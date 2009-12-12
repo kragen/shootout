@@ -82,7 +82,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             if (isset($l[LANG_SPECIALURL]) && !empty($l[LANG_SPECIALURL])){
                printf('<td><dl><dt><a href="%s.php" title="Compare %s against one other language implementation">%s</a></dt><dd>%s</dd></dl></td>', $l[LANG_SPECIALURL],$LangName,$LangName,$LangTag);
             } else {
-               printf('<td><dl><dt><a href="benchmark.php?test=all&amp;lang=%s">%s</a></dt><dd>%s</dd></dl></td>', $LangLink,$LangName,$LangTag);
+               printf('<td><dl><dt><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s against one other language implementation">%s</a></dt><dd>%s</dd></dl></td>', $LangLink,$LangName,$LangName,$LangTag);
             }
             $j++;
          }
@@ -113,7 +113,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
             $TestLink = $t[TEST_LINK];
             $TestName = $t[TEST_NAME];
             $TestTag = $t[TEST_TAG];
-            printf('<td class="test"><dl><dt><a href="benchmark.php?test=%s&amp;lang=all">%s</a></dt><dd>%s</dd></dl></td>', $TestLink,$TestName,$TestTag); 
+            printf('<td class="test"><dl><dt><a href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a></dt><dd>%s</dd></dl></td>', $TestLink,$TestName,$TestName,$TestTag); 
             $i++; 
          }
          else {
