@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <?=$PageBody;?>
 
 <p class="imgfooter">
-<a href="license.php" title="Software contributed to the Shootout is published under this revised BSD license" >
+<a href="license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>

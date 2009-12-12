@@ -28,8 +28,13 @@ if (!isset($T)){ $T = ''; }
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $faqUrl = 'help.php';
-   if ($F == 'benchmarking'){ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit"  content="10 days" />'; }
-   else { $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />'; }
+   if ($F == 'benchmarking'){ 
+      $metaRobots = '<meta name="robots" content="all" /><meta name="revisit"  content="10 days" />';
+      $metaKeywords = '<meta name="description" content="Some of the many ways in which benchmark comparisons of programming language performance are flawed." />';
+   } else {
+      $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+      $metaKeywords = '<meta name="description" content="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license." />';
+   }
 
 } else {
    // Help people choose the up-to-date measurements
@@ -56,7 +61,7 @@ $Body->set('Changed', filemtime(MISC_PATH.$F.'.php'));
 $Page->set('PageBody', $Body->fetch('misc.tpl.php'));
 
 $Page->set('Robots', $metaRobots);
-$Page->set('MetaKeywords', '');
+$Page->set('MetaKeywords', $metaKeywords);
 $Page->set('PageId', 'miscfile');
 
 echo $Page->fetch('page.tpl.php');
