@@ -15,7 +15,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 
 <h2><a href="#box" name="box">&nbsp;<strong>How much time do these <strong>benchmark programs</strong> take?</strong></a></h2>
 
-<p>This chart shows one <em>comparison</em> - <a href="help.php#measurecpu">Time-used</a>&nbsp;(Elapsed&nbsp;secs).</p>
+<p>This chart shows one <em>comparison</em> - <a href="help.php#measurecpu">Time-used</a>&nbsp;(CPU&nbsp;secs).</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a benchmark, and each horizontal black bar shows the median program time measured.</p>
 
