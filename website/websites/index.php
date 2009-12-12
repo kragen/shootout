@@ -1,5 +1,6 @@
 <?php 
-ini_set('zlib.output_compression',8192);
+ob_start('ob_gzhandler');
+//ini_set('zlib.output_compression',8192);
 
 $s = time(); $m = floor($s/60); $h = floor($m/60); $threedays = floor($h/72); 
 

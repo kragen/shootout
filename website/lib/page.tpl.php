@@ -1,6 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 <?php 
-ini_set('zlib.output_compression',8192);
+ob_start('ob_gzhandler');
+//ini_set('zlib.output_compression',8192);
 
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 8 hours after they are visited.
