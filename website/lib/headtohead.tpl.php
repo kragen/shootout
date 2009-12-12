@@ -111,7 +111,7 @@ foreach($sTests as $Row){
       } else {
          $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s programs">%s</a>%s&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName, $n);
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a>%s&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName, $n);
 
       $ELAPSED = '';
       if (isset($measurements[$Link][1]) && ($measurements[$Link][0][DATA_TIME] < $measurements[$Link][1][DATA_TIME])){
@@ -146,7 +146,7 @@ foreach($sTests as $Row){
       }
    }
    else {
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s programs">%s</a></th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName);
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a></th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName);
 
       if (isset($data[$Link])){
          printf('<tr><td><a href="benchmark.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s"><strong>%s</strong></a><td colspan="2"><span class="message">%s</span></td><td colspan="3"></td></tr>', $Link,$SelectedLang,$data[$Link][N_ID],$Langs[$SelectedLang][LANG_FULL],$TestName,$NoSpaceLangName,StatusMessage($data[$Link][N_LINES]));

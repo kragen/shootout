@@ -44,17 +44,20 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
 
-$bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
+$bannerUrl = 'http://shootout.alioth.debian.org/index.php';
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $metaKeywords = '<meta name="description" content="All the benchmark programs and language implementations available for '.PLATFORM_NAME.'." />';
    $metaRobots = '<meta name="robots" content="follow,noindex,noarchive" />';
    $faqUrl = 'help.php';
 } else {
+   $metaKeywords = '<meta name="description" content="zzz" />';
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
    $faqUrl = 'http://shootout.alioth.debian.org/u32/help.php#means';
 }
 
+$Page->set('MetaKeywords', $metaKeywords);
 $Page->set('Robots', $metaRobots);
 $Page->set('PageId', 'nav');
 $Page->set('BannerUrl', $bannerUrl);

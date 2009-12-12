@@ -102,7 +102,7 @@ foreach($Tests as $t){
    $weight = $W[ $t[TEST_LINK] ];
 
    printf('<tr>'); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=all">%s</a></td>', $Link,$Name); echo "\n";
+   printf('<td><a href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a></td>', $Link,$Name,$Name); echo "\n";
    printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
 }

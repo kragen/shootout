@@ -14,6 +14,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
 <?=$Robots;?>
+<?=$MetaKeywords;?>
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_12dec2009.php" />
