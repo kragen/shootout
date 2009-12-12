@@ -135,7 +135,8 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('W', $W);
          $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
-         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
+         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
+         $MetaKeywords = '<meta name="description" content="Find out which programming languages have the best benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
       }
 
 

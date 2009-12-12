@@ -1,7 +1,7 @@
 <?php 
 ob_start('ob_gzhandler');
 
-$s = time(); $m = floor($s/60); $h = floor($m/60); $threedays = floor($h/72); 
+$s = time(); $m = floor($s/60); $h = floor($m/60); $rotate = floor($h/36); 
 
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 16 hours after they are visited.
@@ -32,15 +32,23 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 $choices = array(
    array('u32q','/which-languages-are-fastest.php'),
    array('u64q','/code-used-time-used-shapes.php'),
-   array('u32','/which-languages-are-fastest.php'),
-   array('u32','/code-used-time-used-shapes.php'),
-   array('u64q','/fwhich-languages-are-fastest.php'),
-   array('u32q','/code-used-time-used-shapes.php'),
+   array('u32','/which-language-is-best.php'),
+   
    array('u64','/which-languages-are-fastest.php'),
-   array('u64','/code-used-time-used-shapes.php')
+   array('u32q','/code-used-time-used-shapes.php'),
+   array('u64q','/which-language-is-best.php'),
+
+   array('u32','/which-languages-are-fastest.php'),
+   array('u64','/code-used-time-used-shapes.php'),
+   array('u32q','/which-language-is-best.php'),
+   
+   array('u64q','/which-languages-are-fastest.php'),
+   array('u32','/code-used-time-used-shapes.php'),
+   array('u64','/which-language-is-best.php')
    );
 
-$chosen = $choices[$threedays%8];
+$nchoices = sizeof($choices);
+$chosen = $choices[$rotate%$nchoices];
 $ChosenSite = $chosen[0];
 $ChosenUrl = $chosen[1];
 ?>
@@ -77,7 +85,7 @@ $choices = array(
    );
 
 $nchoices = sizeof($choices);
-$k = $threedays%$nchoices;
+$k = $rotate%$nchoices;
 
 $u32qChosen = $choices[$k];
 $u64qChosen = $choices[($k+3)%$nchoices];
@@ -216,7 +224,8 @@ $choices = array(
    array('u64q','u32q')
    );
 
-$chosen = $choices[$threedays%8];
+$nchoices = sizeof($choices);
+$chosen = $choices[$rotate%$nchoices];
 $a_list = Keys( array( $chosen[0] ));
 $b_list = Keys( array( $chosen[1] ));
 

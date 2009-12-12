@@ -117,5 +117,5 @@ foreach($Tests as $t){
 
 </td></tr></table>
 
-<h3><a href="#about" name="about">&nbsp;<?=$Title;?> <i>The Weighted Geometric Mean</i></a></h3>
+<h3><a href="#about" name="about">&nbsp;<strong><?=$Title;?></strong> <i>The Weighted Geometric Mean</i></a></h3>
 <?=$About;?>

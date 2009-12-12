@@ -98,11 +98,13 @@
 
 
 <h2><a href="#shapes" name="shapes">&nbsp;<?=$Title;?>&nbsp;[<?=$Mark;?>]</a></h2>
-<p>Scatter plots of normalized Code-used and normalized Time-used measurements give shape to each language implementation and position the programs in a broader context. From <strong>concise at the left</strong> to less-concise at the right, from slower at the top to <strong>faster at the bottom</strong>.</p>
+<p>Scatter plots of <a href="#about">&darr;&nbsp;normalized Code-used and normalized Time-used measurements</a> give shape to each language implementation and position the programs in a broader context. From <strong>concise at the left</strong> to less-concise at the right, from slower at the top to <strong>faster at the bottom</strong>.</p>
+
+<p>Also, click a scatter plot to compare that language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 <?
    printf('<table>');
-   
+
    for ($row=0; $row<$n; $row++){
       printf('<tr>');
       for ($col=0; $col<NCOLS; $col++){
@@ -111,9 +113,9 @@
             $k = $cols[$col][$row];
 
             if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
-               printf('<a href="%s.php">', $Langs[$k][LANG_SPECIALURL]); 
+               printf('<a href="%s.php" title="Compare %s against one other language implementation">', $Langs[$k][LANG_SPECIALURL], $Langs[$k][LANG_FULL]);
             } else {
-               printf('<a href="benchmark.php?test=all&amp;lang=%s">', $k); 
+               printf('<a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s against one other language implementation">', $k, $Langs[$k][LANG_FULL]);
             }
 
             printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" width="150" height="120" />',
