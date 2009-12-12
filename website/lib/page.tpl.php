@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 16 hours after they are visited.
@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <?=$PageBody;?>
 
 <p class="imgfooter">
-<a href="miscfile.php?file=license&amp;title=Revised BSD license" title="Software contributed to the Shootout is published under this revised BSD license" >
+<a href="license.php" title="Software contributed to the Shootout is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>

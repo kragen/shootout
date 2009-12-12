@@ -12,7 +12,7 @@
 
 <dt><a href="#win" name="win"><b>How do I win?</b></a></dt>
 <dd>
-<p>Learn something - look at several benchmarks and compare the program source code for a language you don't know with a language you do know, compare them on different measures, read <a href="miscfile.php?file=benchmarking&amp;title=Flawed Benchmarks" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>. Write programs that improve the showing of your chosen language. Write the best program in your chosen language. </p>
+<p>Learn something - look at several benchmarks and compare the program source code for a language you don't know with a language you do know, compare them on different measures, read <a href="flawed-benchmarks.php" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>. Write programs that improve the showing of your chosen language. Write the best program in your chosen language. </p>
 </dd>
 
 <dt><a href="#scored" name="scored"><b>How is the game scored?</b></a></dt>

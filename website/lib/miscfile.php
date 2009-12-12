@@ -12,9 +12,7 @@ if (isset($HTTP_GET_VARS['file'])
       && strlen($HTTP_GET_VARS['file']) && (strlen($HTTP_GET_VARS['file']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['file'];
    if (ereg("^[a-z]+$",$X) && (
-         $X == 'acknowledgements' ||
          $X == 'benchmarking' ||
-         $X == 'dynamic' ||
          $X == 'license'
       )){ $F = $X; }
 }
