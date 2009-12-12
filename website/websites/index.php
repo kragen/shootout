@@ -4,10 +4,10 @@ ob_start('ob_gzhandler');
 $s = time(); $m = floor($s/60); $h = floor($m/60); $threedays = floor($h/72); 
 
 // REVISED - don't have all pages expire at the same time!
-// EXPIRE pages 8 hours after they are visited.
+// EXPIRE pages 16 hours after they are visited.
 header("Pragma: public");
-header("Cache-Control: maxage=".(8*3600).",public");
-header("Expires: " . gmdate("D, d M Y H:i:s", $s + (8*3600)) . " GMT");
+header("Cache-Control: maxage=".(16*3600).",public");
+header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 ?>
 <?php echo '<?xml version="1.0" encoding="utf-8"?>'; ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">

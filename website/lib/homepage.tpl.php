@@ -1,5 +1,4 @@
 <?php 
-ob_start('ob_gzhandler');
 
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 8 hours after they are visited.
@@ -17,7 +16,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (8*3600)) . " GMT");
 <?=$Robots;?>
 
 <title><?=$PageTitle;?></title>
-<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_10dec2009.php" />
+<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_12dec2009.php" />
 <link rel="shortcut icon" href="./favicon_ico_11dec2009.php" />
 </head>
 
