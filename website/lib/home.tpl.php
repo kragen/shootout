@@ -13,7 +13,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
    MkMenuForm($sTests,'all',$Langs,'all','fullcpu');
 ?>
 
-<h2><a href="#box" name="box">&nbsp;<strong>How long do these <strong>benchmark programs</strong> take?</strong></a></h2>
+<h2><a href="#box" name="box">&nbsp;<strong>How much time do these <strong>benchmark programs</strong> take?</strong></a></h2>
 
 <p>This chart shows one <em>comparison</em> - <a href="help.php#measurecpu">Time-used</a>&nbsp;(Elapsed&nbsp;secs).</p>
 
