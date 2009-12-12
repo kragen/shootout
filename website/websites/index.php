@@ -1,5 +1,8 @@
 <?php 
+ini_set('zlib.output_compression',8192);
+
 $s = time(); $m = floor($s/60); $h = floor($m/60); $threedays = floor($h/72); 
+
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 8 hours after they are visited.
 header("Pragma: public");
