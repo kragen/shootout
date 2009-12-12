@@ -11,7 +11,7 @@
 
 <p>This chart shows one <em>comparison</em> - <a href="help.php#measurecpu">Time-used</a>.</p>
 
-<p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows the median program time measured.</p>
+<p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
@@ -22,9 +22,9 @@
 
 <h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
-<p>Select which language implementations you want to compare (and deselect those you want to remove) before you click the chart button.</p>
+<p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 
-<p>Compare 2 language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
+<p>Also, follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 <form method="get" action="which-languages-are-fastest.php">
 
@@ -88,7 +88,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;<strong>Which languages are fastest?</strong></a></h3>
+<h3><a href="#about" name="about">&nbsp;<strong>Which languages are fastest?</strong></a> <i>Robust Statistics</i></h3>
 <?=$About;?>
 
 
