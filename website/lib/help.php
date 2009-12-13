@@ -23,12 +23,13 @@ $Page->set('PageBody', $Body->fetch('help.tpl.php'));
 
 
 $metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
-$faqUrl = 'help.php';
+$bannerUrl = CORE_SITE.'index.php';
+$faqUrl = CORE_SITE.'help.php';
 $MetaKeywords = '<meta name="description" content="How to compare programming languages in the benchmarks game. How to contribute programs. How programs were measured." />';
 
 
 $Page->set('Robots', $metaRobots);
-$Page->set('BannerUrl', '../index.php');
+$Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
 $Page->set('MetaKeywords', $MetaKeywords);
 $Page->set('PageId', 'faq');

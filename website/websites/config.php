@@ -1,35 +1,35 @@
 <?php
-// Copyright (c) Isaac Gouy 2004, 2005, 2008
+// Copyright (c) Isaac Gouy 2009
 
 
 // FILE PATHS ///////////////////////////////////////////////////
 
-define('LIB_PATH', '../../lib/');
-define('LIB', '../../lib/lib.php');
+define('LIB_PATH', '../lib/');
+define('LIB', '../lib/lib.php');
 
-define('DESC_PATH', '../../desc/');
-define('DATA_PATH', './data/');
-define('ABOUT_PATH', '../../about/');
-define('ABOUT_PROGRAMS_PATH', '../../about/programs/');
+define('DESC_PATH', '../desc/');
+define('DATA_PATH', '../data/');
+define('ABOUT_PATH', '../about/');
+define('ABOUT_PROGRAMS_PATH', '../about/programs/');
 define('VERSION_PATH', './version/');
 define('CODE_PATH', './code/');
 define('LOG_PATH', './code/');
-define('MISC_PATH', '../../misc/');
+define('MISC_PATH', '../misc/');
 define('DOWNLOAD_PATH', '../download/');
-define('IMAGE_PATH', '../');
+define('IMAGE_PATH', './');
 
 define('CORE_SITE', 'http://shootout.alioth.debian.org/');
 
 // CONSTANTS ///////////////////////////////////////////////////
 
-define('DEV',TRUE);                // show excluded languages, tests, programs, when TRUE
+define('DEV',FALSE);                // show excluded languages, tests, programs, when TRUE
 define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 
-define('SITE_NAME', 'u64q');
-define('SITE_TITLE','x64 Ubuntu : Intel&#174; Q6600&#174; quad-core Computer Language Benchmarks Game');
-define('BANNER_TITLE','x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core<br/>Computer&nbsp;<strong>Language</strong>&nbsp;<strong>Benchmarks</strong>&nbsp;Game&nbsp;');
-define('PLATFORM_NAME', 'x64 Ubuntu : Intel Q6600 quad-core');
+define('SITE_NAME', 'core');
+define('SITE_TITLE','Computer Language Benchmarks Game');
+define('BANNER_TITLE','The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp;<br/><strong>Benchmarks</strong>&nbsp;Game&nbsp;');
+define('PLATFORM_NAME', 'Ubuntu : Intel Q6600');
 define('FAQ_TITLE','Help');
 define('BAR',' | ');
 define('DASH',' - ');

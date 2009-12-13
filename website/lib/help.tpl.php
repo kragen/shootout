@@ -22,23 +22,23 @@
 
 <dt><a href="#oneone" name="oneone"><b>How do I compare 2 language implementations?</b></a></dt>
 <dd>
-<p>Compare them directly <a href="benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><b>one-against-another</b> for all the benchmarks</a>.</p>
+<p>Compare them directly <a href="./u64/benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><b>one-against-another</b> for all the benchmarks</a>.</p>
 </dd>
 
 
 <dt><a href="#several" name="several"><b>How do I compare 3 or 4 or more language implementations?</b></a></dt>
 <dd>
-<p>Compare the <a href="which-languages-are-fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><b>summary</b> measurements for just those language implementations</a>.</p>
+<p>Compare the <a href="./u64/which-languages-are-fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><b>summary</b> measurements for just those language implementations</a>.</p>
 </dd>
 
 <dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
 <dd>
-<p><a href="benchmark.php?test=all&lang=gpp&lang2=gpp">Select <b>- all benchmarks -</b> and that language implementation in both the other drop-down menus!</a> Measurements for all the accepted programs for that programming language implementation will be shown row-after-row.</p>
+<p><a href="./u64/benchmark.php?test=all&lang=gpp&lang2=gpp">Select <b>- all benchmarks -</b> and that language implementation in both the other drop-down menus!</a> Measurements for all the accepted programs for that programming language implementation will be shown row-after-row.</p>
 </dd>
 
 <dt><a href="#samebenchmark" name="samebenchmark"><strong>How can I find all the programs for a benchmark?</strong></a></dt>
 <dd>
-<p><a href="benchmark.php?test=spectralnorm&lang=all">Select that benchmark and <b>- all languages -</b> in the drop-down menus.</a> Measurements for all the accepted programs for that benchmark will be shown row-after-row.</p>
+<p><a href="./u64/benchmark.php?test=spectralnorm&lang=all">Select that benchmark and <b>- all languages -</b> in the drop-down menus.</a> Measurements for all the accepted programs for that benchmark will be shown row-after-row.</p>
 </dd>
 
 
@@ -60,7 +60,7 @@
 
 <dt><a href="#play" name="play"><b>How do I play?</b></a></dt>
 <dd>
-<p>Look at what we show for Ubuntu&#8482; Intel&#174; Q6600&#174; quad-core. Choose one of those programming languages. Choose one of those benchmarks. Read and accept <a href="miscfile.php?file=rules&amp;title=The Benchmarks Game Rules">the benchmarks game rules</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
+<p>Look at what we show for Ubuntu&#8482; Intel&#174; Q6600&#174; quad-core. Choose one of those programming languages. Choose one of those benchmarks. Read and accept <a href="license.php">the benchmarks game license</a>. Ask questions <a href="#help">&darr;&nbsp;in the discussion forum</a>.</p>
 <p><a href="#implement">&darr;&nbsp;Write a new program</a> and make sure it's correct by diff'ing the output. Profile and improve the program. <a href="#contribute">&darr;&nbsp;Attach the program source code file to a tracker item</a>.</p>
 </dd>
 
@@ -83,10 +83,10 @@
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="../u32q/"><? printf('%s', gmdate("d M Y", filemtime('../u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
 <h3><span class="u32q">
 <a title="Fastest in each programming language, 32 bit Ubuntu."
-href="../u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -96,10 +96,10 @@ href="../u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbs
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="../u64q/"><? printf('%s', gmdate("d M Y", filemtime('../u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
 <h3><span class="u64q">
 <a title="Fastest in each programming language, 64 bit Ubuntu."
-href="../u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -109,10 +109,10 @@ href="../u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="../u64/"><? printf('%s', gmdate("d M Y", filemtime('../u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
 <h3><span class="u64">
 <a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu."
-href="../u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -122,10 +122,10 @@ href="../u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="../u32/"><? printf('%s', gmdate("d M Y", filemtime('../u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
 <h3><span class="u32">
 <a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu."
-href="../u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -475,7 +475,7 @@ The system is going down for system halt NOW!
 
 <dt><a href="#implementp" name="implementp">How should I implement programs for the Benchmarks Game?</a></dt>
 <dd><p>We prefer <b>plain vanilla programs</b> - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable - so please format your code to fit in less than 80 columns (we don't measure lines-of-code!).</p>
-<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="faq.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> section.</p>
+<p>We also have a weakness for idiosyncratic, elegant, clever programs; and when they are too elegant to meet the requirements of the benchmark we <em>might</em> still show them in the <a href="help.php#alternative">&darr;&nbsp;Interesting Alternative Programs</a> section.</p>
 </dd>
 
 <dt><a href="#correct" name="correct">How much effort should I put into getting the program correct?</a></dt>
@@ -538,7 +538,7 @@ each new target source file will start from the <b>comment line</b> which includ
 <p>Attach the full source-code file of a tested program. Please don't paste source-code into the description field. Please don't contribute patch-files.</p>
 <p>Before contributing programs</p>
 <ul>
-<li>read and accept the <a href="miscfile.php?file=license&amp;title=revised BSD license" title="Read the revised BSD license"><b>Revised&nbsp;BSD&nbsp;license</b></a> - all contributed programs are published under this revised BSD license.</li>
+<li>read and accept the <a href="license.php" title="Read the revised BSD license"><b>Revised&nbsp;BSD&nbsp;license</b></a> - all contributed programs are published under this revised BSD license.</li>
 <li><a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a> and login.</li>
 </ul>
 
@@ -583,21 +583,21 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 <dt><a href="#version" name="version">Where can I see which language version was used?</a></dt>
-<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="benchmark.php?test=all&lang=gpp&lang2=java#about"><strong>language comparison</strong> page</a> and at the bottom of each <a href="benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="C GNU gcc : unchecked low-level programming"><strong>language measurements</strong> page</a>.</p>
+<dd><p>You can see information about the language implementation, including the version number, at the bottom of each <a href="./u64/benchmark.php?test=all&lang=gpp&lang2=java#about"><strong>language comparison</strong> page</a> and at the bottom of each <a href="./u64/benchmark.php?test=all&amp;lang=gcc&amp;lang2=gcc#about" title="C GNU gcc : unchecked low-level programming"><strong>language measurements</strong> page</a>.</p>
 </dd>
 
 <dt><a href="#options" name="options">Where can I see which compiler and runtime options were used?</a></dt>
 <dd><p>You can see the build commands and runtime options at the bottom of each program page -
-<a href="benchmark.php?test=nbody&amp;lang=gcc&amp;id=1#log" title="make, command line, and program output logs"><b>make, command line, and program output logs</b></a>.</p>
+<a href="./u64/benchmark.php?test=nbody&amp;lang=gcc&amp;id=1#log" title="make, command line, and program output logs"><b>make, command line, and program output logs</b></a>.</p>
 </dd>
 
 <dt><a href="#summarydata" name="summarydata">Where can I see the data?</a></dt>
 <dd>
 <ul>
 <li><a
-href="summarydata.php?d=data"><b>summary data</b> for largest N</a></li>
+href="./u64/summarydata.php?d=data"><b>summary data</b> for largest N</a></li>
 <li><a
-href="summarydata.php?d=ndata"><b>full summary data</b> - smaller and largest N</a></li>
+href="./u64/summarydata.php?d=ndata"><b>full summary data</b> - smaller and largest N</a></li>
 </ul>
 </dd>
 
@@ -622,7 +622,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
  differences were simply better algorithms.</p>
 <p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
  we should think of <em>same thing</em> (same result) tests as <b>contests</b>.</p>
-<p>At present, we show just one contest - <a href="benchmark.php?test=meteor&amp;lang=all">meteor-contest</a>.</p>
+<p>At present, we show just one contest - <a href="./u64/benchmark.php?test=meteor&amp;lang=all">meteor-contest</a>.</p>
 </dd>
 
 <dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
@@ -632,7 +632,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 <li><b>Interesting?</b> Is there something significant and interesting about the language, and will that be revealed by these simple benchmark programs? (But look closely and you'll notice that we sometimes include languages just because <em>we find them interesting</em>.)</li>
 </ul>
 <p>If that wasn't discouraging enough: in too many cases we've been asked to include a language implementation, and been told that of course programs would be contributed, but once the language didn't seem to perform as-well-as hoped no more programs were contributed. We're interested in the whole range of performance - not just in the 5 programs which show a language implementation at it's best.</p>
-<p>We have no ambition to measure every Python implementation or every Haskell implementation or every C implementation - that's a chore for all you Python enthusiasts and Haskell enthusiasts and C enthusiasts, a chore which might be straightforward if you <a href="faq.php#measurementscripts">use our measurement scripts</a>.</p>
+<p>We have no ambition to measure every Python implementation or every Haskell implementation or every C implementation - that's a chore for all you Python enthusiasts and Haskell enthusiasts and C enthusiasts, a chore which might be straightforward if you <a href="help.php#measurementscripts">use our measurement scripts</a>.</p>
 <p>We are unable to publish measurements for many commercial language implementations simply because their license conditions forbid it.</p>
 <p>We will accept <b>and reject</b> languages in a capricious and unfair fashion - so ask if we're interested before you start coding.</p>
 </dd>

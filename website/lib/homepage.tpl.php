@@ -17,7 +17,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <?=$MetaKeywords;?>
 
 <title><?=$PageTitle;?></title>
-<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_12dec2009.php" />
+<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_13dec2009.php" />
 <link rel="shortcut icon" href="./favicon_ico_11dec2009.php" />
 </head>
 
@@ -31,7 +31,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <?=$PageBody;?>
 
 <p class="img">
-<a href="license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+<a href="<?=CORE_SITE;?>license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" /></a>
 </p>
 </div>

@@ -223,13 +223,15 @@ if ($T=='all'){
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
 
+
+$faqUrl = CORE_SITE.'help.php';
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $bannerUrl = 'index.php'; $faqUrl = 'help.php';
+   $bannerUrl = 'index.php';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
-   $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
-   $faqUrl = 'http://shootout.alioth.debian.org/u32q/help.php#means';
+   $bannerUrl = CORE_SITE.'index.php';
+   $faqUrl = $faqUrl.'#means';
 }
 
 

@@ -66,8 +66,8 @@ for($k=0;$k<sizeof($p);$k++){
 <colgroup span="<?=$cols;?>" class="num"></colgroup>
 <tr>
 <th></th>
-<th colspan="<?=$cols;?>"><a href="help.php#measurecpu">&nbsp;Time secs&nbsp;</a></th>
-<th colspan="<?=$cols;?>"><a href="help.php#memory">&nbsp;Memory&nbsp;KB&nbsp;</a></th>
+<th colspan="<?=$cols;?>"><a href="<?=CORE_SITE;?>help.php#measurecpu">&nbsp;Time secs&nbsp;</a></th>
+<th colspan="<?=$cols;?>"><a href="<?=CORE_SITE;?>help.php#memory">&nbsp;Memory&nbsp;KB&nbsp;</a></th>
 </tr>
 <tr>
 <th>Program &amp; Logs</th>

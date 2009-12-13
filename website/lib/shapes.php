@@ -47,17 +47,16 @@ if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-a
 $Body->set('DataSet', $DataSet);
 $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
 
-
+$faqUrl = CORE_SITE.'help.php';
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
-   $bannerUrl = 'index.php'; $faqUrl = 'help.php';
+   $bannerUrl = 'index.php';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
    $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
-   $faqUrl = 'http://shootout.alioth.debian.org/u32q/help.php#means';
+   $faqUrl = $faqUrl.'#means';
 }
-
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 

@@ -26,21 +26,21 @@ if (isset($HTTP_GET_VARS['title'])
 if (!isset($T)){ $T = ''; }
 
 
-if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $faqUrl = 'help.php';
-   if ($F == 'benchmarking'){ 
+if (SITE_NAME == 'core' || SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   if ($F == 'benchmarking'){
       $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit"  content="10 days" />';
       $metaKeywords = '<meta name="description" content="Some of the many ways in which benchmark comparisons of programming language performance are flawed." />';
    } else {
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
       $metaKeywords = '<meta name="description" content="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license." />';
    }
-
 } else {
    // Help people choose the up-to-date measurements
-   $faqUrl = '../u64/help.php#means';
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
+
+$faqUrl = CORE_SITE.'help.php';
+$bannerUrl = CORE_SITE.'index.php';
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
@@ -48,7 +48,7 @@ $Page = & new Template(LIB_PATH);
 $Page->set('PageTitle', $T.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', 'The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game');
 $Page->set('FaqTitle', 'Help');
-$Page->set('BannerUrl', '../index.php');
+$Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
 $Page->set('PageBody', BLANK);
 $Page->set('PicturePath', CORE_SITE);

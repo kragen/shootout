@@ -10,9 +10,9 @@ $LangTag = $Row[LANG_TAG];
 
 <h2><a href="#title" name="title">&nbsp;<strong><?=$LangName;?> measurements</strong></a></h2>
 
-<p>This table shows 4 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a> and <a href="help.php#gzbytes">Code</a>.</p>
+<p>This table shows 4 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory">Memory</a> and <a href="<?=CORE_SITE;?>help.php#gzbytes">Code</a>.</p>
 
-<p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="help.php#nmeans">command-line input value N</a>.</p>
+<p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#nmeans">command-line input value N</a>.</p>
 
 <p>This table shows <b>all the accepted <strong><?=$LangName;?></strong> programs</b>.</p>
 
@@ -21,11 +21,11 @@ $LangTag = $Row[LANG_TAG];
 <colgroup span="4" class="num"></colgroup>
 <tr>
 <th>Program&nbsp;Source&nbsp;Code</th>
-<th><a href="help.php#nmeans">&nbsp;N&nbsp;</a></th>
-<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#nmeans">&nbsp;N&nbsp;</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code&nbsp;B</a></th>
 </tr>
 
 <?

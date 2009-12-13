@@ -58,9 +58,9 @@ if ($TestName=='startup'){ $NString = ''; }
  /></p>
  
 
-<h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="help.php#nmeans"><?=$NString;?></a></h2>
+<h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="<?=CORE_SITE;?>help.php#nmeans"><?=$NString;?></a></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>         
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>         
 
 <p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz">sort Code&nbsp;B</a></p>      
 
@@ -93,11 +93,11 @@ if ($TestName=='startup'){ $NString = ''; }
 <tr>
 <th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
 <th>Program&nbsp;Source&nbsp;Code</th>
-<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
-<th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code&nbsp;B</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?
@@ -208,7 +208,7 @@ foreach($Langs as $k => $v){
 
 <?
 if (sizeof($Special)>0){ 
-   echo '<tr><th colspan="7"><a href="help.php#alternative" name="alt">interesting alternative programs</a></th></tr>', "\n";
+   echo '<tr><th colspan="7"><a href="<?=CORE_SITE;?>help.php#alternative" name="alt">interesting alternative programs</a></th></tr>', "\n";
 
    foreach($Special as $d){
       $k = $d[DATA_LANG];

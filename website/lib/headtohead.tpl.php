@@ -47,10 +47,10 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <tr>
 <th>Benchmark</th>
-<th><a href="help.php#measurecpu">Time</a></th>
-<th><a href="help.php#memory">Memory</a></th>
-<th><a href="help.php#gzbytes">Code</a></th>
-<th><a href="help.php#nmeans">Reduced&nbsp;N</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Time</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory">Memory</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#nmeans">Reduced&nbsp;N</a></th>
 </tr>
 
 
@@ -83,18 +83,18 @@ foreach($sTests as $Row){
 
 <h2><a href="#measurements" name="measurements">&nbsp;Step&nbsp;3&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <em>Measurements.</em></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="help.php#measurecpu">CPU&nbsp;Time</a>, <a href="help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="help.php#memory">Memory</a>, <a href="help.php#gzbytes">Code</a> and <a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring">~&nbsp;CPU&nbsp;Load</a>.</p>
 
 <p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
 
 <table>
 <tr>
 <th>Program&nbsp;Source&nbsp;Code</th>
-<th><a href="help.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="help.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="help.php#gzbytes">Code&nbsp;B</a></th>
-<th><a href="help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory">Memory&nbsp;KB</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code&nbsp;B</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

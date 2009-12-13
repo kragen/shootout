@@ -28,7 +28,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 
 <h2><a href="#best" name="best">&nbsp;<strong>Which language is best?</strong></a></h2>
 
-<p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="help.php#measurecpu">Time-used</a> and/or <a href="help.php#memory">Memory-used</a> and/or <a href="help.php#gzbytes">Code-used</a> - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
+<p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> and/or <a href="<?=CORE_SITE;?>help.php#memory">Memory-used</a> and/or <a href="<?=CORE_SITE;?>help.php#gzbytes">Code-used</a> - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
 <p>Column &#215; shows <i>how many times more</i> that geometric mean is for a programming language than for the language that used least.</p>
 
@@ -82,15 +82,15 @@ foreach($score as $k => $v){
 
 <tr><th colspan="2">weight</th></tr>
 <tr>
-<td><a href="help.php#measurecpu">Time&nbsp;secs</a></td>
+<td><a href="<?=CORE_SITE;?>help.php#measurecpu">Time&nbsp;secs</a></td>
 <td><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></td>
 </tr>
 <tr>
-<td><a href="help.php#memory">Memory&nbsp;KB</a></td>
+<td><a href="<?=CORE_SITE;?>help.php#memory">Memory&nbsp;KB</a></td>
 <td><input type="text" size="2" name="xmem" value="<?=$W['xmem'];?>" /></td>
 </tr>
 <tr>
-<td><a href="help.php#gzbytes">Code B</a></td>
+<td><a href="<?=CORE_SITE;?>help.php#gzbytes">Code B</a></td>
 <td><input type="text" size="2" name="xloc" value="<?=$W['xloc'];?>" /></td>
 </tr>
 
