@@ -29,7 +29,7 @@ if (!isset($T)){ $T = ''; }
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $faqUrl = 'help.php';
    if ($F == 'benchmarking'){ 
-      $metaRobots = '<meta name="robots" content="all" /><meta name="revisit"  content="10 days" />';
+      $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit"  content="10 days" />';
       $metaKeywords = '<meta name="description" content="Some of the many ways in which benchmark comparisons of programming language performance are flawed." />';
    } else {
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';

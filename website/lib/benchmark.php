@@ -114,7 +114,7 @@ if ($T=='all'){
          if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
          $Body->set('DataSet', $DataSet);
          $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
-         $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
+         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 
       }  else {
@@ -135,7 +135,7 @@ if ($T=='all'){
          $Body->set('DataSet', $DataSet);
          $Body->set('W', $W);
          $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
-         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
+         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
          $MetaKeywords = '<meta name="description" content="Find out which programming languages have the best benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
       }
 
