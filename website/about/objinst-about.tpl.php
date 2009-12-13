@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=objinst&amp;lang=java&amp;sort=<?=$Sort;?>">Java program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=objinst&amp;lang=java&amp;sort=<?=$Sort;?>">Java program</a>.</p>
 
 <p>The objects benchmark measures the speed of object creation in OO languages. It measures a mixture of base class and a derived class object creation.</p>
 <p>Each program should:</p>

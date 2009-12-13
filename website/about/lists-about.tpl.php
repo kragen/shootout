@@ -1,4 +1,4 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=lists&amp;lang=gst&amp;sort=<?=$Sort;?>">Smalltalk program</a>.</p>
+<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=lists&amp;lang=gst&amp;sort=<?=$Sort;?>">Smalltalk program</a>.</p>
 
 <p>Programs should:</p>
 <ul>

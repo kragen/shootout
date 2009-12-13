@@ -16,4 +16,4 @@
 
 <p>(Note that as in the original version, whitespace is
   defined as space, newline and tab characters, which is a little
-  different from the Unix <strong>wc</strong> command.)</p>
+  different from the Unix <b>wc</b> command.)</p>

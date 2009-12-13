@@ -1,7 +1,7 @@
-<p><strong>diff</strong> program output N = 10 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><b>diff</b> program output N = 10 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
-<p><strong>Note</strong>: we're thinking about a better way to start client &amp; server within our measurement framework.</p>
+<p><b>Note</b>: we're thinking about a better way to start client &amp; server within our measurement framework.</p>
 
 <p>Each program (M = 100, REPLY_SIZE = 4096) should</p>
 <ul>

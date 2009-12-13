@@ -1,9 +1,9 @@
-<p><strong>diff</strong> program output N = 2 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><b>diff</b> program output N = 2 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should count the prime numbers from 2 to M, using the same na&#239;ve Sieve of Eratosthenes algorithm:</p>
 <ul>
-  <li>create a sequence of M <strong>boolean flags</strong> (don't use bit flags - if the language implementation doesn't provide a boolean type or if the boolean type is packed then use byte flags)</li>
+  <li>create a sequence of M <b>boolean flags</b> (don't use bit flags - if the language implementation doesn't provide a boolean type or if the boolean type is packed then use byte flags)</li>
   <li>for each index number
      <ul>
      <li>if the flag value at that index is true

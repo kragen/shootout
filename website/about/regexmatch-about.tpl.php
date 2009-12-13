@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=regex&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=regex&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
 
 <p>The regex benchmark measures regular expression pattern matching, extracting telephone numbers from a text.</p>
 
@@ -42,7 +42,7 @@
    followed by anything).</li>
 </ul>
 
-<p><strong>Please Note:</strong> this test is due for an overhaul, because of the
+<p><b>Please Note:</b> this test is due for an overhaul, because of the
   variety of solutions for this test that aren't really using regular
   expressions.</p>
 

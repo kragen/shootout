@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=hash2&amp;lang=lua&amp;sort=<?=$Sort;?>">Lua program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=hash2&amp;lang=lua&amp;sort=<?=$Sort;?>">Lua program</a>.</p>
 
 <ul>
 <li>create 10000 hash entries</li>

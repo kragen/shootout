@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 7 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><b>diff</b> program output N = 7 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should calculate this TAK function using the same na&#239ve floating-point recursive-algorithm</p>

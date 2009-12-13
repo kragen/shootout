@@ -1,4 +1,4 @@
-<p><strong>ndiff</strong> program output N = 600 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program output has <em>the correct format</em> before contributing.</p>
+<p><b>ndiff</b> program output N = 600 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program output has <em>the correct format</em> before contributing.</p>
 
 <p>The text-part and spelled-out numbers in the program output should match the expected output exactly. Thread scheduling may cause small differences in the other numbers, so program output is checked with <a href="http://www.math.utah.edu/~beebe/software/ndiff/">ndiff -fields 2-10</a></p>
 
@@ -21,4 +21,4 @@ caller does not know whether another chameneos is already present or not, neithe
 
 <p>The chameneos benchmark is an adaptation of <a href="http://cedric.cnam.fr/PUBLIS/RC474.pdf">"Chameneos, a Concurrency Game for Java, Ada and Others"</a> 100KB pdf (which includes example implementations in Java, Ada and C).</p>
 
-<p>Programs may use kernel threads, lightweight threads; but <strong>coroutines, cooperative threads and other programs with custom schedulers will be listed as interesting alternative implementations</strong>. Briefly say what concurrency technique is used in the program header comment.</p>
+<p>Programs may use kernel threads, lightweight threads; but <b>coroutines, cooperative threads and other programs with custom schedulers will be listed as interesting alternative implementations</b>. Briefly say what concurrency technique is used in the program header comment.</p>

@@ -1,4 +1,4 @@
-<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=sieve&amp;lang=gcc&amp;sort=<?=$Sort;?>">C program</a>.</p>
+<p>Each program should be implemented the <a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=sieve&amp;lang=gcc&amp;sort=<?=$Sort;?>">C program</a>.</p>
 
 <p>Count the prime numbers from 2 to 8192 N times.</p> 
 <p>Find the prime numbers with Eratosthenes Sieve:</p>

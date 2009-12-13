@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=spellcheck&amp;lang=lua&amp;sort=<?=$Sort;?>">Lua program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=spellcheck&amp;lang=lua&amp;sort=<?=$Sort;?>">Lua program</a>.</p>
 <p>The spellcheck benchmark measures line oriented I/O and hash table  (associative array) performance.</p>
 
 <p>Each program should:</p>

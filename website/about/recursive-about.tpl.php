@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 3 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
+<p><b>diff</b> program output N = 3 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
 
 <p>Each program should use the same na&#239;ve recursive-algorithms to calculate 3 simple numeric functions: ackermann, fibonnaci and tak.</p>
 <pre>

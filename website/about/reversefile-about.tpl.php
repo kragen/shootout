@@ -1,5 +1,5 @@
 <p>Each program should do the <a
- href="faq.php?sort=<?=$Sort;?>#samething"><strong>same&nbsp;thing</strong></a>.</p>
+ href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.</p>
 
 <p>Reverse the input file from stdin, line by line. The benchmark is the-same-as the <em>tail</em> test in <a href="
   http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html">

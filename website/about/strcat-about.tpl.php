@@ -1,5 +1,5 @@
 <p>Each program should be implemented the 
-<a href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=strcat&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
+<a href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=strcat&amp;lang=perl&amp;sort=<?=$Sort;?>">Perl program</a>.</p>
 
 <p>Each program should:</p>
 <ul>

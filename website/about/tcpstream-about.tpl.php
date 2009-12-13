@@ -1,4 +1,4 @@
-<p><strong>Note</strong>: we're thinking about a better way to start client &amp; server within our measurement framework.</p>
+<p><b>Note</b>: we're thinking about a better way to start client &amp; server within our measurement framework.</p>
 
 <p>Each program (M = 1, REPLY_SIZE = 409600) should</p>
 <ul>

@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 1 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><b>diff</b> program output N = 1 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should print &quot;hello world&quot; and exit.</p>

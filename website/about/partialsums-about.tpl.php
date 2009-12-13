@@ -1,8 +1,8 @@
-<p><strong>diff</strong> program output N = 25000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
+<p><b>diff</b> program output N = 25000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
 
 <p>(Programs may use a single-loop or several-loops; programs may cache <tt>&#178;&#8260;<sub>3</sub></tt>, <tt>k&#178;</tt>, <tt>k&#179;</tt>, <tt>sin k</tt>, <tt>cos k</tt> in local variables)
 
-<p>Each program should use the same <strong>na&#239;ve</strong> iterative double-precision algorithms to calculate partial-sums of the series:</p>
+<p>Each program should use the same <b>na&#239;ve</b> iterative double-precision algorithms to calculate partial-sums of the series:</p>
 <div>
 <p>&#8721; (&#178;&#8260;<sub>3</sub>)<sup>k</sup> <sub>k=0, &#8230;</sub> <em>use power function</em></p>
 <p>&#8721; k<sup>&#8722;0.5</sup> <sub>k=1, &#8230;</sub> <em>use power or sqrt function</em></p>

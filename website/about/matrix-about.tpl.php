@@ -1,4 +1,4 @@
-<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><strong>same&nbsp;thing</strong></a>.</p>  
+<p>Each program should do the <a href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.</p>  
 
 <p>The matrix benchmark was inspired by another small language comparison: <a
  href="http://www.networkcomputing.com/unixworld/tutorial/005/005.html">

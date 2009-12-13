@@ -1,5 +1,5 @@
 <p>Each program should do the <a
- href="faq.php?sort=<?=$Sort;?>#samething"><strong>same&nbsp;thing</strong></a>.</p>
+ href="faq.php?sort=<?=$Sort;?>#samething"><b>same&nbsp;thing</b></a>.</p>
 
 <p>Each program should:</p>
 <ul>

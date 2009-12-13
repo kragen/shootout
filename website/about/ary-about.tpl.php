@@ -1,5 +1,5 @@
 <p>Each program should be implemented the <a
-  href="faq.php?sort=<?=$Sort;?>#sameway"><strong>same&nbsp;way</strong></a> - the same way as this <a href="benchmark.php?test=ary&amp;lang=gcc&amp;sort=<?=$Sort;?>">C program</a>.</p>
+  href="faq.php?sort=<?=$Sort;?>#sameway"><b>same&nbsp;way</b></a> - the same way as this <a href="benchmark.php?test=ary&amp;lang=gcc&amp;sort=<?=$Sort;?>">C program</a>.</p>
 
 <p>The array benchmark was inspired by the array test in
   <a href="http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html">

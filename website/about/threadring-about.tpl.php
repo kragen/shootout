@@ -1,4 +1,4 @@
-<p><strong>diff</strong> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
+<p><b>diff</b> program output N = 1000 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
 </p>
 
 <p>Each program should create and keep alive 503 threads, explicity or implicitly linked in a ring, and pass a token between one thread and the next thread at least N times.</p>
@@ -15,4 +15,4 @@
 <p>Similar benchmarks are described in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.cl.cam.ac.uk/users/mr/Cobench.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a>
 For some language implementations increasing the number of threads quickly results in <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Death by Concurrency</a>.</p>
 
-<p>Programs may use kernel threads, lightweight threads; but <strong>coroutines, cooperative threads and other programs with custom schedulers will be listed as interesting alternative implementations</strong>. Briefly say what concurrency technique is used in the program header comment.</p>
+<p>Programs may use kernel threads, lightweight threads; but <b>coroutines, cooperative threads and other programs with custom schedulers will be listed as interesting alternative implementations</b>. Briefly say what concurrency technique is used in the program header comment.</p>
