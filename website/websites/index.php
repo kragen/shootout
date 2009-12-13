@@ -51,12 +51,11 @@ $nchoices = sizeof($choices);
 $chosen = $choices[$rotate%$nchoices];
 $ChosenSite = $chosen[0];
 $ChosenUrl = $chosen[1];
-$ChosenHelpSite = $ChosenSite;
 ?>
 
 
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/<?=$ChosenHelpSite;?>/help.php">Help</a></h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php">Help</a></h1></td>
 </tr></table>
 
 <div id="home">
@@ -241,7 +240,7 @@ foreach($Langs as $a){
 
 
 <p class="imgfooter">
-<a href="http://shootout.alioth.debian.org/<?=$ChosenHelpSite;?>/license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+<a href="http://shootout.alioth.debian.org/license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
