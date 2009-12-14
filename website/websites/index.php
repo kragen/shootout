@@ -19,7 +19,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 
 <meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="1 days" />
 
-<meta name="description" content="Compare ~30 programming languages using ~12 flawed benchmarks and ~1100 programs. Contribute faster more elegant programs." />
+<meta name="description" content="Compare the performance of ~30 programming languages using ~12 flawed benchmarks and ~1100 programs. Contribute faster more elegant programs." />
 
 <title>Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_13dec2009.php" />
