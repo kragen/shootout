@@ -72,7 +72,7 @@ We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Which programming languages have the fastest programs?</strong></a></h5><br/>
 
-<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p>
+<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-coded links to see one benchmark for a particular OS/machine -</p>
 
 <?
 $choices = array(
@@ -97,57 +97,6 @@ $u32qChosen = $choices[$k];
 $u64qChosen = $choices[($k+3)%$nchoices];
 $u64Chosen = $choices[($k+6)%$nchoices];
 $u32Chosen = $choices[($k+9)%$nchoices];
-?>
-
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
-<h3><span class="u32q">
-<a title="Fastest in each programming language, 32 bit Ubuntu."
-href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
-<h3><span class="u64q">
-<a title="Fastest in each programming language, 64 bit Ubuntu."
-href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
-<h3><span class="u64q">
-<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
-<h3><span class="u32">
-<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-
-<h5><br/><strong>Programming language comparisons</strong> Z to A</h5><br/>
-
-
-<?php
 
 require_once('../lib/lib_whitelist.php');
 
@@ -162,6 +111,64 @@ function ReadA($FileName){
    @fclose($f);
    return $rows;
 }
+
+$Tests = ReadA('../desc/test.csv');
+$u32qChosenTip = 'Fastest in each programming language to '.$Tests[$u32qChosen][4];
+$u64qChosenTip = 'Fastest in each programming language to '.$Tests[$u64qChosen][4];
+$u64ChosenTip = 'Fastest in each programming language to '.$Tests[$u64Chosen][4];
+$u32ChosenTip = 'Fastest in each programming language to '.$Tests[$u32Chosen][4];
+unset($Tests);
+?>
+
+
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="<?=$u32qChosenTip?>" href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
+<h3><span class="u32q">
+<a title="<?=$u32qChosenTip?>"
+href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="<?=$u64qChosenTip?>" href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
+<h3><span class="u64q">
+<a title="<?=$u64qChosenTip?>"
+href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+
+
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="<?=$u64ChosenTip?>" href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
+<h3><span class="u64q">
+<a title="<?=$u64ChosenTip?>" href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+
+<table class="layout">
+<tr class="test">
+<td>
+<p class="timestamp"><a title="<?=$u32ChosenTip?>" href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
+<h3><span class="u32">
+<a title="<?=$u32ChosenTip?>" href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
+</td>
+</tr>
+</table>
+
+
+<h5><br/><strong>Programming language comparisons</strong> Z to A</h5><br/>
+
+
+<?php
 
 function Keys($sites){
    $siteKeys = array();

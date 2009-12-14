@@ -12,7 +12,7 @@
 
 <dt><a href="#win" name="win"><b>How do I win?</b></a></dt>
 <dd>
-<p>Learn something - look at several benchmarks and compare the program source code for a language you don't know with a language you do know, compare them on different measures, read <a href="flawed-benchmarks.php" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>. Write programs that improve the showing of your chosen language. Write the best program in your chosen language. </p>
+<p>Learn something - look at several benchmarks and compare the program source code for a language you don't know, with a language you do know; compare them on different measures. Read <a href="flawed-benchmarks.php" title="Flawed Benchmarks - Are there any other kind?"><strong>Flawed Benchmarks</strong></a>. Write programs that improve the showing of your chosen language. Write the best program in your chosen language. </p>
 </dd>
 
 <dt><a href="#scored" name="scored"><b>How is the game scored?</b></a></dt>
@@ -75,7 +75,7 @@
 <dt><a href="#current" name="current"><b>Up-to-date measurements</b></a></dt>
 
 <dd>
-<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages. Click one of these color-code links to see measurements for a particular OS/machine - </p>
+<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages. Click one of these color-coded links to see measurements for a particular OS/machine - </p>
 </dd>
 
 
