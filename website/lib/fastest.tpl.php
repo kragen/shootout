@@ -9,7 +9,7 @@
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> (Elapsed secs).</p>
 
-<p>The 4 sets of up-to-date measurements have been combined - both Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp; and one&nbsp;core, both x64&nbsp;and x86&nbsp;Ubuntu&#8482;.</p>
+<p>The 4 sets of up-to-date measurements have been combined - both Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core and one-core; both x64&nbsp;and x86&nbsp;Ubuntu&#8482;.</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 
@@ -24,7 +24,7 @@
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 
-<form method="get" action="which-languages-are-fastest.php">
+<form method="get" action="which-programming-language-is-fastest.php">
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
