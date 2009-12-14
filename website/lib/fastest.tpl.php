@@ -5,7 +5,7 @@
    unset($Data);   
 ?>
 
-<h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a></h2>
+<h2><a href="#chart" name="chart">&nbsp;<strong>Which languages are fastest?</strong></a></h2>
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> (Elapsed secs).</p>
 
@@ -18,7 +18,7 @@
    width="480" height="300"
  /></p>
 
-<h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
+<h2><a href="#table" name="table">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 

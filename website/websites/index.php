@@ -47,8 +47,8 @@ $choices = array(
 
    array('u64q/','which-languages-are-fastest.php'),
    array('u32/','code-used-time-used-shapes.php'),
-   array('u64/','which-language-is-best.php')
-   array('','which-languages-are-fastest.php'),
+   array('u64/','which-language-is-best.php'),
+   array('','which-languages-are-fastest.php')
    );
 
 $nchoices = sizeof($choices);
