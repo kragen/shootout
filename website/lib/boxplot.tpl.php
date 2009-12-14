@@ -7,7 +7,7 @@
    unset($Data);   
 ?>
 
-<h2><a href="#chart" name="chart">&nbsp;<strong>Which languages are fastest?</strong></a></h2>
+<h2><a href="#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a>.</p>
 
@@ -88,7 +88,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;<strong>Which languages are fastest?</strong></a> <i>Robust Statistics</i></h3>
+<h3><a href="#about" name="about">&nbsp;<strong>Which programming languages are fastest?</strong></a> <i>Robust Statistics</i></h3>
 <?=$About;?>
 
 

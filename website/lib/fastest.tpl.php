@@ -5,9 +5,11 @@
    unset($Data);   
 ?>
 
-<h2><a href="#chart" name="chart">&nbsp;<strong>Which languages are fastest?</strong></a></h2>
+<h2><a href="#chart" name="chart">&nbsp;<strong>Which programming language is fastest?</strong></a></h2>
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> (Elapsed secs).</p>
+
+<p>The 4 sets of up-to-date measurements have been combined - both Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp; and one&nbsp;core, both x64&nbsp;and x86&nbsp;Ubuntu&#8482;.</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 
@@ -18,7 +20,7 @@
    width="480" height="300"
  /></p>
 
-<h2><a href="#table" name="table">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
+<h2><a href="#table" name="table">&nbsp;<strong>Which language is fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 
@@ -84,7 +86,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;<strong>Which languages are fastest?</strong></a> <i>Robust Statistics</i></h3>
+<h3><a href="#about" name="about">&nbsp;<strong>Which programming language is fastest?</strong></a> <i>Robust Statistics</i></h3>
 <?=$About;?>
 
 

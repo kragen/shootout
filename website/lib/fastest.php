@@ -44,7 +44,7 @@ require_once(LIB_PATH.'lib_scorecard.php');
 list ($mark,$mtime)= MarkTime('u64q/');
 $mark = $mark.' 32 64';
 
-$Title = 'Which languages are fastest?';
+$Title = 'Which programming language is fastest?';
 if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'fastest.tpl.php';
@@ -55,7 +55,7 @@ $SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
 if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 $Body->set('DataSet', $DataSet);
 $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
-$MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
+$MetaKeywords = '<meta name="description" content="Find out which programming language has the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 $faqUrl = CORE_SITE.'help.php';
 $bannerUrl = 'index.php';
 
