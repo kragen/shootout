@@ -57,6 +57,7 @@ if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME
    $bannerUrl = 'http://shootout.alioth.debian.org/index.php'; 
    $faqUrl = $faqUrl.'#means';
 }
+$metaKeywords = '<meta name="description" content="Look for patterns in Code-used Time-used Shapes ('.PLATFORM_NAME.') & find out how your favorite language compares." />';
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
@@ -71,7 +72,7 @@ $Body->set('Langs', $Langs);
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
-$Page->set('MetaKeywords', $MetaKeywords);
+$Page->set('MetaKeywords', $metaKeywords);
 $Page->set('PageId', $PageId);
 
 echo $Page->fetch('page.tpl.php');
