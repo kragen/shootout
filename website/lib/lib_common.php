@@ -423,7 +423,7 @@ function PTime($d){
 }
 
 
-function MarkTime(){
+function MarkTime($PathRoot=''){
    if (SITE_NAME == 'debian'){
       $Mark = 'late 2007';
       $DataTime = '';
@@ -431,7 +431,7 @@ function MarkTime(){
       $Mark = 'mid 2008';
       $DataTime = '';
    } else {
-      $mtime = filemtime(DATA_PATH.'data.csv');
+      $mtime = filemtime($PathRoot.DATA_PATH.'data.csv');
       $Mark = gmdate("d M Y", $mtime);
       $DataTime = ' '.gmdate("g:i a", $mtime).'  GMT';
    }

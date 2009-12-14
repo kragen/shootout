@@ -1,15 +1,13 @@
 <?   // Copyright (c) Isaac Gouy 2009 ?>
 
 <? 
-   MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
-
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);   
 ?>
 
 <h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a></h2>
 
-<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a>.</p>
+<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> (Elapsed secs).</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 
@@ -23,8 +21,6 @@
 <h2><a href="#box" name="box">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
-
-<p>Also, follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 <form method="get" action="which-languages-are-fastest.php">
 
@@ -41,7 +37,7 @@
 
 <tr>
 <th>&nbsp;</th>
-<th>compare 2</th>
+<th>language implementation</th>
 <th><a href="#about">&nbsp;|-</a></th>
 <th><a href="#about">&nbsp;|---</a></th>
 <th><a href="#about">&nbsp;25%</a></th>
@@ -64,9 +60,9 @@ foreach($score as $k => $v){
    printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', $k, $checked); echo "\n";
 
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
-      printf('<td><a href="%s.php" title="Compare %s against one other language implementation">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Name,$HtmlName); 
+      printf('<td>%s</td>', $Name);
    } else {
-      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s against one other language implementation">%s</a></td>', $k,$Name,$HtmlName);
+      printf('<td>%s</td>', $Name);
    }
    echo "\n";
 

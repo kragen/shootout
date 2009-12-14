@@ -249,6 +249,11 @@ function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE
 
 
 function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
+
+   return FullScores( $SLangs, FullRatios($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading) );
+}
+
+function FullRatios($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
    // expect to encounter more than one DATA_TESTVALUE for each test
    $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
    if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
@@ -299,7 +304,7 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
    same language implementation - but it's completely negligible.
    */
 
-   $score = array();
+   $ratios = array();
    foreach($data as $k => $test){
       if (sizeof($test)/sizeof($Tests) > 0.5){
 
@@ -318,9 +323,19 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
                }
             }
          }
-         if ($include > 0){ $score[$k] = Percentiles($s); }
+         if ($include > 0){ $ratios[$k] = $s; }
       }
    }
+   return $ratios;
+}
+
+
+function FullScores(&$SLangs,&$ratios){
+  $score = array();
+  foreach($ratios as $k => $s){
+     $score[$k] = Percentiles($s);
+  }
+
    uasort($score,'CompareMedian');
 
    $labels = array();
