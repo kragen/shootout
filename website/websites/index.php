@@ -30,36 +30,37 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 
 <?
 $choices = array(
-   array('u32q/','which-languages-are-fastest.php'),
-   array('u64q/','code-used-time-used-shapes.php'),
-   array('u32/','which-language-is-best.php'),
-   array('','which-programming-language-is-fastest.php.php'),
+   array('u32q/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on quad-core Ubuntu?'),
+   array('u64q/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on quad-core x64 Ubuntu'),
+   array('u32/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
+   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
 
-   array('u64/','which-languages-are-fastest.php'),
-   array('u32q/','code-used-time-used-shapes.php'),
-   array('u64q/','which-language-is-best.php'),
-   array('','which-programming-language-is-fastest.php.php'),
+   array('u64/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on one-core x64 Ubuntu?'),
+   array('u32q/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on quad-core Ubuntu'),
+   array('u64q/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
+   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
 
-   array('u32/','which-languages-are-fastest.php'),
-   array('u64/','code-used-time-used-shapes.php'),
-   array('u32q/','which-language-is-best.php'),
-   array('','which-programming-language-is-fastest.php.php'),
+   array('u32/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on one-core Ubuntu?'),
+   array('u64/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on one-core x64 Ubuntu'),
+   array('u32q/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
+   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
 
-   array('u64q/','which-languages-are-fastest.php'),
-   array('u32/','code-used-time-used-shapes.php'),
-   array('u64/','which-language-is-best.php'),
-   array('','which-programming-language-is-fastest.php.php')
+   array('u64q/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on quad-core x64 Ubuntu?'),
+   array('u32/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on one-core Ubuntu'),
+   array('u64/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
+   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?')
    );
 
 $nchoices = sizeof($choices);
 $chosen = $choices[$rotate%$nchoices];
 $ChosenSite = $chosen[0];
 $ChosenUrl = $chosen[1];
+$ChosenTip = $chosen[2];
 ?>
 
 
 <table class="banner"><tr>
-<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php">Help</a></h1></td>
+<td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php" title="How to compare programming languages. How to contribute programs. How programs were measured.">Help</a></h1></td>
 </tr></table>
 
 <div id="home">
@@ -69,7 +70,7 @@ We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
 We can't - <strong>we measure particular programs</strong>.</p><br/>
 
-<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>"><strong>Which programming languages have the fastest programs?</strong></a></h5><br/>
+<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Which programming languages have the fastest programs?</strong></a></h5><br/>
 
 <p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-code links to see one benchmark for a particular OS/machine -</p>
 
@@ -244,7 +245,7 @@ foreach($Langs as $a){
 
 
 <p class="imgfooter">
-<a href="http://shootout.alioth.debian.org/license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+<a href="http://shootout.alioth.debian.org/license.php" title="The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>

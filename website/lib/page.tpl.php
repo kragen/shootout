@@ -25,14 +25,14 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 
 <body id="<?=SITE_NAME;?>">
 <table class="banner"><tr>
-<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?=$FaqUrl;?>"><?=$FaqTitle;?></a></h1></td>
+<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?=$FaqUrl;?>" title="How to compare programming languages. How to contribute programs. How programs were measured."><?=$FaqTitle;?></a></h1></td>
 </tr></table>
 
 <div id="<?=$PageId;?>">
 <?=$PageBody;?>
 
 <p class="imgfooter">
-<a href="<?=CORE_SITE;?>license.php" title="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license" >
+<a href="<?=CORE_SITE;?>license.php" title="The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="<?=IMAGE_PATH;?>open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>

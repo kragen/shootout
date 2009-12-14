@@ -58,6 +58,7 @@ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content=
 $MetaKeywords = '<meta name="description" content="Find out which programming language has the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 $faqUrl = CORE_SITE.'help.php';
 $bannerUrl = 'index.php';
+$timeUsed = 'Elapsed secs';
 
 
 $Data = FullRatios('u64/'.DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs);
@@ -79,6 +80,7 @@ $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark );
 $Body->set('MTime', $mtime);
+$Body->set('TimeUsed', $timeUsed);
 
 $Body->set('About', $About->fetch($AboutTemplateName));
 

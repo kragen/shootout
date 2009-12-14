@@ -136,9 +136,8 @@ if ($T=='all'){
          $Body->set('W', $W);
          $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
          $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
-         $MetaKeywords = '<meta name="description" content="Find out which programming languages have the best benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
+         $MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks & Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
       }
-
 
    } else {           // Head to Head
 
@@ -225,6 +224,8 @@ if ($T=='all'){
 
 
 $faqUrl = CORE_SITE.'help.php';
+$timeUsed = 'Elapsed secs';
+
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $bannerUrl = 'index.php';
 } else {
@@ -232,6 +233,7 @@ if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME
    // Help people choose the up-to-date measurements
    $bannerUrl = CORE_SITE.'index.php';
    $faqUrl = $faqUrl.'#means';
+   $timeUsed = 'CPU secs';
 }
 
 
@@ -253,6 +255,7 @@ $Body->set('Sort', $S);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark);
 $Body->set('MTime', $mtime);
+$Body->set('TimeUsed', $timeUsed);
 
 $About->set('SelectedTest', $T);
 $About->set('SelectedLang', $L);

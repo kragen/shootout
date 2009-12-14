@@ -7,7 +7,7 @@
 
 <h2><a href="#chart" name="chart">&nbsp;<strong>Which programming language is fastest?</strong></a></h2>
 
-<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> (Elapsed secs).</p>
+<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> (<?=$TimeUsed;?>).</p>
 
 <p>The 4 sets of up-to-date measurements have been combined - both Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core and one-core; both x64&nbsp;and x86&nbsp;Ubuntu&#8482;.</p>
 
