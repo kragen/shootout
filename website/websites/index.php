@@ -17,7 +17,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
 
-<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="1 days" />
+<meta name="robots" content="all" /><meta name="revisit" content="1 days" />
 
 <meta name="description" content="Compare the performance of ~30 programming languages using ~12 flawed benchmarks and ~1100 programs. Contribute faster more elegant programs." />
 

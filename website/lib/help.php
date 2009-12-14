@@ -22,7 +22,7 @@ $Body->set('Changed', filemtime(LIB_PATH.'help.tpl.php'));
 $Page->set('PageBody', $Body->fetch('help.tpl.php'));
 
 
-$metaRobots = '<meta name="robots" content="follow,index,noarchive" /><meta name="revisit" content="10 days" />';
+$metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
 $bannerUrl = CORE_SITE.'index.php';
 $faqUrl = CORE_SITE.'help.php';
 $MetaKeywords = '<meta name="description" content="How to compare programming languages in the benchmarks game. How to contribute programs. How programs were measured." />';
