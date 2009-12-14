@@ -30,21 +30,25 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 
 <?
 $choices = array(
-   array('u32q','/which-languages-are-fastest.php'),
-   array('u64q','/code-used-time-used-shapes.php'),
-   array('u32','/which-language-is-best.php'),
-   
-   array('u64','/which-languages-are-fastest.php'),
-   array('u32q','/code-used-time-used-shapes.php'),
-   array('u64q','/which-language-is-best.php'),
+   array('u32q/','which-languages-are-fastest.php'),
+   array('u64q/','code-used-time-used-shapes.php'),
+   array('u32/','which-language-is-best.php'),
+   array('','which-languages-are-fastest.php'),
 
-   array('u32','/which-languages-are-fastest.php'),
-   array('u64','/code-used-time-used-shapes.php'),
-   array('u32q','/which-language-is-best.php'),
-   
-   array('u64q','/which-languages-are-fastest.php'),
-   array('u32','/code-used-time-used-shapes.php'),
-   array('u64','/which-language-is-best.php')
+   array('u64/','which-languages-are-fastest.php'),
+   array('u32q/','code-used-time-used-shapes.php'),
+   array('u64q/','which-language-is-best.php'),
+   array('','which-languages-are-fastest.php'),
+
+   array('u32/','which-languages-are-fastest.php'),
+   array('u64/','code-used-time-used-shapes.php'),
+   array('u32q/','which-language-is-best.php'),
+   array('','which-languages-are-fastest.php'),
+
+   array('u64q/','which-languages-are-fastest.php'),
+   array('u32/','code-used-time-used-shapes.php'),
+   array('u64/','which-language-is-best.php')
+   array('','which-languages-are-fastest.php'),
    );
 
 $nchoices = sizeof($choices);
