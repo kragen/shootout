@@ -25,7 +25,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 
 <body id="<?=SITE_NAME;?>">
 <table class="banner"><tr>
-<td><h1><a href="<?=$BannerUrl;?>"><?=$BannerTitle;?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?=$FaqUrl;?>" title="How to compare programming languages. How to contribute programs. How programs were measured."><?=$FaqTitle;?></a></h1></td>
+<td><h1><a href="<?=$BannerUrl;?>"<?=$BannerTitleTag;?>><?=$BannerTitle;?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?=$FaqUrl;?>" title="How to compare programming languages. How to contribute programs. How programs were measured."><?=$FaqTitle;?></a></h1></td>
 </tr></table>
 
 <div id="<?=$PageId;?>">

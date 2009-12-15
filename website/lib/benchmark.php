@@ -228,10 +228,12 @@ $timeUsed = 'Elapsed secs';
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $bannerUrl = 'index.php';
+   $bannerTitleTag = 'title="Go to '.PLATFORM_NAME.' Home"';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
    $bannerUrl = CORE_SITE.'index.php';
+   $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
    $faqUrl = $faqUrl.'#means';
    $timeUsed = 'CPU secs';
 }
@@ -241,8 +243,9 @@ if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME
 
 $Page->set('PageTitle', $Title.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', BANNER_TITLE);
-$Page->set('FaqTitle', FAQ_TITLE);
+$Page->set('BannerTitleTag', $bannerTitleTag);
 $Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('FaqUrl', $faqUrl);
 $Page->set('Sort', $S);
 

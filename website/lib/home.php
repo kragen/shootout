@@ -45,6 +45,7 @@ $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
 
 $bannerUrl = CORE_SITE.'index.php';
+$bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
 $faqUrl = CORE_SITE.'help.php';
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
@@ -60,6 +61,7 @@ if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME
 $Page->set('MetaKeywords', $metaKeywords);
 $Page->set('Robots', $metaRobots);
 $Page->set('PageId', 'nav');
+$Page->set('BannerTitleTag', $bannerTitleTag);
 $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
 
