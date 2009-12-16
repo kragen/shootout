@@ -1,0 +1,268 @@
+// The Computer Language Benchmarks Game
+// http://shootout.alioth.debian.org/
+//
+// Based on C contribution of Mike Pall
+// Contributed by The Anh Tran
+
+#define _GNU_SOURCE
+#include <omp.h>
+#include <sched.h>
+#include <pcre.h>
+
+#include <assert.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+
+
+// read all redirected data from stdin
+// strip DNA headers and newline characters
+char*
+ReadInput_StripHeader(   size_t *file_size, size_t *strip_size )
+{
+   // get input size
+   *file_size = ftell(stdin);
+   fseek(stdin, 0, SEEK_END);
+   *file_size = ftell(stdin) - *file_size;
+   fseek(stdin, 0, SEEK_SET);
+    *strip_size = 0;
+
+   // load original content into memory
+   char* input = (char*)malloc(*file_size +1);
+   assert(input != 0);
+   {
+      size_t sz = fread(input, 1, *file_size, stdin);
+      assert(sz == *file_size);
+      input[*file_size] = 0;
+   }
+
+   // alloc space for regex_replace
+   char* output = (char*)malloc(*file_size);
+   assert(output != 0);
+
+
+   const char*   re_error;
+   int         re_erroff;
+
+   // compile pattern
+   pcre* re = pcre_compile(">.*\\n|\\n", 0, &re_error, &re_erroff, 0);
+   pcre_extra*   re_extra = pcre_study(re, 0, &re_error);
+   assert(re != 0);
+
+   int         position;
+   int         match[3];
+
+   // regex_replace
+   for(   position = 0;
+         pcre_exec(re, re_extra, input, *file_size, position, 0, match, 3) >= 0;
+         position = match[1]   )
+   {
+      int char_to_copy = match[0] - position;
+      memcpy(output + (*strip_size), input + position, char_to_copy);
+      *strip_size += char_to_copy;
+   }
+
+   // copy remain part
+   int char_to_copy = *file_size - position;
+   memcpy(output + (*strip_size), input + position, char_to_copy);
+   *strip_size += char_to_copy;
+      
+   free(input);
+   pcre_free(re_extra);
+   pcre_free(re);
+   
+   return output;
+}
+
+
+
+void 
+Count_Patterns(char const* input, size_t input_len, char* result)
+{
+   static char const* ptns[] = 
+   {
+      "agggtaaa|tttaccct",   
+      "[cgt]gggtaaa|tttaccc[acg]",   
+      "a[act]ggtaaa|tttacc[agt]t",   
+      "ag[act]gtaaa|tttac[agt]ct",   
+      "agg[act]taaa|ttta[agt]cct",   
+      "aggg[acg]aaa|ttt[cgt]ccct",   
+      "agggt[cgt]aa|tt[acg]accct",   
+      "agggta[cgt]a|t[acg]taccct",   
+      "agggtaa[cgt]|[acg]ttaccct"
+   };
+   static const int n_ptns = sizeof(ptns) / sizeof(ptns[0]);
+   static size_t counters[9];
+
+   int i;
+   #pragma omp for schedule(dynamic, 1) nowait
+   for (i = 0; i < n_ptns; ++i)
+   {
+      const char*   re_error   = 0;
+      int         re_erroff   = 0;
+
+      pcre*       re          = pcre_compile(ptns[i], 0, &re_error, &re_erroff, 0);
+      pcre_extra*   re_extra    = pcre_study(re, 0, &re_error);
+      assert(re != 0);
+   
+      int         position, count;
+      int         match[3];
+
+      // regex_search
+      for(   position = count = 0;
+            pcre_exec(re, re_extra, input, input_len, position, 0, match, 3) >= 0;
+            position = match[1]   )
+         ++count;
+         
+      counters[i] = count;
+      pcre_free(re_extra);
+      pcre_free(re);
+   }
+
+   // we want the last thread, reaching this code block, to print result
+   static size_t thread_passed = 0;
+   if (__sync_add_and_fetch(&thread_passed, 1) == (size_t)omp_get_num_threads() )
+   {
+      int plen = 0;
+      int i;
+
+      for (i = 0; i < n_ptns; ++i)
+         plen += sprintf(result + plen, "%s %d\n", ptns[i], counters[i]);
+
+      thread_passed = 0;
+   }
+}
+
+
+typedef struct IUB_T
+{
+   const char*   iub;
+   int         len;
+} IUB;
+
+ 
+IUB const iub_table[] = 
+{
+   {0}, 
+   {"(c|g|t)",   7}, 
+   {0}, 
+   {"(a|g|t)",   7}, 
+   {0}, {0}, {0}, 
+   {"(a|c|t)",   7}, 
+   {0}, {0}, 
+   {"(g|t)",   5}, 
+   {0}, 
+   {"(a|c)",   5}, 
+   {"(a|c|g|t)",   9}, 
+   {0}, {0}, {0}, 
+   {"(a|g)",   5}, 
+   {"(c|t)",   5}, 
+   {0}, {0}, 
+   {"(a|c|g)",   7}, 
+   {"(a|t)",   5}, 
+   {0}, 
+   {"(c|t)",   5}
+};
+int const n_iub = sizeof(iub_table)/sizeof(iub_table[0]);
+
+
+void
+Replace_Patterns(char const* input, size_t input_len, size_t* repl_len)
+{
+   #pragma omp single nowait
+   {
+      // input_len * 1.5
+      char*      output       = (char*)malloc(input_len + (input_len >> 1));
+      assert(output != 0);
+      
+      const char*   re_error   = 0;
+      int         re_erroff   = 0;
+
+      pcre*       re          = pcre_compile("[BDHKMNRSVWY]", 0, &re_error, &re_erroff, 0);
+      pcre_extra*   re_extra    = pcre_study(re, 0, &re_error);
+      assert(re != 0);
+   
+      int         position;
+      int         match[3];
+      int         replace_len   = 0;
+
+      // regex_replace
+      for(   position = 0;
+            pcre_exec(re, re_extra, input, input_len, position, 0, match, 3) >= 0;
+            position = match[1]   )
+      {
+         int char_to_copy = match[0] - position;
+         memcpy(output + replace_len, input + position, char_to_copy);
+         replace_len += char_to_copy;
+
+         IUB const* i_r = iub_table + (input[match[0]] - 'A'); 
+
+         char_to_copy = i_r->len;
+         memcpy(output + replace_len, i_r->iub, char_to_copy);
+         replace_len += char_to_copy;
+         
+      }
+   
+      // copy remain part
+      int char_to_copy = input_len - position;
+      memcpy(output + replace_len, input + position, char_to_copy);
+      replace_len += char_to_copy;
+
+      free(output);
+      pcre_free(re_extra);
+      pcre_free(re);
+
+      *repl_len = replace_len;
+   }
+}
+
+
+
+// Detect single - multi thread benchmark
+int 
+GetThreadCount()
+{
+   cpu_set_t cs;
+   int count = 0;
+   int i;
+
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   for (i = 0; i < CPU_SETSIZE; ++i)
+   {
+      if (CPU_ISSET(i, &cs))
+      ++count;
+   }
+   return count;
+}
+
+
+int 
+main()
+{
+   size_t initial_length = 0;
+   size_t striped_length = 0;
+   size_t replace_length = 0;
+   
+   char* input = ReadInput_StripHeader (&initial_length, &striped_length);
+
+   
+   char match_result[1024];
+   #pragma omp parallel default(shared) num_threads(GetThreadCount())
+   {
+      Count_Patterns   (input, striped_length, match_result);
+      Replace_Patterns(input, striped_length, &replace_length);
+   }
+   
+   printf("%s\n%d\n%d\n%d\n", 
+      match_result,
+      initial_length,
+      striped_length,
+      replace_length );
+
+   free(input);
+   return 0;
+}
+
