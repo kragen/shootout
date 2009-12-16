@@ -42,7 +42,7 @@ $PageId = 'boxplot';
 require_once(LIB_PATH.'lib_scorecard.php');
 
 list ($mark,$mtime)= MarkTime('u64q/');
-$mark = $mark.' 32 64';
+$mark = $mark.' Q6600';
 
 $Title = 'Which programming language is fastest?';
 if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
