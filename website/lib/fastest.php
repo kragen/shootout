@@ -57,6 +57,7 @@ $Body->set('DataSet', $DataSet);
 $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="4 days" />';
 $MetaKeywords = '<meta name="description" content="Find out which programming language has the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 $faqUrl = CORE_SITE.'help.php';
+$bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
 $bannerUrl = 'index.php';
 $timeUsed = 'Elapsed secs';
 
@@ -71,6 +72,7 @@ $Body->set('Data', FullScores($SLangs,$Data));
 
 $Page->set('PageTitle', $Title.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', BANNER_TITLE);
+$Page->set('BannerTitleTag', $bannerTitleTag);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
