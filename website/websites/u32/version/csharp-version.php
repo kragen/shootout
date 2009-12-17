@@ -1,1 +1,1 @@
-<p>Mono JIT compiler version 2.4.2.3 (tarball Wed Jul 29 16:27:38 PDT 2009)</p>
+<p>Mono JIT compiler version 2.6 (tarball Tue Dec 15 23:41:11 PST 2009)</p>
