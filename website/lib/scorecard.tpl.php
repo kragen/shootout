@@ -74,7 +74,6 @@ foreach($score as $k => $v){
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
-<tr><td colspan="2"><? MkDataSetMenu($DataSet); ?></td></tr>
 <tr><td colspan="2" class="num">
 <input type="submit" name="calc" value="calculate" />
 <input type="submit" name="calc" value="reset" />

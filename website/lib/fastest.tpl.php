@@ -30,8 +30,7 @@
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="7" class="num"></colgroup>
 <tr class="score">
-<td colspan="2"><? MkDataSetMenu($DataSet); ?></td>
-<td colspan="7" class="num">
+<td colspan="9" class="num">
 <input type="submit" name="calc" value="chart" />
 <input type="submit" name="calc" value="reset" />
 </td>
