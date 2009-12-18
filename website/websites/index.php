@@ -33,22 +33,22 @@ $choices = array(
    array('u32q/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on quad-core Ubuntu?'),
    array('u64q/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on quad-core x64 Ubuntu'),
    array('u32/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
+   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
 
    array('u64/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on one-core x64 Ubuntu?'),
    array('u32q/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on quad-core Ubuntu'),
    array('u64q/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
+   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
 
    array('u32/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on one-core Ubuntu?'),
    array('u64/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on one-core x64 Ubuntu'),
    array('u32q/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
+   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
 
    array('u64q/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on quad-core x64 Ubuntu?'),
    array('u32/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on one-core Ubuntu'),
    array('u64/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?')
+   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?')
    );
 
 $nchoices = sizeof($choices);
