@@ -54,7 +54,7 @@
 <?
 foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];
-   $HtmlName = $Langs[$k][LANG_HTML];
+   $NoSpaceName = str_replace(' ','&nbsp;',$Name);
 
    $checked = '';
    if (isset($selected[$k])){ $checked = 'checked="checked"'; }
@@ -62,14 +62,8 @@ foreach($score as $k => $v){
    printf('<tr>');
    printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', $k, $checked); echo "\n";
 
-   if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
-      printf('<td>%s</td>', $Name);
-   } else {
-      printf('<td>%s</td>', $Name);
-   }
-   echo "\n";
-
-   printf('<td>%0.2f</td><td>%0.2f</td><td>%0.2f</td><td class="sort">%0.2f</td><td>%0.2f</td><td>%0.2f</td><td>%0.2f</td>',
+   printf('<td>%s</td><td>%0.2f</td><td>%0.2f</td><td>%0.2f</td><td class="sort">%0.2f</td><td>%0.2f</td><td>%0.2f</td><td>%0.2f</td>',
+      $NoSpaceName,
       $v[STAT_MIN], $v[STAT_XLOWER], $v[STAT_LOWER], $v[STAT_MEDIAN],
       $v[STAT_UPPER], $v[STAT_XUPPER], $v[STAT_MAX]); echo "\n";
    echo "</tr>\n";
