@@ -11,7 +11,7 @@
 
 <p>For this comparison, the 4 sets of up-to-date measurements have been combined. This comparison includes measurements both for Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core and one-core; both for x64&nbsp;and x86&nbsp;Ubuntu&#8482;. <i>This comparison blurs the differences</i>.</p>
 
-<p>"For every complex problem</a> there is an answer that is clear, simple, and wrong." &nbsp;H.&nbsp;L.&nbsp;Mencken</p>
+<p><b>"For every complex problem there is an answer that is clear, simple, and wrong."</b> &nbsp;H.&nbsp;L.&nbsp;Mencken</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 
