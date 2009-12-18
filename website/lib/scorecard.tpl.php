@@ -4,8 +4,6 @@
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 ?>
 
-<!-- <h3><a href="#faster" name="faster">"For every complex problem</a> there is an answer that is clear, simple, and wrong." &nbsp;H.&nbsp;L.&nbsp;Mencken</h3> -->
-
 <?
    list($score,$ratio) = $Data;
    unset($Data);
