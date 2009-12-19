@@ -47,10 +47,10 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <tr>
 <th>Benchmark</th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Time</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#memory">Memory</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#nmeans">Reduced&nbsp;N</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#nmeans" title="? Help">Reduced&nbsp;N</a></th>
 </tr>
 
 
@@ -90,11 +90,11 @@ foreach($sTests as $Row){
 <table>
 <tr>
 <th>Program&nbsp;Source&nbsp;Code</th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

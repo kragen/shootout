@@ -26,7 +26,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu");
 
 <h2><a href="#best" name="best">&nbsp;<strong>Which language is best?</strong></a></h2>
 
-<p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a> and/or <a href="<?=CORE_SITE;?>help.php#memory">Memory-used</a> and/or <a href="<?=CORE_SITE;?>help.php#gzbytes">Code-used</a> - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
+<p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time-used</a> and/or <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory-used</a> and/or <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code-used</a> - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
 <p>Column &#215; shows <i>how many times more</i> that geometric mean is for a programming language than for the language that used least.</p>
 

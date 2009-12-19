@@ -9,17 +9,17 @@ $P = $SelectedLang.'-'.$Id;
 
 <h2><a href="#prog" name="prog">&nbsp;performance measurements</a></h2>
 
-<p>Each table row shows performance measurements for this <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#nmeans">command-line input value N</a>.</p>
+<p>Each table row shows performance measurements for this <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#nmeans" title="? Help">command-line input value N</a>.</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>
 <tr>
-<th><a href="<?=CORE_SITE;?>help.php#nmeans">&nbsp;N&nbsp;</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu">CPU&nbsp;secs</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu">Elapsed&nbsp;secs</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#memory">Memory&nbsp;KB</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#gzbytes">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#nmeans" title="? Help">&nbsp;N&nbsp;</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?
 foreach($Data as $d){

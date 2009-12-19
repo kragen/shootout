@@ -4,7 +4,9 @@
    MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
 
    list($score,$labels,$stats,$selected) = $Data;
-   unset($Data);   
+   unset($Data);  
+
+   $aboutUrl = CORE_SITE.SITE_NAME.'/which-languages-are-fastest.php#about'; 
 ?>
 
 <h2><a href="#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
@@ -41,13 +43,13 @@
 <tr>
 <th>&nbsp;</th>
 <th>compare 2</th>
-<th><a href="#about">&nbsp;|-</a></th>
-<th><a href="#about">&nbsp;|---</a></th>
-<th><a href="#about">&nbsp;25%</a></th>
-<th><a href="#about">median</a></th>
-<th><a href="#about">&nbsp;75%</a></th>
-<th><a href="#about">&nbsp;---|</a></th>
-<th><a href="#about">&nbsp;-|</a></th>
+<th><a href="<?=$aboutUrl;?>">&nbsp;|-</a></th>
+<th><a href="<?=$aboutUrl;?>">&nbsp;|---</a></th>
+<th><a href="<?=$aboutUrl;?>">&nbsp;25%</a></th>
+<th><a href="<?=$aboutUrl;?>">median</a></th>
+<th><a href="<?=$aboutUrl;?>">&nbsp;75%</a></th>
+<th><a href="<?=$aboutUrl;?>">&nbsp;---|</a></th>
+<th><a href="<?=$aboutUrl;?>">&nbsp;-|</a></th>
 </tr>
 
 
