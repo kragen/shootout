@@ -66,7 +66,7 @@ $faqUrl = CORE_SITE.'help.php';
 $timeUsed = 'Elapsed secs';
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $bannerUrl = '';
+   $bannerUrl = CORE_SITE.SITE_NAME.'/';
    $bannerTitleTag = 'title="Go to '.PLATFORM_NAME.' Home"';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';

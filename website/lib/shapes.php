@@ -50,7 +50,7 @@ $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $In
 $faqUrl = CORE_SITE.'help.php';
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
-   $bannerUrl = '';
+   $bannerUrl = CORE_SITE.SITE_NAME.'/';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
