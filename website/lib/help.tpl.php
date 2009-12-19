@@ -28,7 +28,7 @@
 
 <dt><a href="#several" name="several"><b>How do I compare 3 or 4 or more language implementations?</b></a></dt>
 <dd>
-<p>Compare the <a href="./u64/which-languages-are-fastest.php?d=data&amp;calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><b>summary</b> measurements for just those language implementations</a>.</p>
+<p>Compare the <a href="./u64/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><b>summary</b> measurements for just those language implementations</a>.</p>
 </dd>
 
 <dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
