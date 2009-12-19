@@ -62,6 +62,21 @@ $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $
 $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
 $MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks & Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
 
+$faqUrl = CORE_SITE.'help.php';
+$timeUsed = 'Elapsed secs';
+
+if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
+   $bannerUrl = '';
+   $bannerTitleTag = 'title="Go to '.PLATFORM_NAME.' Home"';
+} else {
+   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
+   // Help people choose the up-to-date measurements
+   $bannerUrl = CORE_SITE;
+   $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
+   $faqUrl = $faqUrl.'#means';
+   $timeUsed = 'CPU secs';
+}
+
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
