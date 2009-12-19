@@ -6,10 +6,10 @@
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);  
 
-   $aboutUrl = CORE_SITE.SITE_NAME.'/which-languages-are-fastest.php#about'; 
+   $pageUrl = CORE_SITE.SITE_NAME.'/which-languages-are-fastest.php'; 
 ?>
 
-<h2><a href="#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
+<h2><a href="<?=$pageUrl;?>#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time-used</a> (<?=$TimeUsed;?>).</p>
 
@@ -22,7 +22,7 @@
    width="480" height="300"
  /></p>
 
-<h2><a href="#table" name="table">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
+<h2><a href="<?=$pageUrl;?>#table" name="table">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 
@@ -43,13 +43,13 @@
 <tr>
 <th>&nbsp;</th>
 <th>compare 2</th>
-<th><a href="<?=$aboutUrl;?>">&nbsp;|-</a></th>
-<th><a href="<?=$aboutUrl;?>">&nbsp;|---</a></th>
-<th><a href="<?=$aboutUrl;?>">&nbsp;25%</a></th>
-<th><a href="<?=$aboutUrl;?>">median</a></th>
-<th><a href="<?=$aboutUrl;?>">&nbsp;75%</a></th>
-<th><a href="<?=$aboutUrl;?>">&nbsp;---|</a></th>
-<th><a href="<?=$aboutUrl;?>">&nbsp;-|</a></th>
+<th><a href="<?=$pageUrl;?>#about">&nbsp;|-</a></th>
+<th><a href="<?=$pageUrl;?>#about">&nbsp;|---</a></th>
+<th><a href="<?=$pageUrl;?>#about">&nbsp;25%</a></th>
+<th><a href="<?=$pageUrl;?>#about">median</a></th>
+<th><a href="<?=$pageUrl;?>#about">&nbsp;75%</a></th>
+<th><a href="<?=$pageUrl;?>#about">&nbsp;---|</a></th>
+<th><a href="<?=$pageUrl;?>#about">&nbsp;-|</a></th>
 </tr>
 
 
@@ -89,7 +89,7 @@ foreach($score as $k => $v){
 </form>
 
 
-<h3><a href="#about" name="about">&nbsp;<strong>Which programming languages are fastest?</strong></a> <i>Robust Statistics</i></h3>
+<h3><a href="<?=$pageUrl;?>#about" name="about">&nbsp;<strong>Which programming languages are fastest?</strong></a> <i>Robust Statistics</i></h3>
 <?=$About;?>
 
 

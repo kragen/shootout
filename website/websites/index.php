@@ -259,5 +259,6 @@ foreach($Langs as $a){
 
 </div>
 
+<? include_once(IMAGE_PATH.'analyticstracking.php'); ?>
 </body>
 </html>

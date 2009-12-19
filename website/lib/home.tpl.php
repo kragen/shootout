@@ -13,9 +13,9 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
    MkMenuForm($sTests,'all',$Langs,'all','fullcpu');
 ?>
 
-<h2><a href="#box" name="box">&nbsp;<strong>How much time do these <strong>benchmark programs</strong> take?</strong></a></h2>
+<h2><a href="#how-much-time" name="how-much-time">&nbsp;<strong>How much time do these <strong>benchmark programs</strong> take?</strong></a></h2>
 
-<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu">Time-used</a>&nbsp;(CPU&nbsp;secs).</p>
+<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time-used</a>&nbsp;(CPU&nbsp;secs).</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a benchmark, and each horizontal black bar shows the median program time measured.</p>
 
@@ -29,7 +29,7 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
  /></p>
 
  
-<h2><a href="#measured" name="measured">&nbsp;<strong>The benchmark programs and language implementations</strong></a></h2>
+<h2><a href="#benchmarks-and-programming-languages" name="benchmarks-and-programming-languages">&nbsp;<strong>The benchmark programs and language implementations</strong></a></h2>
 
 <p>Follow the links to compare measurements for all programs for that <strong>benchmark</strong>.</p>
 
@@ -40,12 +40,12 @@ if (TESTS_PHRASE){ $TestsPhrase = TESTS_PHRASE; } else { $TestsPhrase = ''; }
 <table class="layout">
 <tr>
 <th class="test"><dl>
-<dt><a href="#check" name="check"><strong>&nbsp;Benchmarks</strong></a></dt>
+<dt><a href="#benchmark-programs" name="benchmark-programs"><strong>&nbsp;Benchmarks</strong></a></dt>
 <dd>Source-code, CPU times</dd>
 </dl></th>
 
 <th colspan="2"><dl>
-<dt><a href="#compare" name="compare"><strong>&nbsp;Language Implementations</strong></a></dt>
+<dt><a href="#programming-language-comparisons" name="programming-language-comparisons"><strong>&nbsp;Language Implementations</strong></a></dt>
 <dd>Compare 2 language implementations</dd>
 </dl></th>
 </tr>
