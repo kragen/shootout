@@ -208,7 +208,7 @@ foreach($Langs as $k => $v){
 
 <?
 if (sizeof($Special)>0){ 
-   echo '<tr><th colspan="7"><a href="'.<?=CORE_SITE;?>.'help.php#alternative" name="alt">interesting alternative programs</a></th></tr>', "\n";
+   printf('<tr><th colspan="7"><a href="%shelp.php#alternative" name="alt">interesting alternative programs</a></th></tr>', CORE_SITE);
 
    foreach($Special as $d){
       $k = $d[DATA_LANG];

@@ -44,7 +44,7 @@ $Body->set('About', $About->fetch(SITE_NAME.SEPARATOR.'home.about'));
 $Page->set('PageBody', $Body->fetch('home.tpl.php'));
 
 
-$bannerUrl = CORE_SITE.'index.php';
+$bannerUrl = CORE_SITE;
 $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
 $faqUrl = CORE_SITE.'help.php';
 

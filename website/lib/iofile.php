@@ -37,10 +37,10 @@ else { $Title = $TestName; }
 
 $faqUrl = CORE_SITE.'help.php';
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $bannerUrl = 'index.php';
+   $bannerUrl = CORE_SITE.SITE_NAME.'/';
 } else {
    // Help people choose the up-to-date measurements
-   $bannerUrl = CORE_SITE.'index.php';
+   $bannerUrl = CORE_SITE;
    $faqUrl = $faqUrl.'#means';
 }
 

@@ -58,7 +58,7 @@ $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content=
 $MetaKeywords = '<meta name="description" content="Find out which programming language has the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 $faqUrl = CORE_SITE.'help.php';
 $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
-$bannerUrl = 'index.php';
+$bannerUrl = CORE_SITE;
 $timeUsed = 'Elapsed secs';
 
 

@@ -23,7 +23,7 @@ $Page->set('PageBody', $Body->fetch('help.tpl.php'));
 
 
 $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="10 days" />';
-$bannerUrl = CORE_SITE.'index.php';
+$bannerUrl = CORE_SITE;
 $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
 
 $faqUrl = CORE_SITE.'help.php';

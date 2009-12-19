@@ -41,7 +41,7 @@ if (SITE_NAME == 'core' || SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAM
 
 $faqUrl = CORE_SITE.'help.php';
 $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
-$bannerUrl = CORE_SITE.'index.php';
+$bannerUrl = CORE_SITE;
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
