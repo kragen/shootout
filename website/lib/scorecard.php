@@ -1,0 +1,89 @@
+<?php
+// Copyright (c) Isaac Gouy 2009
+
+// LIBRARIES ////////////////////////////////////////////////
+
+require_once(LIB_PATH.'lib_whitelist.php');
+require_once(LIB_PATH.'lib_common.php');
+require_once(LIB);
+
+// DATA ///////////////////////////////////////////
+
+list($Incl,$Excl) = WhiteListInEx();
+$Tests = WhiteListUnique('test.csv',$Incl);
+uasort($Tests, 'CompareTestName');
+
+$Langs = WhiteListUnique('lang.csv',$Incl);
+uasort($Langs, 'CompareLangName');
+
+list ($mark,$mtime)= MarkTime();
+$mark = $mark.' '.SITE_NAME;
+
+
+if (isset($HTTP_GET_VARS['calc'])
+      && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
+   $X = $HTTP_GET_VARS['calc'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'reset')){ $Action = $X; }
+}
+if (!isset($Action)){ $Action = 'calculate'; }
+
+
+if (isset($HTTP_GET_VARS['d'])
+      && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
+   $X = $HTTP_GET_VARS['d'];
+   if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
+}
+if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
+
+
+// PAGES ///////////////////////////////////////////////////
+
+
+$Page = & new Template(LIB_PATH);
+$Body = & new Template(LIB_PATH);
+
+$PageId = 'scorecard';
+
+require_once(LIB_PATH.'lib_scorecard.php');
+
+list ($mark,$mtime)= MarkTime();
+
+$Title = 'Which language is best?';
+if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
+$Body->set('Title', $Title);
+$TemplateName = 'scorecard.tpl.php';
+$About = & new Template(ABOUT_PATH);
+$AboutTemplateName = 'scorecard-about.tpl.php';
+$About->set('DataSet', $DataSet);
+$W = Weights($Tests, $Action, $HTTP_GET_VARS);
+$Body->set('DataSet', $DataSet);
+$Body->set('W', $W);
+$Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
+$metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
+$MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks & Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
+
+
+// TEMPLATE VARS ////////////////////////////////////////////////
+
+$Page->set('PageTitle', $Title.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
+$Page->set('BannerTitle', BANNER_TITLE);
+$Page->set('BannerTitleTag', $bannerTitleTag);
+$Page->set('FaqTitle', FAQ_TITLE);
+$Page->set('BannerUrl', $bannerUrl);
+$Page->set('FaqUrl', $faqUrl);
+
+$Body->set('Tests', $Tests);
+$Body->set('Langs', $Langs);
+$Body->set('Excl', $Excl);
+$Body->set('Mark', $mark );
+$Body->set('MTime', $mtime);
+
+$Body->set('About', $About->fetch($AboutTemplateName));
+
+$Page->set('PageBody', $Body->fetch($TemplateName));
+$Page->set('Robots', $metaRobots);
+$Page->set('MetaKeywords', $MetaKeywords);
+$Page->set('PageId', $PageId);
+
+echo $Page->fetch('page.tpl.php');
+?>

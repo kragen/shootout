@@ -269,7 +269,7 @@ function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Selecte
    echo '</select>', "\n";   
 
    echo '<input type="submit" value="Show" />', "\n";
-   echo '<input type="hidden" name="box" value="1" /></p></form>', "\n";
+   echo '</p></form>', "\n";
 }
 
 

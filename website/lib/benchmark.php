@@ -63,14 +63,6 @@ if (isset($HTTP_GET_VARS['calc'])
 if (!isset($Action)){ $Action = 'calculate'; }
 
 
-if (isset($HTTP_GET_VARS['box'])
-      && strlen($HTTP_GET_VARS['box']) && (strlen($HTTP_GET_VARS['box']) <= 1)){
-   $X = $HTTP_GET_VARS['box'];
-   if (ereg("^[0-9]$",$X) && ($X == 1)){ $Box = $X; }
-}
-if (!isset($Box)){ $Box = 0; }
-
-
 if (isset($HTTP_GET_VARS['d'])
       && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
    $X = $HTTP_GET_VARS['d'];
@@ -95,9 +87,8 @@ $Page = & new Template(LIB_PATH);
 $Body = & new Template(LIB_PATH);
 
 if ($T=='all'){
-   if ($L=='all'){    
+   if ($L=='all'){
 
-      if ($Box){    // Boxplot Summary
          $S = '';
          $PageId = 'boxplot';
 
@@ -117,27 +108,6 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $MetaKeywords = '<meta name="description" content="Find out which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
 
-      }  else {
-        // Scorecard
-         $PageId = 'scorecard';
-         $S = 'mean';
-
-         require_once(LIB_PATH.'lib_scorecard.php');
-
-         $Title = 'Which language is best?';
-         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
-         $Body->set('Title', $Title);
-         $TemplateName = 'scorecard.tpl.php';
-         $About = & new Template(ABOUT_PATH);
-         $AboutTemplateName = 'scorecard-about.tpl.php';
-         $About->set('DataSet', $DataSet);
-         $W = Weights($Tests, $Action, $HTTP_GET_VARS);
-         $Body->set('DataSet', $DataSet);
-         $Body->set('W', $W);
-         $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
-         $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
-         $MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks & Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
-      }
 
    } else {           // Head to Head
 
