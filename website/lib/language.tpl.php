@@ -12,7 +12,7 @@ $LangTag = $Row[LANG_TAG];
 
 <p>This table shows 4 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a> and <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a>.</p>
 
-<p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#nmeans">command-line input value N</a>.</p>
+<p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#nmeans" title="? Help">command-line input value N</a>.</p>
 
 <p>This table shows <b>all the accepted <strong><?=$LangName;?></strong> programs</b>.</p>
 
