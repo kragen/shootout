@@ -6,7 +6,7 @@
 // CONSTANTS ////////////////////////////////////////////////
 
 define('HTTP_DIR', '/home/dunham/shootout/website/websites');
-//$Sites = array('gp4','debian','u32q');
+//$Sites = array('gp4','debian');
 $Sites = array('u32q');
 
 // FUNCTIONS ///////////////////////////////////////////
@@ -23,7 +23,7 @@ function extractLogDates($site){
          $fs[] = $d.'/'.$each;
       }
    }
-   
+  
    $sitelist = includes($site);
    $freq = array();
    $sum = 0.0;
@@ -31,20 +31,20 @@ function extractLogDates($site){
       $parts = explode(".",$each);
       $lang = $parts[2];
       if (isset($sitelist[$lang])){
-
          $fp = @fopen($each,"r")
             or die("Couldn't open $each");
 
-         while ($line = fgets($fp, 128))
+         while ($line = fgets($fp, 128)){
             if ($found = preg_match('/([A-Z][a-z]{2})[0-9A-Z\s\:]+(\d{4})/', $line,$match))
                break;
+         }
 
          if ($found){
             $sum++;
             $mth = month($match[1]);
             $yr = intval($match[2]);     
             if (!isset($freq[$yr][$mth][$site])){
-               $freq[$yr][$mth][$site] = 0;
+               $freq[$yr][$mth][$site] = 1;
             } else {
                $freq[$yr][$mth][$site] += 1;
             }
