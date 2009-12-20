@@ -28,75 +28,21 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 
 <body id="core">
 
-<?
-$choices = array(
-   array('u32q/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on quad-core Ubuntu?'),
-   array('u64q/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on quad-core x64 Ubuntu'),
-   array('u32/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
-
-   array('u64/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on one-core x64 Ubuntu?'),
-   array('u32q/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on quad-core Ubuntu'),
-   array('u64q/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
-
-   array('u32/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on one-core Ubuntu?'),
-   array('u64/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on one-core x64 Ubuntu'),
-   array('u32q/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?'),
-
-   array('u64q/','which-languages-are-fastest.php','Which programming languages have the fastest benchmark programs on quad-core x64 Ubuntu?'),
-   array('u32/','code-used-time-used-shapes.php','Look for patterns in Code-used Time-used Shapes on one-core Ubuntu'),
-   array('u64/','which-language-is-best.php','Compare programming language performance using your choice of benchmarks and Time-used Memory-used Code-used weights'),
-   array('','which-programming-language-is-fastest.php','Which programming language has the fastest benchmark programs on Q6600 Ubuntu?')
-   );
-
-$nchoices = sizeof($choices);
-$chosen = $choices[$rotate%$nchoices];
-$ChosenSite = $chosen[0];
-$ChosenUrl = $chosen[1];
-$ChosenTip = $chosen[2];
-?>
-
-
 <table class="banner"><tr>
 <td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php" title="How to compare programming languages. How to contribute programs. How programs were measured.">Help</a></h1></td>
 </tr></table>
 
 <div id="home">
-<h5><strong>Benchmarking programming languages</strong>?</h5>
-<p>How can we benchmark a programming language?<br/>
-We can't - we benchmark programming language implementations.</p>
-<p>How can we benchmark language implementations?<br/>
-We can't - <strong>we measure particular programs</strong>.</p><br/>
+<h5><strong>Compare the performance of ~30 programming languages</strong> using ~12 flawed benchmarks and ~1100 programs</h5><br/>
+<p>Read the source code. Contribute faster more elegant programs.</p>
+<p>Compare performance on both 32 bit and 64 bit Ubuntu&#8482;.</p>
+<p>Compare performance both when programs are allowed to use quad-core and when programs are forced to use one-core.</p>
 
-<h5><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Which programming languages have the fastest programs?</strong></a></h5><br/>
 
-<p>There are 4 sets of up-to-date measurements. Click one of these <br/>color-coded links to see one benchmark for a particular OS/machine -</p>
 
-<?
-$choices = array(
-   'fannkuch'
-   ,'knucleotide'
-   ,'mandelbrot'
-   ,'nbody'
-   ,'fasta'
-   ,'spectralnorm'
-   ,'threadring'
-   ,'chameneosredux'
-   ,'regexdna'
-   ,'pidigits'
-   ,'binarytrees'
-   ,'revcomp'
-   );
+<h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
 
-$nchoices = sizeof($choices);
-$k = $rotate%$nchoices;
-
-$u32qChosen = $choices[$k];
-$u64qChosen = $choices[($k+3)%$nchoices];
-$u64Chosen = $choices[($k+6)%$nchoices];
-$u32Chosen = $choices[($k+9)%$nchoices];
+<?php
 
 require_once('../lib/lib_whitelist.php');
 
@@ -111,64 +57,6 @@ function ReadA($FileName){
    @fclose($f);
    return $rows;
 }
-
-$Tests = ReadA('../desc/test.csv');
-$u32qChosenTip = 'Fastest in each programming language to '.$Tests[$u32qChosen][4];
-$u64qChosenTip = 'Fastest in each programming language to '.$Tests[$u64qChosen][4];
-$u64ChosenTip = 'Fastest in each programming language to '.$Tests[$u64Chosen][4];
-$u32ChosenTip = 'Fastest in each programming language to '.$Tests[$u32Chosen][4];
-unset($Tests);
-?>
-
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="<?=$u32qChosenTip?>" href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
-<h3><span class="u32q">
-<a title="<?=$u32qChosenTip?>"
-href="http://shootout.alioth.debian.org/u32q/benchmark.php?test=<?=$u32qChosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="<?=$u64qChosenTip?>" href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
-<h3><span class="u64q">
-<a title="<?=$u64qChosenTip?>"
-href="http://shootout.alioth.debian.org/u64q/benchmark.php?test=<?=$u64qChosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="<?=$u64ChosenTip?>" href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
-<h3><span class="u64q">
-<a title="<?=$u64ChosenTip?>" href="http://shootout.alioth.debian.org/u64/benchmark.php?test=<?=$u64Chosen?>&amp;lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="<?=$u32ChosenTip?>" href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
-<h3><span class="u32">
-<a title="<?=$u32ChosenTip?>" href="http://shootout.alioth.debian.org/u32/benchmark.php?test=<?=$u32Chosen?>&amp;lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-
-
-<h5><br/><strong>Programming language comparisons</strong> Z to A</h5><br/>
-
-
-<?php
 
 function Keys($sites){
    $siteKeys = array();

@@ -1,5 +1,11 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
+<h5><strong>Benchmarking programming languages</strong>?</h5>
+<p>How can we benchmark a programming language?<br/>
+We can't - we benchmark programming language implementations.</p>
+<p>How can we benchmark language implementations?<br/>
+We can't - <strong>we measure particular programs</strong>.</p><br/>
+
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 
 <dl>
@@ -20,20 +26,15 @@
 <p>On 3 measures - <a href="#measurecpu">&darr;&nbsp;Time-used</a>, <a href="#memory">&darr;&nbsp;Memory-used</a> and <a href="#gzbytes">&darr;&nbsp;Code-used</a>.</p>
 </dd>
 
-<dt><a href="#oneone" name="oneone"><b>How do I compare 2 language implementations?</b></a></dt>
-<dd>
-<p>Click a "Compare ... against one other language implementation" link, or <a href="./u64/benchmark.php?test=all&amp;lang=java">Select "- all benchmarks -" and a language implementation</a> in the drop-down menus.</p>
-</dd>
-
 <dt><a href="#several" name="several"><b>How do I compare 3 or 4 or more language implementations?</b></a></dt>
 <dd>
 <p>Select "- all benchmarks -" and "- all languages -" in the drop-down menus. 
 <a href="./u64/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">Select the language implementations you want to chart</a> (deselect those you want to remove).</p>
 </dd>
 
-<dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
+<dt><a href="#oneone" name="oneone"><b>How do I compare 2 language implementations?</b></a></dt>
 <dd>
-<p>Select that language in the drop-down menu <a href="./u64/java.php#measurements">Measurements for all the accepted programs</a> on any language comparison page.</p>
+<p>Click a "Compare ... against one other language implementation" link, or <a href="./u64/benchmark.php?test=all&amp;lang=java">Select "- all benchmarks -" and a language implementation</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#samebenchmark" name="samebenchmark"><strong>How can I find all the programs for a benchmark?</strong></a></dt>
@@ -41,6 +42,10 @@
 <p><a href="./u64/benchmark.php?test=spectralnorm&lang=all">Select that benchmark and "- all languages -"</a> in the drop-down menus.</p>
 </dd>
 
+<dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
+<dd>
+<p>Select that language in the drop-down menu <a href="./u64/java.php#measurements">Measurements for all the accepted programs</a> on any language comparison page.</p>
+</dd>
 
 <dt><a href="#playing" name="playing"><b>Who's playing?</b></a></dt>
 <dd>
@@ -78,12 +83,18 @@
 <p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages. Click one of these color-coded links to see measurements for a particular OS/machine - </p>
 </dd>
 
+<?
+$u32qTimestamp = gmdate("d M Y", filemtime('./u32q/data/data.csv'));
+$u64qTimestamp = gmdate("d M Y", filemtime('./u64q/data/data.csv'));
+$u64Timestamp = gmdate("d M Y", filemtime('./u64/data/data.csv'));
+$u32Timestamp = gmdate("d M Y", filemtime('./u32/data/data.csv'));
+?>
 
 <dd>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/"><? printf('%s', gmdate("d M Y", filemtime('./u32q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/">Most recent measurement - <?=$u32qTimestamp;?></a></p>
 <h3><span class="u32q">
 <a title="Fastest in each programming language, 32 bit Ubuntu."
 href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
@@ -96,7 +107,7 @@ href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/"><? printf('%s', gmdate("d M Y", filemtime('./u64q/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/">Most recent measurement - <?=$u64qTimestamp;?></a></p>
 <h3><span class="u64q">
 <a title="Fastest in each programming language, 64 bit Ubuntu."
 href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
@@ -109,7 +120,7 @@ href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/"><? printf('%s', gmdate("d M Y", filemtime('./u64/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/">Most recent measurement - <?=$u64Timestamp;?></a></p>
 <h3><span class="u64">
 <a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu."
 href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
@@ -122,7 +133,7 @@ href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#1
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/"><? printf('%s', gmdate("d M Y", filemtime('./u32/data/data.csv'))) ?></a></p>
+<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/">Most recent measurement - <?=$u32Timestamp;?></a></p>
 <h3><span class="u32">
 <a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu."
 href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
