@@ -22,23 +22,23 @@
 
 <dt><a href="#oneone" name="oneone"><b>How do I compare 2 language implementations?</b></a></dt>
 <dd>
-<p>Compare them directly <a href="./u64/benchmark.php?test=all&amp;lang=gpp&amp;lang2=java"><b>one-against-another</b> for all the benchmarks</a>.</p>
+<p>Click a "Compare ... against one other language implementation" link, or <a href="./u64/benchmark.php?test=all&amp;lang=java">Select "- all benchmarks -" and a language implementation</a> in the drop-down menus.</p>
 </dd>
-
 
 <dt><a href="#several" name="several"><b>How do I compare 3 or 4 or more language implementations?</b></a></dt>
 <dd>
-<p>Compare the <a href="./u64/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on"><b>summary</b> measurements for just those language implementations</a>.</p>
+<p>Select "- all benchmarks -" and "- all languages -" in the drop-down menus. 
+<a href="./u64/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">Select the language implementations you want to chart</a> (deselect those you want to remove).</p>
 </dd>
 
 <dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
 <dd>
-<p>Use the drop-down menu <a href="./u64/java.php#measurements">Measurements for all the accepted programs</a> on any language comparison page.</p>
+<p>Select that language in the drop-down menu <a href="./u64/java.php#measurements">Measurements for all the accepted programs</a> on any language comparison page.</p>
 </dd>
 
 <dt><a href="#samebenchmark" name="samebenchmark"><strong>How can I find all the programs for a benchmark?</strong></a></dt>
 <dd>
-<p><a href="./u64/benchmark.php?test=spectralnorm&lang=all">Select that benchmark and <b>- all languages -</b> in the drop-down menus.</a> Measurements for all the accepted programs for that benchmark will be shown row-after-row.</p>
+<p><a href="./u64/benchmark.php?test=spectralnorm&lang=all">Select that benchmark and "- all languages -"</a> in the drop-down menus.</p>
 </dd>
 
 
