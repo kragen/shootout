@@ -36,7 +36,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <h5><strong>Compare the performance of ~30 programming languages</strong> using ~12 flawed benchmarks and ~1100 programs</h5><br/>
 <p>Read the source code. Contribute faster more elegant programs.</p>
 <p>Compare performance on both 32 bit and 64 bit Ubuntu&#8482;.</p>
-<p>Compare performance both when programs are allowed to use quad-core and when programs are forced to use one-core.</p>
+<p>Compare performance both when programs are allowed to use quad-core and when programs are forced to use one core.</p>
 
 
 
