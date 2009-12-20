@@ -33,7 +33,7 @@
 
 <dt><a href="#samelanguage" name="samelanguage"><strong>How can I find all the programs for a language?</strong></a></dt>
 <dd>
-<p><a href="./u64/benchmark.php?test=all&lang=gpp&lang2=gpp">Select <b>- all benchmarks -</b> and that language implementation in both the other drop-down menus!</a> Measurements for all the accepted programs for that programming language implementation will be shown row-after-row.</p>
+<p>Use the drop-down menu <a href="./u64/java.php#measurements">Measurements for all the accepted programs</a> on any language comparison page.</p>
 </dd>
 
 <dt><a href="#samebenchmark" name="samebenchmark"><strong>How can I find all the programs for a benchmark?</strong></a></dt>

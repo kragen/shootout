@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <?
-MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
+MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 ?>
 
 <?

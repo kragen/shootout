@@ -367,7 +367,7 @@ function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
 
 // CONTENT ///////////////////////////////////////////////////
 
-function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
+function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
    echo '<option value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
@@ -386,6 +386,25 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort){
 
    echo '<select name="lang">', "\n";
    echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
+   foreach($Langs as $Row){
+      $Link = $Row[LANG_LINK];
+      $Name = $Row[LANG_FULL];
+      if ($Link==$SelectedLang){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";
+   echo '<input type="submit" value="Show" />', "\n";
+   echo '</p></form>', "\n";
+}
+
+
+function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
+   echo '<form method="get" action="'.$Action.'">', "\n";
+   echo '<select name="lang">', "\n";
    foreach($Langs as $Row){
       $Link = $Row[LANG_LINK];
       $Name = $Row[LANG_FULL];

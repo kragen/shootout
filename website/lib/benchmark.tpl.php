@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <? 
-MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$Sort); 
+MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 $Row = $Tests[$SelectedTest];
 $TestName = $Row[TEST_NAME];
 $TestTag = $Row[TEST_TAG];

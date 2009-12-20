@@ -222,7 +222,7 @@ function CompareTestValue2($a, $b){
 }
 
 
-function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,$Sort){
+function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2){
    echo '<form method="get" action="benchmark.php">', "\n";
    echo '<p><select name="test">', "\n";
    echo '<option value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";

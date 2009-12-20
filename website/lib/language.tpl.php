@@ -6,7 +6,7 @@ $LangName = $Row[LANG_FULL];
 $LangTag = $Row[LANG_TAG];
 ?>
 
-<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
+<? MkLangsMenuForm($Langs,$SelectedLang); ?>
 
 <h2><a href="#title" name="title">&nbsp;<strong><?=$LangName;?> measurements</strong></a></h2>
 

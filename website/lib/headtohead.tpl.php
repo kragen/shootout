@@ -18,7 +18,7 @@ $Family = $Row[LANG_FAMILY];
 $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fraction? <b>used</b> how many times more?&nbsp;';
 ?>
 
-<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2,"fullcpu"); ?>
+<? MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2); ?>
 
 
 <h2><a href="#faster-programs-chart" name="faster-programs-chart">&nbsp;Step&nbsp;1&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <i>At a glance.</i></h2>
@@ -159,6 +159,11 @@ foreach($sTests as $Row){
 ?>
 
 </table>
+
+
+<h2><a href="#measurements" name="measurements">&nbsp;<strong>Measurements</strong> for all the accepted programs</h2>
+<p></p>
+<? MkLangsMenuForm($Langs,$SelectedLang); ?>
 
 <h3><a href="#about" name="about">&nbsp;<strong><?=$LangName;?></strong></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
 <p></p>
