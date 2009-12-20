@@ -404,7 +404,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang){
 
 function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
    echo '<form method="get" action="'.$Action.'">', "\n";
-   echo '<select name="lang">', "\n";
+   echo '<p><select name="lang">', "\n";
    foreach($Langs as $Row){
       $Link = $Row[LANG_LINK];
       $Name = $Row[LANG_FULL];
