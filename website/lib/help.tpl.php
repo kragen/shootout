@@ -649,7 +649,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 </dd>
 
 <dt><a href="#measurementscripts" name="measurementscripts">Use our <b>measurement scripts</b> to make your own measurents!</a></dt>
-<dd><p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><b>download bencher</b></a></p>
+<dd><p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="http://alioth.debian.org/frs/?group_id=30402"><b>download bencher</b></a> and unpack into your ~ directory.</p>
 
 <p><b>As an alternative</b>, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
