@@ -1,0 +1,160 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by The Go Authors.</span>
+<span class="hl com"> * modified by roger peppe</span>
+<span class="hl com"> *</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">package</span> main
+
+<span class="hl kwa">import</span> <span class="hl sym">(</span>
+   <span class="hl str">&quot;flag&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;fmt&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;strconv&quot;</span><span class="hl sym">;</span>
+   <span class="hl str">&quot;sync&quot;</span><span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">const</span> <span class="hl sym">(</span>
+   blue <span class="hl sym">=</span> iota<span class="hl sym">;</span>
+   red<span class="hl sym">;</span>
+   yellow<span class="hl sym">;</span>
+   ncol<span class="hl sym">;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">var</span> complement <span class="hl sym">= [...]</span>int<span class="hl sym">{</span>
+   red <span class="hl sym">|</span> red<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> red<span class="hl sym">,</span>
+   red <span class="hl sym">|</span> yellow<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> blue<span class="hl sym">,</span>
+   red <span class="hl sym">|</span> blue<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> yellow<span class="hl sym">,</span>
+   yellow <span class="hl sym">|</span> red<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> blue<span class="hl sym">,</span>
+   yellow <span class="hl sym">|</span> yellow<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> yellow<span class="hl sym">,</span>
+   yellow <span class="hl sym">|</span> blue<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> red<span class="hl sym">,</span>
+   blue <span class="hl sym">|</span> red<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> yellow<span class="hl sym">,</span>
+   blue <span class="hl sym">|</span> yellow<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> red<span class="hl sym">,</span>
+   blue <span class="hl sym">|</span> blue<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">:</span> blue<span class="hl sym">,</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">var</span> colname <span class="hl sym">= [...]</span>string<span class="hl sym">{</span>
+   blue<span class="hl sym">:</span> <span class="hl str">&quot;blue&quot;</span><span class="hl sym">,</span>
+   red<span class="hl sym">:</span> <span class="hl str">&quot;red&quot;</span><span class="hl sym">,</span>
+   yellow<span class="hl sym">:</span> <span class="hl str">&quot;yellow&quot;</span><span class="hl sym">,</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// information about the current state of a creature.</span>
+<span class="hl kwa">type</span> info <span class="hl kwa">struct</span> <span class="hl sym">{</span>
+   colour int<span class="hl sym">;</span> <span class="hl slc">// creature's current colour.</span>
+   name   int<span class="hl sym">;</span> <span class="hl slc">// creature's name.</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// if mate is nil, it indicates there's no creature currently waiting;</span>
+<span class="hl slc">// otherwise the creature's info is stored in info, and</span>
+<span class="hl slc">// it is waiting to receive its mate's information on the mate channel.</span>
+<span class="hl kwa">type</span> Place <span class="hl kwa">struct</span> <span class="hl sym">{</span>
+   sync<span class="hl sym">.</span>Mutex<span class="hl sym">;</span>
+   n    int<span class="hl sym">;</span>         <span class="hl slc">// current number of encounters.</span>
+   mate <span class="hl kwa">chan</span><span class="hl sym">&lt;-</span> info<span class="hl sym">;</span> <span class="hl slc">// creature waiting when non-nil.</span>
+   info info<span class="hl sym">;</span>        <span class="hl slc">// info about creature waiting.</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// result sent by each creature at the end of processing.</span>
+<span class="hl kwa">type</span> result <span class="hl kwa">struct</span> <span class="hl sym">{</span>
+   met  int<span class="hl sym">;</span>
+   same int<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">var</span> n <span class="hl sym">=</span> <span class="hl num">600</span>
+
+<span class="hl kwa">func</span> main<span class="hl sym">() {</span>
+   flag<span class="hl sym">.</span>Parse<span class="hl sym">();</span>
+   <span class="hl kwa">if</span> flag<span class="hl sym">.</span>NArg<span class="hl sym">() &gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      n<span class="hl sym">,</span> _ <span class="hl sym">=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span>flag<span class="hl sym">.</span>Arg<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">))</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">for</span> c0 <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> c0 <span class="hl sym">&lt;</span> ncol<span class="hl sym">;</span> c0<span class="hl sym">++ {</span>
+      <span class="hl kwa">for</span> c1 <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> c1 <span class="hl sym">&lt;</span> ncol<span class="hl sym">;</span> c1<span class="hl sym">++ {</span>
+         fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%s + %s -&gt; %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> colname<span class="hl sym">[</span>c0<span class="hl sym">],</span> colname<span class="hl sym">[</span>c1<span class="hl sym">],</span> colname<span class="hl sym">[</span>complement<span class="hl sym">[</span>c0<span class="hl sym">|</span>c1<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">]])</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   fmt<span class="hl sym">.</span>Print<span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+
+   pallmall<span class="hl sym">([]</span>int<span class="hl sym">{</span>blue<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow<span class="hl sym">});</span>
+   pallmall<span class="hl sym">([]</span>int<span class="hl sym">{</span>blue<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow<span class="hl sym">,</span> blue<span class="hl sym">,</span> red<span class="hl sym">,</span> yellow<span class="hl sym">,</span> red<span class="hl sym">,</span> blue<span class="hl sym">});</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> pallmall<span class="hl sym">(</span>cols <span class="hl sym">[]</span>int<span class="hl sym">) {</span>
+
+   <span class="hl slc">// invariant: meetingplace always contains a value unless a creature</span>
+   <span class="hl slc">// is currently dealing with it (whereupon it must put it back).</span>
+   meetingplace <span class="hl sym">:=</span> new<span class="hl sym">(</span>Place<span class="hl sym">);</span>
+   ended <span class="hl sym">:=</span> make<span class="hl sym">(</span><span class="hl kwa">chan</span> result<span class="hl sym">);</span>
+   msg <span class="hl sym">:=</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i<span class="hl sym">,</span> col <span class="hl sym">:=</span> <span class="hl kwa">range</span> cols <span class="hl sym">{</span>
+      <span class="hl kwa">go</span> creature<span class="hl sym">(</span>info<span class="hl sym">{</span>col<span class="hl sym">,</span> i<span class="hl sym">},</span> meetingplace<span class="hl sym">,</span> ended<span class="hl sym">);</span>
+      msg <span class="hl sym">+=</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> colname<span class="hl sym">[</span>col<span class="hl sym">];</span>
+   <span class="hl sym">}</span>
+   fmt<span class="hl sym">.</span>Println<span class="hl sym">(</span>msg<span class="hl sym">);</span>
+   tot <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl slc">// wait for all results</span>
+   <span class="hl kwa">for</span> _ <span class="hl sym">=</span> <span class="hl kwa">range</span> <span class="hl sym">(</span>cols<span class="hl sym">) {</span>
+      result <span class="hl sym">:= &lt;-</span>ended<span class="hl sym">;</span>
+      tot <span class="hl sym">+=</span> result<span class="hl sym">.</span>met<span class="hl sym">;</span>
+      fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%v%v</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> result<span class="hl sym">.</span>met<span class="hl sym">,</span> spell<span class="hl sym">(</span>result<span class="hl sym">.</span>same<span class="hl sym">,</span> true<span class="hl sym">));</span>
+   <span class="hl sym">}</span>
+   fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%v</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> spell<span class="hl sym">(</span>tot<span class="hl sym">,</span> true<span class="hl sym">));</span>
+<span class="hl sym">}</span>
+
+<span class="hl slc">// in this function, variables ending in 0 refer to the local creature,</span>
+<span class="hl slc">// variables ending in 1 to the creature we've met.</span>
+<span class="hl kwa">func</span> creature<span class="hl sym">(</span>info0 info<span class="hl sym">,</span> m <span class="hl sym">*</span>Place<span class="hl sym">,</span> ended <span class="hl kwa">chan</span> result<span class="hl sym">) {</span>
+   c0 <span class="hl sym">:=</span> make<span class="hl sym">(</span><span class="hl kwa">chan</span> info<span class="hl sym">);</span>
+   met <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   same <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">{</span>
+      <span class="hl kwa">var</span> othername int<span class="hl sym">;</span>
+      <span class="hl slc">// get access to rendez data and decide what to do.</span>
+      m<span class="hl sym">.</span>Lock<span class="hl sym">();</span>
+      <span class="hl kwa">switch</span> <span class="hl sym">{</span>
+      <span class="hl kwa">case</span> m<span class="hl sym">.</span>n <span class="hl sym">&gt;=</span> n<span class="hl sym">:</span>
+         <span class="hl slc">// if no more meetings left, then send our result data and exit.</span>
+         m<span class="hl sym">.</span>Unlock<span class="hl sym">();</span>
+         ended <span class="hl sym">&lt;-</span> result<span class="hl sym">{</span>met<span class="hl sym">,</span> same<span class="hl sym">};</span>
+         <span class="hl kwa">return</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">case</span> m<span class="hl sym">.</span>mate <span class="hl sym">==</span> nil<span class="hl sym">:</span>
+         <span class="hl slc">// no creature waiting; wait for someone to meet us,</span>
+         <span class="hl slc">// get their info and send our info in reply.</span>
+         m<span class="hl sym">.</span>info <span class="hl sym">=</span> info0<span class="hl sym">;</span>
+         m<span class="hl sym">.</span>mate <span class="hl sym">=</span> c0<span class="hl sym">;</span>
+         m<span class="hl sym">.</span>Unlock<span class="hl sym">();</span>
+         info1 <span class="hl sym">:= &lt;-</span>c0<span class="hl sym">;</span>
+         othername <span class="hl sym">=</span> info1<span class="hl sym">.</span>name<span class="hl sym">;</span>
+         info0<span class="hl sym">.</span>colour <span class="hl sym">=</span> complement<span class="hl sym">[</span>info0<span class="hl sym">.</span>colour<span class="hl sym">|</span>info1<span class="hl sym">.</span>colour<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">];</span>
+
+      <span class="hl kwa">default</span><span class="hl sym">:</span>
+         <span class="hl slc">// another creature is waiting for us with its info;</span>
+         <span class="hl slc">// increment meeting count,</span>
+         <span class="hl slc">// send them our info in reply.</span>
+         mate <span class="hl sym">:=</span> m<span class="hl sym">.</span>mate<span class="hl sym">;</span>
+         m<span class="hl sym">.</span>n<span class="hl sym">++;</span>
+         m<span class="hl sym">.</span>mate <span class="hl sym">=</span> nil<span class="hl sym">;</span>
+         info1 <span class="hl sym">:=</span> m<span class="hl sym">.</span>info<span class="hl sym">;</span>
+         m<span class="hl sym">.</span>Unlock<span class="hl sym">();</span>
+         mate <span class="hl sym">&lt;-</span> info0<span class="hl sym">;</span>
+         othername <span class="hl sym">=</span> info1<span class="hl sym">.</span>name<span class="hl sym">;</span>
+         info0<span class="hl sym">.</span>colour <span class="hl sym">=</span> complement<span class="hl sym">[</span>info0<span class="hl sym">.</span>colour<span class="hl sym">|</span>info1<span class="hl sym">.</span>colour<span class="hl sym">&lt;&lt;</span><span class="hl num">2</span><span class="hl sym">];</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">if</span> othername <span class="hl sym">==</span> info0<span class="hl sym">.</span>name <span class="hl sym">{</span>
+         same<span class="hl sym">++</span>
+      <span class="hl sym">}</span>
+      met<span class="hl sym">++;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">var</span> digits <span class="hl sym">= [...]</span>string<span class="hl sym">{</span><span class="hl str">&quot;zero&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;one&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;two&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;three&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;four&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;five&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;six&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;seven&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;eight&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;nine&quot;</span><span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> spell<span class="hl sym">(</span>n int<span class="hl sym">,</span> required bool<span class="hl sym">)</span> string <span class="hl sym">{</span>
+   <span class="hl kwa">if</span> n <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp; !</span>required <span class="hl sym">{</span>
+      <span class="hl kwa">return</span> <span class="hl str">&quot;&quot;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> spell<span class="hl sym">(</span>n<span class="hl sym">/</span><span class="hl num">10</span><span class="hl sym">,</span> false<span class="hl sym">) +</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> digits<span class="hl sym">[</span>n<span class="hl sym">%</span><span class="hl num">10</span><span class="hl sym">];</span>
+<span class="hl sym">}</span>
