@@ -64,15 +64,12 @@ $MetaKeywords = '<meta name="description" content="Compare programming language 
 
 $faqUrl = CORE_SITE.'help.php';
 $timeUsed = 'Elapsed secs';
+$bannerUrl = CORE_SITE;
+$bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
 
-if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
-   $bannerUrl = CORE_SITE.SITE_NAME.'/';
-   $bannerTitleTag = 'title="Go to '.PLATFORM_NAME.' Home"';
-} else {
+if (!(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q')){
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
-   $bannerUrl = CORE_SITE;
-   $bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
    $faqUrl = $faqUrl.'#means';
    $timeUsed = 'CPU secs';
 }
