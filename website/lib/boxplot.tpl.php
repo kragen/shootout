@@ -26,7 +26,7 @@
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 
-<p>Also, follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
+<p>Or follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 <form method="get" action="which-languages-are-fastest.php">
 

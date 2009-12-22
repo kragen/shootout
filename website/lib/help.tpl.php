@@ -5,7 +5,11 @@
 <dl>
 <dt><a href="#compare" name="compare">&nbsp;How to compare these programming language measurements</a></dt>
 <dd>
-<dl>          
+<dl> 
+
+<dd>
+<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages.</p>
+</dd>
 
 <dt><a href="#several" name="several">How to compare <b>3 or 4 or more language implementations</b></a></dt>
 <dd>
@@ -16,7 +20,7 @@ href="./u32q/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=o
 <dt><a href="#samebenchmark" name="samebenchmark">How to compare <b>all the programs for one benchmark</b></a></dt>
 <dd>
 <p>Example <span class="u64q"><a
-href="./u64q/benchmark.php?test=spectralnorm&lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">spectral-norm</a> select <a href="./u64/benchmark.php?test=spectralnorm&lang=all">all languages</a> in the drop-down menus.</p>
+href="./u64q/benchmark.php?test=spectralnorm&lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">all languages</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#oneone" name="oneone">How to compare <b>2 language implementations</b></a></dt>
@@ -331,14 +335,14 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#machine" name="machine">What machine are you running the programs on?</a></dt>
 <dd>
-<p>We use a quad-core 2.4Ghz Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine with 4GB of RAM and 250GB SATA II disk drive.</p>
+<p>We use a <b>quad-core 2.4Ghz Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup></b> machine with 4GB of RAM and 250GB SATA II disk drive.</p>
 <p>The out-of-date measurements used a single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine with 512MB of RAM and 40GB IDE disk drive; and a single-processor 2Ghz Intel<sup>&#174;</sup> Pentium<sup>&#174;</sup> 4 machine with 512MB of RAM and 80GB IDE disk drive.</p>
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
 <dd><p>We use <b>Ubuntu&#8482; 9.04 Linux</b> Kernel 2.6.28-17-generic</p>
 
-<p>The out-of-date measurements used <b>Debian Linux</b> 'unstable', Kernel 2.6.18-3-k7 and <b>Gentoo Linux</b> gentoo-sources-2.6.20-r6</p>
+<p>The out-of-date measurements used Debian Linux 'unstable', Kernel 2.6.18-3-k7 and Gentoo Linux gentoo-sources-2.6.20-r6</p>
 </dd>
 
 <dt><a href="#previous" name="previous">Where can I see previous programs?</a></dt>
@@ -359,90 +363,8 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 
 
 
-</dl>
-</dd>
 
-
-
-
-<dt><a href="#means" name="means">&nbsp;</a></dt>
-<dd>
-<dl>
-
-<dd>
-<p>March 1 - August 31, 2009<br/> 1,022,612 Unique Page Views; 150,802 Absolute Unique Visitors; 166 programs contributed.</p>
-</dd>
-
-<dt><a href="#current" name="current"><b>Up-to-date measurements</b></a></dt>
-<dd>
-<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages. Click one of these color-coded links to see measurements for a particular OS/machine - </p>
-</dd>
-
-<?
-$u32qTimestamp = gmdate("d M Y", filemtime('./u32q/data/data.csv'));
-$u64qTimestamp = gmdate("d M Y", filemtime('./u64q/data/data.csv'));
-$u64Timestamp = gmdate("d M Y", filemtime('./u64/data/data.csv'));
-$u32Timestamp = gmdate("d M Y", filemtime('./u32/data/data.csv'));
-?>
-
-<dd>
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language, 32 bit Ubuntu." href="./u32q/">Most recent measurement - <?=$u32qTimestamp;?></a></p>
-<h3><span class="u32q">
-<a title="Fastest in each programming language, 32 bit Ubuntu."
-href="./u32q/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-</dd>
-
-<dd>
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language, 64 bit Ubuntu." href="./u64q/">Most recent measurement - <?=$u64qTimestamp;?></a></p>
-<h3><span class="u64q">
-<a title="Fastest in each programming language, 64 bit Ubuntu."
-href="./u64q/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-</dd>
-
-<dd>
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu." href="./u64/">Most recent measurement - <?=$u64Timestamp;?></a></p>
-<h3><span class="u64">
-<a title="Fastest in each programming language forced onto one core, 64 bit Ubuntu."
-href="./u64/">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-</dd>
-
-<dd>
-<table class="layout">
-<tr class="test">
-<td>
-<p class="timestamp"><a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu." href="./u32/">Most recent measurement - <?=$u32Timestamp;?></a></p>
-<h3><span class="u32">
-<a title="Fastest in each programming language forced onto one core, 32 bit Ubuntu."
-href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core&nbsp;</a></span></h3>
-</td>
-</tr>
-</table>
-</dd>
-
-<dd>
-<p>It's worth asking why a program is better in one set of measurements rather than another set of measurements made on <b>the same</b> Intel<sup>&#174;</sup> Q6600<sup>&#174;</sup> machine. <em>Caveat lector!</em> Check the source code!</p>
-</dd>
-
-
-<dt><a href="#history" name="history">Out-of-date measurements</a></dt>
+<dt><a href="#history" name="history">Why do you continue to show out-of-date measurements?</a></dt>
 
 <dd>
 <p><img src="<?=IMAGE_PATH;?>fresh_png_11dec2009.php"
@@ -450,23 +372,23 @@ href="./u32/">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;
    title=""
    width="400" height="225"
  /></p>
-<p>It isn't worth asking why a program is better on a different test machine, because as well as the obvious differences - hardware, os, language implementation versions - it's likely that the programs measured on the different machines are different programs (either because missing third party libraries stop a program being measured, or simply because the program was not downloaded and measured).</p>
+<p>The out-of-date measurements show different programming languages. The program source code written in those other programming languages is interesting.</p>
 </dd>
 
 <dd>
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="" href="../gp4/">mid 2008</a></p>
+<p class="timestamp"><a title="" href="./gp4/benchmark.php?test=nbody&lang=all">mid 2008</a></p>
 <h3><span class="gp4">
 <a title=""
-href="../gp4/">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
+href="./gp4/benchmark.php?test=nbody&lang=all">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><a title="" href="../debian/">late 2007</a></p>
+<p class="timestamp"><a title="" href="./debian/benchmark.php?test=nbody&lang=all">late 2007</a></p>
 <h3><span class="debian">
 <a title=""
-href="../debian/">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
+href="./debian/benchmark.php?test=nbody&lang=all">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
