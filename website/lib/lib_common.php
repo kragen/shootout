@@ -224,12 +224,16 @@ function CompareProgramDataTime($a, $b){
    } elseif ($b[DATA_STATUS] < 0){
       return -1;
    } else {
-      if ($a[DATA_TIME] <= 0.0 || $b[DATA_TIME] <= 0.0){
-         return  ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1;
-      } else {
+      if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]){
          return  ($a[DATA_TIME] < $b[DATA_TIME]) ? -1 : 1;
+      } else {
+         return  ($b[DATA_TESTVALUE] < $a[DATA_TESTVALUE]) ? -1 : 1;
       }
    }
+}
+
+function CompareProgramTestValue($a, $b){
+   return  ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
 }
 
 

@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2009 ?>
 
 <? 
-MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,"fullcpu"); 
+MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 $TestName = $Tests[$SelectedTest][TEST_NAME];
 $LangName = $Langs[$SelectedLang][LANG_FULL];
 $P = $SelectedLang.'-'.$Id;
@@ -22,6 +22,8 @@ $P = $SelectedLang.'-'.$Id;
 <th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?
+usort($Data, 'CompareProgramTestValue');
+
 foreach($Data as $d){
       if ($Id==$d[DATA_ID]){
          if ($d[DATA_TESTVALUE]>0){ $n = number_format((double)$d[DATA_TESTVALUE]); } else { $n = '&nbsp;'; }
