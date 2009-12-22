@@ -224,7 +224,7 @@ function CompareProgramDataTime($a, $b){
    } elseif ($b[DATA_STATUS] < 0){
       return -1;
    } else {
-      if ($a[DATA_TIME] <= 0.0 || $a[DATA_TIME] <= 0.0){
+      if ($a[DATA_TIME] <= 0.0 || $b[DATA_TIME] <= 0.0){
          return  ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1;
       } else {
          return  ($a[DATA_TIME] < $b[DATA_TIME]) ? -1 : 1;
