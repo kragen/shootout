@@ -5,22 +5,26 @@
 <dl>
 <dt><a href="#compare" name="compare">&nbsp;How to compare these programming language measurements</a></dt>
 <dd>
-<dl>
+<dl>          
 
 <dt><a href="#several" name="several">How to compare <b>3 or 4 or more language implementations</b></a></dt>
 <dd>
-<p>Example, select <a href="./u64/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">all benchmarks</a> select <a href="./u64/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">all languages</a> in the drop-down menus.</p>
+<p>Example <span class="u32q"><a
+href="./u32q/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u32q/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">all benchmarks</a> select <a href="./u32q/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on">all languages</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#samebenchmark" name="samebenchmark">How to compare <b>all the programs for one benchmark</b></a></dt>
 <dd>
-<p>Example, select <a href="./u64/benchmark.php?test=spectralnorm&lang=all">spectral-norm</a> select <a href="./u64/benchmark.php?test=spectralnorm&lang=all">all languages</a> in the drop-down menus.</p>
+<p>Example <span class="u64q"><a
+href="./u64q/benchmark.php?test=spectralnorm&lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">spectral-norm</a> select <a href="./u64/benchmark.php?test=spectralnorm&lang=all">all languages</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#oneone" name="oneone">How to compare <b>2 language implementations</b></a></dt>
 <dd>
-<p>Example, select <a href="./u64/benchmark.php?test=all&amp;lang=java">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java">Java -6 server</a> in the drop-down menus.</p>
-<p>Example, select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python">Python CPython</a> in the drop-down menus.</p>
+<p>Example <span class="u64"><a
+href="./u64/benchmark.php?test=all&amp;lang=java">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java">Java -6 server</a> in the drop-down menus.</p>
+<p>Example <span class="u32"><a
+href="./u32/benchmark.php?test=all&lang=java&lang2=python">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python">Python CPython</a> in the drop-down menus.</p>
 </dd>
 
 
@@ -228,7 +232,7 @@ language, benchmark, your-name, date, (version)<br />
 </tr>
 
 <tr>
-<td>meteor-contest&nbsp;&nbsp;</td>
+<td>meteor&nbsp;contest&nbsp;&nbsp;</td>
 <td>0.23s</td>
 <td>0.01</td>
 <td>0.12s</td>
@@ -239,7 +243,7 @@ language, benchmark, your-name, date, (version)<br />
 </tr>
 
 <tr>
-<td>spectral-norm&nbsp;&nbsp;</td>
+<td>spectral&nbsp;norm&nbsp;&nbsp;</td>
 <td>4.08s</td>
 <td>0.23</td>
 <td>3.96s</td>
@@ -283,7 +287,7 @@ language, benchmark, your-name, date, (version)<br />
 </tr>
 
 <tr>
-<td>binary-trees&nbsp;&nbsp;</td>
+<td>binary&nbsp;trees&nbsp;&nbsp;</td>
 <td>20.69s</td>
 <td>0.69</td>
 <td>15.35s</td>
