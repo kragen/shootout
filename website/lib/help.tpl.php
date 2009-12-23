@@ -92,7 +92,7 @@ href="./u32/benchmark.php?test=all&lang=java&lang2=python">&nbsp;Ubuntu&#8482;&n
 </dd>
 
 <dt><a href="#implementp" name="implementp">How should I implement programs?</a></dt>
-<dd><p>We prefer plain vanilla programs - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable - so please format your code to fit in <b>less than 80 columns</b> (we don't measure lines-of-code!).</p>
+<dd><p>Prefer plain vanilla programs - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable - so please format your code to fit in <b>less than 80 columns</b> (we don't measure lines-of-code!).</p>
 </dd>
 
 <dt><a href="#datainput" name="datainput">How should I implement data-input?</a></dt>
@@ -354,11 +354,7 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#contest" name="contest">Why don't you accept every program that gives the correct result?</a></dt>
 <dd><p>We are trying to show the performance of various programming language implementations - so we ask that contributed programs not only give the
 correct result, but also <b>use the same algorithm</b> to calculate that result.</p>
-<p>Back in the day, Doug Bagley used both <em>same way</em> (same algorithm) and <em>same thing</em> (same result) benchmarks - so in many cases the performance
- differences were simply better algorithms.</p>
-<p>After hearing many arguments, it seems <em>to me</em> that we should think of <em>same way</em> (same algorithm) tests as <strong>benchmarks</strong>, and
- we should think of <em>same thing</em> (same result) tests as <b>contests</b>.</p>
-<p>At present, we show just one contest - <a href="./u64/benchmark.php?test=meteor&amp;lang=all">meteor-contest</a>.</p>
+<p>We do show one contest where you can use different algorithms - <a href="./u64/benchmark.php?test=meteor&amp;lang=all">meteor-contest</a>.</p>
 </dd>
 
 
