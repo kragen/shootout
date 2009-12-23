@@ -6,7 +6,7 @@
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);  
 
-   $pageUrl = CORE_SITE.SITE_NAME.'/which-languages-are-fastest.php'; 
+   $pageUrl = CORE_SITE.SITE_NAME.'/which-programming-languages-are-fastest.php'; 
 ?>
 
 <h2><a href="<?=$pageUrl;?>#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
@@ -28,7 +28,7 @@
 
 <p>Or follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
-<form method="get" action="which-languages-are-fastest.php">
+<form method="get" action="which-programming-languages-are-fastest.php">
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
