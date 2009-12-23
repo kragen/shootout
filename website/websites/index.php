@@ -98,7 +98,7 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
             elseif ($site == 'gp4'){ $arch = '<em>Gentoo</em>'; }
 
             if (isset($a[LANG_SPECIALURL]) && !empty($a[LANG_SPECIALURL])){ // special_url
-                printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s against one other language implementation">%s</a> <span class="smaller">%s %s</span></p>',
+                printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s against one other programming language">%s</a> <span class="smaller">%s %s</span></p>',
                    $site, $a[LANG_SPECIALURL], $a[LANG_FULL], $a[LANG_HTML], $tag, $arch);
             } else {
                 printf('<p><a href="http://shootout.alioth.debian.org/%s/benchmark.php?test=all&amp;lang=%s" title="Compare %s against one other programming language">%s</a> <span class="smaller">%s %s</span></p>',
