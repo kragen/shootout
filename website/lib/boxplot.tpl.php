@@ -67,7 +67,7 @@ foreach($score as $k => $v){
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
       printf('<td><a href="%s.php" title="Compare %s against one other language implementation">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Name,$HtmlName); 
    } else {
-      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s against one other language implementation">%s</a></td>', $k,$Name,$HtmlName);
+      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s against one other programming language">%s</a></td>', $k,$Name,$HtmlName);
    }
    echo "\n";
 
