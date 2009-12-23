@@ -20,13 +20,13 @@ href="./u32q/which-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=o
 <dt><a href="#samebenchmark" name="samebenchmark">How to compare <b>all the programs for one benchmark</b></a></dt>
 <dd>
 <p>Example <span class="u64q"><a
-href="./u64q/benchmark.php?test=spectralnorm&lang=all">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">all languages</a> in the drop-down menus.</p>
+href="./u64q/benchmark.php?test=spectralnorm&lang=all">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all">all languages</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#oneone" name="oneone">How to compare <b>2 language implementations</b></a></dt>
 <dd>
 <p>Example <span class="u64"><a
-href="./u64/benchmark.php?test=all&amp;lang=java">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java">Java -6 server</a> in the drop-down menus.</p>
+href="./u64/benchmark.php?test=all&amp;lang=java">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java">Java -6 server</a> in the drop-down menus.</p>
 <p>Example <span class="u32"><a
 href="./u32/benchmark.php?test=all&lang=java&lang2=python">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python">Python CPython</a> in the drop-down menus.</p>
 </dd>

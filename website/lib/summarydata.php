@@ -30,11 +30,7 @@ if (!isset($DataSet)){ $DataSet = 'data'; }
 $MetaKeywords = '';
 
 $faqUrl = CORE_SITE.'help.php';
-$bannerUrl = CORE_SITE;
-if (!(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q')){
-   // Help people choose the up-to-date measurements
-   $faqUrl = $faqUrl.'#means';
-}
+$bannerUrl = CORE_SITE;
 
 // PAGES ///////////////////////////////////////////////////
 
@@ -51,14 +47,11 @@ $Body->set('DataSet', $DataSet);
 $Body->set('Data', DataRows(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl));
 $Body->set('Title', $Title);
 $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-$bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
-
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
 $Page->set('PageTitle', $Title.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', BANNER_TITLE);
-$Page->set('BannerTitleTag', $bannerTitleTag);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);

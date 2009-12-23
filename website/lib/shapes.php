@@ -49,14 +49,11 @@ $Body->set('Data', TimeSizeShapes(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $In
 
 $faqUrl = CORE_SITE.'help.php';
 $bannerUrl = CORE_SITE;
-$bannerTitleTag = 'title="Go to Computer Language Benchmarks Game Home"';
 
 if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q'){
    $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-   // Help people choose the up-to-date measurements
-   $faqUrl = $faqUrl.'#means';
 }
 $metaKeywords = '<meta name="description" content="Look for patterns in Code-used Time-used Shapes ('.PLATFORM_NAME.') & find out how your favorite language compares." />';
 
@@ -64,7 +61,6 @@ $metaKeywords = '<meta name="description" content="Look for patterns in Code-use
 
 $Page->set('PageTitle', $Title.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', BANNER_TITLE);
-$Page->set('BannerTitleTag', $bannerTitleTag);
 $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
