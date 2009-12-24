@@ -11,19 +11,19 @@
 <p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages.</p>
 </dd>
 
-<dt><a href="#several" name="several">How to compare <b>3 or 4 or more language implementations</b></a></dt>
+<dt><a href="#several" name="several">How to compare the performance of <b>3 or 4 or more language implementations</b></a></dt>
 <dd>
 <p>Example <span class="u32q"><a
 href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all benchmarks</a> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all languages</a> in the drop-down menus.</p>
 </dd>
 
-<dt><a href="#samebenchmark" name="samebenchmark">How to compare <b>all the programs for one benchmark</b></a></dt>
+<dt><a href="#samebenchmark" name="samebenchmark">How to compare the performance of <b>all the programs for one benchmark</b></a></dt>
 <dd>
 <p>Example <span class="u64q"><a
 href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">all languages</a> in the drop-down menus.</p>
 </dd>
 
-<dt><a href="#oneone" name="oneone">How to compare <b>2 language implementations</b></a></dt>
+<dt><a href="#oneone" name="oneone">How to compare the performance of <b>2 language implementations</b></a></dt>
 <dd>
 <p>Example <span class="u64"><a
 href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare Java 6 -server programs against C++ GNU g++ programs. Which are faster?">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare Java 6 -server programs against C++ GNU g++ programs. Which are faster?">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare Java 6 -server programs against C++ GNU g++ programs. Which are faster?">Java -6 server</a> in the drop-down menus.</p>
