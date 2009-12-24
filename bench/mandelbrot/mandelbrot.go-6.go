@@ -14,12 +14,12 @@
 package main
 
 import (
-   "bufio";
-   "flag";
-   "fmt";
-   "os";
-   "strconv";
-   "runtime";
+   "bufio"
+   "flag"
+   "fmt"
+   "os"
+   "strconv"
+   "runtime"
 )
 
 /* targeting a q6600 system, one cpu worker per core */
@@ -30,7 +30,7 @@ const LIMIT = 2.0
 const ITER = 50   // Benchmark parameter
 const SIZE = 16000
 
-var rows []byte;
+var rows []byte
 var bytesPerRow int
 
 // This func is responsible for rendering a row of pixels,
@@ -38,23 +38,23 @@ var bytesPerRow int
 
 func renderRow(w, h, bytes int, workChan chan int,iter int, finishChan chan bool) {
 
-   var Zr, Zi, Tr, Ti, Cr float64;
-   var x,i int;
+   var Zr, Zi, Tr, Ti, Cr float64
+   var x,i int
 
    for y := range workChan {
 
-      offset := bytesPerRow * y;
-      Ci := (2*float64(y)/float64(h) - 1.0);
+      offset := bytesPerRow * y
+      Ci := (2*float64(y)/float64(h) - 1.0)
 
       for x = 0; x < w; x++ {
-         Zr, Zi, Tr, Ti = ZERO, ZERO, ZERO, ZERO;
-         Cr = (2*float64(x)/float64(w) - 1.5);
+         Zr, Zi, Tr, Ti = ZERO, ZERO, ZERO, ZERO
+         Cr = (2*float64(x)/float64(w) - 1.5)
 
          for i = 0; i < iter && Tr+Ti <= LIMIT*LIMIT; i++ {
-            Zi = 2*Zr*Zi + Ci;
-            Zr = Tr - Ti + Cr;
-            Tr = Zr * Zr;
-            Ti = Zi * Zi;
+            Zi = 2*Zr*Zi + Ci
+            Zr = Tr - Ti + Cr
+            Tr = Zr * Zr
+            Ti = Zi * Zi
          }
 
          // Store the value in the array of ints
@@ -64,45 +64,45 @@ func renderRow(w, h, bytes int, workChan chan int,iter int, finishChan chan bool
       }
    }
    /* tell master I'm finished */
-   finishChan <- true;
+   finishChan <- true
 }
 
 func main() {
-   runtime.GOMAXPROCS(pool); 
+   runtime.GOMAXPROCS(pool) 
 
-   size := SIZE;   // Contest settings
-   iter := ITER;
+   size := SIZE   // Contest settings
+   iter := ITER
 
    // Get input, if any...
-   flag.Parse();
+   flag.Parse()
    if flag.NArg() > 0 {
       size, _ = strconv.Atoi(flag.Arg(0))
    }
-   w, h := size, size;
-   bytesPerRow =  w / 8;
+   w, h := size, size
+   bytesPerRow =  w / 8
 
-   out := bufio.NewWriter(os.Stdout);
-   defer out.Flush();
-   fmt.Fprintf(out, "P4\n%d %d\n", w, h);
+   out := bufio.NewWriter(os.Stdout)
+   defer out.Flush()
+   fmt.Fprintf(out, "P4\n%d %d\n", w, h)
 
-   rows = make([]byte, bytesPerRow*h);
+   rows = make([]byte, bytesPerRow*h)
 
    /* global buffer of work for workers, ideally never runs dry */
-   workChan := make(chan int, pool*2+1);
+   workChan := make(chan int, pool*2+1)
    /* global buffer of results for output, ideally never blocks */
-   finishChan := make(chan bool);
+   finishChan := make(chan bool)
    // start pool workers, and assign all work
    for y := 0; y < size; y++ {
       if y < pool {
          go renderRow(w, h, bytesPerRow, workChan, iter,finishChan)
       }
-      workChan <- y;
+      workChan <- y
    }
    /* tell the workers all done */
-   close(workChan);
+   close(workChan)
    /* write for the file workers to finish */
    for i:=0;i<pool;i++ {
-      <- finishChan;
+      <- finishChan
    }
-   out.Write(rows);
+   out.Write(rows)
 }

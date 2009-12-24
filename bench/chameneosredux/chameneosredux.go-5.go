@@ -9,17 +9,17 @@
 package main
 
 import (
-   "flag";
-   "fmt";
-   "strconv";
-   "sync";
+   "flag"
+   "fmt"
+   "strconv"
+   "sync"
 )
 
 const (
-   blue = iota;
-   red;
-   yellow;
-   ncol;
+   blue = iota
+   red
+   yellow
+   ncol
 )
 
 var complement = [...]int{
@@ -42,30 +42,30 @@ var colname = [...]string{
 
 // information about the current state of a creature.
 type info struct {
-   colour int; // creature's current colour.
-   name   int; // creature's name.
+   colour int // creature's current colour.
+   name   int // creature's name.
 }
 
-// if mate is nil, it indicates there's no creature currently waiting;
+// if mate is nil, it indicates there's no creature currently waiting
 // otherwise the creature's info is stored in info, and
 // it is waiting to receive its mate's information on the mate channel.
 type Place struct {
-   sync.Mutex;
-   n    int;         // current number of encounters.
-   mate chan<- info; // creature waiting when non-nil.
-   info info;        // info about creature waiting.
+   sync.Mutex
+   n    int         // current number of encounters.
+   mate chan<- info // creature waiting when non-nil.
+   info info        // info about creature waiting.
 }
 
 // result sent by each creature at the end of processing.
 type result struct {
-   met  int;
-   same int;
+   met  int
+   same int
 }
 
 var n = 600
 
 func main() {
-   flag.Parse();
+   flag.Parse()
    if flag.NArg() > 0 {
       n, _ = strconv.Atoi(flag.Arg(0))
    }
@@ -75,78 +75,78 @@ func main() {
          fmt.Printf("%s + %s -> %s\n", colname[c0], colname[c1], colname[complement[c0|c1<<2]])
       }
    }
-   fmt.Print("\n");
+   fmt.Print("\n")
 
-   pallmall([]int{blue, red, yellow});
-   pallmall([]int{blue, red, yellow, red, yellow, blue, red, yellow, red, blue});
+   pallmall([]int{blue, red, yellow})
+   pallmall([]int{blue, red, yellow, red, yellow, blue, red, yellow, red, blue})
 }
 
 func pallmall(cols []int) {
 
    // invariant: meetingplace always contains a value unless a creature
    // is currently dealing with it (whereupon it must put it back).
-   meetingplace := new(Place);
-   ended := make(chan result);
-   msg := "";
+   meetingplace := new(Place)
+   ended := make(chan result)
+   msg := ""
    for i, col := range cols {
-      go creature(info{col, i}, meetingplace, ended);
-      msg += " " + colname[col];
+      go creature(info{col, i}, meetingplace, ended)
+      msg += " " + colname[col]
    }
-   fmt.Println(msg);
-   tot := 0;
+   fmt.Println(msg)
+   tot := 0
    // wait for all results
    for _ = range (cols) {
-      result := <-ended;
-      tot += result.met;
-      fmt.Printf("%v%v\n", result.met, spell(result.same, true));
+      result := <-ended
+      tot += result.met
+      fmt.Printf("%v%v\n", result.met, spell(result.same, true))
    }
-   fmt.Printf("%v\n\n", spell(tot, true));
+   fmt.Printf("%v\n\n", spell(tot, true))
 }
 
 // in this function, variables ending in 0 refer to the local creature,
 // variables ending in 1 to the creature we've met.
 func creature(info0 info, m *Place, ended chan result) {
-   c0 := make(chan info);
-   met := 0;
-   same := 0;
+   c0 := make(chan info)
+   met := 0
+   same := 0
    for {
-      var othername int;
+      var othername int
       // get access to rendez data and decide what to do.
-      m.Lock();
+      m.Lock()
       switch {
       case m.n >= n:
          // if no more meetings left, then send our result data and exit.
-         m.Unlock();
-         ended <- result{met, same};
-         return;
+         m.Unlock()
+         ended <- result{met, same}
+         return
 
       case m.mate == nil:
-         // no creature waiting; wait for someone to meet us,
+         // no creature waiting wait for someone to meet us,
          // get their info and send our info in reply.
-         m.info = info0;
-         m.mate = c0;
-         m.Unlock();
-         info1 := <-c0;
-         othername = info1.name;
-         info0.colour = complement[info0.colour|info1.colour<<2];
+         m.info = info0
+         m.mate = c0
+         m.Unlock()
+         info1 := <-c0
+         othername = info1.name
+         info0.colour = complement[info0.colour|info1.colour<<2]
 
       default:
-         // another creature is waiting for us with its info;
+         // another creature is waiting for us with its info
          // increment meeting count,
          // send them our info in reply.
-         mate := m.mate;
-         m.n++;
-         m.mate = nil;
-         info1 := m.info;
-         m.Unlock();
-         mate <- info0;
-         othername = info1.name;
-         info0.colour = complement[info0.colour|info1.colour<<2];
+         mate := m.mate
+         m.n++
+         m.mate = nil
+         info1 := m.info
+         m.Unlock()
+         mate <- info0
+         othername = info1.name
+         info0.colour = complement[info0.colour|info1.colour<<2]
       }
       if othername == info0.name {
          same++
       }
-      met++;
+      met++
    }
 }
 
@@ -156,5 +156,5 @@ func spell(n int, required bool) string {
    if n == 0 && !required {
       return ""
    }
-   return spell(n/10, false) + " " + digits[n%10];
+   return spell(n/10, false) + " " + digits[n%10]
 }

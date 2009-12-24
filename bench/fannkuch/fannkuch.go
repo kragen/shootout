@@ -10,53 +10,53 @@
 package main
 
 import (
-   "flag";
-   "fmt";
-   "strconv";
+   "flag"
+   "fmt"
+   "strconv"
 )
 
 var n = 0
 
 func fannkuch(n int) int {
    if n < 1 {
-      return 0;
+      return 0
    }
 
-   n1 := n - 1;
-   perm := make([]int, n);
-   perm1 := make([]int, n);
-   count := make([]int, n);
+   n1 := n - 1
+   perm := make([]int, n)
+   perm1 := make([]int, n)
+   count := make([]int, n)
 
    for i := 0; i < n; i++ {
-      perm1[i] = i;   // initial (trivial) permutation
+      perm1[i] = i   // initial (trivial) permutation
    }
 
-   r := n;
-   didpr := 0;
-   flipsMax := 0;
+   r := n
+   didpr := 0
+   flipsMax := 0
    for {
       if didpr < 30  {
          for i := 0; i < n; i++ {
-            fmt.Printf("%d", 1+perm1[i]);
+            fmt.Printf("%d", 1+perm1[i])
          }
-         fmt.Printf("\n");
-         didpr++;
+         fmt.Printf("\n")
+         didpr++
       }
       for ; r != 1; r-- {
-         count[r-1] = r;
+         count[r-1] = r
       }
 
       if perm1[0] != 0 && perm1[n1] != n1 {
-         flips := 0;
+         flips := 0
          for i := 1; i < n; i++ {   // perm = perm1
-            perm[i] = perm1[i];
+            perm[i] = perm1[i]
          }
-         k := perm1[0];      // cache perm[0] in k
+         k := perm1[0]      // cache perm[0] in k
          for {         // k!=0 ==> k>0
             for i, j := 1, k-1; i < j; i, j = i+1, j-1 {
-               perm[i], perm[j] = perm[j], perm[i];
+               perm[i], perm[j] = perm[j], perm[i]
             }
-            flips++;
+            flips++
             // Now exchange k (caching perm[0]) and perm[k]... with care!
             j := perm[k]; perm[k] = k; k = j;
             if k == 0 {
@@ -64,31 +64,31 @@ func fannkuch(n int) int {
             }
          }
          if flipsMax < flips {
-            flipsMax = flips;
+            flipsMax = flips
          }
       }
 
       for ; r < n; r++ {
          // rotate down perm[0..r] by one
-         perm0 := perm1[0];
+         perm0 := perm1[0]
          for i := 0; i < r; i++ {
-            perm1[i] = perm1[i+1];
+            perm1[i] = perm1[i+1]
          }
-         perm1[r] = perm0;
-         count[r]--;
+         perm1[r] = perm0
+         count[r]--
          if count[r] > 0 {
-            break;
+            break
          }
       }
       if r == n {
-         return flipsMax;
+         return flipsMax
       }
    }
    return 0
 }
 
 func main() {
-   flag.Parse();
+   flag.Parse()
    if flag.NArg() > 0 { n,_ = strconv.Atoi( flag.Arg(0) ) }
-   fmt.Printf("Pfannkuchen(%d) = %d\n", n, fannkuch(n));
+   fmt.Printf("Pfannkuchen(%d) = %d\n", n, fannkuch(n))
 }
