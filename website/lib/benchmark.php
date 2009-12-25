@@ -120,13 +120,13 @@ if ($T=='all'){
 
       if ($L!=$L2){
          $LangName2 = $Langs[$L2][LANG_FULL];
-         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2;
+         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2.'&nbsp;speed&nbsp;size';
          $TemplateName = 'headtohead.tpl.php';
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
-         $MetaKeywords = '<meta name="description" content="Compare '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.'). Which are faster?" />';
+         $MetaKeywords = '<meta name="description" content="Compare speed and size of '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
 
       } else {
         $Title = $LangName.' measurements';
@@ -134,7 +134,7 @@ if ($T=='all'){
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
 
         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
-        $MetaKeywords = '<meta name="description" content="Performance measurements for all the '.$LangName.' programs implementing ~12 flawed benchmarks ('.PLATFORM_NAME.')." />';
+        $MetaKeywords = '<meta name="description" content="Performance measurements for all the '.$LangName.' programs implementing ~12 flawed benchmarks ('.PLATFORM_NAME.')." />';&nbsp;
 
       }
 
