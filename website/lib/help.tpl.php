@@ -11,7 +11,7 @@
 <p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages.</p>
 </dd>
 
-<dt><a href="#several" name="several">Compare performance for <b>3 or 4 or more programming languages</b></a></dt>
+<dt><a href="#several" name="several">Compare performance for <b>3 or 4 <i>or more</i> programming languages</b></a></dt>
 <dd>
 <p>Example <span class="u32q"><a
 href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all benchmarks</a> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all languages</a> in the drop-down menus.</p>
@@ -368,7 +368,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
    title=""
    width="400" height="225"
  /></p>
-<p>The out-of-date measurements show different programming languages. The program source code written in those other programming languages is interesting.</p>
+<p>The out-of-date measurements are for many more different programming languages. The program source code written in those other programming languages is interesting.</p>
 </dd>
 
 <dd>

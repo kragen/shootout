@@ -1,6 +1,6 @@
 <?php 
 header("HTTP/1.1 301 Moved Permanently");
-header("Location: http://shootout.alioth.debian.org/index.php");
+header("Location: http://shootout.alioth.debian.org/");
 exit;
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
@@ -10,6 +10,6 @@ exit;
 <title>The Computer Language Benchmarks Game</title>
 </head>
 <body>
-<h3><a href="http://shootout.alioth.debian.org/index.php">The Computer Language Benchmarks Game</a></h3>
+<h3><a href="http://shootout.alioth.debian.org/">The Computer Language Benchmarks Game</a></h3>
 </body>
 </html>
