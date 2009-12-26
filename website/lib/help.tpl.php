@@ -11,7 +11,7 @@
 <p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages.</p>
 </dd>
 
-<dt><a href="#several" name="several">Compare the performance of <b>3 or 4 or more programming languages</b></a></dt>
+<dt><a href="#several" name="several">Compare performance for <b>3 or 4 or more programming languages</b></a></dt>
 <dd>
 <p>Example <span class="u32q"><a
 href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all benchmarks</a> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all languages</a> in the drop-down menus.</p>
@@ -23,12 +23,12 @@ href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=
 href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">all languages</a> in the drop-down menus.</p>
 </dd>
 
-<dt><a href="#oneone" name="oneone">Compare the performance of <b>2 language implementations</b></a></dt>
+<dt><a href="#oneone" name="oneone">Compare program speed and size for <b>2 language implementations</b></a></dt>
 <dd>
 <p>Example <span class="u64"><a
-href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare Java 6 -server programs against C++ GNU g++ programs. Which are faster?">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare Java 6 -server programs against C++ GNU g++ programs. Which are faster?">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare Java 6 -server programs against C++ GNU g++ programs. Which are faster?">Java -6 server</a> in the drop-down menus.</p>
+href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs.">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs.">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs.">Java -6 server</a> in the drop-down menus.</p>
 <p>Example <span class="u32"><a
-href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare Java 6 -server programs against Python CPython programs. Which are faster?">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare Java 6 -server programs against Python CPython programs. Which are faster?">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare Java 6 -server programs against Python CPython programs. Which are faster?">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python" title="Compare Java 6 -server programs against Python CPython programs. Which are faster?">Python CPython</a> in the drop-down menus.</p>
+href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python" title="Compare Java 6 -server programs against Python CPython programs. Which are faster?">Python CPython</a> in the drop-down menus.</p>
 </dd>
 
 
@@ -207,7 +207,7 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
 <dd>
 <p><b>Why don't you</b> use our measurement scripts and publish measurements for language X?</p>
-<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running - and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.tar.bz2"><b>download bencher</b></a> and unpack into your ~ directory and read the license before use.</p>
+<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.tar.bz2"><b>download bencher</b></a> and unpack into your ~ directory and read the license before use.</p>
 <p>As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 

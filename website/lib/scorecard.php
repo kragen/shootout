@@ -48,7 +48,7 @@ require_once(LIB_PATH.'lib_scorecard.php');
 
 list ($mark,$mtime)= MarkTime();
 
-$Title = 'Which language is best?';
+$Title = 'Which programming language is best?';
 if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
 $Body->set('Title', $Title);
 $TemplateName = 'scorecard.tpl.php';

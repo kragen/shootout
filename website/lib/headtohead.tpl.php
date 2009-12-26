@@ -23,7 +23,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <h2><a href="#faster-programs-chart" name="faster-programs-chart">&nbsp;Step&nbsp;1&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <i>At a glance.</i></h2>
 
-<p>This chart shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used.</p>
+<p>This chart shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used - speed and size.</p>
 <p>Each chart bar shows, for one unidentified benchmark, how much the fastest <strong><?=$LangName;?></strong> program <i>used</i> compared to the fastest <?=$LangName2;?> program.</p>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
@@ -35,7 +35,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <h2><a href="#faster-programs-approximately" name="faster-programs-approximately">&nbsp;Step&nbsp;2&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <i>Approximately.</i></h2>
 
-<p>This table shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used.</p>
+<p>This table shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used - speed and size.</p>
 
 <p>Each table row shows, for one named benchmark, how much the fastest <strong><?=$LangName;?></strong> program <i>used</i> compared to the fastest <?=$LangName2;?> program.</p>
 
@@ -83,7 +83,7 @@ foreach($sTests as $Row){
 
 <h2><a href="#faster-programs-measurements" name="faster-programs-measurements">&nbsp;Step&nbsp;3&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <em>Measurements.</em></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a>.</p>
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a> - speed and size.</p>
 
 <p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
 
@@ -109,9 +109,9 @@ foreach($sTests as $Row){
       if ($data[$Link][N_N]==0){
          $n = '';
       } else {
-         $n = '&nbsp;N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
+         $n = ' N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
       }
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a>%s&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName, $n);
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a><span class="smaller">%s</span>&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName, $n);
 
       $ELAPSED = '';
       if (isset($measurements[$Link][1]) && ($measurements[$Link][0][DATA_TIME] < $measurements[$Link][1][DATA_TIME])){

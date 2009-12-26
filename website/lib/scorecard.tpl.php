@@ -9,9 +9,9 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
    unset($Data);
 ?>
 
-<h2><a href="#chart" name="chart">&nbsp;How big is the difference between languages?</a></h2>
+<h2><a href="#chart" name="chart">&nbsp;How big is the difference between programming languages?</a></h2>
 
-<p>This chart shows 1 or 2 or 3 <em>comparisons</em> - Time-used and/or Memory-used and/or Code-used.</p>
+<p>This chart shows 1 or 2 or 3 <em>comparisons</em> - Time-used and/or Memory-used and/or Code-used - speed and size.</p>
 
 <p>Selected and weighted "<i>how many times more</i> compared to the program that used least <i>scores</i>" are compressed into one number - <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
@@ -24,15 +24,15 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
  /></p>
 
 
-<h2><a href="#best" name="best">&nbsp;<strong>Which language is best?</strong></a></h2>
+<h2><a href="#best" name="best">&nbsp;<strong>Which programming language is best? <em>Speed and Size</em></strong></a></h2>
 
-<p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time-used</a> and/or <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory-used</a> and/or <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code-used</a> - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
+<p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time-used</a> and/or <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory-used</a> and/or <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code-used</a> - speed and size - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
 <p>Column &#215; shows <i>how many times more</i> that geometric mean is for a programming language than for the language that used least.</p>
 
 <p>Select the weights you want to give each comparison and each benchmark then click the <b>calculate</b> button.</p>
 
-<p>Also, follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
+<p>Or follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 <table class="layout"><tr><td>
 
@@ -53,9 +53,9 @@ foreach($score as $k => $v){
    printf('<td>%s</td>', PFx($v[SCORE_RATIO]));
 
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
-      printf('<td><a href="%s.php" title="Compare %s performance against one other programming language">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Langs[$k][LANG_FULL],$HtmlName); 
+      printf('<td><a href="%s.php" title="Compare %s speed and size against one other programming language">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Langs[$k][LANG_FULL],$HtmlName); 
    } else {
-      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s performance against one other programming language">%s</a></td>', $k,$Langs[$k][LANG_FULL],$HtmlName); 
+      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s speed and size against one other programming language">%s</a></td>', $k,$Langs[$k][LANG_FULL],$HtmlName); 
    }
    echo "\n";
 

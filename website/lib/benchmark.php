@@ -96,7 +96,7 @@ if ($T=='all'){
 
          require_once(LIB_PATH.'lib_scorecard.php');
 
-         $Title = 'Which languages are fastest?';
+         $Title = 'Which programming languages are fastest?';
          if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'boxplot.tpl.php';
@@ -126,7 +126,7 @@ if ($T=='all'){
 
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
-         $MetaKeywords = '<meta name="description" content="Compare speed and size of '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
+         $MetaKeywords = '<meta name="description" content="Compare the speed and size of '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
 
       } else {
         $Title = $LangName.' measurements';
