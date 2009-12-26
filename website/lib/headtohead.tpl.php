@@ -23,7 +23,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <h2><a href="#faster-programs-chart" name="faster-programs-chart">&nbsp;Step&nbsp;1&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <i>At a glance.</i></h2>
 
-<p>This chart shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used - speed and size.</p>
+<p>This chart shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used ~ speed and size.</p>
 <p>Each chart bar shows, for one unidentified benchmark, how much the fastest <strong><?=$LangName;?></strong> program <i>used</i> compared to the fastest <?=$LangName2;?> program.</p>
 
 <p><br/><img src="chartvs.php?<?='r='.Encode($ratios);?>&amp;<?='m='.Encode($Mark.' n');?>&amp;<?='w='.Encode($SelectedLang.'O'.$SelectedLang2);?>"
@@ -35,7 +35,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;used what fracti
 
 <h2><a href="#faster-programs-approximately" name="faster-programs-approximately">&nbsp;Step&nbsp;2&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <i>Approximately.</i></h2>
 
-<p>This table shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used - speed and size.</p>
+<p>This table shows 3 <em>comparisons</em> - Time-used, Memory-used and Code-used ~ speed and size.</p>
 
 <p>Each table row shows, for one named benchmark, how much the fastest <strong><?=$LangName;?></strong> program <i>used</i> compared to the fastest <?=$LangName2;?> program.</p>
 
@@ -83,7 +83,7 @@ foreach($sTests as $Row){
 
 <h2><a href="#faster-programs-measurements" name="faster-programs-measurements">&nbsp;Step&nbsp;3&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <em>Measurements.</em></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a> - speed and size.</p>
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a> ~ speed and size.</p>
 
 <p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
 
