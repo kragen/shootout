@@ -1,0 +1,387 @@
+/*
+   The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+
+   Based on C contribution of Josh Goldfoot. And modified by Cedric Bail.
+   Based on bit encoding idea of C++ contribution of Andrew Moon
+   Contributed by The Anh Tran
+*/
+
+#define _GNU_SOURCE
+#include <omp.h>
+#include <sched.h>
+
+#include <assert.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <stdint.h>
+
+
+// Use G_Hash_Table
+#include <glib.h>
+
+
+typedef unsigned int uint;
+typedef uint64_t   ui64;
+
+
+#define BIT_PER_CODE 2
+#define MAX_THREADS 16
+
+
+void
+ReadAll(char* *input, size_t *length)
+{
+   // get input size
+   *length = ftell(stdin);
+   fseek(stdin, 0, SEEK_END);
+   *length = ftell(stdin) - *length;
+   fseek(stdin, 0, SEEK_SET);
+
+   *input = (char*)malloc(*length);
+
+   // rule: read line-by-line
+   char buffer[64];
+   while (fgets_unlocked(buffer, sizeof(buffer), stdin))
+   {
+      if ((buffer[0] == '>') && (strncmp(buffer, ">THREE", 6) == 0))
+         break;
+   }
+
+   size_t const LL = 60;
+   buffer[LL] = 0;
+   size_t byte_read = 0;
+
+   while (fgets_unlocked(buffer, sizeof(buffer), stdin))
+   {
+      if (buffer[LL] == '\n')
+      {
+         memcpy(*input + byte_read, buffer, LL);
+         byte_read += LL;
+      }
+      else
+      {
+         size_t sz = strlen(buffer);
+         if (buffer[sz -1] == '\n')
+            --sz;
+
+         memcpy(*input + byte_read, buffer, sz);
+         byte_read += sz;
+      }
+
+      buffer[LL] = 0;
+   }
+
+   *length = byte_read;
+   (*input)[ byte_read ] = 0;
+}
+
+
+typedef struct
+{
+   size_t      frame_size;
+   GHashTable   *hash_table[MAX_THREADS];
+
+   size_t      stride_processed;
+   size_t      thread_passed;
+}   Result_t;
+
+Result_t result_list[7] = {{1}, {2}, {3}, {4}, {6}, {12}, {18}};
+
+
+ui64
+CodeToBit(char c)
+{
+   switch (c)
+   {
+   case 'a':   return 0;
+   case 't':   return 1;
+   case 'c':   return 2;
+   case 'g':   return 3;
+
+   case 'A':   return 0;
+   case 'T':   return 1;
+   case 'C':   return 2;
+   case 'G':   return 3;
+
+   default:   assert(FALSE);
+   }
+   return 0;
+}
+
+
+char
+BitToCode(uint bit)
+{
+   static
+   char const tb[4] = {'A', 'T', 'C', 'G'};
+
+   assert(bit < 4);
+   return tb[bit];
+}
+
+
+uint
+HashFunc(void const *param)
+{
+   ui64 const* key = (ui64 const*)param;
+   return (guint)(*key);
+}
+
+
+int
+EqualFunc(void const *p1, void const *p2)
+{
+   ui64 const* k1 = (ui64 const*)p1;
+   ui64 const* k2 = (ui64 const*)p2;
+
+   return *k1 == *k2;
+}
+
+
+ui64
+EncodeKey(char const* data, size_t hash_length)
+{
+   ui64 key = 0;
+   size_t index = 0;
+   size_t shift = 0;
+
+   for (; index < hash_length; ++index)
+   {
+      key |= (CodeToBit(data[index]) << shift);
+
+      shift += BIT_PER_CODE;
+   }
+
+   return key;
+}
+
+char*
+DecodeKey(char* buffer, size_t frame_size, ui64 key)
+{
+   size_t index = 0;
+   ui64 extract_mask = 3;
+
+   for (; index < frame_size; ++index)
+   {
+      uint extract_value = ((key & extract_mask) >> (index * BIT_PER_CODE));
+      buffer[index] = BitToCode(extract_value);
+
+      extract_mask <<= BIT_PER_CODE;
+   }
+
+   return buffer;
+}
+
+void
+MergeTable(GHashTable *des, GHashTable* src)
+{
+   GHashTableIter ite;
+   g_hash_table_iter_init (&ite, src);
+
+   ui64*   src_key;
+   int*   src_val;
+   ui64*   des_key;
+   int*   des_val;
+
+   while ( g_hash_table_iter_next (&ite, (void**)&src_key, (void**)&src_val) )
+   {
+      if (g_hash_table_lookup_extended(des, src_key, (void**)&des_key, (void**)&des_val))
+         *des_val += *src_val;
+      else
+      {
+         ui64* new_key = (ui64*)malloc(sizeof(ui64));
+         int* new_val = (int*)malloc(sizeof(int));
+
+         *new_key = *src_key;
+         *new_val = *src_val;
+         g_hash_table_replace( des, new_key, new_val );
+      }
+   }
+}
+
+void
+BuildHashTableAtOffset(char const* data, size_t data_length,
+                  GHashTable* ht, size_t frame_size, size_t start_offset)
+{
+   size_t i_begin = start_offset;
+   size_t i_end = data_length - frame_size + 1;
+
+   ui64 key = 0;
+
+   ui64 *old_key;
+   int *old_val;
+
+   for(; i_begin < i_end; i_begin += frame_size)
+   {
+      key = EncodeKey(data + i_begin, frame_size);
+      if (g_hash_table_lookup_extended(ht, &key, (void**)&old_key, (void**)&old_val))
+         *old_val += 1;
+      else
+      {
+         ui64* new_key = (ui64*)malloc(sizeof(ui64));
+         int* new_val = (int*)malloc(sizeof(int));
+
+         *new_key = key;
+         *new_val = 1;
+         g_hash_table_replace(ht, new_key, new_val);
+      }
+   }
+}
+
+void
+DeleteFunc(void* k, void* v, void* user)
+{
+   free(k);
+   free(v);
+}
+
+void
+DeleteTable(GHashTable *ht)
+{
+   g_hash_table_foreach(ht, DeleteFunc, 0);
+   g_hash_table_destroy(ht);
+}
+
+void
+BuildHashTable(char const* data, size_t data_length, int n_element)
+{
+   size_t offset;
+   Result_t *ht = &(result_list[n_element]);
+
+   GHashTable* local_table = g_hash_table_new(HashFunc, EqualFunc);
+   ht->hash_table[omp_get_thread_num()] = local_table;
+
+   while ( (offset = __sync_fetch_and_add(&(ht->stride_processed), 1)) < ht->frame_size )
+      BuildHashTableAtOffset(data, data_length, local_table, ht->frame_size, offset);
+
+   if (__sync_add_and_fetch(&(ht->thread_passed), 1) == omp_get_num_threads())
+   {
+      int i = 1;
+      for (; i < omp_get_num_threads(); ++i)
+      {
+         MergeTable(ht->hash_table[0], ht->hash_table[i]);
+
+         DeleteTable(ht->hash_table[i]);
+         ht->hash_table[i] = 0;
+      }
+   }
+
+}
+
+typedef struct
+{
+   ui64   key;
+   int      value;
+} KVPair;
+
+int
+DescCompFunc(void const*p1, void const* p2)
+{
+   KVPair const* k1 = (KVPair const*)p1;
+   KVPair const* k2 = (KVPair const*)p2;
+
+   return -(k1->value - k2->value);
+}
+
+void
+WriteFreq(Result_t const* tb, size_t length)
+{
+   uint n_elements = g_hash_table_size(tb->hash_table[0]);
+   KVPair* sorted_list = (KVPair*)calloc(n_elements, sizeof(KVPair));
+
+   GHashTableIter ite = {0};
+   g_hash_table_iter_init (&ite, tb->hash_table[0]);
+
+   ui64*   src_key = 0;
+   int*   src_val = 0;
+   int      index = 0;
+
+   for (; g_hash_table_iter_next (&ite, (void**)&src_key, (void**)&src_val); ++index)
+   {
+      sorted_list[index].key      = *src_key;
+      sorted_list[index].value   = *src_val;
+   }
+
+   qsort(sorted_list, n_elements, sizeof(KVPair), DescCompFunc);
+
+   char buffer[64];
+   float total = length - tb->frame_size +1;
+
+   for (index = 0; index < n_elements; ++index)
+   {
+      buffer[tb->frame_size] = 0;
+
+      printf("%s %.3f\n",
+         DecodeKey(buffer, tb->frame_size, sorted_list[index].key),
+         sorted_list[index].value * 100.0f / total);
+   }
+
+   printf("\n");
+   free(sorted_list);
+}
+
+void
+WriteCount(Result_t const* tb, char const* pattern)
+{
+   ui64 key = EncodeKey(pattern, tb->frame_size);
+   int* val = (int*)g_hash_table_lookup(tb->hash_table[0], &key);
+
+   printf("%d\t%s\n",
+      (val != 0) ? *val : 0,
+      pattern);
+}
+
+int
+GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   int i;
+   for (i = 0; i < MAX_THREADS; ++i)
+   {
+      if (CPU_ISSET(i, &cs))
+         ++count;
+   }
+   return count;
+}
+
+
+int
+main()
+{
+   char*   input;
+   size_t   length;
+   ReadAll(&input, &length);
+
+   #pragma omp parallel num_threads(GetThreadCount()) default(shared)
+   {
+      int i;
+      for (i = 0; i < 7; ++i)
+         BuildHashTable(input, length, i);
+   }
+
+   WriteFreq(&result_list[0], length);
+   WriteFreq(&result_list[1], length);
+
+   WriteCount(&result_list[2], "GGT");
+   WriteCount(&result_list[3], "GGTA");
+   WriteCount(&result_list[4], "GGTATT");
+   WriteCount(&result_list[5], "GGTATTTTAATT");
+   WriteCount(&result_list[6], "GGTATTTTAATTTATAGT");
+
+   {
+      free(input);
+
+      int i;
+      for (i = 0; i < 7; ++i)
+         DeleteTable(result_list[i].hash_table[0]);
+   }
+
+   return 0;
+}
