@@ -20,17 +20,21 @@ href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=
 <dt><a href="#samebenchmark" name="samebenchmark">Compare the performance of <b>all the programs for one benchmark</b></a></dt>
 <dd>
 <p>Example <span class="u64q"><a
-href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&lang=all" title="Compare programs that calculate an eigenvalue using the power method">all languages</a> in the drop-down menus.</p>
+href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare programs that calculate an eigenvalue using the power method">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare programs that calculate an eigenvalue using the power method">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare programs that calculate an eigenvalue using the power method">all languages</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#oneone" name="oneone">Compare program speed and size for <b>2 language implementations</b></a></dt>
 <dd>
 <p>Example <span class="u64"><a
-href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs.">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs.">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs.">Java -6 server</a> in the drop-down menus.</p>
+href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">Java -6 server</a> in the drop-down menus.</p>
 <p>Example <span class="u32"><a
-href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&lang=java&lang2=python" title="Compare Java 6 -server programs against Python CPython programs. Which are faster?">Python CPython</a> in the drop-down menus.</p>
+href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Python CPython</a> in the drop-down menus.</p>
 </dd>
 
+<dt><a href="#allmeasurements" name="allmeasurements">Compare measurements of <b>all the programs for one language</b></a></dt>
+<dd>
+<p>Example select <a href="./u64/measurements.php?lang=java" title="Compare performance measurements of all the accepted Java 6 -server programs">Java -6 server</a> in the drop-down menu.</p>
+</dd>
 
 </dl>
 </dd>
@@ -75,7 +79,7 @@ href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the sp
 <dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression. The Code-used measurement is the size in bytes of that GZip compressed source-code file.</p>
 </dd>
 
-<dt><a href="#cpuload" name="cpuload">How did you measure <b>~ CPU Load?</b></a></dt>
+<dt><a href="#cpuload" name="cpuload">How did you measure <b>&asymp; CPU Load?</b></a></dt>
 <dd><p>The GTop cpu idle and GTop cpu total was taken before forking the child-process and after the child-process exits, The percentages represent the proportion of cpu not-idle to cpu total for each core.</p>
 </dd>
 
@@ -177,10 +181,10 @@ language, benchmark, your-name, date, (version)<br />
 <p>Read <a href="#pretest">&darr;&nbsp;How programs were measured</a></p>
 </dd>
 
-<dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' ~ CPU Load mean?</a></dt>
+<dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' &asymp; CPU Load mean?</a></dt>
 <dd><p>When the program was being measured: the first core was not-idle about 27% of the time, the second core was not-idle about 34% of the time, the third core was not-idle about 28% of the time, the fourth core was not-idle about 67% of the time.</p>
-<p>When <em>all the programs</em> show ~CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core - the fourth core (rather than being allowed to use any or all of the CPU cores).</p>
-<p>Read <a href="#cpuload">&darr;&nbsp;How did you measure ~ CPU Load?</a></p>
+<p>When <em>all the programs</em> show &asymp; CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core - the fourth core (rather than being allowed to use any or all of the CPU cores).</p>
+<p>Read <a href="#cpuload">&darr;&nbsp;How did you measure &asymp; CPU Load?</a></p>
 </dd>
 
 <dt><a href="#alternative" name="alternative">What does Interesting Alternative Program mean?</a></dt>

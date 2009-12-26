@@ -83,7 +83,7 @@ foreach($sTests as $Row){
 
 <h2><a href="#faster-programs-measurements" name="faster-programs-measurements">&nbsp;Step&nbsp;3&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <em>Measurements.</em></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a> ~ speed and size.</p>
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a> ~ speed and size.</p>
 
 <p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
 
@@ -94,7 +94,7 @@ foreach($sTests as $Row){
 <th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

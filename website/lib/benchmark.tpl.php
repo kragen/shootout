@@ -33,11 +33,11 @@ foreach($Accepted as $d){
 
 if ($TestName=='fasta'||$TestName=='k-nucleotide'||
       $TestName=='reverse-complement'||$TestName=='regex-dna'){
-   if ($d[DATA_TESTVALUE] == 25000000) { $NString = '~240MB '.$NString; }
-   elseif ($d[DATA_TESTVALUE] == 2500000) { $NString = '~24MB '.$NString; }
-   elseif ($d[DATA_TESTVALUE] == 5000000) { $NString = '~50MB '.$NString; }
-   elseif ($d[DATA_TESTVALUE] == 1000000) { $NString = '~10MB '.$NString; }
-   elseif ($d[DATA_TESTVALUE] == 500000) { $NString = '~5MB '.$NString; }
+   if ($d[DATA_TESTVALUE] == 25000000) { $NString = '&asymp;240MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 2500000) { $NString = '&asymp;24MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 5000000) { $NString = '&asymp;50MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 1000000) { $NString = '&asymp;10MB '.$NString; }
+   elseif ($d[DATA_TESTVALUE] == 500000) { $NString = '&asymp;5MB '.$NString; }
    }
 
 if ($TestName=='startup'){ $NString = ''; }
@@ -60,7 +60,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="<?=CORE_SITE;?>help.php#nmeans"><?=$NString;?></a></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a>.</p>         
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a>.</p>
 
 <p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz">sort Code&nbsp;B</a></p>      
 
@@ -97,7 +97,7 @@ if ($TestName=='startup'){ $NString = ''; }
 <th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?

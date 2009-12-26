@@ -19,7 +19,7 @@ $P = $SelectedLang.'-'.$Id;
 <th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">~&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?
 usort($Data, 'CompareProgramTestValue');
