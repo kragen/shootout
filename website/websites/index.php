@@ -110,33 +110,55 @@ $a_list = Keys( array( $chosen[0] ));
 $b_list = Keys( array( $chosen[1] ));
 
 
-$siteTip = array(
-   'u32' => 'on one core x86 Ubuntu'
-   ,'u32q' =>'on quad-core x86 Ubuntu'
-   ,'u64' =>'on one core x64 Ubuntu'
-   ,'u64q' =>'on quad-core x64 Ubuntu'
-   ,'' =>'on Q6600 Ubuntu'
+$testchoices = array(
+   'fannkuch'
+   ,'knucleotide'
+   ,'mandelbrot'
+   ,'nbody'
+   ,'fasta'
+   ,'spectralnorm'
+   ,'threadring'
+   ,'chameneosredux'
+   ,'regexdna'
+   ,'pidigits'
+   ,'binarytrees'
+   ,'revcomp'
    );
+   
+$nchoices = sizeof($testchoices);
+$chosentest = $testchoices[$rotate%$nchoices];
+$Tests = ReadA('../desc/test.csv');
+$chosenTip = 'Fastest in each programming language to '.$Tests[$chosentest][4];
+unset($Tests);
+
+$siteTip = array(
+   'u32' => ' on one core x86 Ubuntu'
+   ,'u32q' =>' on quad-core x86 Ubuntu'
+   ,'u64' =>' on one core x64 Ubuntu'
+   ,'u64q' =>' on quad-core x64 Ubuntu'
+   );
+$chosenSiteTip = $siteTip[$chosen[1]];
+
 
 $pagechoices = array(
    array(
       '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs '.$siteTip[$chosen[1]].'?')
+      ,'Which programming languages have the fastest benchmark programs '.$chosenSiteTip.'?')
    ,array(
-      '/benchmark.php?test=fasta&amp;lang=all'
-      ,'Measurements for all the fasta benchmark programs '.$siteTip[$chosen[1]])
+      '/benchmark.php?test='.$chosentest.'&amp;lang=all'
+      ,$chosenTip.$chosenSiteTip)
    ,array(
       '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs '.$siteTip[$chosen[1]].'?')
+      ,'Which programming languages have the fastest benchmark programs '.$chosenSiteTip.'?')
    ,array(
       '/code-used-time-used-shapes.php'
-      ,'Look for patterns in Code-used Time-used Shapes '.$siteTip[$chosen[1]])
+      ,'Look for patterns in Code-used Time-used Shapes '.$chosenSiteTip)
    ,array(
       '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs '.$siteTip[$chosen[1]].'?')
+      ,'Which programming languages have the fastest benchmark programs '.$chosenSiteTip.'?')
    ,array(
-      '/benchmark.php?test=nbody&amp;lang=all'
-      ,'Measurements for all the n-body benchmark programs '.$siteTip[$chosen[1]])
+      '/benchmark.php?test='.$chosentest.'&amp;lang=all'
+      ,$chosenTip.$chosenSiteTip)
    );
 
 $nchoices = sizeof($pagechoices);
@@ -144,7 +166,6 @@ $chosenpage = $pagechoices[$rotate%$nchoices];
 $ChosenSite = $chosen[1];
 $ChosenUrl = $chosenpage[0];
 $ChosenTip = $chosenpage[1];
-
 ?>
 
 
