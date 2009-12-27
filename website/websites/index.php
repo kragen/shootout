@@ -1,13 +1,13 @@
 <?php 
 ob_start('ob_gzhandler');
 
-$s = time(); $m = floor($s/60); $h = floor($m/60); $rotate = floor($h/36); 
+$s = time(); $m = floor($s/60); $h = floor($m/60); $rotate = floor($h/7); 
 
 // REVISED - don't have all pages expire at the same time!
-// EXPIRE pages 16 hours after they are visited.
+// EXPIRE pages 13 hours after they are visited.
 header("Pragma: public");
-header("Cache-Control: maxage=".(16*3600).",public");
-header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
+header("Cache-Control: maxage=".(13*3600).",public");
+header("Expires: " . gmdate("D, d M Y H:i:s", $s + (13*3600)) . " GMT");
 ?>
 <?php echo '<?xml version="1.0" encoding="utf-8"?>'; ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -32,15 +32,6 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (16*3600)) . " GMT");
 <td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php" title="How to compare these programming language measurements. How programs were measured. How to contribute programs. FAQs">Help</a></h1></td>
 </tr></table>
 
-<div id="home">
-<h5><strong>Compare the performance of ~30 programming languages</strong> <br/>using ~12 <strong>flawed benchmarks</strong> and ~1100 programs</h5>
-<p><br/>Read the source code. Contribute faster more elegant programs.</p>
-<p>Compare performance on both 32 bit and 64 bit Ubuntu&#8482;.</p>
-<p>Compare performance both when programs are allowed to use <br/>quad-core and when programs are forced to use one core.</p>
-
-
-
-<h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
 
 <?php
 
@@ -80,32 +71,20 @@ function CompareLangName($b, $a){
 function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
    $link = $a[LANG_LINK];
    $notShown = $notShown0;
-   $showTag = TRUE;
    foreach($sites as $keys){
       if (isset($keys[$link]) && !empty($link)){
          $notShown = FALSE;
-         $notShownYet =$showTag;
-         if ($showTag) {
-            $tag = $a[LANG_TAG];
-            $showTag = FALSE;
-         } else { $tag = ''; }
+         $tag = $a[LANG_TAG];
+         $site = $keys[$link];
 
-         if ($notShownYet){
-
-            $arch = '';
-            $site = $keys[$link];
-            if ($site == 'debian'){ $arch = '<em>Debian</em>'; }
-            elseif ($site == 'gp4'){ $arch = '<em>Gentoo</em>'; }
-
-            if (isset($a[LANG_SPECIALURL]) && !empty($a[LANG_SPECIALURL])){ // special_url
-                printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s %s</span></p>',
-                   $site, $a[LANG_SPECIALURL], $a[LANG_FULL], $a[LANG_HTML], $tag, $arch);
-            } else {
-                printf('<p><a href="http://shootout.alioth.debian.org/%s/benchmark.php?test=all&amp;lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s %s</span></p>',
-                   $site, $link, $a[LANG_FULL], $a[LANG_HTML], $tag, $arch);
-            }
-
+         if (isset($a[LANG_SPECIALURL]) && !empty($a[LANG_SPECIALURL])){ // special_url
+             printf('<p><a href="./%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
+                $site, $a[LANG_SPECIALURL], $a[LANG_FULL], $a[LANG_HTML], $tag);
+         } else {
+             printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
+                $site, $link, $a[LANG_FULL], $a[LANG_HTML], $tag);
          }
+
       }
    }
    return $notShown;
@@ -130,10 +109,61 @@ $chosen = $choices[$rotate%$nchoices];
 $a_list = Keys( array( $chosen[0] ));
 $b_list = Keys( array( $chosen[1] ));
 
+
+$siteTip = array(
+   'u32' => 'on one core x86 Ubuntu'
+   ,'u32q' =>'on quad-core x86 Ubuntu'
+   ,'u64' =>'on one core x64 Ubuntu'
+   ,'u64q' =>'on quad-core x64 Ubuntu'
+   ,'' =>'on Q6600 Ubuntu'
+   );
+
+$pagechoices = array(
+   array(
+      '/which-programming-languages-are-fastest.php'
+      ,'Which programming languages have the fastest benchmark programs '.$siteTip[$chosen[1]].'?')
+   ,array(
+      '/benchmark.php?test=fasta&amp;lang=all'
+      ,'Measurements for all the fasta benchmark programs '.$siteTip[$chosen[1]])
+   ,array(
+      '/which-programming-languages-are-fastest.php'
+      ,'Which programming languages have the fastest benchmark programs '.$siteTip[$chosen[1]].'?')
+   ,array(
+      '/code-used-time-used-shapes.php'
+      ,'Look for patterns in Code-used Time-used Shapes '.$siteTip[$chosen[1]])
+   ,array(
+      '/which-programming-languages-are-fastest.php'
+      ,'Which programming languages have the fastest benchmark programs '.$siteTip[$chosen[1]].'?')
+   ,array(
+      '/benchmark.php?test=nbody&amp;lang=all'
+      ,'Measurements for all the n-body benchmark programs '.$siteTip[$chosen[1]])
+   );
+
+$nchoices = sizeof($pagechoices);
+$chosenpage = $pagechoices[$rotate%$nchoices];
+$ChosenSite = $chosen[1];
+$ChosenUrl = $chosenpage[0];
+$ChosenTip = $chosenpage[1];
+
+?>
+
+
+
+<div id="home">
+<h5><strong>Compare the performance of ~30 programming languages</strong> <br/>using ~12 <strong>flawed benchmarks</strong> and ~1100 programs</h5>
+<p><br/>Read the source code. Contribute faster more elegant programs.</p>
+<p><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Compare performance</strong></a> on both 32 bit and 64 bit Ubuntu&#8482;.</p>
+<p>Compare performance both when programs are allowed to use <br/>quad-core and when programs are forced to use one core.</p>
+
+
+
+<h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
+
+
+<?php
 foreach($Langs as $a){
    $notShown = PrintIncludedLanguages($a_list,$a,TRUE);
    if ($notShown){ $notShown = PrintIncludedLanguages($b_list,$a,$notShown); }
-//   if ($notShown){ $notShown = PrintIncludedLanguages($u32,$a,$notShown); }
 }
 ?>
 
