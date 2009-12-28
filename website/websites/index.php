@@ -143,19 +143,19 @@ $chosenSiteTip = $siteTip[$chosen[1]];
 $pagechoices = array(
    array(
       '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs '.$chosenSiteTip.'?')
+      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
       '/benchmark.php?test='.$chosentest.'&amp;lang=all'
       ,$chosenTip.$chosenSiteTip)
    ,array(
       '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs '.$chosenSiteTip.'?')
+      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
       '/code-used-time-used-shapes.php'
-      ,'Look for patterns in Code-used Time-used Shapes '.$chosenSiteTip)
+      ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
    ,array(
       '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs '.$chosenSiteTip.'?')
+      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
       '/benchmark.php?test='.$chosentest.'&amp;lang=all'
       ,$chosenTip.$chosenSiteTip)
