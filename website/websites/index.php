@@ -171,7 +171,7 @@ $ChosenTip = $chosenpage[1];
 
 
 <div id="home">
-<h5><strong>Compare the performance of ~30 programming languages</strong> <br/>using ~12 <strong>flawed benchmarks</strong> and ~1100 programs</h5>
+<h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <strong>flawed benchmarks</strong> and &asymp;1100 programs</h5>
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
 <p><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Compare performance</strong></a> on both 32 bit and 64 bit Ubuntu&#8482;.</p>
 <p>Compare performance both when programs are allowed to use <br/>quad-core and when programs are forced to use one core.</p>
