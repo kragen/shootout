@@ -161,7 +161,7 @@ foreach($sTests as $Row){
 </table>
 
 
-<h2><a href="#measurements" name="measurements">&nbsp;<strong>Measurements</strong> for all the accepted programs</h2>
+<h2><a href="#measurements" name="measurements">&nbsp;<strong>Measurements</strong> for all the accepted programs</a></h2>
 <p></p>
 <? MkLangsMenuForm($Langs,$SelectedLang); ?>
 

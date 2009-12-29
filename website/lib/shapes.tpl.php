@@ -118,11 +118,10 @@
                printf('<a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s size and speed against one other programming language">', $k, $Langs[$k][LANG_FULL]);
             }
 
-            printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" width="150" height="120" />',
+            printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" alt="" title="" width="150" height="120" />',
                Encode($k), Encode($Shapes[$k]), Encode($Centers[$k]) );
 
             printf('</a>');
-
 
          } else {
             printf('&nbsp;');

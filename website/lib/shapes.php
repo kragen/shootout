@@ -55,7 +55,7 @@ if (SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME
 } else {
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
-$metaKeywords = '<meta name="description" content="Look for patterns in Code-used Time-used Shapes ('.PLATFORM_NAME.') & find out how your favorite language compares." />';
+$metaKeywords = '<meta name="description" content="Look for patterns in Code-used Time-used Shapes ('.PLATFORM_NAME.') &amp; find out how your favorite language compares." />';
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 

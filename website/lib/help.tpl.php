@@ -28,7 +28,7 @@ href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare progra
 <p>Example <span class="u64"><a
 href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">Java -6 server</a> in the drop-down menus.</p>
 <p>Example <span class="u32"><a
-href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&lang=java&lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Python CPython</a> in the drop-down menus.</p>
+href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Python CPython</a> in the drop-down menus.</p>
 </dd>
 
 <dt><a href="#allmeasurements" name="allmeasurements">Compare measurements of <b>all the programs for one language</b></a></dt>
@@ -305,6 +305,7 @@ language, benchmark, your-name, date, (version)<br />
 <td>(17&nbsp;min)</td>
 </tr>
 
+<tr>
 <td>fannkuch&nbsp;&nbsp;</td>
 <td>18.74s</td>
 <td>0.66</td>
@@ -379,16 +380,16 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 <table class="layout">
 <tr class="test">
 <td>
-<p class="timestamp"><a title="" href="./gp4/benchmark.php?test=nbody&lang=all">mid 2008</a></p>
+<p class="timestamp"><a title="" href="./gp4/benchmark.php?test=nbody&amp;lang=all">mid 2008</a></p>
 <h3><span class="gp4">
 <a title=""
-href="./gp4/benchmark.php?test=nbody&lang=all">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
+href="./gp4/benchmark.php?test=nbody&amp;lang=all">&nbsp;Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4&nbsp;</a></span></h3>
 </td>
 <td>
-<p class="timestamp"><a title="" href="./debian/benchmark.php?test=nbody&lang=all">late 2007</a></p>
+<p class="timestamp"><a title="" href="./debian/benchmark.php?test=nbody&amp;lang=all">late 2007</a></p>
 <h3><span class="debian">
 <a title=""
-href="./debian/benchmark.php?test=nbody&lang=all">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
+href="./debian/benchmark.php?test=nbody&amp;lang=all">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482;&nbsp;</a></span></h3>
 </td>
 </tr>
 </table>
@@ -398,8 +399,5 @@ href="./debian/benchmark.php?test=nbody&lang=all">&nbsp;Debian&nbsp;:&nbsp;AMD&#
 </dd>
 
 
-
 </dl>
-</dd>
 
-</dl>

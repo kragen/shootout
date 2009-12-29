@@ -60,7 +60,7 @@ $Body->set('DataSet', $DataSet);
 $Body->set('W', $W);
 $Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
 $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
-$MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks & Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
+$MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks &amp; Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
 
 $faqUrl = CORE_SITE.'help.php';
 $timeUsed = 'Elapsed secs';
