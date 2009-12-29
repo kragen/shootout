@@ -55,7 +55,7 @@ $SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
 if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
 $Body->set('DataSet', $DataSet);
 $metaRobots = '<meta name="robots" content="all" /><meta name="revisit" content="4 days" />';
-$MetaKeywords = '<meta name="description" content="Find out which programming language has the fastest benchmark programs ('.PLATFORM_NAME.') & how your favorite language compares." />';
+$MetaKeywords = '<meta name="description" content="Find out which programming language has the fastest benchmark programs ('.PLATFORM_NAME.') &amp; how your favorite language compares." />';
 $faqUrl = CORE_SITE.'help.php';
 $bannerUrl = CORE_SITE;
 $timeUsed = 'Elapsed secs';
