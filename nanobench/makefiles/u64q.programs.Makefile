@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.40 2009-11-17 16:52:44 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.41 2009-12-30 00:38:20 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -190,7 +190,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-mv $< $@
 
 %.fsharp_run: %.fs
-	-$(MONORUN) $(FSHARPC) -r FSharp.PowerPack.dll --platform x64 -O --cliversion 3.5 $(FSHARPOPTS) -o $@.exe $<
+	-$(MONORUN) $(FSHARPC) -r FSharp.PowerPack.dll --platform:x64 -O $(FSHARPOPTS) -o $@.exe $<
 
 ########################################
 # Zonnon
