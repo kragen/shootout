@@ -9,17 +9,17 @@ $P = $SelectedLang.'-'.$Id;
 
 <h2><a href="#prog" name="prog">&nbsp;performance measurements</a></h2>
 
-<p>Each table row shows performance measurements for this <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#nmeans" title="? Help">command-line input value N</a>.</p>
+<p>Each table row shows performance measurements for this <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#inputvalue" title="? Help">command-line input value N</a>.</p>
 
 <table>
 <colgroup span="4" class="num"></colgroup>
 <tr>
-<th><a href="<?=CORE_SITE;?>help.php#nmeans" title="? Help">&nbsp;N&nbsp;</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;secs</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#inputvalue" title="? Help">&nbsp;N&nbsp;</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#time" title="? Help">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#time" title="? Help">Elapsed&nbsp;secs</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?
 usort($Data, 'CompareProgramTestValue');

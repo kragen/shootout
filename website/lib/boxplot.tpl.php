@@ -11,7 +11,7 @@
 
 <h2><a href="<?=$pageUrl;?>#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
 
-<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Time-used</a> (<?=$TimeUsed;?>).</p>
+<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a> (<?=$TimeUsed;?>).</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 

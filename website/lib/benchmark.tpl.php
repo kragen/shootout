@@ -58,9 +58,9 @@ if ($TestName=='startup'){ $NString = ''; }
  /></p>
  
 
-<h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="<?=CORE_SITE;?>help.php#nmeans"><?=$NString;?></a></h2>
+<h2><a href="#table" name="table">&nbsp;<?=$TestName;?>&nbsp;<strong>benchmark</strong></a>&nbsp;<a href="<?=CORE_SITE;?>help.php#inputvalue"><?=$NString;?></a></h2>
 
-<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a>.</p>
+<p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a>.</p>
 
 <p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz">sort Code&nbsp;B</a></p>      
 
@@ -73,7 +73,7 @@ if ($TestName=='startup'){ $NString = ''; }
 <th class="c">&nbsp;</th>
 <th class="c">&nbsp;</th>
 <th>
-   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=fullcpu" 
+   <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=fullcpu"
    title="Sort by CPU Time secs">sort</a>
 </th>
 <th>
@@ -93,11 +93,11 @@ if ($TestName=='startup'){ $NString = ''; }
 <tr>
 <th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
 <th>Program&nbsp;Source&nbsp;Code</th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">CPU&nbsp;secs</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#measurecpu" title="? Help">Elapsed&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#time" title="? Help">CPU&nbsp;secs</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#time" title="? Help">Elapsed&nbsp;secs</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory&nbsp;KB</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code&nbsp;B</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#loadstring" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
+<th><a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 
 <?
@@ -118,7 +118,7 @@ foreach($Accepted as $d){
       // Sort according to current sort criteria, bold the sort-column
       if ($Sort=='fullcpu'){
          $CPU = ' class="sort"';
-      } elseif ($Sort=='kb'){ 
+      } elseif ($Sort=='kb'){
          $MEM = ' class="sort"';
       } elseif ($Sort=='elapsed'){
          $ELAPSED = ' class="sort"';

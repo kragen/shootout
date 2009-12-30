@@ -17,13 +17,13 @@
 href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all benchmarks</a> select <a href="./u32q/which-programming-languages-are-fastest.php?calc=calculate&amp;gpp=on&amp;gcc=on&amp;java=on&amp;javaxint=on&amp;jruby=on" title="Which programming languages are fastest?">all languages</a> in the drop-down menus.</p>
 </dd>
 
-<dt><a href="#samebenchmark" name="samebenchmark">Compare the performance of <b>all the programs for one benchmark</b></a></dt>
+<dt><a href="#onebenchmark" name="onebenchmark">Compare the performance of <b>all the programs for one benchmark</b></a></dt>
 <dd>
 <p>Example <span class="u64q"><a
 href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare programs that calculate an eigenvalue using the power method">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core&nbsp;</a></span> select <a href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare programs that calculate an eigenvalue using the power method">spectral-norm</a> select <a href="./u64q/benchmark.php?test=spectralnorm&amp;lang=all" title="Compare programs that calculate an eigenvalue using the power method">all languages</a> in the drop-down menus.</p>
 </dd>
 
-<dt><a href="#oneone" name="oneone">Compare program speed and size for <b>2 language implementations</b></a></dt>
+<dt><a href="#comparetwo" name="comparetwo">Compare program speed and size for <b>2 language implementations</b></a></dt>
 <dd>
 <p>Example <span class="u64"><a
 href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">&nbsp;x64&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">all benchmarks</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and size of Java 6 -server programs against C++ GNU g++ programs">Java -6 server</a> in the drop-down menus.</p>
@@ -31,7 +31,7 @@ href="./u64/benchmark.php?test=all&amp;lang=java" title="Compare the speed and s
 href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">all benchmarks</a> select <a href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Java -6 server</a> select <a href="./u64/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Python CPython</a> in the drop-down menus.</p>
 </dd>
 
-<dt><a href="#allmeasurements" name="allmeasurements">Compare measurements of <b>all the programs for one language</b></a></dt>
+<dt><a href="#measurements" name="measurements">Compare measurements of <b>all the programs for one language</b></a></dt>
 <dd>
 <p>Example select <a href="./u64/measurements.php?lang=java" title="Compare performance measurements of all the accepted Java 6 -server programs">Java -6 server</a> in the drop-down menu.</p>
 </dd>
@@ -44,7 +44,7 @@ href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compar
 <dt><a href="#measure" name="measure">&nbsp;How programs were measured</a></dt>
 <dd>
 <dl>
-<dt><a href="#pretest" name="pretest">The Process</a></dt>
+<dt><a href="#process" name="process">The Process</a></dt>
 <dd>
 <ol>
 <li>Each program was run and measured at the smallest input value, program output redirected to a file and compared to expected output. As long as the output matched expected output, the program was then run and measured at the next larger input value until measurements had been made at every input value.</li>
@@ -61,7 +61,7 @@ href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compar
 </ol>
 </dd>
 
-<dt><a href="#measurecpu" name="measurecpu">How did you measure <strong>Time-used?</strong></a></dt>
+<dt><a href="#time" name="time">How did you measure <strong>Time-used?</strong></a></dt>
 <dd>
 <p>Each program was run as a child-process of a Python script using <a href="http://docs.python.org/library/subprocess.html#popen-objects">Popen</a>.</p>
 <ul>
@@ -91,25 +91,25 @@ href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compar
 <dd>
 <dl>
 
-<dt><a href="#correct" name="correct">How much effort should I put into getting the program correct?</a></dt>
+<dt><a href="#diff" name="diff">How much effort should I put into getting the program correct?</a></dt>
 <dd><p>Do design-iteration on your machine, or in a language newsgroup. Only contribute programs which give correct results on your machine - <b>diff the program output with the provided output file before you contribute the program</b>.</p>
 </dd>
 
-<dt><a href="#implementp" name="implementp">How should I implement programs?</a></dt>
+<dt><a href="#implement" name="implement">How should I implement programs?</a></dt>
 <dd><p>Prefer plain vanilla programs - after all we're trying to compare language implementations not programmer effort and skill. We'd like your programs to be easily viewable - so please format your code to fit in <b>less than 80 columns</b> (we don't measure lines-of-code!).</p>
 </dd>
 
-<dt><a href="#datainput" name="datainput">How should I implement data-input?</a></dt>
+<dt><a href="#input" name="input">How should I implement data-input?</a></dt>
 <dd><p>Programs are measured across a range of input-values; programs are expected to either take a single command-line parameter or read text from <b>stdin</b>.</p>
 <p>(Look at what the other programs do.)</p>
 </dd>
 
-<dt><a href="#dataoutput" name="dataoutput">How should I implement data-output?</a></dt>
+<dt><a href="#output" name="output">How should I implement data-output?</a></dt>
 <dd><p>Programs should write to <b>stdout</b>. Program output is redirected to a log-file and diff'd with the expected output.</p>
 <p>(Look at what the other programs do.)</p>
 </dd>
 
-<dt><a href="#brag" name="brag">How should I identify my program?</a></dt>
+<dt><a href="#credit" name="credit">How should I identify my program?</a></dt>
 <dd><p>Include a header comment in the program like this:</p>
 <pre>
 /* The Computer Language Benchmarks Game
@@ -125,7 +125,7 @@ href="./u32/benchmark.php?test=all&amp;lang=java&amp;lang2=python" title="Compar
 <dd><p>Don't manually unroll loops!</p></dd>
 
 
-<dt><a href="#implementp" name="implementp">Finally! <b>How to contribute programs</b></a></dt>
+<dt><a href="#stepbystep" name="stepbystep">Finally! <b>How to contribute programs</b></a></dt>
 
 <dd><p>Attach the full source-code file of a tested program. Please don't paste source-code into the description field. Please don't contribute patch-files.</p>
 <p>Before contributing programs</p>
@@ -154,13 +154,13 @@ language, benchmark, your-name, date, (version)<br />
 </p>
 </dd>
 
-<dt><a href="#status" name="status">How can I track what happens to the program I contributed?</a></dt>
+<dt><a href="#track" name="track">How can I track what happens to the program I contributed?</a></dt>
 <dd>
 
 <p>You created an <a href="#aliothid">&darr;&nbsp;Alioth ID</a> with a valid email address so you'll receive email updates when your program is accepted and measured.</p>
 </dd>
 
-<dt><a href="#report" name="report">Where can I report bugs&#8230; request features?</a></dt>
+<dt><a href="#reportbugs" name="reportbugs">Where can I report bugs&#8230; request features?</a></dt>
 <dd>
 <p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em></p>
 <p>Please <a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a>, login and <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><b>Report a Bug</b></a>.</p>
@@ -172,16 +172,16 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 
-<dt><a href="#means" name="means">&nbsp;What does &#8230; mean?</a></dt>
+<dt><a href="#gloss" name="gloss">&nbsp;What does &#8230; mean?</a></dt>
 <dd>
 <dl>
 
-<dt><a href="#nmeans" name="nmeans">What does N mean?</a></dt>
+<dt><a href="#inputvalue" name="inputvalue">What does N mean?</a></dt>
 <dd><p>N means the value passed to the program on the command-line (or the value used to create the data file passed to the program on stdin). Larger N causes the program to do more work - mostly measurements are shown for the largest N, the largest workload.</p>
 <p>Read <a href="#pretest">&darr;&nbsp;How programs were measured</a></p>
 </dd>
 
-<dt><a href="#loadstring" name="loadstring">What does '27% 34% 28% 67%' &asymp; CPU Load mean?</a></dt>
+<dt><a href="#cpuloadpercent" name="cpuloadpercent">What does '27% 34% 28% 67%' &asymp; CPU Load mean?</a></dt>
 <dd><p>When the program was being measured: the first core was not-idle about 27% of the time, the second core was not-idle about 34% of the time, the third core was not-idle about 28% of the time, the fourth core was not-idle about 67% of the time.</p>
 <p>When <em>all the programs</em> show &asymp; CPU Load like this '0% 0% 0% 100%' you are probably looking at measurements of programs forced to use just one core - the fourth core (rather than being allowed to use any or all of the CPU cores).</p>
 <p>Read <a href="#cpuload">&darr;&nbsp;How did you measure &asymp; CPU Load?</a></p>
@@ -191,7 +191,7 @@ language, benchmark, your-name, date, (version)<br />
 <dd><p>Interesting Alternative Program means that the program doesn't implement the benchmark according to the arbitrary and idiosyncratic rules of The Computer Language Benchmarks Game - but we felt like showing the program anyway.</p>
 </dd>
 
-<dt><a href="#id" name="id">What do #2 #3 mean?</a></dt>
+<dt><a href="#suffixes" name="suffixes">What do #2 #3 mean?</a></dt>
 <dd><p>Nothing - they are arbitrary suffixes that identify a specific program.</p>
 </dd>
 
@@ -204,18 +204,18 @@ language, benchmark, your-name, date, (version)<br />
 
 
 
-<dt><a href="#where" name="where">&nbsp;FAQs</a></dt>
+<dt><a href="#faqs" name="faqs">&nbsp;FAQs</a></dt>
 <dd>
 <dl>
 
-<dt><a href="#acceptable" name="acceptable">Why don't you include language X?</a></dt>
+<dt><a href="#languagex" name="languagex">Why don't you include language X?</a></dt>
 <dd>
 <p><b>Why don't you</b> use our measurement scripts and publish measurements for language X?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.tar.bz2"><b>download bencher</b></a> and unpack into your ~ directory and read the license before use.</p>
 <p>As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 
-<dt><a href="#dynamic" name="dynamic"><b>What about Java</b>?</a></dt>
+<dt><a href="#java" name="java"><b>What about Java</b>?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
 <p>The usual startup measurements and the "Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
 

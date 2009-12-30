@@ -1,6 +1,6 @@
 <?=$Version;?>
 
-<p>The reported "Java 6 steady state" program CPU secs and program Elapsed secs are <b>averages</b> that approximate steady state performance - see <a href="help.php#dynamic"><b>Help: What about Java?</b></a></p>
+<p>The reported "Java 6 steady state" program CPU secs and program Elapsed secs are <b>averages</b> that approximate steady state performance - see <a href="help.php#java"><b>Help: What about Java?</b></a></p>
 
 <p>Each program performs the same calculation 66 times, for example -</p>
 
