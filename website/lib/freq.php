@@ -6,8 +6,8 @@
 // CONSTANTS ////////////////////////////////////////////////
 
 define('HTTP_DIR', '/home/dunham/shootout/website/websites');
-$Sites = array('gp4','debian');
-//$Sites = array('u32q');
+//$Sites = array('gp4','debian');
+$Sites = array('u32q');
 
 // FUNCTIONS ///////////////////////////////////////////
 

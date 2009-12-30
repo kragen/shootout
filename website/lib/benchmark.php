@@ -120,7 +120,7 @@ if ($T=='all'){
 
       if ($L!=$L2){
          $LangName2 = $Langs[$L2][LANG_FULL];
-         $Title = $LangName.'&nbsp;&#247;&nbsp;'.$LangName2.'&nbsp;~&nbsp;speed';
+         $Title = 'speed and size '.$LangName.'&nbsp;&#247;&nbsp;'.$LangName2;
          $TemplateName = 'headtohead.tpl.php';
          $Body->set('Data', HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2));
 
