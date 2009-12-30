@@ -11,7 +11,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <h2><a href="#chart" name="chart">&nbsp;How big is the difference between programming languages?</a></h2>
 
-<p>This chart shows 1 or 2 or 3 <em>comparisons</em> - Time-used and/or Memory-used and/or Code-used - speed and size.</p>
+<p>This chart shows 1 or 2 or 3 <em>comparisons</em> - Time-used and/or Memory-used and/or Code-used ~ speed and size.</p>
 
 <p>Selected and weighted "<i>how many times more</i> compared to the program that used least <i>scores</i>" are compressed into one number - <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
