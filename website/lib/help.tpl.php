@@ -178,7 +178,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#inputvalue" name="inputvalue">What does N mean?</a></dt>
 <dd><p>N means the value passed to the program on the command-line (or the value used to create the data file passed to the program on stdin). Larger N causes the program to do more work - mostly measurements are shown for the largest N, the largest workload.</p>
-<p>Read <a href="#pretest">&darr;&nbsp;How programs were measured</a></p>
+<p>Read <a href="#measure">&darr;&nbsp;How programs were measured</a></p>
 </dd>
 
 <dt><a href="#cpuloadpercent" name="cpuloadpercent">What does '27% 34% 28% 67%' &asymp; CPU Load mean?</a></dt>
