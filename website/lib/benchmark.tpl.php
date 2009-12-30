@@ -46,7 +46,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#chart" name="chart">&nbsp;How big is the <strong>measured performance difference</strong>?</a></h2>
 
-<p>Each chart bar shows <i>how many times more</i> Time or <i>how many times more</i> Memory one unidentified <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the program that used least Time or the program that used least Memory.</p>
+<p>Each chart bar shows <i>how many times more</i> Time or <i>how many times more</i> Memory one unidentified <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the benchmark program that used least Time or the program that used least Memory.</p>
 
 
 <? list($dtime,$dmem) = TimeMemoryRatios($Accepted,$Sort); ?>
@@ -62,9 +62,9 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a>.</p>
 
-<p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz">sort Code&nbsp;B</a></p>      
+<p>Compare how much Memory the <?=$TestName;?> programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the benchmark programs used - <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=<?=$SelectedLang;?>&amp;sort=gz">sort Code&nbsp;B</a></p>      
 
-<p>Column &#215; shows <i>how many times more</i> each program used compared to the program that used least.</p> 
+<p>Column &#215; shows <i>how many times more</i> each program used compared to the benchmark program that used least.</p> 
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
@@ -208,7 +208,7 @@ foreach($Langs as $k => $v){
 
 <?
 if (sizeof($Special)>0){ 
-   printf('<tr><th colspan="7"><a href="%shelp.php#alternative" name="alt" title="? Help">interesting alternative programs</a></th></tr>', CORE_SITE);
+   printf('<tr><th colspan="7"><a href="%shelp.php#alternative" name="alt" title="? Help">"interesting alternative" programs</a></th></tr>', CORE_SITE);
 
    foreach($Special as $d){
       $k = $d[DATA_LANG];
@@ -257,7 +257,7 @@ if (sizeof($Special)>0){
 <? // MISSING PROGRAMS TABLE //////////////////////////
 
 if (sizeof($No_Program_Langs)>0){
-   echo '<tr><th colspan="7"><a href="#missing" name="missing">missing programs</a></th></tr>', "\n";
+   echo '<tr><th colspan="7"><a href="#missing" name="missing">missing benchmark programs</a></th></tr>', "\n";
       
    foreach($Langs as $k => $v){
       $no_program = isset($No_Program_Langs[$k]);
