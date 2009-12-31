@@ -1,0 +1,325 @@
+<span class="hl com">/*</span>
+<span class="hl com">   The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   Based on C contribution of Josh Goldfoot. And modified by Cedric Bail.</span>
+<span class="hl com">   Based on bit encoding idea of C++ contribution of Andrew Moon</span>
+<span class="hl com">   Contributed by The Anh Tran</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#define _GNU_SOURCE</span>
+<span class="hl dir">#include &lt;omp.h&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+
+<span class="hl dir">#include &lt;assert.h&gt;</span>
+
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;memory.h&gt;</span>
+<span class="hl dir">#include &lt;stdint.h&gt;</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned int</span> uint<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">uint64_t</span>   ui64<span class="hl sym">;</span>
+<span class="hl dir">#include</span> <span class="hl dstr">&quot;simple_hash.h&quot;</span><span class="hl dir"></span>
+
+
+<span class="hl dir">#define BIT_PER_CODE 2</span>
+<span class="hl dir">#define MAX_THREADS 16</span>
+<span class="hl dir">#define HT_SIZE (2*1024*1024)</span>
+
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">ReadAll</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">* *</span>input<span class="hl sym">,</span> <span class="hl kwb">size_t</span> <span class="hl sym">*</span>length<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// get input size</span>
+   <span class="hl sym">*</span>length <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">);</span>
+   <span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_END<span class="hl sym">);</span>
+   <span class="hl sym">*</span>length <span class="hl sym">=</span> <span class="hl kwd">ftell</span><span class="hl sym">(</span>stdin<span class="hl sym">) - *</span>length<span class="hl sym">;</span>
+   <span class="hl kwd">fseek</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> SEEK_SET<span class="hl sym">);</span>
+
+   <span class="hl sym">*</span>input <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(*</span>length<span class="hl sym">);</span>
+
+   <span class="hl slc">// rule: read line-by-line</span>
+   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">64</span><span class="hl sym">];</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets_unlocked</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">((</span>buffer<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ==</span> <span class="hl str">'&gt;'</span><span class="hl sym">) &amp;&amp; (</span><span class="hl kwd">strncmp</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">))</span>
+         <span class="hl kwa">break</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">size_t const</span> LL <span class="hl sym">=</span> <span class="hl num">60</span><span class="hl sym">;</span>
+   buffer<span class="hl sym">[</span>LL<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span> byte_read <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">fgets_unlocked</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>buffer<span class="hl sym">),</span> stdin<span class="hl sym">))</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span>LL<span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwd">memcpy</span><span class="hl sym">(*</span>input <span class="hl sym">+</span> byte_read<span class="hl sym">,</span> buffer<span class="hl sym">,</span> LL<span class="hl sym">);</span>
+         byte_read <span class="hl sym">+=</span> LL<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">size_t</span> sz <span class="hl sym">=</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>buffer<span class="hl sym">);</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>buffer<span class="hl sym">[</span>sz <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span>
+            <span class="hl sym">--</span>sz<span class="hl sym">;</span>
+
+         <span class="hl kwd">memcpy</span><span class="hl sym">(*</span>input <span class="hl sym">+</span> byte_read<span class="hl sym">,</span> buffer<span class="hl sym">,</span> sz<span class="hl sym">);</span>
+         byte_read <span class="hl sym">+=</span> sz<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+
+      buffer<span class="hl sym">[</span>LL<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl sym">*</span>length <span class="hl sym">=</span> byte_read<span class="hl sym">;</span>
+   <span class="hl sym">(*</span>input<span class="hl sym">)[</span> byte_read <span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">size_t</span>         frame_size<span class="hl sym">;</span>
+   <span class="hl kwb">struct</span> ht_ht   <span class="hl sym">*</span>hash_table<span class="hl sym">[</span>MAX_THREADS<span class="hl sym">];</span>
+
+   <span class="hl kwb">size_t</span>         stride_processed<span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span>         thread_passed<span class="hl sym">;</span>
+<span class="hl sym">}</span>   Result_t<span class="hl sym">;</span>
+
+Result_t result_list<span class="hl sym">[</span><span class="hl num">7</span><span class="hl sym">] = {{</span><span class="hl num">1</span><span class="hl sym">}, {</span><span class="hl num">2</span><span class="hl sym">}, {</span><span class="hl num">3</span><span class="hl sym">}, {</span><span class="hl num">4</span><span class="hl sym">}, {</span><span class="hl num">6</span><span class="hl sym">}, {</span><span class="hl num">12</span><span class="hl sym">}, {</span><span class="hl num">18</span><span class="hl sym">}};</span>
+
+
+ui64
+<span class="hl kwd">CodeToBit</span><span class="hl sym">(</span><span class="hl kwb">char</span> c<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+   <span class="hl kwa">case</span> <span class="hl str">'a'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl str">'t'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl str">'c'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">2</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl str">'g'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">3</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">case</span> <span class="hl str">'A'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl str">'T'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl str">'C'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">2</span><span class="hl sym">;</span>
+   <span class="hl kwa">case</span> <span class="hl str">'G'</span><span class="hl sym">:</span>   <span class="hl kwa">return</span> <span class="hl num">3</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">char</span>
+<span class="hl kwd">BitToCode</span><span class="hl sym">(</span>uint bit<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">static</span>
+   <span class="hl kwb">char const</span> tb<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">] = {</span><span class="hl str">'A'</span><span class="hl sym">,</span> <span class="hl str">'T'</span><span class="hl sym">,</span> <span class="hl str">'C'</span><span class="hl sym">,</span> <span class="hl str">'G'</span><span class="hl sym">};</span>
+
+   <span class="hl kwd">assert</span><span class="hl sym">(</span>bit <span class="hl sym">&lt;</span> <span class="hl num">4</span><span class="hl sym">);</span>
+   <span class="hl kwa">return</span> tb<span class="hl sym">[</span>bit<span class="hl sym">];</span>
+<span class="hl sym">}</span>
+
+
+ui64
+<span class="hl kwd">EncodeKey</span><span class="hl sym">(</span><span class="hl kwb">char const</span><span class="hl sym">*</span> data<span class="hl sym">,</span> <span class="hl kwb">size_t</span> hash_length<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   ui64 key <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span> index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span> shift <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(;</span> index <span class="hl sym">&lt;</span> hash_length<span class="hl sym">; ++</span>index<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      key <span class="hl sym">|= (</span><span class="hl kwd">CodeToBit</span><span class="hl sym">(</span>data<span class="hl sym">[</span>index<span class="hl sym">]) &lt;&lt;</span> shift<span class="hl sym">);</span>
+      shift <span class="hl sym">+=</span> BIT_PER_CODE<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> key<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">char</span><span class="hl sym">*</span>
+<span class="hl kwd">DecodeKey</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">*</span> buffer<span class="hl sym">,</span> <span class="hl kwb">size_t</span> frame_size<span class="hl sym">,</span> ui64 key<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">size_t</span> index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   ui64 extract_mask <span class="hl sym">=</span> <span class="hl num">3</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(;</span> index <span class="hl sym">&lt;</span> frame_size<span class="hl sym">; ++</span>index<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      uint extract_value <span class="hl sym">= ((</span>key <span class="hl sym">&amp;</span> extract_mask<span class="hl sym">) &gt;&gt; (</span>index <span class="hl sym">*</span> BIT_PER_CODE<span class="hl sym">));</span>
+      buffer<span class="hl sym">[</span>index<span class="hl sym">] =</span> <span class="hl kwd">BitToCode</span><span class="hl sym">(</span>extract_value<span class="hl sym">);</span>
+
+      extract_mask <span class="hl sym">&lt;&lt;=</span> BIT_PER_CODE<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   buffer<span class="hl sym">[</span>index<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">return</span> buffer<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">MergeTable</span><span class="hl sym">(</span><span class="hl kwb">struct</span> ht_ht <span class="hl sym">*</span>des<span class="hl sym">,</span> <span class="hl kwb">struct</span> ht_ht<span class="hl sym">*</span> src<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">struct</span> ht_node<span class="hl sym">*</span> src_node<span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>src_node <span class="hl sym">=</span> <span class="hl kwd">ht_first</span><span class="hl sym">(</span>src<span class="hl sym">);</span> src_node <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">;</span> src_node <span class="hl sym">=</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span>src<span class="hl sym">))</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">struct</span> ht_node<span class="hl sym">*</span> des_node <span class="hl sym">=</span> <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span>des<span class="hl sym">,</span> src_node<span class="hl sym">-&gt;</span>key<span class="hl sym">);</span>
+      des_node<span class="hl sym">-&gt;</span>val <span class="hl sym">+=</span> src_node<span class="hl sym">-&gt;</span>val<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">BuildHashTableAtOffset</span><span class="hl sym">(</span><span class="hl kwb">char const</span><span class="hl sym">*</span> data<span class="hl sym">,</span> <span class="hl kwb">size_t</span> data_length<span class="hl sym">,</span>
+                  <span class="hl kwb">struct</span> ht_ht<span class="hl sym">*</span> ht<span class="hl sym">,</span> <span class="hl kwb">size_t</span> frame_size<span class="hl sym">,</span> <span class="hl kwb">size_t</span> start_offset<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">size_t</span> i_begin <span class="hl sym">=</span> start_offset<span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span> i_end <span class="hl sym">=</span> data_length <span class="hl sym">-</span> frame_size <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+   ui64 key <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span><span class="hl sym">(;</span> i_begin <span class="hl sym">&lt;</span> i_end<span class="hl sym">;</span> i_begin <span class="hl sym">+=</span> frame_size<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      key <span class="hl sym">=</span> <span class="hl kwd">EncodeKey</span><span class="hl sym">(</span>data <span class="hl sym">+</span> i_begin<span class="hl sym">,</span> frame_size<span class="hl sym">);</span>
+      <span class="hl kwd">ht_find_new</span><span class="hl sym">(</span>ht<span class="hl sym">,</span> key<span class="hl sym">)-&gt;</span>val <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">BuildHashTable</span><span class="hl sym">(</span><span class="hl kwb">char const</span><span class="hl sym">*</span> data<span class="hl sym">,</span> <span class="hl kwb">size_t</span> data_length<span class="hl sym">,</span> <span class="hl kwb">int</span> n_element<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">size_t</span> offset<span class="hl sym">;</span>
+   Result_t <span class="hl sym">*</span>processing <span class="hl sym">= &amp;</span>result_list<span class="hl sym">[</span>n_element<span class="hl sym">];</span>
+
+   <span class="hl kwb">struct</span> ht_ht<span class="hl sym">*</span> local_table <span class="hl sym">=</span> <span class="hl kwd">ht_create</span><span class="hl sym">(</span>HT_SIZE<span class="hl sym">);</span>
+   processing<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span><span class="hl kwd">omp_get_thread_num</span><span class="hl sym">()] =</span> local_table<span class="hl sym">;</span>
+
+   <span class="hl kwa">while</span> <span class="hl sym">( (</span>offset <span class="hl sym">=</span> <span class="hl kwd">__sync_fetch_and_add</span><span class="hl sym">(&amp;</span>processing<span class="hl sym">-&gt;</span>stride_processed<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">))</span>
+         <span class="hl sym">&lt;</span> processing<span class="hl sym">-&gt;</span>frame_size <span class="hl sym">)</span>
+      <span class="hl kwd">BuildHashTableAtOffset</span><span class="hl sym">(</span>data<span class="hl sym">,</span> data_length<span class="hl sym">,</span> local_table<span class="hl sym">,</span> processing<span class="hl sym">-&gt;</span>frame_size<span class="hl sym">,</span> offset<span class="hl sym">);</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__sync_add_and_fetch</span><span class="hl sym">(&amp;</span>processing<span class="hl sym">-&gt;</span>thread_passed<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">) ==</span> <span class="hl kwd">omp_get_num_threads</span><span class="hl sym">())</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(;</span> i <span class="hl sym">&lt;</span> <span class="hl kwd">omp_get_num_threads</span><span class="hl sym">(); ++</span>i<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwd">MergeTable</span><span class="hl sym">(</span>processing<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> processing<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+
+         <span class="hl kwd">ht_destroy</span><span class="hl sym">(</span>processing<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+         processing<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+<span class="hl sym">}</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span>
+<span class="hl sym">{</span>
+   ui64   key<span class="hl sym">;</span>
+   <span class="hl kwb">int</span>      value<span class="hl sym">;</span>
+<span class="hl sym">}</span> KVPair<span class="hl sym">;</span>
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">DescCompFunc</span><span class="hl sym">(</span><span class="hl kwb">void const</span><span class="hl sym">*</span>p1<span class="hl sym">,</span> <span class="hl kwb">void const</span><span class="hl sym">*</span> p2<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   KVPair <span class="hl kwb">const</span><span class="hl sym">*</span> k1 <span class="hl sym">= (</span>KVPair <span class="hl kwb">const</span><span class="hl sym">*)</span>p1<span class="hl sym">;</span>
+   KVPair <span class="hl kwb">const</span><span class="hl sym">*</span> k2 <span class="hl sym">= (</span>KVPair <span class="hl kwb">const</span><span class="hl sym">*)</span>p2<span class="hl sym">;</span>
+
+   <span class="hl kwa">return</span> <span class="hl sym">-(</span>k1<span class="hl sym">-&gt;</span>value <span class="hl sym">-</span> k2<span class="hl sym">-&gt;</span>value<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">WriteFreq</span><span class="hl sym">(</span>Result_t <span class="hl sym">*</span> tb<span class="hl sym">,</span> <span class="hl kwb">size_t</span> length<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">struct</span> ht_ht<span class="hl sym">*</span> ht <span class="hl sym">=</span> tb<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+   uint n_elements <span class="hl sym">=</span> <span class="hl kwd">ht_count</span><span class="hl sym">(</span>ht<span class="hl sym">);</span>
+   KVPair<span class="hl sym">*</span> sorted_list <span class="hl sym">= (</span>KVPair<span class="hl sym">*)</span><span class="hl kwd">calloc</span><span class="hl sym">(</span>n_elements<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>KVPair<span class="hl sym">));</span>
+
+   <span class="hl kwb">struct</span> ht_node <span class="hl sym">*</span> node<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>node <span class="hl sym">=</span> <span class="hl kwd">ht_first</span><span class="hl sym">(</span>ht<span class="hl sym">);</span> node <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">;</span> node <span class="hl sym">=</span> <span class="hl kwd">ht_next</span><span class="hl sym">(</span>ht<span class="hl sym">), ++</span>index<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      sorted_list<span class="hl sym">[</span>index<span class="hl sym">].</span>key      <span class="hl sym">=</span> node<span class="hl sym">-&gt;</span>key<span class="hl sym">;</span>
+      sorted_list<span class="hl sym">[</span>index<span class="hl sym">].</span>value   <span class="hl sym">=</span> node<span class="hl sym">-&gt;</span>val<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   n_elements <span class="hl sym">=</span> index<span class="hl sym">;</span>
+   <span class="hl kwd">qsort</span><span class="hl sym">(</span>sorted_list<span class="hl sym">,</span> n_elements<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>KVPair<span class="hl sym">),</span> DescCompFunc<span class="hl sym">);</span>
+
+   <span class="hl kwb">char</span> buffer<span class="hl sym">[</span><span class="hl num">64</span><span class="hl sym">];</span>
+   <span class="hl kwb">float</span> total <span class="hl sym">=</span> length <span class="hl sym">-</span> tb<span class="hl sym">-&gt;</span>frame_size <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> index <span class="hl sym">&lt;</span> n_elements<span class="hl sym">; ++</span>index<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      buffer<span class="hl sym">[</span>tb<span class="hl sym">-&gt;</span>frame_size<span class="hl sym">] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+         <span class="hl kwd">DecodeKey</span><span class="hl sym">(</span>buffer<span class="hl sym">,</span> tb<span class="hl sym">-&gt;</span>frame_size<span class="hl sym">,</span> sorted_list<span class="hl sym">[</span>index<span class="hl sym">].</span>key<span class="hl sym">),</span>
+         sorted_list<span class="hl sym">[</span>index<span class="hl sym">].</span>value <span class="hl sym">*</span> <span class="hl num">100.0</span>f <span class="hl sym">/</span> total<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">free</span><span class="hl sym">(</span>sorted_list<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">WriteCount</span><span class="hl sym">(</span>Result_t <span class="hl kwb">const</span><span class="hl sym">*</span> tb<span class="hl sym">,</span> <span class="hl kwb">char const</span><span class="hl sym">*</span> pattern<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   ui64 key <span class="hl sym">=</span> <span class="hl kwd">EncodeKey</span><span class="hl sym">(</span>pattern<span class="hl sym">,</span> tb<span class="hl sym">-&gt;</span>frame_size<span class="hl sym">);</span>
+   <span class="hl kwb">struct</span> ht_node <span class="hl kwb">const</span><span class="hl sym">*</span> node <span class="hl sym">=</span> <span class="hl kwd">ht_find</span><span class="hl sym">(</span>tb<span class="hl sym">-&gt;</span>hash_table<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> key<span class="hl sym">);</span>
+
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\t</span><span class="hl str">%s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+      <span class="hl sym">(</span>node <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span> ? node<span class="hl sym">-&gt;</span>val <span class="hl sym">:</span> <span class="hl num">0</span><span class="hl sym">,</span>
+      pattern<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
+
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> MAX_THREADS<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         <span class="hl sym">++</span>count<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">main</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">char</span><span class="hl sym">*</span>   input<span class="hl sym">;</span>
+   <span class="hl kwb">size_t</span>   length<span class="hl sym">;</span>
+   <span class="hl kwd">ReadAll</span><span class="hl sym">(&amp;</span>input<span class="hl sym">, &amp;</span>length<span class="hl sym">);</span>
+
+   <span class="hl dir">#pragma omp parallel num_threads(GetThreadCount()) default(shared)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">7</span><span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+         <span class="hl kwd">BuildHashTable</span><span class="hl sym">(</span>input<span class="hl sym">,</span> length<span class="hl sym">,</span> i<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwd">WriteFreq</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> length<span class="hl sym">);</span>
+   <span class="hl kwd">WriteFreq</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> length<span class="hl sym">);</span>
+
+   <span class="hl kwd">WriteCount</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> <span class="hl str">&quot;GGT&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">WriteCount</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> <span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">WriteCount</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">],</span> <span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">WriteCount</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">5</span><span class="hl sym">],</span> <span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">);</span>
+   <span class="hl kwd">WriteCount</span><span class="hl sym">(&amp;</span>result_list<span class="hl sym">[</span><span class="hl num">6</span><span class="hl sym">],</span> <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">);</span>
+
+   <span class="hl sym">{</span>
+      <span class="hl kwd">free</span><span class="hl sym">(</span>input<span class="hl sym">);</span>
+
+      <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">7</span><span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+         <span class="hl kwd">ht_destroy</span><span class="hl sym">(</span>result_list<span class="hl sym">[</span>i<span class="hl sym">].</span>hash_table<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
