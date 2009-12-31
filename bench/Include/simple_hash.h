@@ -1,12 +1,18 @@
 /*
- * $Id: simple_hash.h,v 1.2 2009-12-31 00:27:10 igouy-guest Exp $
+ * $Id: simple_hash.h,v 1.3 2009-12-31 20:58:30 igouy-guest Exp $
  * simple hashtable map: Cstring -> Int
  *
  * 28-Dec-2009 changed by The Anh Tran: hashtable ui64 -> uint
  */
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <stdint.h>
+
+typedef unsigned int uint;
+typedef uint64_t	ui64;
 
 enum { ht_num_primes = 28 };
 
@@ -47,7 +53,8 @@ static inline
 int 
 ht_hashcode(struct ht_ht *ht, ui64 key) 
 {
-    return (int)(key % ht->size);
+	key = ((key ^ (key >> 5)) ^ 0x01010101);
+	return (key % ht->size);
 }
 
 static
@@ -73,7 +80,7 @@ ht_create(int size)
     int i = 0;
     struct ht_ht *ht = (struct ht_ht *)calloc(1, sizeof(struct ht_ht));
 
-    while (ht_prime_list[i] < size) 
+    while (ht_prime_list[i] < (unsigned long)size) 
     	i++; 
     
     ht->size		= ht_prime_list[i];

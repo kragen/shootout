@@ -18,14 +18,13 @@
 #include <memory.h>
 #include <stdint.h>
 
-typedef unsigned int uint;
-typedef uint64_t   ui64;
+//#define HT_DEBUG
 #include "simple_hash.h"
 
 
-#define BIT_PER_CODE 2
-#define MAX_THREADS 16
-#define HT_SIZE (2*1024*1024)
+#define BIT_PER_CODE    2
+#define MAX_THREADS    16
+#define HT_SIZE       (2*1024*1024)
 
 
 void 
@@ -78,18 +77,19 @@ ReadAll(char* *input, size_t *length)
 
 typedef struct 
 {
-   size_t         frame_size;
    struct ht_ht   *hash_table[MAX_THREADS];
    
    size_t         stride_processed;
    size_t         thread_passed;
+   char         str_output[256];
 }   Result_t;
 
-Result_t result_list[7] = {{1}, {2}, {3}, {4}, {6}, {12}, {18}};
+Result_t result_list[7] = {0};
 
 
-ui64 
-CodeToBit(char c)
+
+uint 
+CodeToBit(uint c)
 {
    switch (c)
    {
@@ -119,22 +119,27 @@ BitToCode(uint bit)
    return tb[bit];
 }
 
-
-ui64
-EncodeKey(char const* data, size_t hash_length)
-{
-   ui64 key = 0;
-   size_t index = 0;
-   size_t shift = 0;
-
-   for (; index < hash_length; ++index)
-   {
-      key |= (CodeToBit(data[index]) << shift);
-      shift += BIT_PER_CODE;
-   }
-
-   return key;
+#define EK_Imp(hash_length)   \
+ui64   \
+EncodeKey##hash_length(char const* data)   \
+{   \
+   ui64 key = 0;   \
+   size_t index = 0;\
+   size_t shift = 0;\
+   \
+   for (; index < hash_length; ++index   )   \
+   {\
+      key      |= (ui64)CodeToBit(data[index]) << shift;   \
+      shift   += BIT_PER_CODE;   \
+   }\
+   \
+   return key;\
 }
+
+EK_Imp(1); EK_Imp(2); EK_Imp(3); EK_Imp(4); EK_Imp(6); EK_Imp(12); EK_Imp(18);
+
+#define EncodeKey(len, data)   EncodeKey##len(data)
+
 
 char* 
 DecodeKey(char* buffer, size_t frame_size, ui64 key)
@@ -166,55 +171,41 @@ MergeTable(struct ht_ht *des, struct ht_ht* src)
    }
 }
 
-void
-BuildHashTableAtOffset(char const* data, size_t data_length, 
-                  struct ht_ht* ht, size_t frame_size, size_t start_offset)
-{
-   size_t i_begin = start_offset;
-   size_t i_end = data_length - frame_size + 1;
 
-   ui64 key = 0;
-
-   for(; i_begin < i_end; i_begin += frame_size)
-   {
-      key = EncodeKey(data + i_begin, frame_size);
-      ht_find_new(ht, key)->val += 1;
-   }
+#define BHT_Imp(frame_size)\
+void    \
+BuildHashTable##frame_size(char const* data, size_t data_length, Result_t *result)\
+{\
+   struct ht_ht* local_table = ht_create(HT_SIZE);\
+   result->hash_table[omp_get_thread_num()] = local_table;\
+\
+   size_t offset; /* each thread pick up task here */\
+   while ((offset = __sync_fetch_and_add(&result->stride_processed, 1)) < frame_size)   \
+   {\
+      size_t i_begin = offset;   \
+      size_t i_end = data_length - frame_size + 1;   \
+      \
+      ui64 key = 0;   \
+      for(; i_begin < i_end; i_begin += frame_size)   \
+      {\
+         key = EncodeKey(frame_size, data + i_begin);\
+         ht_find_new(local_table, key)->val += 1;\
+      }\
+   }\
 }
 
+BHT_Imp(1); BHT_Imp(2); BHT_Imp(3); BHT_Imp(4); BHT_Imp(6); BHT_Imp(12); BHT_Imp(18);
 
-void
-BuildHashTable(char const* data, size_t data_length, int n_element)
-{
-   size_t offset;
-   Result_t *processing = &result_list[n_element];
-   
-   struct ht_ht* local_table = ht_create(HT_SIZE);
-   processing->hash_table[omp_get_thread_num()] = local_table;
+#define BuildHashTable(frame_size, data, data_length, result)   \
+      BuildHashTable##frame_size(data, data_length, result)   
 
-   while ( (offset = __sync_fetch_and_add(&processing->stride_processed, 1)) 
-         < processing->frame_size )
-      BuildHashTableAtOffset(data, data_length, local_table, processing->frame_size, offset);
-   
-   if (__sync_add_and_fetch(&processing->thread_passed, 1) == omp_get_num_threads())
-   {
-      int i = 1;
-      for (; i < omp_get_num_threads(); ++i)
-      {
-         MergeTable(processing->hash_table[0], processing->hash_table[i]);
-
-         ht_destroy(processing->hash_table[i]);
-         processing->hash_table[i] = 0;
-      }
-   }
-
-}
 
 typedef struct
 {
    ui64   key;
    int      value;
 } KVPair;
+
 
 int
 DescCompFunc(void const*p1, void const* p2)
@@ -225,51 +216,93 @@ DescCompFunc(void const*p1, void const* p2)
    return -(k1->value - k2->value);
 }
 
-void
-WriteFreq(Result_t * tb, size_t length)
-{
-   struct ht_ht* ht = tb->hash_table[0];
-   uint n_elements = ht_count(ht);
-   KVPair* sorted_list = (KVPair*)calloc(n_elements, sizeof(KVPair));
 
-   struct ht_node * node;
-   int index = 0;
-   
-   for (node = ht_first(ht); node != 0; node = ht_next(ht), ++index)
-   {
-      sorted_list[index].key      = node->key;
-      sorted_list[index].value   = node->val;
-   }
-   
-   n_elements = index;
-   qsort(sorted_list, n_elements, sizeof(KVPair), DescCompFunc);
 
-   char buffer[64];
-   float total = length - tb->frame_size +1;
-   
-   for (index = 0; index < n_elements; ++index)
-   {
-      buffer[tb->frame_size] = 0;
-      
-      printf("%s %.3f\n", 
-         DecodeKey(buffer, tb->frame_size, sorted_list[index].key), 
-         sorted_list[index].value * 100.0f / total);
-   }
-   
-   printf("\n");
-   free(sorted_list);   
+#define WF_Imp(frame_size) \
+void \
+WriteFreq##frame_size(char* data, size_t length, Result_t * result) \
+{ \
+   BuildHashTable(frame_size, data, length, result); \
+\
+   if (__sync_add_and_fetch(&result->thread_passed, 1) == (size_t)omp_get_num_threads()) \
+   { \
+      int i = 1; \
+      for (; i < omp_get_num_threads(); ++i) \
+      { \
+         MergeTable(result->hash_table[0], result->hash_table[i]); \
+         ht_destroy(result->hash_table[i]); \
+      } \
+\
+      struct ht_ht* ht = result->hash_table[0]; \
+      uint n_elements = ht_count(ht); \
+      KVPair* sorted_list = (KVPair*)calloc(n_elements, sizeof(KVPair)); \
+\
+      struct ht_node * node; \
+      uint index = 0; \
+\
+      for (node = ht_first(ht); node != 0; node = ht_next(ht), ++index) \
+      {\
+         sorted_list[index].key      = node->key; \
+         sorted_list[index].value   = node->val; \
+      } \
+\
+      n_elements = index;\
+      qsort(sorted_list, n_elements, sizeof(KVPair), DescCompFunc);\
+\
+      char buffer[64];\
+      int char_count = 0;\
+      float total = length - frame_size +1;\
+\
+      for (index = 0; index < n_elements; ++index)\
+      {\
+         buffer[frame_size] = 0;\
+\
+         char_count += sprintf(result->str_output + char_count,\
+            "%s %.3f\n", \
+            DecodeKey(buffer, frame_size, sorted_list[index].key), \
+            sorted_list[index].value * 100.0f / total);\
+      }\
+\
+      sprintf(result->str_output + char_count, "\n");\
+\
+      free(sorted_list);\
+      ht_destroy(result->hash_table[0]); \
+   }\
 }
 
-void
-WriteCount(Result_t const* tb, char const* pattern)
-{
-   ui64 key = EncodeKey(pattern, tb->frame_size);
-   struct ht_node const* node = ht_find(tb->hash_table[0], key);
-   
-   printf("%d\t%s\n", 
-      (node != 0) ? node->val : 0, 
-      pattern);
+WF_Imp(1);   WF_Imp(2);
+
+#define WriteFreq(frame_size, data, length, result) \
+WriteFreq##frame_size(data, length, result)
+
+
+
+#define WC_Imp(frame_size) \
+void \
+WriteCount##frame_size(char* data, size_t length, Result_t* result, char const* pattern) \
+{ \
+   BuildHashTable(frame_size, data, length, result); \
+\
+   if (__sync_add_and_fetch(&result->thread_passed, 1) == (size_t)omp_get_num_threads()) \
+   { \
+      int i = 1; \
+      for (; i < omp_get_num_threads(); ++i) \
+      { \
+         MergeTable(result->hash_table[0], result->hash_table[i]); \
+         ht_destroy(result->hash_table[i]); \
+      } \
+\
+      ui64 key = EncodeKey(frame_size, pattern); \
+      struct ht_node const* node = ht_find(result->hash_table[0], key); \
+\
+      sprintf(result->str_output, "%d\t%s\n", (node != 0) ? node->val : 0, pattern); \
+      ht_destroy(result->hash_table[0]); \
+   }\
 }
+
+WC_Imp(3); WC_Imp(4); WC_Imp(6); WC_Imp(12); WC_Imp(18);
+
+#define WriteCount(frame_size, data, len, rs, pt) WriteCount##frame_size(data, len, rs, pt)
 
 int 
 GetThreadCount()
@@ -298,27 +331,20 @@ main()
 
    #pragma omp parallel num_threads(GetThreadCount()) default(shared)
    {
-      int i;
-      for (i = 0; i < 7; ++i)
-         BuildHashTable(input, length, i);
+      WriteCount(18,   input, length, &result_list[6], "GGTATTTTAATTTATAGT");
+      WriteCount(12,   input, length, &result_list[5], "GGTATTTTAATT");
+      WriteCount(6,   input, length, &result_list[4], "GGTATT");
+      WriteCount(4,   input, length, &result_list[3], "GGTA");
+      WriteCount(3,   input, length, &result_list[2], "GGT");
+      WriteFreq(2,   input, length, &result_list[1]);
+      WriteFreq(1,   input, length, &result_list[0]);
    }
-   
-   WriteFreq(&result_list[0], length);
-   WriteFreq(&result_list[1], length);
 
-   WriteCount(&result_list[2], "GGT");
-   WriteCount(&result_list[3], "GGTA");
-   WriteCount(&result_list[4], "GGTATT");
-   WriteCount(&result_list[5], "GGTATTTTAATT");
-   WriteCount(&result_list[6], "GGTATTTTAATTTATAGT");
-
-   {   
-      free(input);
+   free(input);
    
-      int i;
-      for (i = 0; i < 7; ++i)
-         ht_destroy(result_list[i].hash_table[0]);
-   }   
+   int i;
+   for (i = 0; i < 7; ++i)
+      printf("%s", result_list[i].str_output);
 
    return 0;
 }
