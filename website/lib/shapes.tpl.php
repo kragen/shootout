@@ -118,8 +118,8 @@
                printf('<a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s size and speed against one other programming language">', $k, $Langs[$k][LANG_FULL]);
             }
 
-            printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" alt="" title="" width="150" height="120" />',
-               Encode($k), Encode($Shapes[$k]), Encode($Centers[$k]) );
+            printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" alt="source code size versus speed of %s benchmark programs" title="Compare %s size and speed against one other programming language" width="150" height="120" />',
+               Encode($k), Encode($Shapes[$k]), Encode($Centers[$k]), $Langs[$k][LANG_FULL], $Langs[$k][LANG_FULL] );
 
             printf('</a>');
 
