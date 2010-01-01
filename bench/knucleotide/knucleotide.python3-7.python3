@@ -7,43 +7,46 @@
 # modified by Paul Ivanov: added the default dictionary to get rid of if
 # statement in gen_freq and removed some local variables to improve
 # performance.
+# modified by Christian Schubert: don't use gen_freq to count longer
+# sequences, drastically reduce memory consumption, some other simplifications
+
+# 2to3
 
 from sys import stdin
 from multiprocessing import Pool
 from collections import defaultdict
 
 def gen_freq(seq, frame, freqs):
-    for ii in xrange(len(seq)+1-frame):
+    for ii in range(len(seq)+1-frame):
         freqs[seq[ii:ii+frame]] += 1
     return ii+1
 
-def sort_seq(seq, length, freqs):
+def sort_seq(seq, length):
+    freqs = defaultdict(int)
     n = gen_freq(seq, length, freqs)
-    l = sorted(freqs.items(), reverse=True, key=lambda (seq,freq): (freq,seq))
+    l = sorted(list(freqs.items()), reverse=True, key=lambda seq_freq: (seq_freq[1],seq_freq[0]))
     return '\n'.join("%s %.3f" % (st, 100.0*fr/n) for st,fr in l) + "\n"
 
 def test_process(key):
-    freqs = defaultdict(lambda: 0)
     if key in ["1","2"]:
-        return sort_seq( seq, int(key), freqs)
+        return sort_seq(seq, int(key))
     else:
-        gen_freq(seq, len(key), freqs )
-        return "%d\t%s" % (freqs[key], key)
+        f = len(key)
+        n = sum(seq[ii:ii+f]==key for ii in range(len(seq)+1-f))
+        return "%d\t%s" % (n, key)
 
 def readSeq():
     for line in stdin:
-        if line[0:3] == ">TH":
+        if line[0:3].startswith(">TH"):
             break
     seq = []
     for line in stdin:
         if line[0] in ">;":
             break
-        seq.append( line[:-1] )
-    return  "".join(seq).upper()
+        seq.append(line[:-1])
+    return "".join(seq).upper()
 
 if __name__ == '__main__':
     seq = readSeq()
-    pool = Pool()
-    result = pool.map(test_process, "1 2 GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT".split())
-    for line in result:
-        print line
+    for line in Pool().map(test_process, "1 2 GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT".split()):
+        print(line)
