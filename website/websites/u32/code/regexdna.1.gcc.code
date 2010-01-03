@@ -1,0 +1,668 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   contributed by Paul Serice</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;sys/types.h&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+<span class="hl dir">#include &lt;errno.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;string.h&gt;</span>
+<span class="hl dir">#include &lt;glib.h&gt;</span>
+<span class="hl dir">#include &lt;tcl.h&gt;</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * Data Structures and Typedefs</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* Mapping of a nucleic acid code to its meaning.  This is used with</span>
+<span class="hl com"> * regsub() to substitute each occurrence of &quot;code&quot; in the main input</span>
+<span class="hl com"> * string with its &quot;meaning.&quot; */</span>
+<span class="hl kwb">static struct</span> nucleic_acid_code <span class="hl sym">{</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> code<span class="hl sym">;</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> meaning<span class="hl sym">;</span>
+<span class="hl sym">}</span> nacodes<span class="hl sym">[] = {{</span><span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;K&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;M&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;N&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;R&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;S&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span><span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">},</span>
+               <span class="hl sym">{</span>NULL<span class="hl sym">,</span> NULL<span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl com">/* The variants are used with regcount() to count the number of times</span>
+<span class="hl com"> * each variant appears in the main input string. */</span>
+<span class="hl kwb">static const char</span><span class="hl sym">*</span> variants<span class="hl sym">[] = {</span>
+  <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+  <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="hl sym">,</span>
+  NULL
+<span class="hl sym">};</span>
+
+
+<span class="hl com">/* To process the variants, a small thread pool is created.  Each</span>
+<span class="hl com"> * thread is passed an array of these tasks.  The threads combine to</span>
+<span class="hl com"> * perform the tasks.  When there are no more tasks, the threads exit</span>
+<span class="hl com"> * and the parent joins with them before continuing. */</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> variant_worker_task <span class="hl sym">{</span>
+
+    <span class="hl com">/* input: which variant to process */</span>
+    <span class="hl kwb">const char</span><span class="hl sym">*</span> variant<span class="hl sym">;</span>
+
+    <span class="hl com">/* input: string against which &quot;variant&quot; will be matched */</span>
+    Tcl_Obj<span class="hl sym">*</span> s<span class="hl sym">;</span>
+
+    <span class="hl com">/* output: number of times &quot;variant&quot; matched against &quot;s&quot; */</span>
+    <span class="hl kwb">unsigned long int</span> count<span class="hl sym">;</span>
+
+<span class="hl sym">} *</span>variant_worker_task_t<span class="hl sym">;</span>
+
+
+<span class="hl com">/* Data passed into each thread that process the variants.  All the</span>
+<span class="hl com"> * threads in the pool share one copy of this data structure and must</span>
+<span class="hl com"> * use &quot;lock&quot; to synchronize access to it. */</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> variant_worker_data <span class="hl sym">{</span>
+
+    <span class="hl com">/* shared: lock that protects this structure */</span>
+    pthread_mutex_t lock<span class="hl sym">;</span>
+
+    <span class="hl com">/* shared: array of tasks that the threads are trying to complete */</span>
+    variant_worker_task_t tasks<span class="hl sym">;</span>
+
+    <span class="hl com">/* shared: pointer to shared index into &quot;tasks&quot; */</span>
+    <span class="hl kwc">volatile</span> <span class="hl kwb">int</span> next_task<span class="hl sym">;</span>
+
+    <span class="hl com">/* shared: total number of tasks in the &quot;tasks&quot; array */</span>
+    <span class="hl kwb">int</span> total_tasks<span class="hl sym">;</span>
+
+<span class="hl sym">} *</span>variant_worker_data_t<span class="hl sym">;</span>
+
+
+<span class="hl com">/* Data passed into each thread that substitutes nucleic acid codes. */</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">struct</span> nacodes_worker_data <span class="hl sym">{</span>
+
+    <span class="hl com">/* input/output: String object that is input to the thread as a</span>
+<span class="hl com">     * copy of the range of characters from the main input string over</span>
+<span class="hl com">     * which the thread should work.  The thread should call</span>
+<span class="hl com">     * Tcl_SetStringObj() to set &quot;range&quot; to hold the result of the</span>
+<span class="hl com">     * substitutions. */</span>
+    Tcl_Obj<span class="hl sym">*</span> range<span class="hl sym">;</span>
+
+<span class="hl sym">} *</span>nacodes_worker_data_t<span class="hl sym">;</span>
+
+
+<span class="hl com">/* Create an explicit typedef for the pthread start functions. */</span>
+<span class="hl kwc">typedef</span> <span class="hl kwb">void</span><span class="hl sym">* (*</span>thread_start_t<span class="hl sym">)(</span><span class="hl kwb">void</span><span class="hl sym">*);</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * regcount()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* Return the number of times the regular expression &quot;regexp_cstr&quot;</span>
+<span class="hl com"> * uniquely matches against the input string &quot;s&quot;. */</span>
+<span class="hl kwb">static unsigned long</span>
+<span class="hl kwd">regcount</span><span class="hl sym">(</span><span class="hl kwb">const char</span><span class="hl sym">*</span> regexp_cstr<span class="hl sym">,</span>
+         Tcl_Obj<span class="hl sym">*</span> s<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> regexec_rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> index_max <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">unsigned long</span> rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    Tcl_Obj<span class="hl sym">*</span> regexp_cstr_obj <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    Tcl_RegExp regexp <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> Tcl_RegExpInfo info <span class="hl sym">= {</span><span class="hl num">0</span><span class="hl sym">};</span>
+
+    <span class="hl com">/* Get &quot;regexp_cstr&quot; as a Tcl string object. */</span>
+    regexp_cstr_obj <span class="hl sym">=</span> <span class="hl kwd">Tcl_NewStringObj</span><span class="hl sym">(</span>regexp_cstr<span class="hl sym">,</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>regexp_cstr<span class="hl sym">));</span>
+    <span class="hl kwd">Tcl_IncrRefCount</span><span class="hl sym">(</span>regexp_cstr_obj<span class="hl sym">);</span>
+
+    <span class="hl com">/* Compile the regular expression. */</span>
+    regexp <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetRegExpFromObj</span><span class="hl sym">(</span>NULL<span class="hl sym">,</span> regexp_cstr_obj<span class="hl sym">,</span>
+                 TCL_REG_ADVANCED <span class="hl sym">|</span> TCL_REG_NOCASE <span class="hl sym">|</span> TCL_REG_NEWLINE<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>regexp<span class="hl sym">) {</span>
+        <span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;*** Error: Tcl_GetRegExpFromObj: failed&quot;</span><span class="hl sym">);</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Iterate over each match. */</span>
+    index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    index_max <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetCharLength</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>index <span class="hl sym">&lt;</span> index_max<span class="hl sym">) {</span>
+
+        <span class="hl com">/* Test for a match. */</span>
+        regexec_rv <span class="hl sym">=</span> <span class="hl kwd">Tcl_RegExpExecObj</span><span class="hl sym">(</span>NULL<span class="hl sym">,</span> regexp<span class="hl sym">,</span> s<span class="hl sym">,</span> index<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>regexec_rv <span class="hl sym">== -</span><span class="hl num">1</span><span class="hl sym">) {</span>
+            <span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;*** Error: Tcl_RegExpExecObj: failed&quot;</span><span class="hl sym">);</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>regexec_rv <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+            <span class="hl com">/* No matches. */</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl com">/* Get the match information. */</span>
+        <span class="hl kwd">Tcl_RegExpGetInfo</span><span class="hl sym">(</span>regexp<span class="hl sym">, &amp;</span>info<span class="hl sym">);</span>
+
+        <span class="hl com">/* Advance curr. */</span>
+        index <span class="hl sym">+=</span> info<span class="hl sym">.</span>matches<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>end<span class="hl sym">;</span>
+
+        <span class="hl com">/* Increment the match count. */</span>
+        <span class="hl sym">++</span>rv<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Clean up.  Note that &quot;regexp&quot; is owned by &quot;regexp_cstr_obj&quot; so</span>
+<span class="hl com">     * it does not need explicit clean up. */</span>
+    <span class="hl kwd">Tcl_DecrRefCount</span><span class="hl sym">(</span>regexp_cstr_obj<span class="hl sym">);</span>
+
+    <span class="hl kwa">return</span> rv<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * regsub()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* Substitute each occurrence of the regular expression &quot;regex&quot; in &quot;s&quot;</span>
+<span class="hl com"> * with &quot;subst&quot;.  The result is returned in a newly allocate string</span>
+<span class="hl com"> * that must be freed with g_free(). */</span>
+<span class="hl kwb">static char</span><span class="hl sym">*</span>
+<span class="hl kwd">regsub</span><span class="hl sym">(</span><span class="hl kwb">const char</span><span class="hl sym">*</span> regex<span class="hl sym">,</span>
+       <span class="hl kwb">const char</span><span class="hl sym">*</span> s<span class="hl sym">,</span>
+       <span class="hl kwb">const char</span><span class="hl sym">*</span> subst<span class="hl sym">,</span>
+       GError<span class="hl sym">**</span> err<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> rv <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    GRegex<span class="hl sym">*</span> prog <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+    <span class="hl com">/* How glib propagates exceptions. */</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>err <span class="hl sym">&amp;&amp; *</span>err<span class="hl sym">) {</span>
+        <span class="hl kwa">goto</span> out<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Compile regex. */</span>
+    prog <span class="hl sym">=</span> <span class="hl kwd">g_regex_new</span><span class="hl sym">(</span>regex<span class="hl sym">,</span>
+                       G_REGEX_CASELESS <span class="hl sym">|</span>
+                       G_REGEX_RAW <span class="hl sym">|</span>
+                       G_REGEX_NO_AUTO_CAPTURE <span class="hl sym">|</span>
+                       G_REGEX_OPTIMIZE<span class="hl sym">,</span>
+                       <span class="hl num">0</span><span class="hl sym">,</span>
+                       err<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>err <span class="hl sym">&amp;&amp; *</span>err<span class="hl sym">) {</span>
+        <span class="hl kwa">goto</span> out<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Substitute. */</span>
+    rv <span class="hl sym">=</span> <span class="hl kwd">g_regex_replace_literal</span><span class="hl sym">(</span>prog<span class="hl sym">,</span> s<span class="hl sym">, -</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> subst<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> err<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>err <span class="hl sym">&amp;&amp; *</span>err<span class="hl sym">) {</span>
+        <span class="hl kwa">goto</span> out<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+ out<span class="hl sym">:</span>
+
+    <span class="hl com">/* Clean up. */</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>prog<span class="hl sym">) {</span>
+        <span class="hl kwd">g_regex_unref</span><span class="hl sym">(</span>prog<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">return</span> rv<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * load_file()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* Load the file f into the string s. */</span>
+<span class="hl kwb">static void</span>
+<span class="hl kwd">load_file</span><span class="hl sym">(</span><span class="hl kwb">FILE</span><span class="hl sym">*</span> f<span class="hl sym">,</span>
+          Tcl_Obj<span class="hl sym">*</span> s<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> block <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span> block_size <span class="hl sym">=</span> <span class="hl num">16384</span><span class="hl sym">;</span>
+    <span class="hl kwb">size_t</span> rcount <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+    <span class="hl com">/* Allocate a block for I/O. */</span>
+    block <span class="hl sym">=</span> <span class="hl kwd">malloc</span><span class="hl sym">(</span>block_size<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>block<span class="hl sym">) {</span>
+        <span class="hl kwd">perror</span><span class="hl sym">(</span><span class="hl str">&quot;malloc&quot;</span><span class="hl sym">);</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Iterate over each block of input. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(;;) {</span>
+
+        <span class="hl com">/* Read a block. */</span>
+        rcount <span class="hl sym">=</span> <span class="hl kwd">fread</span><span class="hl sym">(</span>block<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> block_size<span class="hl sym">,</span> f<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>rcount <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+            <span class="hl com">/* Check for errors. */</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">ferror</span><span class="hl sym">(</span>f<span class="hl sym">)) {</span>
+                <span class="hl kwd">perror</span><span class="hl sym">(</span><span class="hl str">&quot;fread&quot;</span><span class="hl sym">);</span>
+                <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+            <span class="hl sym">}</span>
+            <span class="hl com">/* EOF */</span>
+            <span class="hl kwa">break</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl com">/* Append a block. */</span>
+        <span class="hl kwd">Tcl_AppendToObj</span><span class="hl sym">(</span>s<span class="hl sym">,</span> block<span class="hl sym">,</span> rcount<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Free block. */</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>block<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * process_variant_worker() and process_variants()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* This is a helper function for process_variant_worker() which is the</span>
+<span class="hl com"> * start routine for the threads that count how many times a variant</span>
+<span class="hl com"> * matches the main input string.  This routing locks &quot;data&quot; and</span>
+<span class="hl com"> * attempts to get the index of the next task.  If successful, it</span>
+<span class="hl com"> * takes ownership of that index by incrementing &quot;data-&gt;next_task&quot; so</span>
+<span class="hl com"> * that the next thread that comes along will get the next task.</span>
+<span class="hl com"> * Before returning, this routine releases the lock.  This routine</span>
+<span class="hl com"> * returns true if successful and false otherwise. */</span>
+<span class="hl kwb">static int</span>
+<span class="hl kwd">get_variant_index</span><span class="hl sym">(</span>variant_worker_data_t data<span class="hl sym">,</span>
+                  <span class="hl kwb">int</span><span class="hl sym">*</span> index<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+    <span class="hl com">/* Lock &quot;data&quot;. */</span>
+    <span class="hl kwd">pthread_mutex_lock</span><span class="hl sym">(&amp;</span>data<span class="hl sym">-&gt;</span>lock<span class="hl sym">);</span>
+
+    <span class="hl com">/* Get the index for the next task if any remain. */</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>data<span class="hl sym">-&gt;</span>next_task <span class="hl sym">&lt;</span> data<span class="hl sym">-&gt;</span>total_tasks<span class="hl sym">) {</span>
+        <span class="hl sym">*</span>index <span class="hl sym">=</span> data<span class="hl sym">-&gt;</span>next_task<span class="hl sym">++;</span>
+        rv <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Unlock &quot;data&quot;. */</span>
+    <span class="hl kwd">pthread_mutex_unlock</span><span class="hl sym">(&amp;</span>data<span class="hl sym">-&gt;</span>lock<span class="hl sym">);</span>
+
+    <span class="hl kwa">return</span> rv<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* This is the worker routine for the thread pool that processes the</span>
+<span class="hl com"> * variants.  This routine atomically gets the next task which holds</span>
+<span class="hl com"> * all the information needed to count the number of times the task's</span>
+<span class="hl com"> * &quot;variant&quot; value matches the main input string and stores the result</span>
+<span class="hl com"> * in the task's &quot;count&quot; value.  The main input string is passed in as</span>
+<span class="hl com"> * the task's read-only &quot;s&quot; value. */</span>
+<span class="hl kwb">static void</span><span class="hl sym">*</span>
+<span class="hl kwd">process_variant_worker</span><span class="hl sym">(</span>variant_worker_data_t data<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+    <span class="hl com">/* Carefully get the index for the next task. */</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwd">get_variant_index</span><span class="hl sym">(</span>data<span class="hl sym">, &amp;</span>index<span class="hl sym">)) {</span>
+        <span class="hl com">/* Perform the task of counting regex matches. */</span>
+        data<span class="hl sym">-&gt;</span>tasks<span class="hl sym">[</span>index<span class="hl sym">].</span>count
+            <span class="hl sym">=</span> <span class="hl kwd">regcount</span><span class="hl sym">(</span>data<span class="hl sym">-&gt;</span>tasks<span class="hl sym">[</span>index<span class="hl sym">].</span>variant<span class="hl sym">,</span>
+                       data<span class="hl sym">-&gt;</span>tasks<span class="hl sym">[</span>index<span class="hl sym">].</span>s<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">return</span> NULL<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Process the list of variants by counting the frequency of each</span>
+<span class="hl com"> * regexp in the main input string &quot;s&quot; and printing the results. */</span>
+<span class="hl kwb">static void</span>
+<span class="hl kwd">process_variants</span><span class="hl sym">(</span><span class="hl kwb">int</span> cpu_count<span class="hl sym">,</span>
+                 Tcl_Obj<span class="hl sym">*</span> s<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> s_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> thread_rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> thread_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> task_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    pthread_t<span class="hl sym">*</span> threads <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    variant_worker_task_t tasks <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> variant_worker_data data <span class="hl sym">= {</span>PTHREAD_MUTEX_INITIALIZER<span class="hl sym">,};</span>
+
+    <span class="hl com">/* WARNING: Tcl_RegExpExecObj() always does an internal conversion</span>
+<span class="hl com">     * of &quot;s&quot; to a UCS-2 Unicode string if &quot;s&quot; is in UTF-8 format.</span>
+<span class="hl com">     * Normally, this is a nice feature, but as of tcl-8.5, it doesn't</span>
+<span class="hl com">     * appear to be thread-safe.  As a work-around, force the</span>
+<span class="hl com">     * conversion now before starting the threads. */</span>
+    <span class="hl kwd">Tcl_GetUnicodeFromObj</span><span class="hl sym">(</span>s<span class="hl sym">, &amp;</span>s_length<span class="hl sym">);</span>
+
+    <span class="hl com">/* Determine the total number of variants (minus the NULL sentinel). */</span>
+    task_count <span class="hl sym">= (</span><span class="hl kwb">int</span><span class="hl sym">)(</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>variants<span class="hl sym">) /</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>variants<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]) -</span> <span class="hl num">1</span><span class="hl sym">);</span>
+
+    <span class="hl com">/* Determine the number of threads to start. */</span>
+    thread_count <span class="hl sym">=</span> cpu_count <span class="hl sym">*</span> <span class="hl num">2</span><span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>thread_count <span class="hl sym">&gt;</span> task_count<span class="hl sym">) {</span>
+        thread_count <span class="hl sym">=</span> task_count<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Allocate the &quot;threads&quot; array which holds the thread IDs. */</span>
+    threads <span class="hl sym">=</span> <span class="hl kwd">calloc</span><span class="hl sym">(</span>thread_count<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span>threads<span class="hl sym">));</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>threads<span class="hl sym">) {</span>
+        <span class="hl kwd">perror</span><span class="hl sym">(</span><span class="hl str">&quot;calloc&quot;</span><span class="hl sym">);</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Allocate the &quot;tasks&quot; array which holds one unit of work per</span>
+<span class="hl com">     * element in the array. */</span>
+    tasks <span class="hl sym">=</span> <span class="hl kwd">calloc</span><span class="hl sym">(</span>task_count<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span>tasks<span class="hl sym">));</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>tasks<span class="hl sym">) {</span>
+        <span class="hl kwd">perror</span><span class="hl sym">(</span><span class="hl str">&quot;calloc&quot;</span><span class="hl sym">);</span>
+        <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Initialize the task array. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> task_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        tasks<span class="hl sym">[</span>i<span class="hl sym">].</span>variant <span class="hl sym">=</span> variants<span class="hl sym">[</span>i<span class="hl sym">];</span>
+        tasks<span class="hl sym">[</span>i<span class="hl sym">].</span>s <span class="hl sym">=</span> s<span class="hl sym">;</span>
+        tasks<span class="hl sym">[</span>i<span class="hl sym">].</span>count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Initialize the data shared by the threads. */</span>
+    data<span class="hl sym">.</span>tasks <span class="hl sym">=</span> tasks<span class="hl sym">;</span>
+    data<span class="hl sym">.</span>next_task <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    data<span class="hl sym">.</span>total_tasks <span class="hl sym">=</span> task_count<span class="hl sym">;</span>
+
+    <span class="hl com">/* Start the threads. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> thread_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        thread_rv <span class="hl sym">=</span> <span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>threads<span class="hl sym">[</span>i<span class="hl sym">],</span>
+                                   NULL<span class="hl sym">,</span>
+                                   <span class="hl sym">(</span>thread_start_t<span class="hl sym">)</span>process_variant_worker<span class="hl sym">,</span>
+                                   <span class="hl sym">&amp;</span>data<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>thread_rv<span class="hl sym">) {</span>
+            <span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;*** Error: pthread_create: failed&quot;</span><span class="hl sym">);</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Wait for each thread to finish. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> thread_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        thread_rv <span class="hl sym">=</span> <span class="hl kwd">pthread_join</span><span class="hl sym">(</span>threads<span class="hl sym">[</span>i<span class="hl sym">],</span> NULL<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>thread_rv<span class="hl sym">) {</span>
+            <span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;*** Error: pthread_join: failed&quot;</span><span class="hl sym">);</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Print results. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> task_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%s %lu</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> variants<span class="hl sym">[</span>i<span class="hl sym">],</span> tasks<span class="hl sym">[</span>i<span class="hl sym">].</span>count<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Clean up. */</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>tasks<span class="hl sym">);</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>threads<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * process_nacodes_worker() and process_nacodes()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* This is the worker routing for the threads that process the</span>
+<span class="hl com"> * substitution of the nucleic acid codes with their meanings.  These</span>
+<span class="hl com"> * threads are not in a thread pool because the work can be divided</span>
+<span class="hl com"> * exactly into one thread per cpu.  So the parent just starts each</span>
+<span class="hl com"> * thread and waits for them all to finish.</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Each worker gets a range of characters from the main input string</span>
+<span class="hl com"> * and is responsible for calling regsub() once for each nucleic acid</span>
+<span class="hl com"> * code.  Thus, if there are 11 nucleic acid codes, each thread calls</span>
+<span class="hl com"> * regsub() 11 times but the scope of the regsub() call is limited to</span>
+<span class="hl com"> * just the range of characters it has been assigned. */</span>
+<span class="hl kwb">static void</span><span class="hl sym">*</span>
+<span class="hl kwd">process_nacodes_worker</span><span class="hl sym">(</span>nacodes_worker_data_t data<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> s_in <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> s_out <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    <span class="hl kwb">struct</span> nucleic_acid_code<span class="hl sym">*</span> nacode <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+    <span class="hl com">/* Get the character range as a C-style string. */</span>
+    s_in <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetString</span><span class="hl sym">(</span>data<span class="hl sym">-&gt;</span>range<span class="hl sym">);</span>
+
+    <span class="hl com">/* Iterate over the nucleic acid codes. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>nacode <span class="hl sym">=</span> nacodes <span class="hl sym">;</span> nacode<span class="hl sym">-&gt;</span>code <span class="hl sym">; ++</span>nacode<span class="hl sym">) {</span>
+
+        <span class="hl com">/* Perform the substitution. */</span>
+        s_out <span class="hl sym">=</span> <span class="hl kwd">regsub</span><span class="hl sym">(</span>nacode<span class="hl sym">-&gt;</span>code<span class="hl sym">,</span> s_in<span class="hl sym">,</span> nacode<span class="hl sym">-&gt;</span>meaning<span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+
+        <span class="hl com">/* Free s_in on all but the first pass because s_in</span>
+<span class="hl com">         * belongs to Tcl on the first pass. */</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>nacode <span class="hl sym">!=</span> nacodes<span class="hl sym">) {</span>
+            <span class="hl kwd">g_free</span><span class="hl sym">(</span>s_in<span class="hl sym">);</span>
+            s_in <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        <span class="hl com">/* If this is the last pass, save the result and clean up. */</span>
+        <span class="hl kwa">if</span> <span class="hl sym">((</span>nacode <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)-&gt;</span>code <span class="hl sym">==</span> NULL<span class="hl sym">) {</span>
+            <span class="hl kwd">Tcl_SetStringObj</span><span class="hl sym">(</span>data<span class="hl sym">-&gt;</span>range<span class="hl sym">,</span> s_out<span class="hl sym">,</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>s_out<span class="hl sym">));</span>
+            <span class="hl kwd">g_free</span><span class="hl sym">(</span>s_out<span class="hl sym">);</span>
+            s_out <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            <span class="hl com">/* Otherwise, prepare for the next iteration. */</span>
+            s_in <span class="hl sym">=</span> s_out<span class="hl sym">;</span>
+            s_out <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">return</span> NULL<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/* Process the nucleic acid codes by substituting each nucleic acid</span>
+<span class="hl com"> * code in &quot;s&quot; with its meaning as defined in the static &quot;nacodes&quot;</span>
+<span class="hl com"> * structure (see top of file).  On return, &quot;s&quot; will hold the</span>
+<span class="hl com"> * substituted string. */</span>
+<span class="hl kwb">static void</span>
+<span class="hl kwd">process_nacodes</span><span class="hl sym">(</span><span class="hl kwb">int</span> cpu_count<span class="hl sym">,</span>
+                Tcl_Obj<span class="hl sym">*</span> s<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> first <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> last <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> s_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> range_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> thread_rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    nacodes_worker_data_t data <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    pthread_t<span class="hl sym">*</span> threads <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+    <span class="hl com">/* Sanity check to make sure we don't divide by zero. */</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>cpu_count <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        <span class="hl kwa">return</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Get the total length of s. */</span>
+    s_length <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetCharLength</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>s_length <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        <span class="hl kwa">return</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Allocate the &quot;data&quot; array which is used to pass data to and</span>
+<span class="hl com">     * from the threads. */</span>
+    data <span class="hl sym">=</span> <span class="hl kwd">calloc</span><span class="hl sym">(</span>cpu_count<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span>data<span class="hl sym">));</span>
+
+    <span class="hl com">/* Allocate the &quot;threads&quot; array which holds the thread IDs. */</span>
+    threads <span class="hl sym">=</span> <span class="hl kwd">calloc</span><span class="hl sym">(</span>cpu_count<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span>threads<span class="hl sym">));</span>
+
+    <span class="hl com">/* Calculate the number of characters to feed each thread.  Note</span>
+<span class="hl com">     * that we checked above to make sure cpu_count is not zero. */</span>
+    range_length <span class="hl sym">=</span> s_length <span class="hl sym">/</span> cpu_count<span class="hl sym">;</span>
+
+    <span class="hl com">/* Start one thread for each cpu. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> cpu_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+
+        <span class="hl com">/* First, initialize the thread's client data. */</span>
+
+        <span class="hl com">/* Calculate the first and last index for the range.  Both</span>
+<span class="hl com">         * &quot;first&quot; and &quot;last&quot; indexes are inclusive because that is</span>
+<span class="hl com">         * what Tcl_GetRange() requires.  We also need to make sure</span>
+<span class="hl com">         * the very last range has all the characters in case</span>
+<span class="hl com">         * range_length does not divide s_length evenly. */</span>
+        first <span class="hl sym">=</span> range_length <span class="hl sym">*</span> i<span class="hl sym">;</span>
+        last <span class="hl sym">=</span> range_length <span class="hl sym">* (</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span> <span class="hl sym">==</span> cpu_count<span class="hl sym">) {</span>
+            last <span class="hl sym">=</span> s_length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl com">/* Pack the data for the worker thread. */</span>
+        data<span class="hl sym">[</span>i<span class="hl sym">].</span>range <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetRange</span><span class="hl sym">(</span>s<span class="hl sym">,</span> first<span class="hl sym">,</span> last<span class="hl sym">);</span>
+        <span class="hl kwd">Tcl_IncrRefCount</span><span class="hl sym">(</span>data<span class="hl sym">[</span>i<span class="hl sym">].</span>range<span class="hl sym">);</span>
+
+        <span class="hl com">/* Second, start the thread. */</span>
+        thread_rv <span class="hl sym">=</span> <span class="hl kwd">pthread_create</span><span class="hl sym">(&amp;</span>threads<span class="hl sym">[</span>i<span class="hl sym">],</span>
+                                   NULL<span class="hl sym">,</span>
+                                   <span class="hl sym">(</span>thread_start_t<span class="hl sym">)</span>process_nacodes_worker<span class="hl sym">,</span>
+                                   <span class="hl sym">&amp;</span>data<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>thread_rv<span class="hl sym">) {</span>
+            <span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;*** Error: pthread_create: failed&quot;</span><span class="hl sym">);</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Wait for each thread to finish. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> cpu_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        thread_rv <span class="hl sym">=</span> <span class="hl kwd">pthread_join</span><span class="hl sym">(</span>threads<span class="hl sym">[</span>i<span class="hl sym">],</span> NULL<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>thread_rv<span class="hl sym">) {</span>
+            <span class="hl kwd">fprintf</span><span class="hl sym">(</span>stderr<span class="hl sym">,</span> <span class="hl str">&quot;*** Error: pthread_join: failed&quot;</span><span class="hl sym">);</span>
+            <span class="hl kwd">exit</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Merge results. */</span>
+    <span class="hl kwd">Tcl_SetObjLength</span><span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> cpu_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        <span class="hl kwd">Tcl_AppendObjToObj</span><span class="hl sym">(</span>s<span class="hl sym">,</span> data<span class="hl sym">[</span>i<span class="hl sym">].</span>range<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Clean up. */</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> i <span class="hl sym">&lt;</span> cpu_count <span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        <span class="hl kwd">Tcl_DecrRefCount</span><span class="hl sym">(</span>data<span class="hl sym">[</span>i<span class="hl sym">].</span>range<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>threads<span class="hl sym">);</span>
+    <span class="hl kwd">free</span><span class="hl sym">(</span>data<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * get_cpu_count()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl com">/* Return the number of cpus.  If an error occurs, 0 cpus will be</span>
+<span class="hl com"> * reported.  There are other ways to do this, but this is a program</span>
+<span class="hl com"> * to test regexp processing so ... */</span>
+<span class="hl kwb">static int</span>
+<span class="hl kwd">get_cpu_count</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">)</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">FILE</span><span class="hl sym">*</span> f <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    Tcl_Obj<span class="hl sym">*</span> s <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+    <span class="hl com">/* Allocate a string. */</span>
+    s <span class="hl sym">=</span> <span class="hl kwd">Tcl_NewStringObj</span><span class="hl sym">(</span><span class="hl str">&quot;&quot;</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl kwd">Tcl_IncrRefCount</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Open /proc/cpuinfo. */</span>
+    f <span class="hl sym">=</span> <span class="hl kwd">fopen</span><span class="hl sym">(</span><span class="hl str">&quot;/proc/cpuinfo&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;r&quot;</span><span class="hl sym">);</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>f<span class="hl sym">) {</span>
+        <span class="hl kwa">goto</span> out<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Load file into s. */</span>
+    <span class="hl kwd">load_file</span><span class="hl sym">(</span>f<span class="hl sym">,</span> s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Count the number of cpus.  &quot;\M&quot; matches at the end of a word. */</span>
+    rv <span class="hl sym">=</span> <span class="hl kwd">regcount</span><span class="hl sym">(</span><span class="hl str">&quot;^processor</span><span class="hl esc">\\</span><span class="hl str">M&quot;</span><span class="hl sym">,</span> s<span class="hl sym">);</span>
+
+ out<span class="hl sym">:</span>
+
+    <span class="hl com">/* Clean up. */</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>f<span class="hl sym">) {</span>
+        <span class="hl kwd">fclose</span><span class="hl sym">(</span>f<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>s<span class="hl sym">) {</span>
+        <span class="hl kwd">Tcl_DecrRefCount</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">return</span> rv<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl com">/*************************************************************************</span>
+<span class="hl com"> * main()</span>
+<span class="hl com"> *************************************************************************/</span>
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span>
+     <span class="hl kwb">char</span><span class="hl sym">*</span> argv<span class="hl sym">[])</span>
+<span class="hl sym">{</span>
+    <span class="hl kwb">int</span> rv <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> cpu_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> init_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> code_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">int</span> seq_length <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwb">char</span><span class="hl sym">*</span> s_cstr <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    Tcl_Interp <span class="hl sym">*</span>tcl <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+    Tcl_Obj<span class="hl sym">*</span> s <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+    <span class="hl com">/* Initialize Tcl. */</span>
+    <span class="hl kwd">Tcl_FindExecutable</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+    tcl <span class="hl sym">=</span> <span class="hl kwd">Tcl_CreateInterp</span><span class="hl sym">();</span>
+    <span class="hl kwd">Tcl_Preserve</span><span class="hl sym">((</span>ClientData<span class="hl sym">)</span>tcl<span class="hl sym">);</span>
+
+    <span class="hl com">/* Count the number of cpus.  If the cpu count could not be</span>
+<span class="hl com">     * determined, assume 4 cpus. */</span>
+    cpu_count <span class="hl sym">=</span> <span class="hl kwd">get_cpu_count</span><span class="hl sym">();</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>cpu_count<span class="hl sym">) {</span>
+        cpu_count <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl com">/* Allocate s. */</span>
+    s <span class="hl sym">=</span> <span class="hl kwd">Tcl_NewStringObj</span><span class="hl sym">(</span><span class="hl str">&quot;&quot;</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">);</span>
+    <span class="hl kwd">Tcl_IncrRefCount</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Load stdin into s. */</span>
+    <span class="hl kwd">load_file</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Get the length of s. */</span>
+    init_length <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetCharLength</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Strip off section headers and EOLs from s.  This is a little</span>
+<span class="hl com">     * messy because we have to go from Tcl-string to C-string and</span>
+<span class="hl com">     * back to Tcl-string. */</span>
+    s_cstr <span class="hl sym">=</span> <span class="hl kwd">regsub</span><span class="hl sym">(</span><span class="hl str">&quot;(&gt;.*)|</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">Tcl_GetString</span><span class="hl sym">(</span>s<span class="hl sym">),</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">,</span> NULL<span class="hl sym">);</span>
+    <span class="hl kwd">Tcl_SetStringObj</span><span class="hl sym">(</span>s<span class="hl sym">,</span> s_cstr<span class="hl sym">,</span> <span class="hl kwd">strlen</span><span class="hl sym">(</span>s_cstr<span class="hl sym">));</span>
+    <span class="hl kwd">g_free</span><span class="hl sym">(</span>s_cstr<span class="hl sym">);</span>
+    s_cstr <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+
+    <span class="hl com">/* Get the length of s. */</span>
+    code_length <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetCharLength</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Process the variants by counting them and printing the results. */</span>
+    <span class="hl kwd">process_variants</span><span class="hl sym">(</span>cpu_count<span class="hl sym">,</span> s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Substitute nucleic acid codes in s with their meanings. */</span>
+    <span class="hl kwd">process_nacodes</span><span class="hl sym">(</span>cpu_count<span class="hl sym">,</span> s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Get the length of s. */</span>
+    seq_length <span class="hl sym">=</span> <span class="hl kwd">Tcl_GetCharLength</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Print the lengths. */</span>
+    <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> init_length<span class="hl sym">,</span> code_length<span class="hl sym">,</span> seq_length<span class="hl sym">);</span>
+
+    <span class="hl com">/* Clean up. */</span>
+    <span class="hl kwd">Tcl_DecrRefCount</span><span class="hl sym">(</span>s<span class="hl sym">);</span>
+
+    <span class="hl com">/* Finalize Tcl. */</span>
+    <span class="hl kwd">Tcl_Release</span><span class="hl sym">((</span>ClientData<span class="hl sym">)</span>tcl<span class="hl sym">);</span>
+    <span class="hl kwd">Tcl_Exit</span><span class="hl sym">(</span>rv<span class="hl sym">);</span>
+
+    <span class="hl com">/* Not reached. */</span>
+    <span class="hl kwa">return</span> rv<span class="hl sym">;</span>
+<span class="hl sym">}</span>
