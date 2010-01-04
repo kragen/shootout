@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
 <?
    list($data,$sTests,$ratios,$measurements) = $Data;
@@ -85,7 +85,7 @@ foreach($sTests as $Row){
 
 <p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a> ~ speed and size.</p>
 
-<p>For each named benchmark, measurements of the fastest <strong><?=$LangName;?></strong> program are shown for comparison against measurements of the fastest <?=$LangName2;?> program.</p>
+<p>For each named benchmark, measurements of <strong><i>the</i> <em>fastest</em> <?=$LangName;?></strong> program are shown for comparison against measurements of <i>the</i> <em>fastest</em> <?=$LangName2;?> program.</p>
 
 <table>
 <tr>
@@ -161,9 +161,18 @@ foreach($sTests as $Row){
 </table>
 
 
-<h2><a href="#measurements" name="measurements">&nbsp;<strong>Measurements</strong> for all the accepted programs</a></h2>
-<p></p>
+<h2><a href="#measurements" name="measurements">&nbsp;Step&nbsp;4&nbsp;:&nbsp;Are there other <strong><?=$LangName;?> programs</strong> for these benchmarks?</a></h2>
+<p>Remember - those are just the <em>fastest</em> programs in each language measured on this OS/machine. <b>Check</b> if there are measurements for other <?=$LangName;?> implementations of these benchmark programs.</p>
 <? MkLangsMenuForm($Langs,$SelectedLang); ?>
+
+<p>Maybe one of those other <?=$LangName;?> programs is fastest on <a href="<?=CORE_SITE;?>help.php#compare" title="? Help">a different OS/machine</a>.</p>
+
+
+<h2><a href="#measurements" name="measurements">&nbsp;Step&nbsp;5&nbsp;:&nbsp;Are there other faster programs for these benchmarks?</a></h2>
+<p>Remember - those are just the fastest <em><?=$LangName;?></em> and <i><?=$LangName2;?></i> programs measured on this OS/machine. <b>Check</b> if there are faster implementations of these benchmark programs for other programming languages.</p>
+<? MkTestsMenuForm($Tests,$SelectedTest); ?>
+<p>Maybe one of those other programs is fastest on <a href="<?=CORE_SITE;?>help.php#compare" title="? Help">a different OS/machine</a>.</p>
+
 
 <h3><a href="#about" name="about">&nbsp;<strong><?=$LangName;?></strong></a>&nbsp;:&nbsp;<?=$LangTag;?>&nbsp;</h3>
 <p></p>

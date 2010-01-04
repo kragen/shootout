@@ -428,6 +428,24 @@ function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
    echo '</p></form>', "\n";
 }
 
+function MkTestsMenuForm($Tests,$SelectedTest,$Action='benchmarks.php'){
+   echo '<form method="get" action="benchmark.php">', "\n";
+   echo '<p><select name="test">', "\n";
+   foreach($Tests as $Row){
+      $Link = $Row[TEST_LINK];
+      $Name = $Row[TEST_NAME];
+      if ($Link==$SelectedTest){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";
+   echo '<input type="submit" value="Show" />', "\n";
+   echo '</p></form>', "\n";
+}
+
 
 function PFx($d){
    if ($d>9.9){ return number_format($d); }
