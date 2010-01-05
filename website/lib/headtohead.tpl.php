@@ -162,7 +162,7 @@ foreach($sTests as $Row){
 
 
 <h2><a href="#measurements" name="measurements">&nbsp;Step&nbsp;4&nbsp;:&nbsp;Are there other <strong><?=$LangName;?> programs</strong> for these benchmarks?</a></h2>
-<p>Remember - those are just the <em>fastest</em> programs in each language measured on this OS/machine. <b>Check</b> if there are measurements for other <?=$LangName;?> implementations of these benchmark programs.</p>
+<p>Remember - those are just the fastest <em><?=$LangName;?></em> and <i><?=$LangName2;?></i> programs measured on this OS/machine. <b>Check</b> if there are other implementations of these benchmark programs for <?=$LangName;?>.</p>
 <? MkLangsMenuForm($Langs,$SelectedLang); ?>
 
 <p>Maybe one of those other <?=$LangName;?> programs is fastest on <a href="<?=CORE_SITE;?>help.php#compare" title="? Help">a different OS/machine</a>.</p>
