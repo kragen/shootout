@@ -1,1 +1,1 @@
-<p>Compiler version: 0.39 beta</p>
+<p>Compiler version: 0.39 rc1</p>
