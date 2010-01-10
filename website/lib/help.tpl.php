@@ -395,6 +395,15 @@ href="./debian/benchmark.php?test=nbody&amp;lang=all">&nbsp;Debian&nbsp;:&nbsp;A
 </table>
 </dd>
 
+<dt><a href="#why" name="why">Why make these comparisons between programming languages?</a></dt>
+<dd>
+<ol>
+<li>To show working programs written in <i>less familiar</i> programming languages</li>
+<li>To show <i>the least</i> we should expect from performance comparisons</li>
+<li>To show how difficult it can be to make <i>meaningful</i> comparisons</li>
+</ol>
+</dd>
+
 </dl>
 </dd>
 
