@@ -6,7 +6,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 <dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed Benchmarks</strong></a></dt>
 <dd>
 <dl>
-<dt><a href="#your" name="your">Are <strong>your programs</strong> even like these benchmarks?</a></dt>
+<dt><a href="#your" name="your">Are <strong>your programs</strong> even like these benchmarks?</a> <i>Ecological Validity</i></dt>
 <dd><ul>  
   <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
   <li><p>Are your programs tiny, like these benchmarks?</p></li>
