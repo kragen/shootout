@@ -11,16 +11,16 @@ means that most programs are small and spend most of their time in I/O and nativ
   <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
   <li><p>Are your programs tiny, like these benchmarks?</p></li>
   <li><p>Do your programs avoid library use, like these benchmarks?</p></li>
-</ul></dd>
-
-<dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
-<dd>
-
-<p>"Our results show that real web applications behave very differently from the benchmarks and that there are definite ways in which the benchmark behavior might mislead a designer."</p>
+</ul>
+<p>"We measure three specific areas of JavaScript runtime behavior: 1) functions and code; 2) heap-allocated objects and data; 3) events and handlers. We find that the benchmarks are not representative of many real websites and that conclusions reached from measuring the benchmarks may be misleading."</p>
 <ul>  
   <li><p><a href="http://research.microsoft.com/en-us/projects/jsmeter/">JSMeter: Characterizing Real-World Behavior of JavaScript Programs</a></p></li>
 </ul>
 
+</dd>
+
+<dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
+<dd>
 <p>"The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."</p>
 <ul>  
   <li><p><a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html">Benchmarks are a crock</a></p></li>
