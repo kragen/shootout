@@ -16,16 +16,14 @@ means that most programs are small and spend most of their time in I/O and nativ
 <ul>  
   <li><p><a href="http://research.microsoft.com/en-us/projects/jsmeter/">JSMeter: Characterizing Real-World Behavior of JavaScript Programs</a></p></li>
 </ul>
-
-</dd>
-
-<dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
-<dd>
 <p>"The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."</p>
 <ul>  
   <li><p><a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html">Benchmarks are a crock</a></p></li>
 </ul>
+</dd>
 
+<dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
+<dd>
 <p>"Generally, we can get accurate measurements for durations that are either very short (less than around 10 millisecond) or very long (greater than around 1 second), even on heavily loaded machines. Times between around 10 milliseconds and 1 second require special care to measure accurately."</p>
 <ul>  
   <li><p><a href="http://csapp.cs.cmu.edu/public/ch9-preview.pdf">Computer Systems: A Programmer's Perspective, Chapter 9</a> (pdf)</p></li>
