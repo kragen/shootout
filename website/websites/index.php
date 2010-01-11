@@ -92,7 +92,6 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
 
 $Tests = ReadA('../desc/test.csv');
 $Langs = ReadA('../desc/lang.csv');
-uasort($Langs, 'CompareLangName');
 
 $choices = array(
    array('u32','u64q'),

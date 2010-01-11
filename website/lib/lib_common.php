@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2009
+// Copyright (c) Isaac Gouy 2004-2010
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
@@ -332,21 +332,26 @@ function TimeMemoryRatios(&$Accepted,$sort){
 
 
 function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
    $data = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
+   $prefix = substr($T,1).','.$L.',';
+   $lines = file($FileName);
 
-      if (($row[DATA_TEST]==$T)&&($row[DATA_LANG]==$L)){
+   foreach($lines as $line) {
+      if (strpos($line,$prefix)){
+         $row = explode( ',', $line);
          settype($row[DATA_ID],'integer');
+         settype($row[DATA_TESTVALUE],'integer');
+         settype($row[DATA_GZ],'integer');
+         settype($row[DATA_FULLCPU],'double');
+         settype($row[DATA_MEMORY],'integer');
+         settype($row[DATA_STATUS],'integer');
+         settype($row[DATA_ELAPSED],'double');
+
          if ($I == -1){ $data[] = $row; }
          elseif ($row[DATA_ID]==$I){ $data[] = $row; }
       }
    }
-   @fclose($f);
+   unset($lines);
 
    if ($I == -1){
       $filtered = array();

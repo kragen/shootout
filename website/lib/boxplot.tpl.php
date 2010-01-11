@@ -1,6 +1,6 @@
-<?   // Copyright (c) Isaac Gouy 2009 ?>
+<?   // Copyright (c) Isaac Gouy 2009-2010 ?>
 
-<? 
+<?
    MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
    list($score,$labels,$stats,$selected) = $Data;

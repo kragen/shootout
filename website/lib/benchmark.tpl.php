@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);

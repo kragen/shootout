@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005-2009
+// Copyright (c) Isaac Gouy 2005-2010
 
 
 function Weights($Tests, $Action, $Vars){
@@ -254,22 +254,28 @@ function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$Ha
 }
 
 function FullRatios($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
-   // expect to encounter more than one DATA_TESTVALUE for each test
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
 
    $mins = array();
    foreach($Tests as $k => $v){ $mins[$k] = array(); }
-
    $data = array();
-   //$timeout = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
+
+   $lines = @file($FileName) or die ('Cannot open $FileName');
+   if ($HasHeading){ unset($lines[0]); } // remove header line
+   // expect to encounter more than one DATA_TESTVALUE for each test
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
       if (!is_array($row)){ continue; }
 
       $test = $row[DATA_TEST];
       $lang = $row[DATA_LANG];
       settype($row[DATA_ID],'integer');
+      settype($row[DATA_TESTVALUE],'integer');
+      settype($row[DATA_GZ],'integer');
+      settype($row[DATA_FULLCPU],'double');
+      settype($row[DATA_MEMORY],'integer');
+      settype($row[DATA_STATUS],'integer');
+      settype($row[DATA_ELAPSED],'double');
+
       $id = $row[DATA_ID];
       $testvalue = $row[DATA_TESTVALUE];
       $key = $test.$lang.strval($id);
@@ -295,9 +301,8 @@ function FullRatios($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading
             }
       }
    }
-   @fclose($f);
+   unset($lines);
 
-   
    /*
    When there are multiple N values this doesn't seem quite right - we might
    have taken times from different programs for different N values for the
@@ -405,7 +410,6 @@ function DataRows($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
       foreach($test as $t => $testvalues){
 
          // wait until now to filter so sizeof($test) is consistent with FullWeightedData
-         //if ($Tests[$t][TEST_WEIGHT]>0){
 
             foreach($testvalues as $tv => $v){
                $v[N_TEST] = $Tests[ $v[N_TEST] ][TEST_NAME];

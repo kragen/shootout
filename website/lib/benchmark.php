@@ -1,8 +1,6 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2009
-
+// Copyright (c) Isaac Gouy 2004-2010
 // LIBRARIES ////////////////////////////////////////////////
-
 require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
@@ -10,11 +8,8 @@ require_once(LIB);
 // DATA ///////////////////////////////////////////
 
 list($Incl,$Excl) = WhiteListInEx();
-$Tests = WhiteListUnique('test.csv',$Incl);
-uasort($Tests, 'CompareTestName');
-
-$Langs = WhiteListUnique('lang.csv',$Incl);
-uasort($Langs, 'CompareLangName');
+$Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
+$Langs = array_reverse(WhiteListUnique('lang.csv',$Incl)); // assume lang.csv in reverse name order
 
 list ($mark,$mtime)= MarkTime();
 $mark = $mark.' '.SITE_NAME;
@@ -73,7 +68,6 @@ if (isset($HTTP_GET_VARS['d'])
 if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
 
 
-
 $MetaKeywords = '';
 
 // PAGES ///////////////////////////////////////////////////
@@ -110,9 +104,7 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $MetaKeywords = '<meta name="description" content="Which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') and how your favorite language compares." />';
 
-
    } else {           // Head to Head
-
       $S = '';
       $PageId = 'headtohead';
       require_once(LIB_PATH.'lib_headtohead.php');
@@ -127,7 +119,6 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="description" content="Compare the speed and size of '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
-
       } else {
         $Title = $LangName.' measurements';
         $TemplateName = 'language.tpl.php';
@@ -135,7 +126,6 @@ if ($T=='all'){
 
         $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
         $MetaKeywords = '<meta name="description" content="Performance measurements for all the '.$LangName.' programs implementing ~12 flawed benchmarks ('.PLATFORM_NAME.')." />';
-
       }
 
       $About = & new Template(ABOUT_PATH);
@@ -145,7 +135,7 @@ if ($T=='all'){
       }
 
    } elseif ($L=='all'){ // Benchmark
-   
+
       $PageId = 'benchmark';
 
       if (isset($HTTP_GET_VARS['sort'])
@@ -164,7 +154,6 @@ if ($T=='all'){
       $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
       $MetaKeywords = '<meta name="description" content="For ~30 programming languages compare programs that '.$Tests[$T][TEST_META].' ('.PLATFORM_NAME.')." />';
-
 
    } else {              // Program
    
@@ -193,7 +182,6 @@ if ($T=='all'){
       $Body->set('Title', $Title);
       $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
-
 
 $faqUrl = CORE_SITE.'help.php';
 $timeUsed = 'Elapsed secs';

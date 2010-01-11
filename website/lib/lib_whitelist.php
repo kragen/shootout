@@ -1,5 +1,5 @@
 <?
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2010
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
@@ -61,74 +61,74 @@ function SetChartCacheControl(){
 }
 
 
+
 function WhiteListInEx(){
    $incl = array();
-   $f = @fopen('./include.csv','r') or die('Cannot open ./include.csv');
-   $row = @fgetcsv($f,1024,','); // heading row
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
+   $lines = @file('./include.csv') or die('Cannot open ./include.csv');
+   unset($lines[0]); // remove header line
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
       if (!is_array($row)){ continue; }
       if (isset($row[INCL_LINK]{0})){ $incl[ $row[INCL_LINK] ] = 0; }
    }
-   @fclose($f);
-   
-   $excl = array();
-   $f = @fopen(DESC_PATH.'/exclude.csv','r') or die('Cannot open '.DESC_PATH.'/exclude.csv');
-   $row = @fgetcsv($f,1024,','); // heading row
 
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
+   $excl = array();
+   $lines = @file(DESC_PATH.'exclude.csv') or die('Cannot open '.DESC_PATH.'exclude.csv');
+   unset($lines[0]); // remove header line
+
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
       if (!is_array($row)){ continue; }
+      settype($row[EXCL_ID],'integer');
       if (isset($row[EXCL_TEST]{0})){
          if (!isset($row[EXCL_ID])){ $row[EXCL_ID] = 1; }
          $key = $row[EXCL_TEST].$row[EXCL_LANG].strval($row[EXCL_ID]);
          $excl[$key] = $row;
       }
    }
-   @fclose($f);
-
    return array($incl,$excl);
 }
 
 
+
 function WhiteListUnique($FileName,$Incl,$HasHeading=TRUE){
-   if (file_exists('./'.$FileName)){
-      $f = @fopen('./'.$FileName,'r') or die('Cannot open '.$FileName);
-   } else {
-      $f = @fopen(DESC_PATH.$FileName,'r') or die('Cannot open '.$FileName);
-   }
-
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
+   $lines = @file(DESC_PATH.$FileName) or die ('Cannot open $FileName');
+   if ($HasHeading){ unset($lines[0]); } // remove header line
+   $rows = array();
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
       if (!is_array($row)){ continue; }
-
 //######## Hardcoded assumption that $row[0] is a link name
       if (isset( $Incl[$row[0]] )){ $rows[ $row[0] ] = $row; }
    }
-   @fclose($f);
    return $rows;
 }
 
 
 function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
+   $lines = @file($FileName) or die ('Cannot open $FileName');
+   if ($HasHeading){ unset($lines[0]); } // remove header line
+   $prefix = substr($Value,1).',';
    $rows = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      if ( isset($row[DATA_LANG]) && ($row[DATA_TEST]==$Value) ){
-         settype($row[DATA_ID],'integer');
-         if (isset($rows[$row[DATA_LANG]])){
-            array_push( $rows[$row[DATA_LANG]], $row);
-         } else {
-            $rows[$row[DATA_LANG]] = array($row);
+   foreach($lines as $line) {
+      if (strpos($line,$prefix)){
+         $row = explode( ',', $line);
+         if ( isset($row[DATA_LANG])){
+            settype($row[DATA_ID],'integer');
+            settype($row[DATA_TESTVALUE],'integer');
+            settype($row[DATA_GZ],'integer');
+            settype($row[DATA_FULLCPU],'double');
+            settype($row[DATA_MEMORY],'integer');
+            settype($row[DATA_STATUS],'integer');
+            settype($row[DATA_ELAPSED],'double');
+            if (isset($rows[$row[DATA_LANG]])){
+               array_push( $rows[$row[DATA_LANG]], $row);
+            } else {
+               $rows[$row[DATA_LANG]] = array($row);
+            }
          }
       }
    }
-   @fclose($f);      
    return $rows;
 }
 

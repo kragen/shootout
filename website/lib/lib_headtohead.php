@@ -1,45 +1,47 @@
 <?php
-// Copyright (c) Isaac Gouy 2005-2008
+// Copyright (c) Isaac Gouy 2005-2010
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
 
 
 function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
-   // Simple filter on file rows
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
    $rows = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
+   $lines = file($FileName);
 
-      $lang = $row[DATA_LANG];                                  
-      if ($lang==$L1 || $lang==$L2){  $rows[] = $row;}
+   $prefixL1 = ','.$L1.',';
+   $prefixL2 = ','.$L2.',';
+   foreach($lines as $line) {
+      if (strpos($line,$prefixL1)||strpos($line,$prefixL2)){
+         $rows[] = explode( ',', $line);
+      }
    }
-   @fclose($f);     
-      
-   // Filter again in memory      
-   $Data = array();   
-   foreach($rows as $row){ 
-      if (isset($Incl[$row[DATA_TEST]])){   
-         settype($row[DATA_ID],'integer'); 
-         settype($row[DATA_TIME],'double');
+   unset($lines);
 
-         //if (ExcludeData($row,$Langs,$Excl) > PROGRAM_SPECIAL){ 
+   // Filter again in memory
+   $Data = array();
+   foreach($rows as $row){
+      if (isset($Incl[$row[DATA_TEST]])){
+         settype($row[DATA_ID],'integer');
+         settype($row[DATA_TESTVALUE],'integer');
+         settype($row[DATA_GZ],'integer');
+         settype($row[DATA_FULLCPU],'double');
+         settype($row[DATA_MEMORY],'integer');
+         settype($row[DATA_STATUS],'integer');
+         settype($row[DATA_ELAPSED],'double');
+
          $ex = ExcludeData($row,$Langs,$Excl);
          if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
-            $Data[] = $row;                                                                      
+            $Data[] = $row;
          }
       }
    }
    unset($rows);
 
 // SELECTION DEPENDS ON THIS SORT ORDER
-   usort($Data,'CompareTestValue2');   
+   usort($Data,'CompareTestValue2');
 
 // TRANSFORM SELECTED DATA
-
    $lang = ""; $id = ""; $test = ""; $n = 0;
    $NData = array();
    $comparable = array();
@@ -92,7 +94,7 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          $r1 = $comparable[$L1];
 
          if (isset($comparable[$L2])){
-            $r2 = $comparable[$L2];            
+            $r2 = $comparable[$L2];
             $full = 1;
             $mem = 1;
             $lines = 1;
@@ -130,7 +132,6 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
                , $L2
                , $r1[DATA_ID]
                , ($errorRowMeasurement[DATA_TESTVALUE] == $n) ? 0 : $errorRowMeasurement[DATA_TESTVALUE]
-//               , ($r1[DATA_TESTVALUE] >= $n) ? 0 : $r1[DATA_TESTVALUE]
                , $Langs[$r1[DATA_LANG]][LANG_FULL].IdName($r1[DATA_ID])
                , $Langs[$r1[DATA_LANG]][LANG_HTML].IdName($r1[DATA_ID])
                , 0
@@ -170,7 +171,6 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
    }
    uasort($NData,'CompareTimeRatio');
 
-
    // sort by x times faster
    $SortedTests = array();
    $reorder = array();
@@ -192,7 +192,6 @@ function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHead
          $ratios[] = NO_VALUE; $ratios[] = NO_VALUE; $ratios[] = NO_VALUE;
       }
    }
-
    return array($NData,$SortedTests,$ratios,$measurements);
 }
 
@@ -293,28 +292,29 @@ function PF($d){
 
 
 
-
-
 function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
-   // Simple filter on file rows
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
    $rows = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      
-      $lang = $row[DATA_LANG];                                  
-      if ($lang==$L1){  $rows[] = $row;}
+   $lines = file($FileName);
+
+   $prefixL1 = ','.$L1.',';
+   foreach($lines as $line) {
+      if (strpos($line,$prefixL1)){
+         $rows[] = explode( ',', $line);
+      }
    }
-   @fclose($f);
+   unset($lines);
+
 
    // Filter again in memory
    $Data = array();   
    foreach($rows as $row){ 
       if (isset($Incl[$row[DATA_TEST]])){
          settype($row[DATA_ID],'integer');
+         settype($row[DATA_TESTVALUE],'integer');
+         settype($row[DATA_GZ],'integer');
          settype($row[DATA_FULLCPU],'double');
+         settype($row[DATA_MEMORY],'integer');
+         settype($row[DATA_STATUS],'integer');
          settype($row[DATA_ELAPSED],'double');
 
          $ex = ExcludeData($row,$Langs,$Excl);
