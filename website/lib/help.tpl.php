@@ -368,7 +368,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 <dt><a href="#history" name="history">Why do you continue to show out-of-date measurements?</a></dt>
 
 <dd>
-<p><img src="<?=IMAGE_PATH;?>fresh_png_11dec2009.php"
+<p><img src="<?=IMAGE_PATH;?>fresh_png_10jan2010.php"
    alt=""
    title=""
    width="400" height="225"
