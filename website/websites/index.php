@@ -38,14 +38,14 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 require_once('../lib/lib_whitelist.php');
 
 function ReadA($FileName){
-   $f = @fopen($FileName,'r') or die('Cannot open '.$FileName);
-   $row = @fgetcsv($f,1024,',');
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
+   $rows = array();
+   $lines = file($FileName);
+   unset($lines[0]); // remove header line
+   foreach($lines as $s) {
+      $row = explode( ',', $s);
       if (!is_array($row)){ continue; }
       $rows[ $row[0] ] = $row;
    }
-   @fclose($f);
    return $rows;
 }
 
@@ -90,6 +90,7 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
    return $notShown;
 }
 
+$Tests = ReadA('../desc/test.csv');
 $Langs = ReadA('../desc/lang.csv');
 uasort($Langs, 'CompareLangName');
 
@@ -127,7 +128,6 @@ $testchoices = array(
    
 $nchoices = sizeof($testchoices);
 $chosentest = $testchoices[$rotate%$nchoices];
-$Tests = ReadA('../desc/test.csv');
 $chosenTip = 'Fastest in each programming language to '.$Tests[$chosentest][4];
 unset($Tests);
 
