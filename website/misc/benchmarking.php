@@ -95,7 +95,7 @@ software. Lua relies on C for those tasks."<br />
 </p></blockquote>
 
 <blockquote><p>"Most (all?) large systems developed using Erlang make heavy use of C for low-level code, leaving Erlang to manage the parts which tend to be complex in other languages, like controlling systems spread across several machines and implementing complex protocol logic."<br />
-<a href="http://www.erlang.org/faq/t1.html#AEN43">Frequently Asked Questions about Erlang</a>
+<a href="http://www.erlang.org/faq/introduction.html#1.4">Frequently Asked Questions about Erlang</a>
 </p></blockquote>
 </dd>
 
