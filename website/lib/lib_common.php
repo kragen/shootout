@@ -69,74 +69,6 @@ function GetMicroTime(){
 }
 
 
-function TestData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
-   // expect NOT to encounter more than one DATA_TESTVALUE for each test
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
-   $data = array();
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-
-      $test = $row[DATA_TEST];
-      $lang = $row[DATA_LANG];
-      settype($row[DATA_ID],'integer');
-      $id = $row[DATA_ID];
-      $key = $test.$lang.strval($id);
-
-      // accumulate all acceptable datarows, exclude duplicates
-
-      if (isset($Incl[$test]) && isset($Incl[$lang]) && isset($Langs[$lang]) &&
-               ($Tests[$test][TEST_WEIGHT]>0) &&
-                  !isset($Excl[$key])){
-
-            if ($row[DATA_STATUS] == 0 && (
-                  ($row[DATA_FULLCPU] > 0 && (!isset($data[$lang][$test]) ||
-                     $row[DATA_FULLCPU] < $data[$lang][$test])))){
-
-               $data[$lang][$test] = $row[DATA_FULLCPU];
-            }
-      }
-   }
-   @fclose($f);
-
-   /*
-   When there are multiple N values this doesn't seem quite right - we might
-   have taken times from different programs for different N values for the
-   same language implementation - but it's completely negligible.
-   */
-
-   $a = array();
-   // preserve ordering of $Tests
-   foreach($Tests as $k => $v){
-      if (($v[TEST_WEIGHT]<=0)){ continue; }
-      $a[$k] = array();
-   }
-   foreach($data as $lang => $testvalues){
-      foreach($testvalues as $t => $v){
-         if ($v > 0.0){
-            $a[$t][] = $v;
-         }
-      }
-   }
-
-   foreach($Tests as $k => $v){
-      if (($v[TEST_WEIGHT]<=0)){ continue; }
-      $a[$k] = Percentiles($a[$k]);
-   }
-
-   $labels = array();
-   $stats = array();
-   foreach($a as $k => $v){
-      $labels[] = $k;
-      $stats[] = $v;
-   }
-   return array($labels,$stats);
-}
-
-
-
 function Percentiles($a){
    sort($a);
    $n = sizeof($a);
@@ -242,7 +174,7 @@ function IdName($id){
 }
 
 
-function ExcludeData(&$d,&$langs,&$Excl){
+function ExcludeData($d,$langs,$Excl){
    if( !isset($langs[$d[DATA_LANG]]) ) { return LANGUAGE_EXCLUDED; }
 
    $key = $d[DATA_TEST].$d[DATA_LANG].strval($d[DATA_ID]);
@@ -254,7 +186,7 @@ function ExcludeData(&$d,&$langs,&$Excl){
 }
 
 
-function FilterAndSortData($langs,$data,&$sort,&$Excl){
+function FilterAndSortData($langs,$data,$sort,$Excl){
    $Accepted = array();
    $Rejected = array();   
    $Special = array();
@@ -300,7 +232,7 @@ function FilterAndSortData($langs,$data,&$sort,&$Excl){
 }
 
 
-function TimeMemoryRatios(&$Accepted,$sort){
+function TimeMemoryRatios($Accepted,$sort){
    if ($sort=='fullcpu'){ $DTIME = DATA_FULLCPU; }
    else { $DTIME = DATA_TIME; }
 
@@ -331,7 +263,7 @@ function TimeMemoryRatios(&$Accepted,$sort){
 }
 
 
-function ProgramData($FileName,$T,$L,$I,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl,$HasHeading=TRUE){
    $data = array();
    $prefix = substr($T,1).','.$L.',';
    $lines = file($FileName);

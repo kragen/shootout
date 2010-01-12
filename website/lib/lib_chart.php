@@ -132,7 +132,7 @@ class Chart {
       }
    }
 
-   function yAxis(&$yaxis,$scale=null,$shift=null,$axistype=null){
+   function yAxis($yaxis,$scale=null,$shift=null,$axistype=null){
       $this->yaxis = $yaxis;
 
       if (isset($scale)){
@@ -155,7 +155,7 @@ class Chart {
       }
    }
    
-   function xAxis(&$xaxis,$scale,$shift=null){
+   function xAxis($xaxis,$scale,$shift=null){
       $this->xaxis = $xaxis;
       $this->xscale = $scale;
       if (isset($shift)){ $this->xshift = $shift; } else { $this->xshift = 0; }
@@ -186,12 +186,12 @@ class BoxChart extends Chart {
       $this->maxboxes = 15;
    }
 
-   function boxAndWhiskers(&$d){
+   function boxAndWhiskers($d){
       $this->boxes($d);
       $this->whiskers($d);
    }
 
-   function boxes(&$d){
+   function boxes($d){
       $n = sizeof($d);
       if ($n % STATS_SIZE == 0){
          $x = $this->xo + 4;
@@ -214,7 +214,7 @@ class BoxChart extends Chart {
       }
    }
 
-   function whiskers(&$d){
+   function whiskers($d){
       $n = sizeof($d);
       if ($n%STATS_SIZE == 0){
          $x = $this->xo + 4;
@@ -249,7 +249,7 @@ class BoxChart extends Chart {
       }
    }
    
-   function backgroundText(&$a){
+   function backgroundText($a){
       $x = $this->xo + 2;
       $count = 0;
       $need = floor(($this->h - 15) /CHAR_WIDTH_3)-1;
@@ -263,7 +263,7 @@ class BoxChart extends Chart {
       }
    }
 
-   function autoBoxspace(&$a){
+   function autoBoxspace($a){
       $boxspace = 4;
       if (sizeof($a)>0){
          $n = sizeof($a)/STATS_SIZE;
@@ -293,7 +293,7 @@ class BarChart extends Chart {
       return 225;
    }
 
-   function bars($barcolour,&$d,$filled=TRUE){
+   function bars($barcolour,$d,$filled=TRUE){
       $x = $this->xo;
       foreach($d as $v){
          if ($v > -4){ // no measurement was made
@@ -327,7 +327,7 @@ class ComparisonChart extends BarChart {
 
 class LineChart extends Chart {
 
-   function lines($linecolour,&$xs,&$ys){
+   function lines($linecolour,$xs,$ys){
       $x2 = $this->xo;
       $y2 = $this->yo;
       for ($i=0;$i<sizeof($ys);$i++){
@@ -371,7 +371,7 @@ class StepChart extends Chart {
       return 225;
    }
    
-   function steps($linecolour,&$d){
+   function steps($linecolour,$d){
       $x = $this->xo;
       $y = $this->h - $this->yo;
       foreach($d as $p){
@@ -415,7 +415,7 @@ class ShapeChart extends Chart {
       return 120;
    }
    
-   function shapes(&$d,&$c){
+   function shapes($d,$c){
       $n = sizeof($d);
       if ($n % 2 == 0){
          $xs = $this->xshift * $this->xscale;
@@ -503,14 +503,14 @@ function axis03000(){
 }
 
 
-function log10axis(&$a){
+function log10axis($a){
    $log10a = array();
    foreach($a as $v){ $log10a[] = array(log10($v[0]),$v[1]); }
    return $log10a;
 }
 
 
-function axisPercent(&$a){
+function axisPercent($a){
    $p = array();
    foreach($a as $v){ $p[] = array($v[0],$v[1].'%'); }
    return $p;

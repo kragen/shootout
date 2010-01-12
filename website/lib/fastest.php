@@ -10,11 +10,12 @@ require_once(LIB);
 // DATA ///////////////////////////////////////////
 
 list($Incl,$Excl) = WhiteListInEx();
-$Tests = WhiteListUnique('test.csv',$Incl);
-uasort($Tests, 'CompareTestName');
+$Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
+//uasort($Tests, 'CompareTestName');
 
-$Langs = WhiteListUnique('lang.csv',$Incl);
-uasort($Langs, 'CompareLangName');
+$Langs = array_reverse(WhiteListUnique('lang.csv',$Incl)); // assume lang.csv in reverse name order
+// $Langs = WhiteListUnique('lang.csv',$Incl);
+//uasort($Langs, 'CompareLangName');
 
 
 

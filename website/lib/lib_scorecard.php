@@ -55,23 +55,28 @@ function SelectedLangs($Langs, $Action, $Vars){
 
 // Data filtering and summary ///////////////////////////////////////////
 
-function ValidRowsAndMins($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
-   // expect to encounter more than one DATA_TESTVALUE for each test
-   $f = @fopen($FileName,'r') or die ('Cannot open $FileName');
-   if ($HasHeading){ $row = @fgetcsv($f,1024,','); }
-
+function ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
    $mins = array();
    foreach($Tests as $k => $v){ $mins[$k] = array(); }
-
    $data = array();
 
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
+   $lines = @file($FileName) or die ('Cannot open $FileName');
+   if ($HasHeading){ unset($lines[0]); } // remove header line
+   // expect to encounter more than one DATA_TESTVALUE for each test
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
       if (!is_array($row)){ continue; }
 
       $test = $row[DATA_TEST];
       $lang = $row[DATA_LANG];
       settype($row[DATA_ID],'integer');
+      settype($row[DATA_TESTVALUE],'integer');
+      settype($row[DATA_GZ],'integer');
+      settype($row[DATA_FULLCPU],'double');
+      settype($row[DATA_MEMORY],'integer');
+      settype($row[DATA_STATUS],'integer');
+      settype($row[DATA_ELAPSED],'double');
+
       $id = $row[DATA_ID];
       $testvalue = $row[DATA_TESTVALUE];
       $key = $test.$lang.strval($id);
@@ -119,13 +124,12 @@ function ValidRowsAndMins($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TR
 
       }
    }
-   @fclose($f);
    return array($data,$mins);
 }
 
 
 
-function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeading=TRUE){
+function FullWeightedData($FileName,$Tests,$Langs,$Incl,$Excl,$W,$HasHeading=TRUE){
    list($data,$mins) = ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading);
 
    /*
@@ -196,7 +200,7 @@ function FullWeightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$W,$HasHeadin
 
 
 
-function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE){
+function TimeSizeShapes($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
    list($data,$mins) = ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading);
 
    /*
@@ -248,12 +252,12 @@ function TimeSizeShapes($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$HasHeading=TRUE
 
 
 
-function FullUnweightedData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
+function FullUnweightedData($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading=TRUE){
 
    return FullScores( $SLangs, FullRatios($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading) );
 }
 
-function FullRatios($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading=TRUE){
+function FullRatios($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading=TRUE){
 
    $mins = array();
    foreach($Tests as $k => $v){ $mins[$k] = array(); }
@@ -335,7 +339,7 @@ function FullRatios($FileName,&$Tests,&$Langs,&$Incl,&$Excl,&$SLangs,$HasHeading
 }
 
 
-function FullScores(&$SLangs,&$ratios){
+function FullScores($SLangs,$ratios){
   $score = array();
   foreach($ratios as $k => $s){
      $score[$k] = Percentiles($s);

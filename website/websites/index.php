@@ -77,7 +77,7 @@ function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
          $tag = $a[LANG_TAG];
          $site = $keys[$link];
 
-         if (isset($a[LANG_SPECIALURL]) && !empty($a[LANG_SPECIALURL])){ // special_url
+         if (isset($a[LANG_SPECIALURL]) && $a[LANG_SPECIALURL]!="\n"){ // special_url
              printf('<p><a href="./%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
                 $site, $a[LANG_SPECIALURL], $a[LANG_FULL], $a[LANG_HTML], $tag);
          } else {

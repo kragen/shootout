@@ -10,16 +10,6 @@ $TestLink = $Row[TEST_LINK];
 list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl);
 
 $first = 0;
-$last = sizeof($Accepted)-1;
-if (sizeof($Accepted)>=$first){ $P1 = $Accepted[$first][DATA_LANG].'-'.$Accepted[$first][DATA_ID]; }
-else { $P1 = ''; }
-
-if (sizeof($Accepted)>=$last){ $P2 = $Accepted[$last][DATA_LANG].'-'.$Accepted[$last][DATA_ID]; }
-else { $P2 = ''; }
-
-$P3 = $P1;
-$P4 = $P2;
-
 $NString = 'N=?';
 $testValue = 1;
 foreach($Accepted as $d){
@@ -175,7 +165,7 @@ unset($better);
 ?>
 
 <?
-uasort($Langs,'CompareLangName');
+//uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
    foreach($Rejected as $d){
       if ($d[DATA_LANG]==$k){

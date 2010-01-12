@@ -5,7 +5,7 @@
 
 
 
-function HeadToHeadData($FileName,&$Tests,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
+function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=TRUE){
    $rows = array();
    $lines = file($FileName);
 
@@ -292,7 +292,7 @@ function PF($d){
 
 
 
-function LanguageData($FileName,&$Langs,&$Incl,&$Excl,$L1,$L2,$HasHeading=TRUE){
+function LanguageData($FileName,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=TRUE){
    $rows = array();
    $lines = file($FileName);
 

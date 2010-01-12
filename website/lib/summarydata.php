@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2010
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -10,11 +10,12 @@ require_once(LIB);
 // DATA ///////////////////////////////////////////
 
 list($Incl,$Excl) = WhiteListInEx();
-$Tests = WhiteListUnique('test.csv',$Incl);
-uasort($Tests, 'CompareTestName');
+$Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
+//uasort($Tests, 'CompareTestName');
 
-$Langs = WhiteListUnique('lang.csv',$Incl);
-uasort($Langs, 'CompareLangName');
+$Langs = array_reverse(WhiteListUnique('lang.csv',$Incl)); // assume lang.csv in reverse name order
+//$Langs = WhiteListUnique('lang.csv',$Incl);
+//uasort($Langs, 'CompareLangName');
 
 list ($mark,$mtime)= MarkTime();
 $mark = $mark.' '.SITE_NAME;
@@ -30,7 +31,8 @@ if (!isset($DataSet)){ $DataSet = 'data'; }
 $MetaKeywords = '';
 
 $faqUrl = CORE_SITE.'help.php';
-$bannerUrl = CORE_SITE;
+$bannerUrl = CORE_SITE;
+
 
 // PAGES ///////////////////////////////////////////////////
 

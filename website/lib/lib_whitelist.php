@@ -161,7 +161,7 @@ function Encode($x){
 }
 
 
-function ValidMark(&$H,$valid=FALSE){
+function ValidMark($H,$valid=FALSE){
    $bounds = 64;
    $mark = '';
    if ($valid){
@@ -176,7 +176,7 @@ function ValidMark(&$H,$valid=FALSE){
 }
 
 
-function ValidMatrix(&$H,$V,$size,$valid=FALSE){
+function ValidMatrix($H,$V,$size,$valid=FALSE){
    $bounds = 1024;
    $d = array();
    if ($valid){
@@ -203,16 +203,16 @@ function ValidMatrix(&$H,$V,$size,$valid=FALSE){
 }
 
 
-function ValidLangs(&$H,&$Langs,$valid=FALSE){
+function ValidLangs($H,$Langs,$valid=FALSE){
    return ValidWhiteList($H,'w',$Langs,"^[a-z0-9O]+$",24,LANG_FULL,$valid);
 }
 
-function ValidTests(&$H,&$Tests,$valid=FALSE){
+function ValidTests($H,$Tests,$valid=FALSE){
    return ValidWhiteList($H,'ww',$Tests,"^[a-zO]+$",32,TEST_NAME,$valid);
 }
 
 // private
-function ValidWhiteList(&$H,$V,&$WhiteList,$regex,$size,$index,$valid){
+function ValidWhiteList($H,$V,$WhiteList,$regex,$size,$index,$valid){
    $bounds = 512;
    $d = array();
    if ($valid){

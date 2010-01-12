@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2009 ?>
+<?   // Copyright (c) Isaac Gouy 2009-2010 ?>
 
 
 <h2>&nbsp;<?= $Title." [".$Mark."]" ?></h2>
