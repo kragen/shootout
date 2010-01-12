@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2009 ?>
+<?   // Copyright (c) Isaac Gouy 2009-2010 ?>
 
 
 <?
@@ -17,7 +17,7 @@
       in cols - use the same row if possible.
    */
 
-   function rowmatch($start,$stop,$k,&$cols,&$Centers){
+   function rowmatch($start,$stop,$k,$cols,$Centers){
       $rowmatch = $start;
       $y = $Centers[$k][1];
       for ($col=0; $col<NCOLS; $col++){
@@ -40,7 +40,7 @@
       based on arbitrary source code size.
    */
 
-   function leftToRight(&$bounds,&$Centers){
+   function leftToRight($bounds,$Centers){
       $cols = array();
       for ($col=0;$col<NCOLS;$col++){
          $b0 = $bounds[$col]; $b1 = $bounds[$col+1];
@@ -64,7 +64,7 @@
       return array($n,$cols);
    }
 
-   function finetune($n,&$cols0,&$Centers){
+   function finetune($n,$cols0,$Centers){
       $colrow = array();
       foreach($cols0 as $c => $a){
          foreach($a as $r => $k){
@@ -87,12 +87,43 @@
             $cols[$col][$r] = $k;
          }
       }
-      return $cols;
+
+      // we might have emptied some row - get rid of empty rows
+
+      for ($r=0; $r<$n; $r++){
+         $before[$r] = $r;
+      }
+      $after = array();
+      foreach($cols as $c => $a){
+         foreach($a as $r => $k){
+            $after[$r] = $r;
+         }
+      }
+      $empty = array_keys( array_diff($before,$after));
+      ksort($empty);
+
+      if (sizeof($empty)>0){
+         foreach($cols as $c => $a){
+            $flip = array_flip($a);
+            foreach($empty as $e){
+               foreach($flip as $k => $v){
+                  if ($v > $e){
+                     $flip[$k] = $v-1;
+                  }
+               }
+            }
+            $shifted[$c] = array_flip($flip);
+         }
+      } else {
+         $shifted = $cols;
+      }
+
+      return array($n-sizeof($empty),$shifted);
    }
 
 
    list($n,$cols) = leftToRight($bounds,$Centers);
-   $cols = finetune($n,$cols,$Centers);
+   list($n,$cols) = finetune($n,$cols,$Centers);
 
 ?>
 
@@ -107,7 +138,7 @@
 
    for ($row=0; $row<$n; $row++){
       printf('<tr>');
-      for ($col=0; $col<NCOLS; $col++){
+      for ($col=0; $col<NCOLS; $col++){  
          printf('<td>&nbsp;');
          if (isset($cols[$col][$row])){
             $k = $cols[$col][$row];
