@@ -11,11 +11,8 @@ require_once(LIB);
 
 list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
-//uasort($Tests, 'CompareTestName');
+$Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 
-$Langs = array_reverse(WhiteListUnique('lang.csv',$Incl)); // assume lang.csv in reverse name order
-//$Langs = WhiteListUnique('lang.csv',$Incl);
-//uasort($Langs, 'CompareLangName');
 
 list ($mark,$mtime)= MarkTime();
 $mark = $mark.' '.SITE_NAME;
