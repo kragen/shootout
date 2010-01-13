@@ -1,7 +1,6 @@
-<?php 
+<?php
 ob_start('ob_gzhandler');
-
-$s = time(); $m = floor($s/60); $h = floor($m/60); $rotate = floor($h/7); 
+$s = time(); $m = floor($s/60); $h = floor($m/60); $rotate = floor($h/7);
 
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 31 hours after they are visited.
@@ -34,65 +33,6 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 
 <?php
-
-require_once('../lib/lib_whitelist.php');
-
-function ReadA($FileName){
-   $rows = array();
-   $lines = file($FileName);
-   unset($lines[0]); // remove header line
-   foreach($lines as $s) {
-      $row = explode( ',', $s);
-      if (!is_array($row)){ continue; }
-      $rows[ $row[0] ] = $row;
-   }
-   return $rows;
-}
-
-function Keys($sites){
-   $siteKeys = array();
-   foreach($sites as $s){
-      $a = array_flip( array_keys( ReadA('http://shootout.alioth.debian.org/'.$s.'/include.csv') ));
-      $akeys = array_keys($a);
-      foreach($akeys as $k){ $a[$k] = $s; }
-      $siteKeys[] = $a;
-   }
-   return $siteKeys;
-}
-
-function CompareLangName($b, $a){
-   if (isset($a[LANG_FULL]) && isset($b[LANG_FULL])){
-      return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
-   } else {
-      return 0;
-   }
-}
-
-function PrintIncludedLanguages(&$sites,&$a,$notShown0 ){
-   $link = $a[LANG_LINK];
-   $notShown = $notShown0;
-   foreach($sites as $keys){
-      if (isset($keys[$link]) && !empty($link)){
-         $notShown = FALSE;
-         $tag = $a[LANG_TAG];
-         $site = $keys[$link];
-
-         if (isset($a[LANG_SPECIALURL]) && $a[LANG_SPECIALURL]!="\n"){ // special_url
-             printf('<p><a href="./%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
-                $site, $a[LANG_SPECIALURL], $a[LANG_FULL], $a[LANG_HTML], $tag);
-         } else {
-             printf('<p><a href="./%s/benchmark.php?test=all&amp;lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
-                $site, $link, $a[LANG_FULL], $a[LANG_HTML], $tag);
-         }
-
-      }
-   }
-   return $notShown;
-}
-
-$Tests = ReadA('../desc/test.csv');
-$Langs = ReadA('../desc/lang.csv');
-
 $choices = array(
    array('u32','u64q'),
    array('u64q','u32'),
@@ -106,8 +46,15 @@ $choices = array(
 
 $nchoices = sizeof($choices);
 $chosen = $choices[$rotate%$nchoices];
-$a_list = Keys( array( $chosen[0] ));
-$b_list = Keys( array( $chosen[1] ));
+
+
+$siteTip = array(
+   'u32' => ' on one core x86 Ubuntu'
+   ,'u32q' =>' on quad-core x86 Ubuntu'
+   ,'u64' =>' on one core x64 Ubuntu'
+   ,'u64q' =>' on quad-core x64 Ubuntu'
+   );
+$chosenSiteTip = $siteTip[$chosen[1]];
 
 
 $testchoices = array(
@@ -124,19 +71,27 @@ $testchoices = array(
    ,'binarytrees'
    ,'revcomp'
    );
-   
+
+
+$testtips = array(  // SHOULD MATCH $testchoices
+   'repeatedly access a tiny integer-sequence'
+   ,'repeatedly update hashtables and k-nucleotide strings'
+   ,'generate a Mandelbrot set and write a portable bitmap'
+   ,'perform an N-body simulation of the Jovian planets'
+   ,'generate and write random DNA sequences'
+   ,'calculate an eigenvalue using the power method'
+   ,'repeatedly switch from thread to thread passing one token'
+   ,'repeatedly perform symmetrical thread rendezvous requests'
+   ,'match DNA 8-mers and substitute nucleotides for IUB code'
+   ,'calculate the digits of Pi with streaming arbitrary-precision arithmetic'
+   ,'allocate and deallocate many many binary trees'
+   ,'read DNA sequences and write their reverse-complement'
+   );
+
 $nchoices = sizeof($testchoices);
 $chosentest = $testchoices[$rotate%$nchoices];
-$chosenTip = 'Fastest in each programming language to '.$Tests[$chosentest][4];
-unset($Tests);
+$chosenTip = 'Fastest in each programming language to '.$testtips[$rotate%$nchoices];
 
-$siteTip = array(
-   'u32' => ' on one core x86 Ubuntu'
-   ,'u32q' =>' on quad-core x86 Ubuntu'
-   ,'u64' =>' on one core x64 Ubuntu'
-   ,'u64q' =>' on quad-core x64 Ubuntu'
-   );
-$chosenSiteTip = $siteTip[$chosen[1]];
 
 
 $pagechoices = array(
@@ -162,29 +117,93 @@ $pagechoices = array(
 
 $nchoices = sizeof($pagechoices);
 $chosenpage = $pagechoices[$rotate%$nchoices];
+
 $ChosenSite = $chosen[1];
 $ChosenUrl = $chosenpage[0];
 $ChosenTip = $chosenpage[1];
-?>
 
+unset($choices);
+unset($siteTip);
+unset($testchoices);
+unset($testtips);
+unset($pagechoices);
+?>
 
 
 <div id="home">
 <h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <strong>flawed benchmarks</strong> and &asymp;1100 programs</h5>
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
-<p><a href="./<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Compare performance</strong></a> on both 32 bit and 64 bit Ubuntu&#8482;.</p>
+<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Compare performance</strong></a> on both 32 bit and 64 bit Ubuntu&#8482;.</p>
 <p>Compare performance both when programs are allowed to use <br/>quad-core and when programs are forced to use one core.</p>
-
-
 
 <h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
 
 
 <?php
-foreach($Langs as $a){
-   $notShown = PrintIncludedLanguages($a_list,$a,TRUE);
-   if ($notShown){ $notShown = PrintIncludedLanguages($b_list,$a,$notShown); }
+$u32sites = array('u32','u32q');
+$allsites = array('u32','u32q','u64','u64q');
+
+$langs = array(
+   array('vw','Smalltalk VisualWorks','uniform reflective environment - real live objects','smalltalk',$allsites),
+   array('mzscheme','Scheme PLT','statically-scoped properly tail-recursive dialect of lisp','scheme',$allsites),
+   array('scala','Scala','higher-order type-safe programming for jvm','scala',$allsites),
+   array('ruby','Ruby MRI','programmer fun - everything is an object scripting','ruby',$allsites),
+   array('jruby','Ruby JRuby','everything is an object scripting for jvm','jruby',$allsites),
+   array('yarv','Ruby 1.9','the new Ruby','',$u32sites),
+   array('python','CPython','uncluttered imperative programming plus objects','python',$allsites),
+   array('python3','Python 3','the new Python','python3',$u32sites),
+   array('php','PHP','scripts embedded in html and much more','php',$allsites),
+   array('perl','Perl','server-side shell &amp; cgi scripts','perl',$allsites),
+   array('fpascal','Free Pascal','imperative programming plus objects','pascal',$allsites),
+   array('ocaml','OCaml','modular type-safe strict functional programming plus objects','ocaml',$allsites),
+   array('oz','Mozart/Oz','multi-multi-multi-paradigm distributed programming','oz',$u32sites),
+   array('luajit','Lua LuaJIT','jit compiler fully compatible with lua 5.1','luajit',$u32sites),
+   array('lua','Lua','associative arrays for extensible embedded scripting','lua',$allsites),
+   array('sbcl','Lisp SBCL','pioneering s-expression oriented programming','lisp',$allsites),
+   array('lisaac','Lisaac','everything is a prototype object plus design by contract','lisaac',$allsites),
+   array('v8','JavaScript V8','web-browser embedded scripting','javascript',$allsites),
+   array('tracemonkey','JavaScript TraceMonkey','ubiquitous web-browser embedded scripting','',$allsites),
+   array('javasteady','Java 6 steady state','approximate jvm steady state','',$allsites),
+   array('javaxint','Java 6 -Xint','ubiquitous bytecode interpreter virtual machine','',$allsites),
+   array('java','Java 6 -server','ubiquitous jit server virtual machine','java',$allsites),
+   array('ghc','Haskell GHC','lazy pure functional programming','haskell',$allsites),
+   array('go','Go 6g 8g','types just are - Go is an experiment','',$allsites),
+   array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$allsites),
+   array('fsharp','F# Mono','higher-order type-safe programming (mono is not ms .net)','fsharp',$allsites),
+   array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$allsites),
+   array('clean','Clean','lazy &amp; strict pure functional programming','clean',$allsites),
+   array('gpp','C++ GNU','c plus objects plus generics','cpp',$allsites),
+   array('csharp','C# Mono','oo plus functional style (mono is not ms .net)','csharp',$allsites),
+   array('gcc','C GNU','unchecked low-level programming','c',$allsites),
+   array('ats','ATS','dependent types &amp; linear types plus theorem proving','ats',$allsites),
+   array('gnat','Ada 2005 GNAT','large-scale safety-critical software','ada',$allsites)
+   );
+
+
+function PrintIncludedLanguages($site,$lang){
+   $name = $lang[1];
+   $tag = $lang[2];
+   if (!empty($lang[3])){ // special_url
+       printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
+          $site, $lang[3], $name, $name, $tag);
+   } else {
+       printf('<p><a href="http://shootout.alioth.debian.org/%s/benchmark.php?test=all&amp;lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
+          $site, $lang[0], $name, $name, $tag);
+   }
 }
+
+
+$site0 = $chosen[0];
+$site1 = $chosen[1];
+foreach($langs as $i => $lang){
+   $sites = $lang[4];
+   if (in_array($site0,$sites)){
+      PrintIncludedLanguages($site0,$lang);
+   } elseif (in_array($site1,$sites)){
+      PrintIncludedLanguages($site1,$lang);
+   }
+}
+unset($langs);
 ?>
 
 
