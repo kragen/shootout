@@ -3,8 +3,8 @@
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 $TestName = $Tests[$SelectedTest][TEST_NAME];
+$TestTag = $Tests[$SelectedTest][TEST_TAG];
 $LangName = $Langs[$SelectedLang][LANG_FULL];
-$P = $SelectedLang.'-'.$Id;
 ?>
 
 <h2><a href="#prog" name="prog">&nbsp;performance measurements</a></h2>
@@ -51,7 +51,9 @@ foreach($Data as $d){
 ?>
 </table>
 
-<p>Read the <a href="#log">&darr;&nbsp;make, command line, and program output logs</a> for more details.</p>
+<p>Read the <a href="#log">&darr;&nbsp;make, command line, and program output logs</a> to see how this program was run.</p>
+
+<p>Read <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=all#about" title="<?=$TestTag;?>"><?=$TestName;?>&nbsp;benchmark</a> to see what this program should do.</p>
 
 
 <h2><a href="#sourcecode" name="sourcecode">&nbsp;<?=$Title;?> source code</a></h2>
