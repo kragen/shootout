@@ -160,7 +160,6 @@ $langs = array(
    array('luajit','LuaJIT','jit compiler fully compatible with lua 5.1','luajit',$u32sites),
    array('lua','Lua','associative arrays for extensible embedded scripting','lua',$allsites),
    array('sbcl','Lisp SBCL','pioneering s-expression oriented programming','lisp',$allsites),
-   array('lisaac','Lisaac','everything is a prototype object plus design by contract','lisaac',$allsites),
    array('v8','JavaScript V8','web-browser embedded scripting','javascript',$allsites),
    array('tracemonkey','JavaScript TraceMonkey','ubiquitous web-browser embedded scripting','',$allsites),
    array('javasteady','Java 6 steady state','approximate jvm steady state','',$allsites),
