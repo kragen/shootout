@@ -216,6 +216,5 @@ unset($langs);
 
 </div>
 
-<? include_once('analyticstracking.php'); ?>
 </body>
 </html>
