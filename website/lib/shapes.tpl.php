@@ -143,7 +143,7 @@
          if (isset($cols[$col][$row])){
             $k = $cols[$col][$row];
 
-            if (isset($Langs[$k][LANG_SPECIALURL]) && $Langs[$k][LANG_SPECIALURL]!="\n"){
+            if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
                printf('<a href="%s.php" title="Is %s the fastest programming language?">', $Langs[$k][LANG_SPECIALURL], $Langs[$k][LANG_FULL]);
             } else {
                printf('<a href="benchmark.php?test=all&amp;lang=%s" title="Is %s the fastest programming language?">', $k, $Langs[$k][LANG_FULL]);

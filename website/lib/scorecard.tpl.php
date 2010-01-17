@@ -52,7 +52,7 @@ foreach($score as $k => $v){
    printf('<tr>');
    printf('<td>%s</td>', PFx($v[SCORE_RATIO]));
 
-   if (isset($Langs[$k][LANG_SPECIALURL]) && $Langs[$k][LANG_SPECIALURL]!="\n"){
+   if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
       printf('<td><a href="%s.php" title="Compare %s speed and size against one other programming language">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Langs[$k][LANG_FULL],$HtmlName); 
    } else {
       printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s speed and size against one other programming language">%s</a></td>', $k,$Langs[$k][LANG_FULL],$HtmlName);
