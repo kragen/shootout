@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2009-2010 ?>
 
 
-<?
+<?    
    function CompareTime($b, $a){
       if ($a[1] == $b[1]) return 0;
       return  ($a[1] < $b[1]) ? -1 : 1;
@@ -9,7 +9,6 @@
    
    list($Shapes,$Centers) = $Data;
    uasort($Centers,'CompareTime');
-
    $bounds = array(0.0,1.3,1.8,2.3,1000.0);
    define('NCOLS',sizeof($bounds)-1);
 
@@ -124,7 +123,6 @@
 
    list($n,$cols) = leftToRight($bounds,$Centers);
    list($n,$cols) = finetune($n,$cols,$Centers);
-
 ?>
 
 

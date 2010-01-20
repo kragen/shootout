@@ -1,29 +1,142 @@
 <?php
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2010
+
+// Some code duplication
 
 // LIBRARIES ////////////////////////////////////////////////
-
 require_once(LIB_PATH.'lib_whitelist.php');
-require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
+
+// DATA LAYOUT ///////////////////////////////////////////////////
+
+define('DATA_TEST',0);
+define('DATA_LANG',1);
+define('DATA_ID',2);
+define('DATA_GZ',4);
+define('DATA_STATUS',7);
+// With quad-core we changed from CPU Time to Elapsed Time
+// but we still want to show the old stuff
+if (SITE_NAME == 'debian' || SITE_NAME == 'gp4'){
+   define('DATA_TIME',5);
+} else {
+   define('DATA_TIME',9);
+}
+
+// FUNCTIONS ///////////////////////////////////////////
+
+function Median($a){
+   $n = sizeof($a);
+   $mid = floor($n / 2);
+   return ($n % 2 != 0) ? $a[$mid] : ($a[$mid-1] + $a[$mid]) / 2.0;
+}
+
+function ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
+   $time_mins = array();
+   $gz_mins = array();
+   foreach($Tests as $k => $v){
+      // unreasonably large initial values, data should always be smaller
+      $time_mins[$k] = 360000.0; // 100 hours 
+      $gz_mins[$k] = 102400; // 100 Kb
+   }
+   $data = array();
+
+   $lines = @file($FileName) or die ('Cannot open $FileName');
+   if ($HasHeading){ unset($lines[0]); } // remove header line
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
+      $test = $row[DATA_TEST];
+      $lang = $row[DATA_LANG];
+      $key = $test.$lang.$row[DATA_ID];
+
+      // accumulate all acceptable datarows, exclude duplicates
+
+      if (isset($Incl[$test]) && isset($Incl[$lang]) &&
+               isset($Langs[$lang]) &&
+                  !isset($Excl[$key])){
+
+            settype($row[DATA_STATUS],'integer');
+            settype($row[DATA_TIME],'double');
+            $row_time = $row[DATA_TIME];
+
+            if ($row[DATA_STATUS] == 0 && (
+                  ($row_time > 0.0 && (!isset($data[$lang][$test]) ||
+                     $row_time < $data[$lang][$test][DATA_TIME])))){
+
+               settype($row[DATA_ID],'integer');
+               settype($row[DATA_GZ],'integer');
+               $data[$lang][$test] = $row;
+
+               if ($row_time < $time_mins[$test]){
+                  $time_mins[$test] = $row_time;
+               }
+               $row_gz = $row[DATA_GZ];
+               if ($row_gz > 0 && $row_gz < $gz_mins[$test]){
+                  $gz_mins[$test] = $row_gz;
+               }
+            }
+
+      }
+   }
+   return array($data,$time_mins,$gz_mins);
+}
+
+
+function TimeSizeShapes($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
+   list($data,$time_mins,$gz_mins) = ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading);
+
+   $shapes = array(); $medians = array();
+
+   foreach($data as $k => $test){
+      // javasteady source code includes an extra loop
+      if ((sizeof($test)/sizeof($Tests) > 0.5) && $k != 'javasteady'){
+
+         $points = array(); $xs = array(); $ys = array();
+         unset($minpoint);
+         foreach($test as $t => $v){
+
+            // wait until now to filter so sizeof($test) is consistent with FullWeightedData
+            if ($Tests[$t][TEST_WEIGHT]>0){
+               // normalized source code size on X, normalized measured time on Y
+               $x = $v[DATA_GZ]/$gz_mins[$t];
+               $y = $v[DATA_TIME]/$time_mins[$t];
+               $points[] = array($x,$y);
+               $xs[] = $x; // collect for median
+               $ys[] = $y; // collect for median
+            }
+         }
+
+         $shapes[$k] = $points;
+         sort($xs);
+         $xm = Median($xs);
+         sort($ys);
+         $ym = Median($ys);
+         $medians[$k] = array($xm,$ym); // median
+      }
+   }
+   return array($shapes,$medians);
+}
+
+
+function MarkTime($PathRoot=''){
+   if (SITE_NAME == 'debian'){
+      $Mark = 'late 2007';
+   } elseif (SITE_NAME == 'gp4'){
+      $Mark = 'mid 2008';
+   } else {
+      $mtime = filemtime($PathRoot.DATA_PATH.'data.csv');
+      $Mark = gmdate("d M Y", $mtime);
+   }
+   return $Mark;
+}
 
 // DATA ///////////////////////////////////////////
 
 list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
 $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
+$mark = MarkTime().' '.SITE_NAME;
 
-list ($mark,$mtime)= MarkTime();
-$mark = $mark.' '.SITE_NAME;
-
-if (isset($HTTP_GET_VARS['d'])
-      && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
-   $X = $HTTP_GET_VARS['d'];
-   if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
-}
-if (!isset($DataSet)){ $DataSet = 'data'; }
-
-
+$DataSet = 'data';
 $MetaKeywords = '';
 
 // PAGES ///////////////////////////////////////////////////
@@ -31,11 +144,9 @@ $MetaKeywords = '';
 $Page = & new Template(LIB_PATH);
 $Body = & new Template(LIB_PATH);
 
-require_once(LIB_PATH.'lib_scorecard.php');
-
 $PageId = 'shapes';
 $Title = 'Code-used Time-used Shapes';
-if ($DataSet == 'ndata'){ $mark = $mark.' n'; }
+
 $Body->set('Title', $Title);
 $TemplateName = 'shapes.tpl.php';
 $About = & new Template(ABOUT_PATH);
@@ -72,6 +183,3 @@ $Page->set('PageId', $PageId);
 
 echo $Page->fetch('page.tpl.php');
 ?>
-
-
-
