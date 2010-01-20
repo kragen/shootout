@@ -85,7 +85,6 @@ foreach($score as $k => $v){
 </td>
 </tr>
 </table>
-<?   // <p><input type="hidden" name="box" value="1" /></p>   ?>
 </form>
 
 

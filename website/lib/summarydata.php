@@ -13,7 +13,7 @@ list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
 $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 
-list ($mark,$mtime)= MarkTime();
+$mark = MarkTime();
 $mark = $mark.' '.SITE_NAME;
 
 if (isset($HTTP_GET_VARS['d'])

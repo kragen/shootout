@@ -408,16 +408,13 @@ function PTime($d){
 function MarkTime($PathRoot=''){
    if (SITE_NAME == 'debian'){
       $Mark = 'late 2007';
-      $DataTime = '';
    } elseif (SITE_NAME == 'gp4'){
       $Mark = 'mid 2008';
-      $DataTime = '';
    } else {
       $mtime = filemtime($PathRoot.DATA_PATH.'data.csv');
       $Mark = gmdate("d M Y", $mtime);
-      $DataTime = ' '.gmdate("g:i a", $mtime).'  GMT';
    }
-   return array($Mark,$DataTime);
+   return $Mark;
 }
 
 function StatusMessage($i){

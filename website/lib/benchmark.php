@@ -11,7 +11,7 @@ list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
 $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 
-list ($mark,$mtime)= MarkTime();
+$mark = MarkTime();
 $mark = $mark.' '.SITE_NAME;
 
 
@@ -60,13 +60,6 @@ if (isset($HTTP_GET_VARS['calc'])
 if (!isset($Action)){ $Action = 'calculate'; }
 
 
-if (isset($HTTP_GET_VARS['d'])
-      && strlen($HTTP_GET_VARS['d']) && (strlen($HTTP_GET_VARS['d']) <= 5)){
-   $X = $HTTP_GET_VARS['d'];
-   if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
-}
-if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
-
 
 $MetaKeywords = '';
 
@@ -88,19 +81,17 @@ if ($T=='all'){
          $S = '';
          $PageId = 'boxplot';
 
-         require_once(LIB_PATH.'lib_scorecard.php');
+         require_once(LIB_PATH.'lib_boxplot.php');
 
          $Title = 'Which programming languages are fastest?';
-         if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
          $Body->set('Title', $Title);
          $TemplateName = 'boxplot.tpl.php';
          $About = & new Template(ABOUT_PATH);
          $AboutTemplateName = 'boxplot-about.tpl.php';
-         $About->set('DataSet', $DataSet);
          $SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
          if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-         $Body->set('DataSet', $DataSet);
-         $Body->set('Data', FullUnweightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
+         $Body->set('DataSet', 'data');
+         $Body->set('Data', FullUnweightedData(DATA_PATH.'data.csv', $Tests, $Langs, $Incl, $Excl, $SLangs));
          $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $MetaKeywords = '<meta name="description" content="Which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') and how your favorite language compares." />';
 
@@ -210,7 +201,6 @@ $Body->set('SelectedLang2', $L2);
 $Body->set('Sort', $S);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark);
-$Body->set('MTime', $mtime);
 $Body->set('TimeUsed', $timeUsed);
 
 $About->set('SelectedTest', $T);

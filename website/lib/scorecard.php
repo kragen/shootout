@@ -44,7 +44,7 @@ $PageId = 'scorecard';
 
 require_once(LIB_PATH.'lib_scorecard.php');
 
-list ($mark,$mtime)= MarkTime();
+$mark = MarkTime();
 
 $Title = 'Which programming language is best?';
 if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
@@ -83,7 +83,6 @@ $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark );
-$Body->set('MTime', $mtime);
 
 $Body->set('About', $About->fetch($AboutTemplateName));
 

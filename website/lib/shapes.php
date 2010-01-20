@@ -62,7 +62,6 @@ function ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
                   ($row_time > 0.0 && (!isset($data[$lang][$test]) ||
                      $row_time < $data[$lang][$test][DATA_TIME])))){
 
-               settype($row[DATA_ID],'integer');
                settype($row[DATA_GZ],'integer');
                $data[$lang][$test] = $row;
 
@@ -74,7 +73,6 @@ function ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
                   $gz_mins[$test] = $row_gz;
                }
             }
-
       }
    }
    return array($data,$time_mins,$gz_mins);
