@@ -63,39 +63,6 @@ define('NO_PROGRAM_OUTPUT',-7);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
-function GetMicroTime(){
-   $t = explode(" ", microtime());
-   return doubleval($t[1]) + doubleval($t[0]);
-}
-
-
-function Percentiles($a){
-   sort($a);
-   $n = sizeof($a);
-   $mid = floor($n / 2);
-   if ($n % 2 != 0){
-      $median = $a[$mid];
-      $lower = Median( array_slice($a,0,$mid+1) ); // include median in both quartiles
-      $upper = Median( array_slice($a,$mid) );
-   } else {
-      $median = ($a[$mid-1] + $a[$mid]) / 2.0;
-      $lower = Median( array_slice($a,0,$mid) );
-      $upper = Median( array_slice($a,$mid) );
-   }
-   $maxwhisker = ($upper - $lower) * 1.5;
-   $xlower = ($lower - $maxwhisker < $a[0]) ? $a[0]: $lower - $maxwhisker;
-   $xupper = ($upper + $maxwhisker > $a[$n-1]) ? $a[$n-1] : $upper + $maxwhisker;
-
-   return array($a[0],$xlower,$lower,$median,$upper,$xupper,$a[$n-1],$n);
-}
-
-
-function Median($a){
-   $n = sizeof($a);
-   $mid = floor($n / 2);
-   return ($n % 2 != 0) ? $a[$mid] : ($a[$mid-1] + $a[$mid]) / 2.0;
-}
-
 
 function CompareFullCpuTime($a, $b){
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
