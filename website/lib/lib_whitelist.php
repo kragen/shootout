@@ -104,7 +104,7 @@ function WhiteListUnique($FileName,$Incl,$HasHeading=TRUE){
    return $rows;
 }
 
-
+/*
 function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
    $lines = @file($FileName) or die ('Cannot open $FileName');
    if ($HasHeading){ unset($lines[0]); } // remove header line
@@ -131,7 +131,7 @@ function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
    }
    return $rows;
 }
-
+*/
 
    // VALIDATION
 

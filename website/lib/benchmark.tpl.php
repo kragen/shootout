@@ -7,16 +7,17 @@ $TestName = $Row[TEST_NAME];
 $TestTag = $Row[TEST_TAG];
 $TestLink = $Row[TEST_LINK];
 
-list($Accepted,$Rejected,$Special) = FilterAndSortData($Langs,$Data,$Sort,$Excl);
+list($Succeeded,$Failed,$Special,$TimeRatios,$MemRatios) = $Data;
+unset($Data);
 
 $first = 0;
 $NString = 'N=?';
-$testValue = 1;
-foreach($Accepted as $d){
+foreach($Succeeded as $d){
    if ($d[DATA_TESTVALUE]>0){
       $testValue = (double)$d[DATA_TESTVALUE];
       $NString = 'N='.number_format($testValue);
-      break; }
+      break; 
+   }
 }
 
 // BEWARE - Hard coded values - BEWARE
@@ -38,10 +39,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <p>Each chart bar shows <i>how many times more</i> Time or <i>how many times more</i> Memory one unidentified <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the benchmark program that used least Time or the program that used least Memory.</p>
 
-
-<? list($dtime,$dmem) = TimeMemoryRatios($Accepted,$Sort); ?>
-
-<p><img src="chart.php?<?='t='.Encode($dtime);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='k='.Encode($dmem);?>&amp;<?='ww='.Encode($TestLink);?>"
+<p><img src="chart.php?<?='t='.Encode($TimeRatios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='k='.Encode($MemRatios);?>&amp;<?='ww='.Encode($TestLink);?>"
    alt=""
    title=""
    width="480" height="225"
@@ -94,9 +92,9 @@ if ($TestName=='startup'){ $NString = ''; }
 foreach($Langs as $k => $v){ $No_Program_Langs[$k] = TRUE; }
 
 $better = array();
-if (sizeof($Accepted) > 0){ $first = $Accepted[0]; }
+if (sizeof($Succeeded) > 0){ $first = $Succeeded[0]; }
 
-foreach($Accepted as $d){
+foreach($Succeeded as $d){
    $k = $d[DATA_LANG];
 
    $CPU = '';
@@ -165,9 +163,8 @@ unset($better);
 ?>
 
 <?
-//uasort($Langs,'CompareLangName');
 foreach($Langs as $k => $v){
-   foreach($Rejected as $d){
+   foreach($Failed as $d){
       if ($d[DATA_LANG]==$k){
          printf('<tr>'); echo "\n";
          $Name = $v[LANG_FULL];

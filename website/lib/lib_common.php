@@ -63,7 +63,7 @@ define('NO_PROGRAM_OUTPUT',-7);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
-
+/*
 function CompareFullCpuTime($a, $b){
    if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
       if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
@@ -107,7 +107,7 @@ function CompareElapsed($a, $b){
    }
    return  ($a[DATA_ELAPSED] < $b[DATA_ELAPSED]) ? -1 : 1;
 }
-
+*/
 
 function CompareLangName($a, $b){
    return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
@@ -150,83 +150,6 @@ function ExcludeData($d,$langs,$Excl){
       else { return PROGRAM_SPECIAL; }
    }
    return $d[DATA_STATUS];
-}
-
-
-function FilterAndSortData($langs,$data,$sort,$Excl){
-   $Accepted = array();
-   $Rejected = array();   
-   $Special = array();
-
-   // $data is an associative array keyed by language
-   // Each value is itself an array of one or more data records
-
-   foreach($data as $ar){
-      foreach($ar as $d){
-         $x = ExcludeData($d,$langs,$Excl);
-         if ($x==PROGRAM_SPECIAL){ 
-            $Special[] = $d;
-         } elseif ($x==PROGRAM_EXCLUDED) {
-
-         } elseif ($x) {
-            $Rejected[] = $d;
-         } elseif ($d[DATA_TIME]>0.0) {
-            $Accepted[] = $d;
-         }
-      }         
-   }
-   
-   // hack for old data which doesn't have Elapsed times only CPU times
-   if ($sort=='elapsed' && (SITE_NAME=='debian'||SITE_NAME=='gp4')){
-      $sort = 'fullcpu';
-   }
-
-   if ($sort=='fullcpu'){
-      usort($Accepted, 'CompareFullCpuTime');
-      usort($Special, 'CompareFullCpuTime');
-   } elseif ($sort=='kb'){
-      usort($Accepted, 'CompareMemoryUse');
-      usort($Special, 'CompareMemoryUse');
-   } elseif ($sort=='gz'){
-      usort($Accepted, 'CompareGz');
-      usort($Special, 'CompareGz');
-   } elseif ($sort=='elapsed'){
-      usort($Accepted, 'CompareElapsed');
-      usort($Special, 'CompareElapsed');
-   }
-
-   return array($Accepted,$Rejected,$Special);
-}
-
-
-function TimeMemoryRatios($Accepted,$sort){
-   if ($sort=='fullcpu'){ $DTIME = DATA_FULLCPU; }
-   else { $DTIME = DATA_TIME; }
-
-   foreach($Accepted as $d){
-      if (!isset($mintime)||$d[$DTIME] < $mintime){
-         $mintime = $d[$DTIME];
-      }
-      if (!isset($minmem)||$d[DATA_MEMORY] < $minmem){
-         $minmem = $d[DATA_MEMORY];
-      }
-   }
-   
-   // memory use measurement can fail, so accomodate strange data
-   $lowest = 200.0;
-   if ($minmem<$lowest){ $minmem = $lowest; }
-
-   $timeratio = array();
-   $memratio = array();
-   foreach($Accepted as $d){
-     if ($mintime==0){ $timeratio[] = 1.0; }
-     else { $timeratio[] = $d[$DTIME]/$mintime; }
-     
-     // memory use measurement can fail, so accomodate strange data
-     if ($d[DATA_MEMORY]<$lowest){ $memratio[] = 1.0; }
-     else { $memratio[] = $d[DATA_MEMORY]/$minmem; }
-   }
-   return array($timeratio,$memratio);
 }
 
 
@@ -413,6 +336,5 @@ function CpuLoad($d){
       return '';
    }
 }
-
 
 ?>

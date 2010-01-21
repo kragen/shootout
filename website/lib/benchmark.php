@@ -96,6 +96,8 @@ if ($T=='all'){
          $MetaKeywords = '<meta name="description" content="Which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') and how your favorite language compares." />';
 
    } else {           // Head to Head
+   
+
       $S = '';
       $PageId = 'headtohead';
       require_once(LIB_PATH.'lib_headtohead.php');
@@ -110,7 +112,10 @@ if ($T=='all'){
          $metaRobots = '<meta name="robots" content="index,follow,noarchive" /><meta name="revisit" content="4 days" />';
          $Family = $Langs[$L][LANG_FAMILY];
          $MetaKeywords = '<meta name="description" content="Compare the speed and size of '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
+
       } else {
+         
+
         $Title = $LangName.' measurements';
         $TemplateName = 'language.tpl.php';
         $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L,$L2));
@@ -125,16 +130,24 @@ if ($T=='all'){
       $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
       }
 
-   } elseif ($L=='all'){ // Benchmark
 
+
+   } elseif ($L=='all'){ // Benchmark
       $PageId = 'benchmark';
+      require_once(LIB_PATH.'lib_benchmark.php');
 
       if (isset($HTTP_GET_VARS['sort'])
             && strlen($HTTP_GET_VARS['sort']) && (strlen($HTTP_GET_VARS['sort']) <= 7)){
          $X = $HTTP_GET_VARS['sort'];
          if (ereg("^[a-z]+$",$X) && ($X == 'fullcpu' || $X == 'kb' || $X == 'gz' || $X == 'elapsed')){ $S = $X; }
       }
-      if (!isset($S)){ $S = 'elapsed'; }
+      if (!isset($S)){
+         if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+            $S = 'fullcpu';
+         } else {
+            $S = 'elapsed'; 
+         }
+      }
 
       $TestName = $Tests[$T][TEST_NAME];
       $Title = $TestName.' benchmark';
@@ -142,9 +155,11 @@ if ($T=='all'){
       $About = & new Template(ABOUT_PATH);
       $AboutTemplateName = $T.SEPARATOR.'about.tpl.php';
       if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-      $Body->set('Data', WhiteListSelected(DATA_PATH.'data.csv', $T, $Incl) );
+      $Body->set('Data', BenchmarkData(DATA_PATH.'data.csv',$T,$Langs, $Incl,$Excl,$S) );
       $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
       $MetaKeywords = '<meta name="description" content="For ~30 programming languages compare programs that '.$Tests[$T][TEST_META].' ('.PLATFORM_NAME.')." />';
+
+
 
    } else {              // Program
    
