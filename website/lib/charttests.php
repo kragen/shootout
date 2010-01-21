@@ -1,6 +1,6 @@
 <?
 header("Content-type: image/png");
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2010
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -9,7 +9,7 @@ require_once(LIB_PATH.'lib_chart.php');
 
 SetChartCacheControl();
 
-list($in,$ex) = WhiteListInEx();
+$in = WhiteListIn();
 $WhiteListTests = WhiteListUnique('test.csv',$in);
 
 // DATA ////////////////////////////////////////////////////

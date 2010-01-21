@@ -24,7 +24,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
 
          if (isset($Incl[$lang])){
             $exclude = $Excl[ $Test.$lang.$row[DATA_ID] ];
-            if ($exclude[EXCL_USE]==EXCLUDED){
+            if ($exclude){
                continue;
             }
 
@@ -36,7 +36,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
             settype($row[DATA_STATUS],'integer');
             settype($row[DATA_ELAPSED],'double');
 
-            if ($exclude){
+            if (isset($exclude)){
                $special[] = $row;
             } elseif ($row[DATA_STATUS]){
                $failed[] = $row;

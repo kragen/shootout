@@ -292,39 +292,26 @@ function PF($d){
 
 
 
-function LanguageData($FileName,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=TRUE){
+function LanguageData($FileName,$Langs,$Incl,$Excl,$L1,$HasHeading=TRUE){
    $rows = array();
    $lines = file($FileName);
 
    $prefixL1 = ','.$L1.',';
    foreach($lines as $line) {
       if (strpos($line,$prefixL1)){
-         $rows[] = explode( ',', $line);
-      }
-   }
-   unset($lines);
+         $row = explode( ',', $line);
+         $test = $row[DATA_TEST];
+         $key = $test.$L1.$row[DATA_ID];
 
-
-   // Filter again in memory
-   $Data = array();   
-   foreach($rows as $row){ 
-      if (isset($Incl[$row[DATA_TEST]])){
-         settype($row[DATA_ID],'integer');
-         settype($row[DATA_TESTVALUE],'integer');
-         settype($row[DATA_GZ],'integer');
-         settype($row[DATA_FULLCPU],'double');
-         settype($row[DATA_MEMORY],'integer');
-         settype($row[DATA_STATUS],'integer');
-         settype($row[DATA_ELAPSED],'double');
-
-         $ex = ExcludeData($row,$Langs,$Excl);
-         if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
-            $Data[] = $row;                                                                      
+         // $L1 has already been checked
+         if (isset($Incl[$test]) && isset($Incl[$L1]) && !isset($Excl[$key])){
+            settype($row[DATA_STATUS],'integer');
+            $rows[] = $row;
          }
+
       }
    }
-   unset($rows);     
-   return $Data;
+   return $rows;
 }
 
 ?>

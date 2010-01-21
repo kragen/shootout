@@ -63,52 +63,6 @@ define('NO_PROGRAM_OUTPUT',-7);
 
 // FUNCTIONS ///////////////////////////////////////////////////
 
-/*
-function CompareFullCpuTime($a, $b){
-   if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
-      if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
-         if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
-         else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
-      }
-      else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
-   }
-   return  ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1;
-}
-
-function CompareMemoryUse($a, $b){
-   if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
-      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
-         if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
-         else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
-      }
-      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
-   }
-   return  ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1;
-}
-
-function CompareGz($a, $b){
-   if ($a[DATA_GZ] == $b[DATA_GZ]){
-      if ($a[DATA_FULLCPU] == $b[DATA_FULLCPU]){
-         if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){ return 0; }
-         else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }            
-      }
-      else { return ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 : 1; }
-   }
-   return  ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1;
-}
-
-function CompareElapsed($a, $b){
-   if ($a[DATA_ELAPSED] == $b[DATA_ELAPSED]){
-      if ($a[DATA_MEMORY] == $b[DATA_MEMORY]){
-         if ($a[DATA_GZ] == $b[DATA_GZ]){ return 0; }
-         else { return ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 : 1; }
-      }
-      else { return ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 : 1; }
-   }
-   return  ($a[DATA_ELAPSED] < $b[DATA_ELAPSED]) ? -1 : 1;
-}
-*/
-
 function CompareLangName($a, $b){
    return strcasecmp($a[LANG_FULL],$b[LANG_FULL]);
 }
@@ -146,7 +100,7 @@ function ExcludeData($d,$langs,$Excl){
 
    $key = $d[DATA_TEST].$d[DATA_LANG].strval($d[DATA_ID]);
    if (isset($Excl[$key])){
-      if ($Excl[$key][EXCL_USE]==EXCLUDED){ return PROGRAM_EXCLUDED; }
+      if ($Excl[$key]){ return PROGRAM_EXCLUDED; }
       else { return PROGRAM_SPECIAL; }
    }
    return $d[DATA_STATUS];

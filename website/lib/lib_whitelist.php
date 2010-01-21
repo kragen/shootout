@@ -61,32 +61,31 @@ function SetChartCacheControl(){
 }
 
 
-
 function WhiteListInEx(){
+   return array(WhiteListIn(),WhiteListEx());
+}
+
+function WhiteListIn(){
    $incl = array();
    $lines = @file('./include.csv') or die('Cannot open ./include.csv');
-   unset($lines[0]); // remove header line
+   // assume no header line
    foreach($lines as $line) {
-      $row = explode( ',', $line);
-      if (!is_array($row)){ continue; }
-      if (isset($row[INCL_LINK]{0})){ $incl[ $row[INCL_LINK] ] = 0; }
+      $incl[ chop($line) ] = TRUE;
    }
-
+   return $incl;
+}
+   
+function WhiteListEx(){
    $excl = array();
    $lines = @file(DESC_PATH.'exclude.csv') or die('Cannot open '.DESC_PATH.'exclude.csv');
-   unset($lines[0]); // remove header line
-
+   // assume no header line
+   $slash = ord('\\');
    foreach($lines as $line) {
-      $row = explode( ',', $line);
-      if (!is_array($row)){ continue; }
-      settype($row[EXCL_ID],'integer');
-      if (isset($row[EXCL_TEST]{0})){
-         if (!isset($row[EXCL_ID])){ $row[EXCL_ID] = 1; }
-         $key = $row[EXCL_TEST].$row[EXCL_LANG].strval($row[EXCL_ID]);
-         $excl[$key] = $row;
-      }
+      // programs which should never be shown have a '\' prefix in excl.csv
+      $value = strpos($line,$slash)>0 ? FALSE : TRUE;
+      $excl[ stripslashes(chop($line)) ] = $value;
    }
-   return array($incl,$excl);
+   return $excl;
 }
 
 
@@ -103,35 +102,6 @@ function WhiteListUnique($FileName,$Incl,$HasHeading=TRUE){
    }
    return $rows;
 }
-
-/*
-function WhiteListSelected($FileName,$Value,$Incl,$HasHeading=TRUE){
-   $lines = @file($FileName) or die ('Cannot open $FileName');
-   if ($HasHeading){ unset($lines[0]); } // remove header line
-   $prefix = substr($Value,1).',';
-   $rows = array();
-   foreach($lines as $line) {
-      if (strpos($line,$prefix)){
-         $row = explode( ',', $line);
-         if ( isset($row[DATA_LANG])){
-            settype($row[DATA_ID],'integer');
-            settype($row[DATA_TESTVALUE],'integer');
-            settype($row[DATA_GZ],'integer');
-            settype($row[DATA_FULLCPU],'double');
-            settype($row[DATA_MEMORY],'integer');
-            settype($row[DATA_STATUS],'integer');
-            settype($row[DATA_ELAPSED],'double');
-            if (isset($rows[$row[DATA_LANG]])){
-               array_push( $rows[$row[DATA_LANG]], $row);
-            } else {
-               $rows[$row[DATA_LANG]] = array($row);
-            }
-         }
-      }
-   }
-   return $rows;
-}
-*/
 
    // VALIDATION
 
