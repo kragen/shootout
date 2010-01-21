@@ -291,7 +291,7 @@ function PF($d){
 }
 
 
-
+/*
 function LanguageData($FileName,$Langs,$Incl,$Excl,$L1,$HasHeading=TRUE){
    $rows = array();
    $lines = file($FileName);
@@ -313,5 +313,5 @@ function LanguageData($FileName,$Langs,$Incl,$Excl,$L1,$HasHeading=TRUE){
    }
    return $rows;
 }
-
+*/
 ?>

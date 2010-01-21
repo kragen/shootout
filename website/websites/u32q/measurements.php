@@ -1,7 +1,6 @@
 <?php
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2010
 ob_start('ob_gzhandler');
 require_once('config.php');
-$T = 'all'; $L2 = 'lang';
-require_once(LIB_PATH.'benchmark.php');
+require_once(LIB_PATH.'measurements.php');
 ?>

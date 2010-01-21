@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
 <? 
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
@@ -53,7 +53,7 @@ foreach($Data as $d){
 
 <p>Read the <a href="#log">&darr;&nbsp;make, command line, and program output logs</a> to see how this program was run.</p>
 
-<p>Read <a href="benchmark.php?test=<?=$SelectedTest;?>&amp;lang=all#about" title="<?=$TestTag;?>"><?=$TestName;?>&nbsp;benchmark</a> to see what this program should do.</p>
+<p>Read <a href="performance.php?test=<?=$SelectedTest;?>#about" title="<?=$TestTag;?>"><?=$TestName;?>&nbsp;benchmark</a> to see what this program should do.</p>
 
 
 <h2><a href="#sourcecode" name="sourcecode">&nbsp;<?=$Title;?> source code</a></h2>

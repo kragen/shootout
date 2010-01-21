@@ -55,7 +55,7 @@ foreach($score as $k => $v){
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
       printf('<td><a href="%s.php" title="Compare %s speed and size against one other programming language">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Langs[$k][LANG_FULL],$HtmlName); 
    } else {
-      printf('<td><a href="benchmark.php?test=all&amp;lang=%s" title="Compare %s speed and size against one other programming language">%s</a></td>', $k,$Langs[$k][LANG_FULL],$HtmlName);
+      printf('<td><a href="compare.php?lang=%s" title="Compare %s speed and size against one other programming language">%s</a></td>', $k,$Langs[$k][LANG_FULL],$HtmlName);
    }
    echo "\n";
 
@@ -99,7 +99,7 @@ foreach($Tests as $t){
    $weight = $W[ $t[TEST_LINK] ];
 
    printf('<tr>'); echo "\n";
-   printf('<td><a href="benchmark.php?test=%s&amp;lang=all" title="Measurements for all the %s benchmark programs">%s</a></td>', $Link,$Name,$Name); echo "\n";
+   printf('<td><a href="performance.php?test=%s" title="Measurements for all the %s benchmark programs">%s</a></td>', $Link,$Name,$Name); echo "\n";
    printf('<td><p><input type="text" size="2" name="%s" value="%d" /></p></td>', $Link, $weight); echo "\n";
    echo "</tr>\n";
 }

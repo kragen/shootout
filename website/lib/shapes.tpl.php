@@ -144,7 +144,7 @@
             if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
                printf('<a href="%s.php" title="Is %s the fastest programming language?">', $Langs[$k][LANG_SPECIALURL], $Langs[$k][LANG_FULL]);
             } else {
-               printf('<a href="benchmark.php?test=all&amp;lang=%s" title="Is %s the fastest programming language?">', $k, $Langs[$k][LANG_FULL]);
+               printf('<a href="compare.php?lang=%s" title="Is %s the fastest programming language?">', $k, $Langs[$k][LANG_FULL]);
             }
 
             printf('<img src="chartshape.php?w=%s&amp;s=%s&amp;c=%s" alt="source code size versus speed of %s benchmark programs" title="Compare %s size and speed against one other programming language" width="150" height="120" />',

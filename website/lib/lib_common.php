@@ -71,6 +71,7 @@ function CompareTestName($a, $b){
    return strcasecmp($a[TEST_NAME],$b[TEST_NAME]);
 }
 
+/*
 function CompareProgramDataTime($a, $b){
    if ($a[DATA_STATUS] < 0){
       return 1;
@@ -85,14 +86,17 @@ function CompareProgramDataTime($a, $b){
    }
 }
 
+
 function CompareProgramTestValue($a, $b){
    return  ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
 }
+*/
 
-
+/*
 function IdName($id){
    if ($id>1){ return '&nbsp;#'.$id; } else { return ''; }
 }
+*/
 
 
 function ExcludeData($d,$langs,$Excl){
@@ -106,7 +110,7 @@ function ExcludeData($d,$langs,$Excl){
    return $d[DATA_STATUS];
 }
 
-
+/*
 function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl,$HasHeading=TRUE){
    $data = array();
    $prefix = substr($T,1).','.$L.',';
@@ -151,7 +155,7 @@ function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl,$HasHeading=TRUE){
    usort($data, 'CompareProgramDataTime');
    return $data;
 }
-
+*/
 
 
 // CONTENT ///////////////////////////////////////////////////
@@ -190,7 +194,7 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang){
    echo '</p></form>', "\n";
 }
 
-
+/*
 function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
    echo '<form method="get" action="'.$Action.'">', "\n";
    echo '<p><select name="lang">', "\n";
@@ -208,6 +212,7 @@ function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
    echo '<input type="submit" value="Show" />', "\n";
    echo '</p></form>', "\n";
 }
+*/
 
 function MkTestsMenuForm($Tests,$SelectedTest,$Action='benchmarks.php'){
    echo '<form method="get" action="benchmark.php">', "\n";
