@@ -99,7 +99,7 @@ $pagechoices = array(
       '/which-programming-languages-are-fastest.php'
       ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
-      '/benchmark.php?test='.$chosentest.'&amp;lang=all'
+      '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
    ,array(
       '/which-programming-languages-are-fastest.php'
@@ -111,7 +111,7 @@ $pagechoices = array(
       '/which-programming-languages-are-fastest.php'
       ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
-      '/benchmark.php?test='.$chosentest.'&amp;lang=all'
+      '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
    );
 
@@ -186,7 +186,7 @@ function PrintIncludedLanguages($site,$lang){
        printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
           $site, $lang[3], $name, $name, $tag);
    } else {
-       printf('<p><a href="http://shootout.alioth.debian.org/%s/benchmark.php?test=all&amp;lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
+       printf('<p><a href="http://shootout.alioth.debian.org/%s/compare.php?lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
           $site, $lang[0], $name, $name, $tag);
    }
 }
