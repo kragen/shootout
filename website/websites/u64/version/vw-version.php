@@ -1,1 +1,2 @@
-<p>VisualWorks,Release 7.6 of March 3, 2008</p>
+<p>VisualWorks(R) 7.7 beta2 Nov 16 2009<br/>
+[ 64-bit thapi ephemerons immutability ]</p>
