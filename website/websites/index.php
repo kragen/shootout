@@ -140,37 +140,39 @@ unset($pagechoices);
 
 
 <?php
+$singlesite = array('u32');
+$onesites = array('u32','u64');
 $u32sites = array('u32','u32q');
 $allsites = array('u32','u32q','u64','u64q');
 
 $langs = array(
-   array('vw','Smalltalk VisualWorks','uniform reflective environment - real live objects','smalltalk',$allsites),
+   array('vw','Smalltalk VisualWorks','uniform reflective environment - real live objects','smalltalk',$u32sites),
    array('mzscheme','Scheme PLT','statically-scoped properly tail-recursive dialect of lisp','scheme',$allsites),
    array('scala','Scala','higher-order type-safe programming for jvm','scala',$allsites),
-   array('ruby','Ruby MRI','programmer fun - everything is an object scripting','ruby',$allsites),
-   array('jruby','JRuby','everything is an object scripting for jvm','jruby',$allsites),
+   array('ruby','Ruby MRI','programmer fun - everything is an object scripting','ruby',$u32sites),
+   array('jruby','JRuby','everything is an object scripting for jvm','jruby',$u32sites),
    array('yarv','Ruby 1.9','the new Ruby','',$u32sites),
-   array('python','CPython','uncluttered imperative programming plus objects','python',$allsites),
+   array('python','CPython','uncluttered imperative programming plus objects','python',$u32sites),
    array('python3','Python 3','the new Python','python3',$u32sites),
-   array('php','PHP','scripts embedded in html and much more','php',$allsites),
-   array('perl','Perl','server-side shell &amp; cgi scripts','perl',$allsites),
+   array('php','PHP','scripts embedded in html and much more','php',$u32sites),
+   array('perl','Perl','server-side shell &amp; cgi scripts','perl',$u32sites),
    array('fpascal','Free Pascal','imperative programming plus objects','pascal',$allsites),
    array('ocaml','OCaml','modular type-safe strict functional programming plus objects','ocaml',$allsites),
    array('oz','Mozart/Oz','multi-multi-multi-paradigm distributed programming','oz',$u32sites),
    array('luajit','LuaJIT','jit compiler fully compatible with lua 5.1','luajit',$u32sites),
-   array('lua','Lua','associative arrays for extensible embedded scripting','lua',$allsites),
+   array('lua','Lua','associative arrays for extensible embedded scripting','lua',$u32sites),
    array('sbcl','Lisp SBCL','pioneering s-expression oriented programming','lisp',$allsites),
-   array('v8','JavaScript V8','web-browser embedded scripting','javascript',$allsites),
-   array('tracemonkey','JavaScript TraceMonkey','ubiquitous web-browser embedded scripting','',$allsites),
+   array('v8','JavaScript V8','web-browser embedded scripting','javascript',$u32sites),
+   array('tracemonkey','JavaScript TraceMonkey','ubiquitous web-browser embedded scripting','',$u32sites),
    array('javasteady','Java 6 steady state','approximate jvm steady state','',$allsites),
    array('javaxint','Java 6 -Xint','ubiquitous bytecode interpreter virtual machine','',$allsites),
    array('java','Java 6 -server','ubiquitous jit server virtual machine','java',$allsites),
    array('ghc','Haskell GHC','lazy pure functional programming','haskell',$allsites),
    array('go','Go 6g 8g','types just are - Go is an experiment','',$allsites),
-   array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$allsites),
+   array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$u32sites),
    array('fsharp','F# Mono','higher-order type-safe programming (mono is not ms .net)','fsharp',$allsites),
-   array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$allsites),
-   array('clean','Clean','lazy &amp; strict pure functional programming','clean',$allsites),
+   array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$$u32sites),
+   array('clean','Clean','lazy &amp; strict pure functional programming','clean',$singlesite),
    array('gpp','C++ GNU','c plus objects plus generics','cpp',$allsites),
    array('csharp','C# Mono','oo plus functional style (mono is not ms .net)','csharp',$allsites),
    array('gcc','C GNU','unchecked low-level programming','c',$allsites),
@@ -183,7 +185,7 @@ function PrintIncludedLanguages($site,$lang){
    $name = $lang[1];
    $tag = $lang[2];
    if (!empty($lang[3])){ // special_url
-       printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
+       printf('<p><a href="http://shootout.alioth.debian.org/%$singlesites/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
           $site, $lang[3], $name, $name, $tag);
    } else {
        printf('<p><a href="http://shootout.alioth.debian.org/%s/compare.php?lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
@@ -194,12 +196,17 @@ function PrintIncludedLanguages($site,$lang){
 
 $site0 = $chosen[0];
 $site1 = $chosen[1];
+$siteu32 = $singlesite[0];
 foreach($langs as $i => $lang){
    $sites = $lang[4];
    if (in_array($site0,$sites)){
       PrintIncludedLanguages($site0,$lang);
    } elseif (in_array($site1,$sites)){
       PrintIncludedLanguages($site1,$lang);
+
+   // assume everything was measured on u32
+   } elseif (in_array($siteu32,$sites)){
+      PrintIncludedLanguages($siteu32,$lang);
    }
 }
 unset($langs);
