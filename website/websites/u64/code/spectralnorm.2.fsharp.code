@@ -1,0 +1,98 @@
+﻿<span class="hl sym">//</span> <span class="hl kwd">The Computer Language Benchmarks Game</span>
+<span class="hl sym">//</span> http<span class="hl sym">://</span>shootout<span class="hl sym">.</span>alioth<span class="hl sym">.</span>debian<span class="hl sym">.</span>org<span class="hl sym">/</span>
+<span class="hl sym">//</span>
+<span class="hl sym">//</span> <span class="hl kwd">Based</span> on <span class="hl kwd">C</span># version by <span class="hl kwd">Isaac Gouy</span><span class="hl sym">,</span> <span class="hl kwd">The Anh Tran</span><span class="hl sym">,</span> <span class="hl kwd">Alan McGovern</span>
+<span class="hl sym">//</span> <span class="hl kwd">Contributed</span> by <span class="hl kwd">Don Syme</span>
+
+<span class="hl kwa">open</span> <span class="hl kwd">System</span>
+<span class="hl kwa">open</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">Threading</span>
+
+<span class="hl kwa">type</span> <span class="hl kwd">BarrierHandle</span><span class="hl sym">(</span>threads<span class="hl sym">:</span><span class="hl kwb">int</span><span class="hl sym">) =</span>
+    <span class="hl kwa">let mutable</span> current <span class="hl sym">=</span> threads
+    <span class="hl kwa">let mutable</span> handle <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ManualResetEvent</span><span class="hl sym">(</span><span class="hl kwa">false</span><span class="hl sym">)</span>
+
+    member x<span class="hl sym">.</span><span class="hl kwd">WaitOne</span><span class="hl sym">() =</span>
+        <span class="hl kwa">let</span> h <span class="hl sym">=</span> handle
+        <span class="hl kwa">if</span> <span class="hl kwc">Interlocked</span><span class="hl sym">.</span><span class="hl kwd">Decrement</span><span class="hl sym">(&amp;</span>current<span class="hl sym">) &gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            h<span class="hl sym">.</span><span class="hl kwd">WaitOne</span><span class="hl sym">() |&gt;</span> ignore<span class="hl sym">;</span>
+        <span class="hl kwa">else</span>
+            handle <span class="hl sym">&lt;-</span> <span class="hl kwa">new</span> <span class="hl kwd">ManualResetEvent</span><span class="hl sym">(</span><span class="hl kwa">false</span><span class="hl sym">);</span>
+            <span class="hl kwc">Interlocked</span><span class="hl sym">.</span><span class="hl kwd">Exchange</span><span class="hl sym">(&amp;</span>current<span class="hl sym">,</span> threads<span class="hl sym">) |&gt;</span> ignore<span class="hl sym">;</span>
+            h<span class="hl sym">.</span><span class="hl kwd">Set</span><span class="hl sym">() |&gt;</span> ignore<span class="hl sym">;</span>
+            h<span class="hl sym">.</span><span class="hl kwd">Close</span><span class="hl sym">();</span>
+
+<span class="hl kwa">let</span> <span class="hl kwd">Approximate</span><span class="hl sym">(</span>u<span class="hl sym">:</span>double<span class="hl sym">[],</span> v<span class="hl sym">:</span>double<span class="hl sym">[],</span> tmp<span class="hl sym">:</span>double<span class="hl sym">[],</span> rbegin<span class="hl sym">,</span> rend<span class="hl sym">,</span> barrier<span class="hl sym">:</span> <span class="hl kwd">BarrierHandle</span><span class="hl sym">) =</span>
+
+    <span class="hl kwa">let mutable</span> vBv <span class="hl sym">=</span> <span class="hl num">0.0</span>
+    <span class="hl kwa">let mutable</span> vv <span class="hl sym">=</span> <span class="hl num">0.0</span>
+
+    <span class="hl sym">//</span> return element i<span class="hl sym">,</span>j <span class="hl kwa">of</span> infinite matrix <span class="hl kwd">A</span>
+    <span class="hl kwa">let</span> <span class="hl kwd">A</span> i j <span class="hl sym">=</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> <span class="hl kwb">float</span><span class="hl sym">((</span>i <span class="hl sym">+</span> j<span class="hl sym">) * (</span>i <span class="hl sym">+</span> j <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+
+    <span class="hl sym">//</span> multiply vector v by matrix <span class="hl kwd">A</span>
+    <span class="hl kwa">let</span> multiplyAv<span class="hl sym">(</span>v<span class="hl sym">:</span>double<span class="hl sym">[],</span> <span class="hl kwd">Av</span><span class="hl sym">:</span>double<span class="hl sym">[]) =</span>
+        <span class="hl kwa">for</span> i <span class="hl sym">=</span> rbegin <span class="hl kwa">to</span> rend <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+            <span class="hl kwa">let mutable</span> sum <span class="hl sym">=</span> <span class="hl num">0.0</span><span class="hl sym">;</span>
+            <span class="hl kwa">for</span> j <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> v<span class="hl sym">.</span><span class="hl kwd">Length</span> <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+                sum <span class="hl sym">&lt;-</span> sum <span class="hl sym">+</span> <span class="hl kwd">A</span> i j <span class="hl sym">*</span> v<span class="hl sym">.[</span>j<span class="hl sym">];</span>
+            <span class="hl kwc">Av</span><span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> sum
+
+    <span class="hl sym">//</span> multiply vector v by matrix <span class="hl kwd">A</span> transposed
+    <span class="hl kwa">let</span> multiplyAtv<span class="hl sym">(</span>v<span class="hl sym">:</span>double<span class="hl sym">[],</span> atv<span class="hl sym">:</span>double<span class="hl sym">[]) =</span>
+        <span class="hl kwa">for</span> i <span class="hl sym">=</span> rbegin <span class="hl kwa">to</span> rend <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+            <span class="hl kwa">let mutable</span> sum <span class="hl sym">=</span> <span class="hl num">0.0</span>
+            <span class="hl kwa">for</span> j <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> v<span class="hl sym">.</span><span class="hl kwd">Length</span> <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+                sum <span class="hl sym">&lt;-</span> sum <span class="hl sym">+</span> <span class="hl kwd">A</span> j i <span class="hl sym">*</span> v<span class="hl sym">.[</span>j<span class="hl sym">];</span>
+            atv<span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> sum<span class="hl sym">;</span>
+
+    <span class="hl sym">//</span> multiply vector v by matrix <span class="hl kwd">A</span> <span class="hl kwa">and then</span> by matrix <span class="hl kwd">A</span> transposed
+    <span class="hl kwa">let</span> multiplyatAv<span class="hl sym">(</span>v<span class="hl sym">:</span>double<span class="hl sym">[],</span> tmp<span class="hl sym">:</span>double<span class="hl sym">[],</span> atAv<span class="hl sym">:</span>double<span class="hl sym">[]) =</span>
+        multiplyAv<span class="hl sym">(</span>v<span class="hl sym">,</span> tmp<span class="hl sym">);</span>
+        barrier<span class="hl sym">.</span><span class="hl kwd">WaitOne</span><span class="hl sym">();</span>
+
+        multiplyAtv<span class="hl sym">(</span>tmp<span class="hl sym">,</span> atAv<span class="hl sym">);</span>
+        barrier<span class="hl sym">.</span><span class="hl kwd">WaitOne</span><span class="hl sym">();</span>
+
+    <span class="hl kwa">for</span> i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> <span class="hl num">9</span> <span class="hl kwa">do</span>
+        multiplyatAv<span class="hl sym">(</span>u<span class="hl sym">,</span> tmp<span class="hl sym">,</span> v<span class="hl sym">);</span>
+        multiplyatAv<span class="hl sym">(</span>v<span class="hl sym">,</span> tmp<span class="hl sym">,</span> u<span class="hl sym">);</span>
+
+    <span class="hl kwa">for</span> i <span class="hl sym">=</span> rbegin <span class="hl kwa">to</span> rend <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+        vBv <span class="hl sym">&lt;-</span> vBv <span class="hl sym">+</span> u<span class="hl sym">.[</span>i<span class="hl sym">] *</span> v<span class="hl sym">.[</span>i<span class="hl sym">];</span>
+        vv <span class="hl sym">&lt;-</span> vv <span class="hl sym">+</span> v<span class="hl sym">.[</span>i<span class="hl sym">] *</span> v<span class="hl sym">.[</span>i<span class="hl sym">];</span>
+
+    <span class="hl sym">(</span>vBv<span class="hl sym">,</span> vv<span class="hl sym">)</span>
+
+
+<span class="hl kwa">let</span> <span class="hl kwd">RunGame</span> n <span class="hl sym">=</span>
+    <span class="hl sym">//</span> create <span class="hl kwb">unit</span> vector
+    <span class="hl kwa">let</span> u <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>create n <span class="hl num">1.0</span>
+    <span class="hl kwa">let</span> tmp <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate n
+    <span class="hl kwa">let</span> v <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate n
+
+    <span class="hl kwa">let</span> nthread <span class="hl sym">=</span> <span class="hl kwc">Environment</span><span class="hl sym">.</span><span class="hl kwd">ProcessorCount</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">let</span> barrier <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">BarrierHandle</span><span class="hl sym">(</span>nthread<span class="hl sym">);</span>
+        <span class="hl sym">//</span> create thread <span class="hl kwa">and</span> hand out tasks
+    <span class="hl kwa">let</span> chunk <span class="hl sym">=</span> n <span class="hl sym">/</span> nthread<span class="hl sym">;</span>
+        <span class="hl sym">//</span> objects contain result <span class="hl kwa">of</span> each thread
+    <span class="hl kwa">let</span> aps <span class="hl sym">=</span>
+        <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">Parallel</span>
+          <span class="hl sym">[</span> <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">0</span> <span class="hl sym">..</span> nthread <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+                <span class="hl kwa">let</span> r1 <span class="hl sym">=</span> i <span class="hl sym">*</span> chunk<span class="hl sym">;</span>
+                <span class="hl kwa">let</span> r2 <span class="hl sym">=</span> <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">&lt; (</span>nthread <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">))</span> <span class="hl kwa">then</span> r1 <span class="hl sym">+</span> chunk <span class="hl kwa">else</span> n
+                yield async <span class="hl sym">{</span> return <span class="hl kwd">Approximate</span><span class="hl sym">(</span>u<span class="hl sym">,</span> v<span class="hl sym">,</span> tmp<span class="hl sym">,</span> r1<span class="hl sym">,</span> r2<span class="hl sym">,</span> barrier<span class="hl sym">) } ]</span>
+         <span class="hl sym">|&gt;</span> <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">RunSynchronously</span>
+
+    <span class="hl kwa">let</span> vBv <span class="hl sym">=</span> aps <span class="hl sym">|&gt;</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>sumBy fst
+    <span class="hl kwa">let</span> vv <span class="hl sym">=</span> aps <span class="hl sym">|&gt;</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>sumBy snd
+
+    <span class="hl kwc">Math</span><span class="hl sym">.</span><span class="hl kwd">Sqrt</span><span class="hl sym">(</span>vBv <span class="hl sym">/</span> vv<span class="hl sym">);</span>
+
+<span class="hl sym">[&lt;</span><span class="hl kwd">EntryPoint</span><span class="hl sym">&gt;]</span>
+<span class="hl kwa">let</span> main args <span class="hl sym">=</span>
+    <span class="hl kwa">let</span> n <span class="hl sym">=</span> <span class="hl kwa">try</span> <span class="hl kwb">int</span> <span class="hl sym">&lt;|</span> args<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span> <span class="hl kwa">with</span> _ <span class="hl sym">-&gt;</span> <span class="hl num">2500</span>
+
+    <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;{0:f9}&quot;</span><span class="hl sym">,</span> <span class="hl kwd">RunGame</span> n<span class="hl sym">);</span>
+    <span class="hl num">0</span>
+
