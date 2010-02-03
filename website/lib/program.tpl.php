@@ -22,7 +22,6 @@ $LangName = $Langs[$SelectedLang][LANG_FULL];
 <th><a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a></th>
 </tr>
 <?
-usort($Data, 'CompareProgramTestValue');
 
 foreach($Data as $d){
       if ($Id==$d[DATA_ID]){

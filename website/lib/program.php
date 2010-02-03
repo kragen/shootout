@@ -13,68 +13,72 @@ require_once(LIB_PATH.'lib_data.php');
 // Some code duplication
 
 
-function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl){
-   $data = array();
-   $prefix = substr($T,1).','.$L.',';
-   $lines = file($FileName);
+function BestRows($rows){
+   $testvalue = -2; // assume not test value is < 0
+   $time = 360000.0; // assume no program was allowed to run for 100 hours
+   $id = -2; // assume no id is < 0
 
-   foreach($lines as $line) {
-      if (strpos($line,$prefix)){
-         $row = explode( ',', $line);
-         settype($row[DATA_ID],'integer');
-         settype($row[DATA_TESTVALUE],'integer');
-         settype($row[DATA_GZ],'integer');
-         settype($row[DATA_FULLCPU],'double');
-         settype($row[DATA_MEMORY],'integer');
-         settype($row[DATA_STATUS],'integer');
-         settype($row[DATA_ELAPSED],'double');
-
-         if ($I == -1){ $data[] = $row; }
-         elseif ($row[DATA_ID]==$I){ $data[] = $row; }
-      }
-   }
-   unset($lines);
-/*
-   if ($I == -1){
-      $filtered = array();
-      foreach($data as $ar){
-         if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])
-               && !ExcludeData($ar,$Langs,$Excl)){
-            $filtered[] = $ar;
+   // Identify id of fastest row at largest n, or whatever rows there are
+   foreach($rows as $row) {
+      $row_testvalue = $row[DATA_TESTVALUE];
+      if ($row[DATA_STATUS] > PROGRAM_TIMEOUT){
+         if ($row_testvalue > $testvalue){
+            $testvalue = $row_testvalue;
+            $time = $row[DATA_TIME];
+            $id = $row[DATA_ID];
+         } elseif ($row_testvalue == $testvalue){
+            $row_time = $row[DATA_TIME];
+            if ($row_time < $time){
+               $time = $row_time;
+               $id = $row[DATA_ID];
+            }
          }
-      }
-      $data = array();
-      foreach($filtered as $ar){
-         if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])){
-           $ex = ExcludeData($ar,$Langs,$Excl);
-           //if (($ex == PROGRAM_TIMEOUT)||($ex == PROGRAM_ERROR)){
-           if ($ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
-              $data[] = $ar;
-           }
-         }
-      }
-   }
-*/
-   usort($data, 'CompareProgramDataTime');
-   return $data;
-}
-
-function CompareProgramDataTime($a, $b){
-   if ($a[DATA_STATUS] < 0){
-      return 1;
-   } elseif ($b[DATA_STATUS] < 0){
-      return -1;
-   } else {
-      if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]){
-         return  ($a[DATA_TIME] < $b[DATA_TIME]) ? -1 : 1;
       } else {
-         return  ($b[DATA_TESTVALUE] < $a[DATA_TESTVALUE]) ? -1 : 1;
+         $failed_id = $row[DATA_ID];
       }
    }
+   if ($id < 0){ $id = $failed_id; } // assume no id is < 0
+
+   // filter and return the best of the rows
+   $best = array();
+   foreach($rows as $row) {
+      if ($row[DATA_ID] == $id){
+         $best[] = $row;
+      }
+   }
+   return $best;
 }
 
-function CompareProgramTestValue($a, $b){
-   return  ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
+
+function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl){
+   $rows = array();
+   
+   if (isset($Incl[$T]) && isset($Incl[$L])){
+      $prefix = substr($T,1).','.$L.',';
+      $lines = file($FileName);
+
+      foreach($lines as $line) {
+         if (strpos($line,$prefix)){
+            $row = explode( ',', $line);
+            $key = $T.$L.$row[DATA_ID];
+            settype($row[DATA_ID],'integer');
+
+            if ($row[DATA_ID]==$I || ($I == -1 && !isset($Excl[$key]))){
+               settype($row[DATA_TESTVALUE],'integer');
+               settype($row[DATA_GZ],'integer');
+               settype($row[DATA_FULLCPU],'double');
+               settype($row[DATA_MEMORY],'integer');
+               settype($row[DATA_STATUS],'integer');
+               settype($row[DATA_ELAPSED],'double');
+               $rows[] = $row;
+            }
+         }
+      }
+      if ($I == -1){
+         $rows = BestRows($rows);
+      }
+   }
+   return $rows;
 }
 
 
@@ -95,7 +99,7 @@ $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
-   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all' || $X == 'fun')){ $T = $X; }
+   if (ereg("^[a-z]+$",$X) && isset($Tests[$X])){ $T = $X; }
 }
 if (!isset($T)){ $T = 'nbody'; }
 
@@ -103,9 +107,9 @@ if (!isset($T)){ $T = 'nbody'; }
 if (isset($HTTP_GET_VARS['lang'])
       && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang'];
-   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) || $X == 'all' || $X == 'fun')){ $L = $X; }
+   if (ereg("^[a-z0-9]+$",$X) && isset($Langs[$X])){ $L = $X; }
 }
-if (!isset($L)){ $L = 'all'; }
+if (!isset($L)){ $L = 'java'; }
 
 
 if (isset($HTTP_GET_VARS['id']) && strlen($HTTP_GET_VARS['id']) == 1){
@@ -113,6 +117,19 @@ if (isset($HTTP_GET_VARS['id']) && strlen($HTTP_GET_VARS['id']) == 1){
    if (ereg("^[0-9]$",$X)){ $I = $X; }
 }
 if (!isset($I)){ $I = -1; }
+
+
+// DATA ////////////////////////////////////////////////
+
+$Data = ProgramData(DATA_PATH.'ndata.csv',$T,$L,$I,$Langs,$Incl,$Excl);
+if (sizeof($Data)>0){ $I = $Data[0][DATA_ID]; }
+$Id = '';
+if ($I > 1){ $Id = SEPARATOR.$I;}
+
+$timeUsed = 'Elapsed secs';
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+   $timeUsed = 'CPU secs';
+}
 
 
 // HEADER ////////////////////////////////////////////////
@@ -126,19 +143,6 @@ $Title = $TestName.' '.$LangName.IdName($I).' program';
 
 $bannerUrl = CORE_SITE;
 $faqUrl = CORE_SITE.'help.php';
-
-
-// DATA ////////////////////////////////////////////////
-
-$Data = ProgramData(DATA_PATH.'ndata.csv',$T,$L,$I,$Langs,$Incl,$Excl);
-if (sizeof($Data)>0){ $I = $Data[0][DATA_ID]; }
-$Id = '';
-if ($I > 1){ $Id = SEPARATOR.$I; }
-
-$timeUsed = 'Elapsed secs';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
-   $timeUsed = 'CPU secs';
-}
 
 
 // ABOUT ////////////////////////////////////////////////

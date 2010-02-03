@@ -1,7 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
 <?
-   list($data,$sTests,$ratios,$measurements) = $Data;
+   list($sorted,$ratios) = $Data;
    unset($Data);
 ?>
 
@@ -48,31 +48,18 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;<b>used</b> what
 <th><a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a></th>
 <th><a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a></th>
-<th><a href="<?=CORE_SITE;?>help.php#inputvalue" title="? Help">Reduced&nbsp;N</a></th>
 </tr>
 
 
 <?
-
-foreach($sTests as $Row){
-   if ($Row[TEST_WEIGHT]<=0){ continue; }
-
-   $Link = $Row[TEST_LINK];
-   $Name = $Row[TEST_NAME];
-
-   if (isset($data[$Link])){
-      $v = $data[$Link];
-
-      if ($v[N_LINES] >= 0){
-         printf('<tr><td>&nbsp;%s</td>', $Name);
-
-         if ($v[N_N]==0){ $n = '<td></td>';
-         } else { $n = '<td class="smaller">&nbsp;'.number_format($v[N_N]).'</td>'; }
-
-         if ($Name=='startup'){ $kb = 1.0; } else { $kb = $v[N_MEMORY]; }
-
-         printf('%s%s%s%s</tr>', PF($v[N_FULLCPU]), PF($kb), PF($v[N_GZ]), $n);
-      }
+foreach($sorted as $k => $v){
+   $test = $Tests[$k];
+   if ($test[TEST_WEIGHT]<=0 || $v[DATA_TIME] == NO_VALUE){ continue; }
+   $name = $test[TEST_NAME];
+   if (!empty($v)){
+      printf('<tr><td>&nbsp;%s</td>', $name);
+      if ($name=='startup'){ $kb = 1.0; } else { $kb = $v[DATA_MEMORY]; }
+      printf('%s%s%s</tr>', PF($v[DATA_TIME]), PF($kb), PF($v[DATA_GZ]));
    }
 }
 ?>
@@ -97,63 +84,59 @@ foreach($sTests as $Row){
 
 <?
 
-foreach($sTests as $Row){
-   if ($Row[TEST_WEIGHT]<=0){ continue; }
+foreach($sorted as $k => $rows){
+   $test = $Tests[$k];
+   if ($test[TEST_WEIGHT]<=0){ continue; }
+   $testname = $test[TEST_NAME];
 
-   $Link = $Row[TEST_LINK];
-   $TestName = $Row[TEST_NAME];
+   if (!empty($rows)){
 
-   if (isset($measurements[$Link])){
-      if ($data[$Link][N_N]==0){
-         $n = '';
-      } else {
-         $n = ' N&nbsp;=&nbsp;'.number_format($data[$Link][N_N]).'&nbsp;reduced&nbsp;workload';
-      }
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="performance.php?test=%s" title="Measurements for all the %s benchmark programs">%s</a><span class="smaller">%s</span>&nbsp;</th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName, $n);
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="performance.php?test=%s" title="Measurements for all the %s benchmark programs">%s</a><span class="smaller">%s</span>&nbsp;</th><th colspan="3"></th></tr>', $k, $k, $testname, $testname, $n);
 
       $ELAPSED = '';
-      if (isset($measurements[$Link][1]) && ($measurements[$Link][0][DATA_TIME] < $measurements[$Link][1][DATA_TIME])){
+      if (isset($rows[0]) && isset($rows[1]) && ($rows[0][DATA_TIME] < $rows[1][DATA_TIME])){
          $ELAPSED = ' class="sort"';
       }
 
       $firstRow = True;
-      foreach($measurements[$Link] as $Row){
-         $k = $Row[DATA_LANG];
-         $Name = $Langs[$k][LANG_FULL];
-         $NoSpaceName = str_replace(' ','&nbsp;',$Name);
-         $id = $Row[DATA_ID];
-         
-         if ($firstRow){ $tag0 = '<strong>'; $tag1 = '</strong>'; $firstRow = False; }
-         else { $tag0 = ''; $tag1 = ''; }
+      foreach($rows as $row){
+         if (is_array($row)){
+            $lang = $row[DATA_LANG];
+            $name = $Langs[$lang][LANG_FULL];
+            $noSpaceName = str_replace(' ','&nbsp;',$name);
+            $id = $row[DATA_ID];
+   
+            if ($firstRow){ $tag0 = '<strong>'; $tag1 = '</strong>'; $firstRow = False; }
+            else { $tag0 = ''; $tag1 = ''; }
 
-         printf('<tr><td><a href="program.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s%s%s</a></td>',
-               $Link,$k,$id,$Name,$TestName,$tag0,$NoSpaceName,$tag1);
+            printf('<tr><td><a href="program.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s%s%s</a></td>',
+                  $k,$lang,$id,$name,$testname,$tag0,$noSpaceName,$tag1);
 
-         $fc = number_format($Row[DATA_FULLCPU],2);
-         if ($Row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$Row[DATA_MEMORY]); }
-         $gz = $Row[DATA_GZ];
-         if ($Row[DATA_ELAPSED]>0){ $e = number_format($Row[DATA_ELAPSED],2); } else { $e = ''; }
-         $ld = CpuLoad($Row);
+            $fc = number_format($row[DATA_FULLCPU],2);
+            if ($row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$row[DATA_MEMORY]); }
+            $gz = $row[DATA_GZ];
+            if ($row[DATA_ELAPSED]>0){ $e = number_format($row[DATA_ELAPSED],2); } else { $e = ''; }
+            $ld = CpuLoad($row);
 
-         printf('<td>%s</td><td %s>%s</td><td>%s</td><td>%d</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $ELAPSED, $e, $kb, $gz, $ld);
+            if($row[DATA_STATUS] > PROGRAM_TIMEOUT){
+               printf('<td>%s</td><td %s>%s</td><td>%s</td><td>%d</td><td class="smaller">&nbsp;&nbsp;%s</td></tr>', $fc, $ELAPSED, $e, $kb, $gz, $ld);
+            } else {
+               printf('<td colspan="2"><span class="message">%s</span></td><td colspan="2"></td><td></td></tr>', StatusMessage($row[DATA_STATUS]));
+            }
+            $ELAPSED = '';
 
-         $ELAPSED = '';
-      }
-      if(!isset($measurements[$Link][1])){
-         printf('<td></td><td colspan="2"><span class="message">No %s</span></td><td colspan="2"></td><td></td></tr>', $LangName2);
+         } elseif (!isset($row)) {
+            printf('<td></td><td colspan="2"><span class="message">%s</span></td><td colspan="2"></td><td></td></tr>', 'No&nbsp;program');
+         }
       }
    }
-   else {
-      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="performance.php?test=%s" title="Measurements for all the %s benchmark programs">%s</a></th><th colspan="3"></th></tr>', $Link, $Link, $TestName, $TestName);
 
-      if (isset($data[$Link])){
-         printf('<tr><td><a href="program.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s"><strong>%s</strong></a></td><td colspan="2"><span class="message">%s</span></td><td colspan="3"></td></tr>', $Link,$SelectedLang,$data[$Link][N_ID],$Langs[$SelectedLang][LANG_FULL],$TestName,$NoSpaceLangName,StatusMessage($data[$Link][N_LINES]));
-      } else {
-         printf('<tr><td>&nbsp;</td><td colspan="2"><span class="message">&nbsp;&nbsp;%s</span></td><td colspan="3"></td></tr>', 'No&nbsp;program');
-      }
+   else { // empty($rows)     
+      printf('<tr><th class="txt" colspan="3">&nbsp;<a name="%s" href="performance.php?test=%s" title="Measurements for all the %s benchmark programs">%s</a></th><th colspan="3"></th></tr>', $k, $k, $testname, $testname);
+
+      printf('<tr><td>&nbsp;</td><td colspan="2"><span class="message">&nbsp;&nbsp;%s</span></td><td colspan="3"></td></tr>', 'No&nbsp;programs');
    }
 }
-
 ?>
 
 </table>

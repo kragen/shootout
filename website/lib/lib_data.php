@@ -22,6 +22,8 @@ if (SITE_NAME == 'debian' || SITE_NAME == 'gp4'){
    define('DATA_TIME',DATA_ELAPSED);
 }
 
+define('PROGRAM_TIMEOUT',-1);
+
 
 // MENU ///////////////////////////////////////////////////
 

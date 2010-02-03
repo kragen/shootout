@@ -51,7 +51,7 @@ define('SCORE_TESTS',2);
 
 // CONSTANTS ///////////////////////////////////////////////////
 
-define('EXCLUDED','X');
+//define('EXCLUDED','X');
 define('PROGRAM_TIMEOUT',-1);
 define('PROGRAM_ERROR',-2);
 define('PROGRAM_SPECIAL','-3');

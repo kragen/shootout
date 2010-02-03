@@ -289,29 +289,4 @@ function PF($d){
       }
    }
 }
-
-
-/*
-function LanguageData($FileName,$Langs,$Incl,$Excl,$L1,$HasHeading=TRUE){
-   $rows = array();
-   $lines = file($FileName);
-
-   $prefixL1 = ','.$L1.',';
-   foreach($lines as $line) {
-      if (strpos($line,$prefixL1)){
-         $row = explode( ',', $line);
-         $test = $row[DATA_TEST];
-         $key = $test.$L1.$row[DATA_ID];
-
-         // $L1 has already been checked
-         if (isset($Incl[$test]) && isset($Incl[$L1]) && !isset($Excl[$key])){
-            settype($row[DATA_STATUS],'integer');
-            $rows[] = $row;
-         }
-
-      }
-   }
-   return $rows;
-}
-*/
 ?>
