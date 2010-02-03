@@ -1,11 +1,119 @@
-<?   // Copyright (c) Isaac Gouy 2004-2010 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2010 
 
-<?
-   list($sorted,$ratios) = $Data;
-   unset($Data);
-?>
 
-<?
+// FUNCTIONS ///////////////////////////////////////////
+
+function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2){
+   echo '<form method="get" action="benchmark.php">', "\n";
+   echo '<p><select name="test">', "\n";
+   echo '<option value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
+
+   foreach($Tests as $Row){
+      $Link = $Row[TEST_LINK];
+      $Name = $Row[TEST_NAME];
+      if ($Link==$SelectedTest){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";
+
+
+   echo '<select name="lang">', "\n";
+   echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
+   foreach($Langs as $Row){
+      $Link = $Row[LANG_LINK];
+      $Name = $Row[LANG_FULL];
+      if ($Link==$SelectedLang){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select></p>', "\n";
+   
+   
+   echo '<p><strong>&#247;</strong> <select name="lang2">', "\n";
+   foreach($Langs as $Row){
+      $Link = $Row[LANG_LINK];
+      $Name = $Row[LANG_FULL];
+      if ($Link==$SelectedLang2){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";   
+
+   echo '<input type="submit" value="Show" />', "\n";
+   echo '</p></form>', "\n";
+}
+
+function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
+   echo '<form method="get" action="'.$Action.'">', "\n";
+   echo '<p><select name="lang">', "\n";
+   foreach($Langs as $Row){
+      $Link = $Row[LANG_LINK];
+      $Name = $Row[LANG_FULL];
+      if ($Link==$SelectedLang){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";
+   echo '<input type="submit" value="Show" />', "\n";
+   echo '</p></form>', "\n";
+}
+
+function MkTestsMenuForm($Tests,$SelectedTest){
+   echo '<form method="get" action="performance.php">', "\n";
+   echo '<p><select name="test">', "\n";
+   foreach($Tests as $Row){
+      $Link = $Row[TEST_LINK];
+      $Name = $Row[TEST_NAME];
+      if ($Link==$SelectedTest){
+         $Selected = 'selected="selected"';
+      } else {
+         $Selected = '';
+      }
+      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
+   }
+   echo '</select>', "\n";
+   echo '<input type="submit" value="Show" />', "\n";
+   echo '</p></form>', "\n";
+}
+
+function PF($d){
+   $rounded = round($d);
+   if ($rounded>15){ return '<td class="num1">'.number_format($rounded).'&#215;</td>'; }
+   elseif ($rounded>1){ return '<td class="num2">'.number_format($rounded).'&#215;</td>'; }
+   elseif ($d>1.01){ return '<td class="num2">&#177;</td>'; }
+   else {
+      if ($d>0){
+         $i = 1.0 / $d;
+         $rounded = round($i);
+         if ($rounded>15){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
+         elseif ($rounded>1){ return '<td><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
+         else { return '<td class="num2">&#177;</td>'; }
+      } else { 
+         return '<td>&nbsp;</td>';
+      }
+   }
+}
+
+
+
+// PAGE ////////////////////////////////////////////////
+
+list($sorted,$ratios) = $Data;
+unset($Data);
+
 $Row = $Langs[$SelectedLang];
 $LangName = $Row[LANG_FULL];
 $NoSpaceLangName = str_replace(' ','&nbsp;',$LangName);
@@ -100,15 +208,15 @@ foreach($sorted as $k => $rows){
 
       $firstRow = True;
       foreach($rows as $row){
+         if ($firstRow){ $tag0 = '<strong>'; $tag1 = '</strong>'; $firstRow = False; }
+         else { $tag0 = ''; $tag1 = ''; }         
+
          if (is_array($row)){
             $lang = $row[DATA_LANG];
             $name = $Langs[$lang][LANG_FULL];
             $noSpaceName = str_replace(' ','&nbsp;',$name);
             $id = $row[DATA_ID];
    
-            if ($firstRow){ $tag0 = '<strong>'; $tag1 = '</strong>'; $firstRow = False; }
-            else { $tag0 = ''; $tag1 = ''; }
-
             printf('<tr><td><a href="program.php?test=%s&amp;lang=%s&amp;id=%d" title="Read the Program Source Code : %s %s">%s%s%s</a></td>',
                   $k,$lang,$id,$name,$testname,$tag0,$noSpaceName,$tag1);
 

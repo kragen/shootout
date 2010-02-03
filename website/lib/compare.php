@@ -9,31 +9,7 @@ require_once(LIB_PATH.'lib_data.php');
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
-define('N_TEST',0);
-define('N_LANG',1);
-define('N_ID',2);
-define('N_NAME',3);
-define('N_FULL',4);
-define('N_HTML',5);
-define('N_FULLCPU',6);
-define('N_MEMORY',7);
-define('N_CPU_MAX',8);
-define('N_MEMORY_MAX',9);
-define('N_COLOR',10);
-
-define('N_N',3);
-define('N_LINES',8);
-define('N_GZ',9);
-define('N_EXCLUDE',10);
-
-define('EXCLUDED','X');
 define('PROGRAM_TIMEOUT',-1);
-define('PROGRAM_ERROR',-2);
-define('PROGRAM_SPECIAL','-3');
-define('PROGRAM_EXCLUDED',-4);
-define('LANGUAGE_EXCLUDED',-5);
-define('NO_COMPARISON',-6);
-define('NO_PROGRAM_OUTPUT',-7);
 
 
 // FUNCTIONS ///////////////////////////////////////////
@@ -119,10 +95,11 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
             }
             $previous = $test;
 
+            $key = $test.$L.$row[DATA_ID];
             settype($row[DATA_ID],'integer');
-            settype($row[DATA_STATUS],'integer');
-            $ex = ExcludeData($row,$Langs,$Excl);
-            if ($ex != PROGRAM_SPECIAL && $ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
+            // $L1 and $L2 have already been checked
+            if (isset($Incl[$test]) && !isset($Excl[$key])){
+               settype($row[DATA_STATUS],'integer');
                settype($row[DATA_TESTVALUE],'integer');
                settype($row[DATA_GZ],'integer');
                settype($row[DATA_FULLCPU],'double');
@@ -140,7 +117,7 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
    }
    AccumulateComparableRows(BestRows($rowsL1),BestRows($rowsL2),$measurements);
 
-   // order values for chart
+   // collect values for chart
    $ratios = array();
    foreach($measurements as $v){
       $test = $v[0][DATA_TEST];
@@ -150,8 +127,9 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
       $ratios[] = $v[DATA_GZ];
    }
 
-   uasort($measurements,'CompareTimeRatio');
    // sort by x times faster
+   uasort($measurements,'CompareTimeRatio');
+
    $sorted = array();
    foreach($measurements as $rows){
       $test = isset($rows[0]) ? $rows[0][DATA_TEST] : $rows[1][DATA_TEST];
@@ -170,136 +148,6 @@ function CompareTimeRatio($a, $b){
          ($a[DATA_TIME] < $b[DATA_TIME] ? -1 : 1));
 }
 
-/*
-function CompareTestValue2($a, $b){
-   if ($a[DATA_TEST] == $b[DATA_TEST]){
-         if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]) return 0;
-         return ($a[DATA_TESTVALUE] > $b[DATA_TESTVALUE]) ? -1 : 1;
-   }
-   else {
-      return ($a[DATA_TEST] < $b[DATA_TEST]) ? -1 : 1;
-   }
-}
-*/
-
-function ExcludeData($d,$langs,$Excl){
-   if( !isset($langs[$d[DATA_LANG]]) ) { return LANGUAGE_EXCLUDED; }
-
-   $key = $d[DATA_TEST].$d[DATA_LANG].strval($d[DATA_ID]);
-   if (isset($Excl[$key])){
-      if ($Excl[$key]){ return PROGRAM_EXCLUDED; }
-      else { return PROGRAM_SPECIAL; }
-   }
-   return $d[DATA_STATUS];
-}
-
-
-// should these be on the tpl.php?
-
-
-function MkHeadToHeadMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang,$SelectedLang2){
-   echo '<form method="get" action="benchmark.php">', "\n";
-   echo '<p><select name="test">', "\n";
-   echo '<option value="all">- all ', TESTS_PHRASE, 's -</option>', "\n";
-
-   foreach($Tests as $Row){
-      $Link = $Row[TEST_LINK];
-      $Name = $Row[TEST_NAME];
-      if ($Link==$SelectedTest){
-         $Selected = 'selected="selected"';
-      } else {
-         $Selected = '';
-      }
-      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
-   }
-   echo '</select>', "\n";
-
-
-   echo '<select name="lang">', "\n";
-   echo '<option value="all">- all ', LANGS_PHRASE, 's -</option>', "\n";
-   foreach($Langs as $Row){
-      $Link = $Row[LANG_LINK];
-      $Name = $Row[LANG_FULL];
-      if ($Link==$SelectedLang){
-         $Selected = 'selected="selected"';
-      } else {
-         $Selected = '';
-      }
-      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
-   }
-   echo '</select></p>', "\n";
-   
-   
-   echo '<p><strong>&#247;</strong> <select name="lang2">', "\n";
-   foreach($Langs as $Row){
-      $Link = $Row[LANG_LINK];
-      $Name = $Row[LANG_FULL];
-      if ($Link==$SelectedLang2){
-         $Selected = 'selected="selected"';
-      } else {
-         $Selected = '';
-      }
-      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
-   }
-   echo '</select>', "\n";   
-
-   echo '<input type="submit" value="Show" />', "\n";
-   echo '</p></form>', "\n";
-}
-
-function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
-   echo '<form method="get" action="'.$Action.'">', "\n";
-   echo '<p><select name="lang">', "\n";
-   foreach($Langs as $Row){
-      $Link = $Row[LANG_LINK];
-      $Name = $Row[LANG_FULL];
-      if ($Link==$SelectedLang){
-         $Selected = 'selected="selected"';
-      } else {
-         $Selected = '';
-      }
-      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
-   }
-   echo '</select>', "\n";
-   echo '<input type="submit" value="Show" />', "\n";
-   echo '</p></form>', "\n";
-}
-
-function MkTestsMenuForm($Tests,$SelectedTest){
-   echo '<form method="get" action="performance.php">', "\n";
-   echo '<p><select name="test">', "\n";
-   foreach($Tests as $Row){
-      $Link = $Row[TEST_LINK];
-      $Name = $Row[TEST_NAME];
-      if ($Link==$SelectedTest){
-         $Selected = 'selected="selected"';
-      } else {
-         $Selected = '';
-      }
-      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
-   }
-   echo '</select>', "\n";
-   echo '<input type="submit" value="Show" />', "\n";
-   echo '</p></form>', "\n";
-}
-
-function PF($d){
-   $rounded = round($d);
-   if ($rounded>15){ return '<td class="num1">'.number_format($rounded).'&#215;</td>'; }
-   elseif ($rounded>1){ return '<td class="num2">'.number_format($rounded).'&#215;</td>'; }
-   elseif ($d>1.01){ return '<td class="num2">&#177;</td>'; }
-   else {
-      if ($d>0){
-         $i = 1.0 / $d;
-         $rounded = round($i);
-         if ($rounded>15){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
-         elseif ($rounded>1){ return '<td><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
-         else { return '<td class="num2">&#177;</td>'; }
-      } else { 
-         return '<td>&nbsp;</td>';
-      }
-   }
-}
 
 // PAGE ////////////////////////////////////////////////
 
@@ -318,7 +166,7 @@ $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 if (isset($HTTP_GET_VARS['lang'])
       && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang'];
-   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]))){ $L = $X; }
+   if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) && isset($Incl[$X]))){ $L = $X; }
 }
 if (!isset($L)){ $L = 'java'; }
 
@@ -328,7 +176,7 @@ else {
    if (isset($HTTP_GET_VARS['lang2'])
          && strlen($HTTP_GET_VARS['lang2']) && (strlen($HTTP_GET_VARS['lang2']) <= NAME_LEN)){
       $X = $HTTP_GET_VARS['lang2'];
-      if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]))){ $L2 = $X; }
+      if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) && isset($Incl[$X]))){ $L2 = $X; }
    }
 }
 if (!isset($L2)){
