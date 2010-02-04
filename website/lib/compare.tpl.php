@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2010 
+<?   // Copyright (c) Isaac Gouy 2004-2010
 
 
 // FUNCTIONS ///////////////////////////////////////////
@@ -221,7 +221,7 @@ foreach($sorted as $k => $rows){
                   $k,$lang,$id,$name,$testname,$tag0,$noSpaceName,$tag1);
 
             $fc = number_format($row[DATA_FULLCPU],2);
-            if ($row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format((double)$row[DATA_MEMORY]); }
+            if ($row[DATA_MEMORY]==0){ $kb = '?'; } else { $kb = number_format($row[DATA_MEMORY]); }
             $gz = $row[DATA_GZ];
             if ($row[DATA_ELAPSED]>0){ $e = number_format($row[DATA_ELAPSED],2); } else { $e = ''; }
             $ld = CpuLoad($row);

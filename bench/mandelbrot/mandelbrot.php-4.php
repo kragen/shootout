@@ -94,10 +94,9 @@ for ($a = 0; $a < $n_workers; $a++)
       $data = compute_data($a * $worker_block, (($a + 1) * $worker_block));
       pcntl_signal(SIGUSR1, "worker_exit");
       posix_kill($m_pid, SIGUSR1);
-      while (true)
+      declare (ticks=1)
       {
-         sleep(1);
-         pcntl_signal_dispatch();
+         while (true) sleep(1);
       }
    } 
    else
@@ -108,10 +107,9 @@ for ($a = 0; $a < $n_workers; $a++)
 
 pcntl_signal(SIGUSR1, "master_wait");
 
-while (true)
+declare (ticks=1)
 {
-   sleep(1);
-   pcntl_signal_dispatch();
+   while (true) sleep(1);
 }
 
 ?>

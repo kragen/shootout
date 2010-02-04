@@ -54,7 +54,7 @@ function BestRows($rows){
 function AccumulateComparableRows($rowsL1,$rowsL2,&$comparable){
    $rowL1 = $rowsL1[0];
    $rowL2 = $rowsL2[0];
-   $time = NO_VALUE; $mem = NO_VALUE; $gz = NO_VALUE;      
+   $time = NO_VALUE; $mem = NO_VALUE; $gz = NO_VALUE;
 
    $n = min(sizeof($rowsL1),sizeof($rowsL2));
    if ($n > 0){
@@ -65,8 +65,8 @@ function AccumulateComparableRows($rowsL1,$rowsL2,&$comparable){
       }
       if ($rowL1[DATA_STATUS] + $rowL2[DATA_STATUS] > PROGRAM_TIMEOUT){
          if ($rowL2[DATA_TIME]>0.0){ $time = $rowL1[DATA_TIME] / $rowL2[DATA_TIME]; }
-         if ($rowL2[DATA_MEMORY]>0){ $mem = $rowL1[DATA_MEMORY] / doubleval($rowL2[DATA_MEMORY]); }
-         if ($rowL2[DATA_GZ]>0){ $gz = $rowL1[DATA_GZ] / doubleval($rowL2[DATA_GZ]); }
+         if ($rowL2[DATA_MEMORY]>0.0){ $mem = $rowL1[DATA_MEMORY] / $rowL2[DATA_MEMORY]; }
+         if ($rowL2[DATA_GZ]>0.0){ $gz = $rowL1[DATA_GZ] / $rowL2[DATA_GZ]; }
       }
    }
    $test = isset($rowL1) ? $rowL1[DATA_TEST] : $rowL2[DATA_TEST];
@@ -87,7 +87,8 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
       if ($isLang1 || strpos($line,$prefixL2)){
          $row = explode( ',', $line);
          $test = $row[DATA_TEST];
-         if (isset($Incl[$test])){
+// do we need to check $test here?         
+//         if (isset($Incl[$test])){
             if (isset($previous) && $previous != $test){ // assume ndata.csv is sorted by test
                AccumulateComparableRows(BestRows($rowsL1),BestRows($rowsL2),$measurements);
                $rowsL1 = array();
@@ -98,13 +99,12 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
             $key = $test.$L.$row[DATA_ID];
             settype($row[DATA_ID],'integer');
             // $L1 and $L2 have already been checked
-            if (isset($Incl[$test]) && !isset($Excl[$key])){
+            if (!isset($Excl[$key])){
                settype($row[DATA_STATUS],'integer');
                settype($row[DATA_TESTVALUE],'integer');
-               settype($row[DATA_GZ],'integer');
-               settype($row[DATA_FULLCPU],'double');
-               settype($row[DATA_MEMORY],'integer');
-               settype($row[DATA_ELAPSED],'double');
+               settype($row[DATA_TIME],'double');
+               settype($row[DATA_GZ],'double');
+               settype($row[DATA_MEMORY],'double');
 
                if ($isLang1){
                   $rowsL1[] = $row;
@@ -112,7 +112,7 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
                   $rowsL2[] = $row;
                }
             }
-         }
+//         }
       }
    }
    AccumulateComparableRows(BestRows($rowsL1),BestRows($rowsL2),$measurements);

@@ -1,6 +1,33 @@
 <?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
 <? 
+// FUNCTIONS ///////////////////////////////////////////
+
+// should these be on the tpl.php?
+
+function PTime($d){
+   if ($d <= 0.0){ return ''; }
+   if ($d<300.0){ return number_format($d,2); }
+   elseif ($d<3600.0){
+     $m = floor($d/60); $s = $d-($m*60); $ss = number_format($s,0);
+     if (strlen($ss)<2) { $ss = "0".$ss; }
+     return number_format($m,0)."&nbsp;min"; }
+   else {
+     $h = floor($d/3600); $m = floor(($d-($h*3600))/60);
+     $mm = number_format($m,0); if (strlen($mm)<2) { $mm = "0".$mm; }
+     return number_format($h,0)."h&nbsp;".$mm."&nbsp;min";
+   }
+}
+
+function PFx($d){
+   if ($d>9.9){ return number_format($d); }
+   elseif ($d>0.0){ return number_format($d,1); }
+   else { return "&nbsp;"; }
+}
+
+
+// PAGE ////////////////////////////////////////////////
+
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 $Row = $Tests[$SelectedTest];
 $TestName = $Row[TEST_NAME];

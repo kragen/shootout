@@ -30,39 +30,37 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
 
          if (isset($Incl[$lang])){
             $exclude = $Excl[ $Test.$lang.$row[DATA_ID] ];
-            if ($exclude){
-               continue;
-            }
-
-            settype($row[DATA_ID],'integer');
-            settype($row[DATA_TESTVALUE],'integer');
-            settype($row[DATA_GZ],'integer');
-            settype($row[DATA_FULLCPU],'double');
-            settype($row[DATA_MEMORY],'integer');
-            settype($row[DATA_STATUS],'integer');
-            settype($row[DATA_ELAPSED],'double');
-
-            if (isset($exclude)){
-               $special[] = $row;
-            } elseif ($row[DATA_STATUS]){
-               $failed[] = $row;
-            } else {
-               $succeeded[] = $row;
-               
-               $row_time = $row[$DATA_TIME_SORT];
-               if ($row_time > 0.0 && $row_time < $time_min){
-                  $time_min = $row_time;
-               }
-               $row_mem = $row[DATA_MEMORY];
-               if ($row_mem > 0 && $row_mem < $mem_min){
-                  $mem_min = $row_mem;
+            if (!$exclude){
+               settype($row[DATA_ID],'integer');
+               settype($row[DATA_TESTVALUE],'integer');
+               settype($row[DATA_GZ],'integer');
+               settype($row[DATA_FULLCPU],'double');
+               settype($row[DATA_MEMORY],'integer');
+               settype($row[DATA_STATUS],'integer');
+               settype($row[DATA_ELAPSED],'double');
+   
+               if (isset($exclude)){
+                  $special[] = $row;
+               } elseif ($row[DATA_STATUS]){
+                  $failed[] = $row;
+               } else {
+                  $succeeded[] = $row;
+                  
+                  $row_time = $row[$DATA_TIME_SORT];
+                  if ($row_time > 0.0 && $row_time < $time_min){
+                     $time_min = $row_time;
+                  }
+                  $row_mem = $row[DATA_MEMORY];
+                  if ($row_mem > 0 && $row_mem < $mem_min){
+                     $mem_min = $row_mem;
+                  }
                }
 
             }
          }
       }
    }
-   
+
    if ($Sort=='fullcpu'){
       usort($succeeded, 'CompareFullCpuTime');
       usort($special, 'CompareFullCpuTime');
@@ -95,46 +93,21 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
 
 
 function CompareFullCpuTime($a, $b){
-   return  ($a[DATA_FULLCPU] < $b[DATA_FULLCPU]) ? -1 :
-      ($a[DATA_FULLCPU] > $b[DATA_FULLCPU] ? 1 : 0);
+   return  $a[DATA_FULLCPU] < $b[DATA_FULLCPU] ? -1 : 1;
 }
 
 function CompareMemoryUse($a, $b){
-   return  ($a[DATA_MEMORY] < $b[DATA_MEMORY]) ? -1 :
-      ($a[DATA_MEMORY] > $b[DATA_MEMORY] ? 1 : 0);
+   return  $a[DATA_MEMORY] < $b[DATA_MEMORY] ? -1 : 1;
 }
 
 function CompareGz($a, $b){
-   return  ($a[DATA_GZ] < $b[DATA_GZ]) ? -1 :
-      ($a[DATA_GZ] > $b[DATA_GZ] ? 1 : 0);
+   return  $a[DATA_GZ] < $b[DATA_GZ] ? -1 : 1;
 }
 
 function CompareElapsed($a, $b){
-   return  ($a[DATA_ELAPSED] < $b[DATA_ELAPSED]) ? -1 :
-      ($a[DATA_ELAPSED] > $b[DATA_ELAPSED] ? 1 : 0);
+   return  $a[DATA_ELAPSED] < $b[DATA_ELAPSED] ? -1 : 1;
 }
 
-// should these be on the tpl.php?
-
-function PTime($d){
-   if ($d <= 0.0){ return ''; }
-   if ($d<300.0){ return number_format($d,2); }
-   elseif ($d<3600.0){
-     $m = floor($d/60); $s = $d-($m*60); $ss = number_format($s,0);
-     if (strlen($ss)<2) { $ss = "0".$ss; }
-     return number_format($m,0)."&nbsp;min"; }
-   else {
-     $h = floor($d/3600); $m = floor(($d-($h*3600))/60);
-     $mm = number_format($m,0); if (strlen($mm)<2) { $mm = "0".$mm; }
-     return number_format($h,0)."h&nbsp;".$mm."&nbsp;min";
-   }
-}
-
-function PFx($d){
-   if ($d>9.9){ return number_format($d); }
-   elseif ($d>0.0){ return number_format($d,1); }
-   else { return "&nbsp;"; }
-}
 
 // PAGE ////////////////////////////////////////////////
 
@@ -153,7 +126,7 @@ $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
-   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) || $X == 'all' || $X == 'fun')){ $T = $X; }
+   if (ereg("^[a-z]+$",$X) && (isset($Tests[$X]) && isset($Incl[$X]))){ $T = $X; }
 }
 if (!isset($T)){ $T = 'nbody'; }
 

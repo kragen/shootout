@@ -108,6 +108,3 @@ $Page->set('PageId', $PageId);
 
 echo $Page->fetch('page.tpl.php');
 ?>
-
-
-

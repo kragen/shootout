@@ -41,6 +41,7 @@ function FullRatios($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading=TRUE
       $key = $test.$lang.$row[DATA_ID];
 
       // accumulate all acceptable datarows, exclude duplicates
+
       if (isset($Incl[$test]) && isset($Incl[$lang]) && isset($Langs[$lang]) &&
                   !isset($Excl[$key])){
 
@@ -75,6 +76,7 @@ function FullRatios($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading=TRUE
          if (!empty($s)){ $ratios[$k] = $s; }
       }
    }
+
    return $ratios;
 }
 
@@ -102,11 +104,10 @@ function FullScores($SLangs,$ratios){
    return array($score,$labels,$stats,$allowed);
 }
 
-
 function CompareMedian($a, $b){
-   return ($a[STAT_MEDIAN] < $b[STAT_MEDIAN]) ? -1 :
-      (($b[STAT_MEDIAN] < $a[STAT_MEDIAN]) ? 1 : 0);
+   return $a[STAT_MEDIAN] < $b[STAT_MEDIAN] ? -1 : 1;
 }
+
 
 function Percentiles($a){
    sort($a);

@@ -11,15 +11,12 @@ define('TEST_META',4);
 define('TEST_DATE',5);
 
 define('LANG_LINK',0);
-define('LANG_FAMILY',1);
-define('LANG_NAME',2);
-define('LANG_FULL',3);
-define('LANG_HTML',4);
-define('LANG_TAG',5);
-//define('LANG_DATE',6);
-define('LANG_SELECT',6);
-define('LANG_COMPARE',7);
-define('LANG_SPECIALURL',8);
+define('LANG_FULL',1);
+define('LANG_HTML',2);
+define('LANG_TAG',3);
+define('LANG_SELECT',4);
+define('LANG_COMPARE',5);
+define('LANG_SPECIALURL',6);
 
 define('INCL_LINK',0);
 define('INCL_NAME',1);

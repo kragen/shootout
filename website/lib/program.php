@@ -52,31 +52,30 @@ function BestRows($rows){
 
 function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl){
    $rows = array();
-   
-   if (isset($Incl[$T]) && isset($Incl[$L])){
-      $prefix = substr($T,1).','.$L.',';
-      $lines = file($FileName);
 
-      foreach($lines as $line) {
-         if (strpos($line,$prefix)){
-            $row = explode( ',', $line);
-            $key = $T.$L.$row[DATA_ID];
-            settype($row[DATA_ID],'integer');
+   // $T and $L have already been checked
+   $prefix = substr($T,1).','.$L.',';
+   $lines = file($FileName);
 
-            if ($row[DATA_ID]==$I || ($I == -1 && !isset($Excl[$key]))){
-               settype($row[DATA_TESTVALUE],'integer');
-               settype($row[DATA_GZ],'integer');
-               settype($row[DATA_FULLCPU],'double');
-               settype($row[DATA_MEMORY],'integer');
-               settype($row[DATA_STATUS],'integer');
-               settype($row[DATA_ELAPSED],'double');
-               $rows[] = $row;
-            }
+   foreach($lines as $line) {
+      if (strpos($line,$prefix)){
+         $row = explode( ',', $line);
+         $key = $T.$L.$row[DATA_ID];
+         settype($row[DATA_ID],'integer');
+
+         if ($row[DATA_ID]==$I || ($I == -1 && !isset($Excl[$key]))){
+            settype($row[DATA_TESTVALUE],'integer');
+            settype($row[DATA_GZ],'integer');
+            settype($row[DATA_FULLCPU],'double');
+            settype($row[DATA_MEMORY],'integer');
+            settype($row[DATA_STATUS],'integer');
+            settype($row[DATA_ELAPSED],'double');
+            $rows[] = $row;
          }
       }
-      if ($I == -1){
-         $rows = BestRows($rows);
-      }
+   }
+   if ($I == -1){
+      $rows = BestRows($rows);
    }
    return $rows;
 }
@@ -99,7 +98,7 @@ $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
-   if (ereg("^[a-z]+$",$X) && isset($Tests[$X])){ $T = $X; }
+   if (ereg("^[a-z]+$",$X) && isset($Tests[$X]) && isset($Incl[$X])){ $T = $X; }
 }
 if (!isset($T)){ $T = 'nbody'; }
 
@@ -107,7 +106,7 @@ if (!isset($T)){ $T = 'nbody'; }
 if (isset($HTTP_GET_VARS['lang'])
       && strlen($HTTP_GET_VARS['lang']) && (strlen($HTTP_GET_VARS['lang']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['lang'];
-   if (ereg("^[a-z0-9]+$",$X) && isset($Langs[$X])){ $L = $X; }
+   if (ereg("^[a-z0-9]+$",$X) && isset($Langs[$X]) && isset($Incl[$X])){ $L = $X; }
 }
 if (!isset($L)){ $L = 'java'; }
 
