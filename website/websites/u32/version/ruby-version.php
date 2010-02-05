@@ -1,1 +1,1 @@
-<p>ruby 1.8.7 (2008-08-11 patchlevel 72) [i686-linux]</p>
+<p>ruby 1.8.7 (2009-06-12 patchlevel 174) [i486-linux]</p>
