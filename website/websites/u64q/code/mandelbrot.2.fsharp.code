@@ -1,0 +1,115 @@
+﻿<span class="hl com">(*   The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   Adapted by Antti Lankila from the earlier Isaac Gouy's implementation</span>
+<span class="hl com">   Add multithread &amp; tweaks from C++ by The Anh Tran</span>
+<span class="hl com">   Ported to F# by Don Syme</span>
+<span class="hl com">   Add memory reduction and performance tweaks by Jomo Fisher</span>
+<span class="hl com">*)</span>
+
+<span class="hl kwa">open</span> <span class="hl kwd">System</span>
+<span class="hl kwa">open</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">Threading</span>
+<span class="hl kwa">open</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">IO</span>
+
+<span class="hl kwa">let</span> out <span class="hl sym">=</span> <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">OpenStandardOutput</span><span class="hl sym">()</span>
+
+<span class="hl sym">//</span> <span class="hl kwd">Helper</span> <span class="hl kwa">type to</span> accumulate a bit array
+<span class="hl kwa">type</span> <span class="hl kwd">BitAccumulator</span><span class="hl sym">(</span>n<span class="hl sym">) =</span>
+    <span class="hl kwa">let</span> numBytes <span class="hl sym">= (</span>n<span class="hl sym">+</span><span class="hl num">7</span><span class="hl sym">)/</span><span class="hl num">8</span>
+    <span class="hl kwa">let</span> numBits <span class="hl sym">=</span> n <span class="hl sym">&amp;&amp;&amp;</span> <span class="hl num">7</span>
+    <span class="hl kwa">let mutable</span> byteCount <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">let mutable</span> bitNum <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">let mutable</span> byteAcc <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">let mutable</span> pdata <span class="hl sym">:</span> byte array <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate numBytes
+
+    member x<span class="hl sym">.</span><span class="hl kwd">Reinit</span><span class="hl sym">() =</span>
+        byteCount <span class="hl sym">&lt;-</span> <span class="hl num">0</span>
+        bitNum <span class="hl sym">&lt;-</span> <span class="hl num">0</span>
+        byteAcc <span class="hl sym">&lt;-</span> <span class="hl num">0</span>
+
+    member x<span class="hl sym">.</span><span class="hl kwd">Add</span> b <span class="hl sym">=</span>
+        byteAcc <span class="hl sym">&lt;- (</span>byteAcc <span class="hl sym">&lt;&lt;&lt;</span> <span class="hl num">1</span><span class="hl sym">) ||| (</span><span class="hl kwa">if</span> b <span class="hl kwa">then</span> <span class="hl num">1</span> <span class="hl kwa">else</span> <span class="hl num">0</span><span class="hl sym">);</span>
+
+        bitNum <span class="hl sym">&lt;-</span> bitNum <span class="hl sym">+</span> <span class="hl num">1</span>
+        <span class="hl kwa">if</span> bitNum <span class="hl sym">=</span> <span class="hl num">8</span> <span class="hl kwa">then</span>
+           pdata<span class="hl sym">.[</span>byteCount<span class="hl sym">] &lt;-</span> byte byteAcc<span class="hl sym">;</span>
+           byteCount <span class="hl sym">&lt;-</span> byteCount <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+           byteAcc <span class="hl sym">&lt;-</span> <span class="hl num">0</span><span class="hl sym">;</span>
+           bitNum <span class="hl sym">&lt;-</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+    member x<span class="hl sym">.</span><span class="hl kwd">Close</span><span class="hl sym">() =</span>
+        <span class="hl sym">//</span> write left over bits
+        <span class="hl kwa">if</span> bitNum <span class="hl sym">&lt;&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            byteAcc <span class="hl sym">&lt;-</span> byteAcc <span class="hl sym">&lt;&lt;&lt; (</span><span class="hl num">8</span> <span class="hl sym">-</span> numBits<span class="hl sym">)</span>
+            pdata<span class="hl sym">.[</span>byteCount<span class="hl sym">] &lt;-</span> byte byteAcc
+            byteCount <span class="hl sym">&lt;-</span> byteCount<span class="hl sym">+</span><span class="hl num">1</span>
+
+    member x<span class="hl sym">.</span><span class="hl kwd">Data</span> <span class="hl sym">=</span> pdata
+    member x<span class="hl sym">.</span><span class="hl kwd">ByteCount</span> <span class="hl sym">=</span> byteCount
+
+<span class="hl kwa">type</span> <span class="hl kwd">ThreadState</span><span class="hl sym">(</span>n<span class="hl sym">) =</span>
+    <span class="hl kwa">let</span> ba <span class="hl sym">=</span> <span class="hl kwd">BitAccumulator</span><span class="hl sym">(</span>n<span class="hl sym">)</span>
+    <span class="hl kwa">let mutable</span> finishedLine <span class="hl sym">= -</span><span class="hl num">1</span>
+    member ts<span class="hl sym">.</span><span class="hl kwd">BitAccumulator</span> <span class="hl sym">=</span> ba
+    member ts<span class="hl sym">.</span><span class="hl kwd">IsReadyToWork</span> <span class="hl sym">=</span> finishedLine <span class="hl sym">= -</span><span class="hl num">1</span>
+    member ts<span class="hl sym">.</span><span class="hl kwd">SetFinishedLine</span><span class="hl sym">(</span>lineNumber<span class="hl sym">) =</span>
+        finishedLine <span class="hl sym">&lt;-</span> lineNumber
+    member ts<span class="hl sym">.</span><span class="hl kwd">TryWriteLine</span><span class="hl sym">(</span>nextLine<span class="hl sym">) =</span>
+        <span class="hl kwa">if</span> finishedLine <span class="hl sym">=</span> nextLine <span class="hl kwa">then</span>
+            out<span class="hl sym">.</span><span class="hl kwd">Write</span><span class="hl sym">(</span> ba<span class="hl sym">.</span><span class="hl kwd">Data</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> ba<span class="hl sym">.</span><span class="hl kwd">ByteCount</span><span class="hl sym">);</span>
+            finishedLine <span class="hl sym">&lt;- -</span><span class="hl num">1</span>
+            ba<span class="hl sym">.</span><span class="hl kwd">Reinit</span><span class="hl sym">()</span>
+            <span class="hl kwa">true</span>
+        <span class="hl kwa">else false</span>
+
+<span class="hl sym">//</span> <span class="hl kwd">Initialize</span> an array by a parallel init using all available processors
+<span class="hl kwa">let</span> parallelArrayInit n f <span class="hl sym">=</span>
+    <span class="hl kwa">let</span> currentLine <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl sym">-</span><span class="hl num">1</span>
+    <span class="hl kwa">let</span> lastWritten <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl sym">-</span><span class="hl num">1</span>
+    <span class="hl kwa">let rec</span> loop <span class="hl sym">(</span>ts<span class="hl sym">:</span><span class="hl kwd">ThreadState</span><span class="hl sym">) =</span>
+        <span class="hl kwa">if</span> ts<span class="hl sym">.</span><span class="hl kwd">IsReadyToWork</span> <span class="hl kwa">then</span>
+            <span class="hl kwa">let</span> y <span class="hl sym">=</span> <span class="hl kwc">Interlocked</span><span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(&amp;</span>currentLine<span class="hl sym">.</span>contents<span class="hl sym">)</span>
+            <span class="hl kwa">if</span> y <span class="hl sym">&lt;</span> n <span class="hl kwa">then</span>
+                f ts<span class="hl sym">.</span><span class="hl kwd">BitAccumulator</span> y
+                ts<span class="hl sym">.</span><span class="hl kwd">SetFinishedLine</span><span class="hl sym">(</span>y<span class="hl sym">)</span>
+                loop<span class="hl sym">(</span>ts<span class="hl sym">)</span>
+        elif ts<span class="hl sym">.</span><span class="hl kwd">TryWriteLine</span><span class="hl sym">(!</span>lastWritten <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+            <span class="hl kwc">Interlocked</span><span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(&amp;</span>lastWritten<span class="hl sym">.</span>contents<span class="hl sym">) |&gt;</span> ignore
+            loop<span class="hl sym">(</span>ts<span class="hl sym">)</span>
+        <span class="hl kwa">else</span> loop<span class="hl sym">(</span>ts<span class="hl sym">)</span>
+
+    <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">Parallel</span> <span class="hl sym">[</span> <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">1</span> <span class="hl sym">..</span> <span class="hl kwc">Environment</span><span class="hl sym">.</span><span class="hl kwd">ProcessorCount</span> <span class="hl sym">-&gt;</span> async <span class="hl sym">{</span><span class="hl kwa">do</span> loop<span class="hl sym">(</span><span class="hl kwd">ThreadState</span><span class="hl sym">(</span>n<span class="hl sym">)) } ]</span>
+       <span class="hl sym">|&gt;</span> <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">Ignore</span>
+       <span class="hl sym">|&gt;</span> <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">RunSynchronously</span>
+
+<span class="hl sym">[&lt;</span><span class="hl kwd">EntryPoint</span><span class="hl sym">&gt;]</span>
+<span class="hl kwa">let</span> main args <span class="hl sym">=</span>
+    <span class="hl kwa">let</span> start <span class="hl sym">=</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwc">DateTime</span><span class="hl sym">.</span><span class="hl kwd">Now</span>
+    <span class="hl kwa">let</span> numLines <span class="hl sym">=</span> <span class="hl kwa">if</span> <span class="hl sym">(</span>args<span class="hl sym">.</span><span class="hl kwd">Length</span> <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span> <span class="hl kwb">int</span> args<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span> <span class="hl kwa">else</span> <span class="hl num">200</span>
+    <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwc">Out</span><span class="hl sym">.</span><span class="hl kwd">Write</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">{0} {0}</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> numLines<span class="hl sym">);</span>
+    <span class="hl kwa">let</span> inversen <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> <span class="hl kwb">float</span> numLines<span class="hl sym">;</span>
+
+    parallelArrayInit numLines <span class="hl sym">(</span><span class="hl kwa">fun</span> ba y <span class="hl sym">-&gt;</span>
+
+        <span class="hl kwa">let</span> civ <span class="hl sym">=</span> <span class="hl kwb">float</span> y <span class="hl sym">*</span> inversen <span class="hl sym">-</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
+
+        <span class="hl kwa">for</span> x <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> numLines <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+            <span class="hl kwa">let</span> crv <span class="hl sym">=</span> <span class="hl kwb">float</span> x <span class="hl sym">*</span> inversen <span class="hl sym">-</span> <span class="hl num">1.5</span><span class="hl sym">;</span>
+
+            <span class="hl kwa">let rec</span> innerLoop i zrv ziv trv tiv <span class="hl sym">=</span>
+               <span class="hl kwa">let</span> ziv <span class="hl sym">= (</span>zrv<span class="hl sym">*</span>ziv<span class="hl sym">) + (</span>zrv<span class="hl sym">*</span>ziv<span class="hl sym">) +</span> civ<span class="hl sym">;</span>
+               <span class="hl kwa">let</span> zrv <span class="hl sym">=</span> trv <span class="hl sym">-</span> tiv <span class="hl sym">+</span> crv<span class="hl sym">;</span>
+
+               <span class="hl kwa">let</span> trv <span class="hl sym">=</span> zrv <span class="hl sym">*</span> zrv<span class="hl sym">;</span>
+               <span class="hl kwa">let</span> tiv <span class="hl sym">=</span> ziv <span class="hl sym">*</span> ziv<span class="hl sym">;</span>
+               <span class="hl kwa">if</span> <span class="hl sym">((</span>trv <span class="hl sym">+</span> tiv<span class="hl sym">) &lt;=</span> <span class="hl num">4.0</span><span class="hl sym">) &amp;&amp; (</span>i <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+                   innerLoop <span class="hl sym">(</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> zrv ziv trv tiv
+               <span class="hl kwa">else</span>
+                   i
+
+            <span class="hl kwa">let</span> i <span class="hl sym">=</span> innerLoop <span class="hl num">49</span> crv civ <span class="hl sym">(</span>crv <span class="hl sym">*</span> crv<span class="hl sym">) (</span>civ <span class="hl sym">*</span> civ<span class="hl sym">)</span>
+            ba<span class="hl sym">.</span><span class="hl kwd">Add</span> <span class="hl sym">((</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">))</span>
+        ba<span class="hl sym">.</span><span class="hl kwd">Close</span><span class="hl sym">())</span>
+
+    <span class="hl num">0</span>
+
