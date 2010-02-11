@@ -171,7 +171,7 @@ $langs = array(
    array('go','Go 6g 8g','types just are - Go is an experiment','',$allsites),
    array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$u32sites),
    array('fsharp','F# Mono','higher-order type-safe programming (mono is not ms .net)','fsharp',$allsites),
-   array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$u32sites),
+   array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$allsites),
    array('clean','Clean','lazy &amp; strict pure functional programming','clean',$onecoresites),
    array('gpp','C++ GNU','c plus objects plus generics','cpp',$allsites),
    array('csharp','C# Mono','oo plus functional style (mono is not ms .net)','csharp',$allsites),
