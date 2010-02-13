@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64.programs.Makefile,v 1.31 2009-12-30 00:38:19 igouy-guest Exp $
+# $Id: u64.programs.Makefile,v 1.32 2010-02-13 13:55:05 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -496,6 +496,15 @@ SBCL_TRACE :=
 %.psyco_run: %.psyco $(PYTHON)
 	-mv $< $*.py
 	-$(PSYCO) -OO -c "from py_compile import compile; compile('$*.py')"
+
+
+########################################
+# Python3
+########################################
+
+%.python3_run: %.python3 $(PYTHON3)
+	-mv $< $*.py
+	-$(PYTHON3) -OO -c "from py_compile import compile; compile('$*.py')"
 
 
 ########################################
