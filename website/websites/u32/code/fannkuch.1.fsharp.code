@@ -1,119 +1,165 @@
 ﻿<span class="hl com">(*</span>
-<span class="hl com"> * The Computer Language Benchmarks Game</span>
-<span class="hl com"> * http://shootout.alioth.debian.org/</span>
-<span class="hl com"> * Based on contribution of Isaac Gouy</span>
-<span class="hl com"> * Based on contribution of Eckehard Berns</span>
-<span class="hl com"> * Based on code by Heiner Marxen</span>
-<span class="hl com"> * and the ATS version by Hongwei Xi</span>
-<span class="hl com"> * converted to C# by The Anh Tran</span>
-<span class="hl com"> * converted to F# by George Prekas</span>
-<span class="hl com"> *)</span>
+<span class="hl com">* The Computer Language Benchmarks Game</span>
+<span class="hl com">* http://shootout.alioth.debian.org/</span>
+<span class="hl com">*</span>
+<span class="hl com">* Based on contribution of Isaac Gouy</span>
+<span class="hl com">* Based on contribution of Eckehard Berns</span>
+<span class="hl com">* Based on code by Heiner Marxen</span>
+<span class="hl com">* and the ATS version by Hongwei Xi</span>
+<span class="hl com">* convert to C# by The Anh Tran</span>
+<span class="hl com">* convert to F# by Jomo Fisher</span>
+<span class="hl com">*)</span>
+<span class="hl kwa">open</span> <span class="hl kwd">System</span>
+<span class="hl kwa">open</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">Threading</span>
 
-#light
+<span class="hl kwa">let mutable</span> n <span class="hl sym">=</span> <span class="hl num">0</span>
+<span class="hl kwa">let mutable</span> flip_max_arr <span class="hl sym">:</span> <span class="hl kwb">int</span> array <span class="hl sym">=</span> null
+<span class="hl kwa">let</span> remain_task <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl sym">-</span><span class="hl num">1</span>
+<span class="hl kwa">let</span> threads <span class="hl sym">=</span> <span class="hl kwc">Environment</span><span class="hl sym">.</span><span class="hl kwd">ProcessorCount</span>
 
-<span class="hl kwa">let</span> print_list l <span class="hl sym">=</span>
-    <span class="hl kwc">Array</span><span class="hl sym">.</span>iter <span class="hl sym">(</span>printf <span class="hl str">&quot;%d&quot;</span><span class="hl sym">)</span> l
-    printfn <span class="hl str">&quot;&quot;</span>
+<span class="hl sym">//</span> <span class="hl kwd">Return</span> next permut<span class="hl sym">,</span> by rotating elements <span class="hl sym">[</span><span class="hl num">0</span> <span class="hl sym">-</span> position<span class="hl sym">]</span> one <span class="hl kwb">'step'</span>
+<span class="hl sym">//</span> next_perm<span class="hl sym">(</span><span class="hl kwb">'1234'</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">) -&gt;</span> <span class="hl kwb">'2314'</span>
+<span class="hl kwa">let</span> next_perm<span class="hl sym">(</span>permutation<span class="hl sym">:</span><span class="hl kwb">int</span> array<span class="hl sym">,</span> position<span class="hl sym">) =</span>
+    <span class="hl kwa">let</span> perm0 <span class="hl sym">=</span> permutation<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span>
+    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">0</span><span class="hl sym">..</span>position<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+        permutation<span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> permutation<span class="hl sym">.[</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">]</span>
+    permutation<span class="hl sym">.[</span>position<span class="hl sym">] &lt;-</span> perm0
 
-<span class="hl kwa">let</span> rotate_array <span class="hl sym">(</span>array<span class="hl sym">:</span>_<span class="hl sym">[])</span> count <span class="hl sym">=</span>
-    <span class="hl kwa">let</span> a0 <span class="hl sym">=</span> array<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span>
-    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> seq <span class="hl sym">{</span> <span class="hl num">0</span><span class="hl sym">..</span>count<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">}</span> <span class="hl kwa">do</span>
-        array<span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> array<span class="hl sym">.[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]</span>
-    array<span class="hl sym">.[</span>count<span class="hl sym">] &lt;-</span> a0
-    array
+<span class="hl sym">//</span> <span class="hl kwd">In</span> order <span class="hl kwa">to</span> divide tasks <span class="hl kwb">'equally'</span> <span class="hl kwa">for</span> many threads<span class="hl sym">,</span> permut generation
+<span class="hl sym">//</span> strategy is different than that <span class="hl kwa">of</span> original single thread<span class="hl sym">.</span>
+<span class="hl sym">//</span> this <span class="hl kwa">function</span> will <span class="hl kwb">'correctly'</span> print first <span class="hl num">30</span> permutations
+<span class="hl kwa">let</span> print_30_permut<span class="hl sym">() =</span>
 
-<span class="hl kwa">let</span> next_perm permutation position <span class="hl sym">=</span>
-    rotate_array <span class="hl sym">(</span><span class="hl kwc">Array</span><span class="hl sym">.</span>copy permutation<span class="hl sym">)</span> position
+    <span class="hl sym">//</span> declare <span class="hl kwa">and</span> initialize
+    <span class="hl kwa">let</span> permutation <span class="hl sym">:</span> <span class="hl kwb">int</span> array <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>init n <span class="hl sym">(</span><span class="hl kwa">fun</span> i<span class="hl sym">-&gt;</span> <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">Write</span><span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span>i<span class="hl sym">)</span>
+    <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">();</span>
 
-<span class="hl kwa">let mutable</span> result <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-<span class="hl kwa">let mutable</span> seq_no <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">let</span> perm_remain <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>init n <span class="hl sym">(</span><span class="hl kwa">fun</span> i<span class="hl sym">-&gt;</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
 
-<span class="hl kwa">let</span> count_flip <span class="hl sym">(</span>perm<span class="hl sym">:</span>_<span class="hl sym">[]) =</span>
-    <span class="hl kwa">let</span> flip <span class="hl sym">(</span>list<span class="hl sym">:</span>_<span class="hl sym">[])</span> pos <span class="hl sym">=</span>
-        <span class="hl kwa">let rec</span> flip_inner x y <span class="hl sym">=</span>
-            <span class="hl kwa">if</span> x<span class="hl sym">&lt;</span>y <span class="hl kwa">then</span>
-                <span class="hl kwa">let</span> tmp <span class="hl sym">=</span> list<span class="hl sym">.[</span>x<span class="hl sym">]</span>
-                list<span class="hl sym">.[</span>x<span class="hl sym">] &lt;-</span> list<span class="hl sym">.[</span>y<span class="hl sym">]</span>
-                list<span class="hl sym">.[</span>y<span class="hl sym">] &lt;-</span> tmp
-                flip_inner <span class="hl sym">(</span>x<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>y<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
-        flip_inner <span class="hl num">0</span> <span class="hl sym">(</span>pos<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
-        list
-    <span class="hl kwa">let rec</span> count_flip_inner acc <span class="hl sym">(</span>perm<span class="hl sym">:</span>_<span class="hl sym">[]) =</span>
-        <span class="hl kwa">if</span> perm<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]=</span><span class="hl num">1</span> <span class="hl kwa">then</span>
-            acc
-        <span class="hl kwa">else</span>
-            count_flip_inner <span class="hl sym">(</span>acc<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>flip perm perm<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">])</span>
-    <span class="hl kwa">if</span> perm<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]&lt;&gt;</span><span class="hl num">1</span> <span class="hl sym">&amp;&amp;</span> perm<span class="hl sym">.[</span><span class="hl kwc">Array</span><span class="hl sym">.</span>length perm<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]&lt;&gt;</span><span class="hl kwc">Array</span><span class="hl sym">.</span>length perm <span class="hl kwa">then</span>
-        count_flip_inner <span class="hl num">0</span> <span class="hl sym">(</span><span class="hl kwc">Array</span><span class="hl sym">.</span>copy perm<span class="hl sym">)</span>
-    <span class="hl kwa">else</span>
-        <span class="hl num">0</span>
+    <span class="hl kwa">let mutable</span> numPermutationsPrinted <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl kwa">let mutable</span> finished <span class="hl sym">=</span> <span class="hl kwa">false</span>
+    <span class="hl kwa">let mutable</span> pos_right <span class="hl sym">=</span> <span class="hl num">2</span>
 
-<span class="hl kwa">let</span> go perm <span class="hl sym">=</span>
-    <span class="hl kwa">let</span> x <span class="hl sym">=</span> count_flip perm
-    <span class="hl kwa">if</span> x <span class="hl sym">&gt;</span> result <span class="hl kwa">then</span> result <span class="hl sym">&lt;-</span> x
+    <span class="hl kwa">while</span> not finished <span class="hl sym">&amp;&amp;</span> pos_right<span class="hl sym">&lt;=</span>n <span class="hl kwa">do</span>
+        <span class="hl kwa">let mutable</span> pos_left <span class="hl sym">=</span> pos_right <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">while</span> not finished <span class="hl sym">&amp;&amp;</span> pos_left <span class="hl sym">&lt;</span> pos_right <span class="hl kwa">do</span>
 
-<span class="hl kwa">exception</span> <span class="hl kwd">StopPrinting</span>
+            <span class="hl sym">//</span> rotate down perm<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">..</span>prev<span class="hl sym">]</span> by one
+            next_perm<span class="hl sym">(</span>permutation<span class="hl sym">,</span> pos_left<span class="hl sym">)</span>
 
-<span class="hl kwa">let</span> go2 perm <span class="hl sym">=</span>
-    <span class="hl kwa">if</span> seq_no <span class="hl sym">&lt;</span> <span class="hl num">30</span> <span class="hl kwa">then</span>
-        print_list perm
-        seq_no <span class="hl sym">&lt;-</span> seq_no<span class="hl sym">+</span><span class="hl num">1</span>
-    <span class="hl kwa">else</span>
-        raise <span class="hl kwd">StopPrinting</span>
+            perm_remain<span class="hl sym">.[</span>pos_left<span class="hl sym">] &lt;-</span> perm_remain<span class="hl sym">.[</span>pos_left<span class="hl sym">] -</span> <span class="hl num">1</span>
+            <span class="hl kwa">if</span> perm_remain<span class="hl sym">.[</span>pos_left<span class="hl sym">] &gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+                numPermutationsPrinted<span class="hl sym">&lt;-</span>numPermutationsPrinted<span class="hl sym">+</span><span class="hl num">1</span>
+                <span class="hl kwa">if</span> numPermutationsPrinted <span class="hl sym">&lt;</span> <span class="hl num">31</span> <span class="hl kwa">then</span>
+                    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">0</span><span class="hl sym">..</span>n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+                        <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">Write</span><span class="hl sym">(</span><span class="hl str">&quot;{0}&quot;</span><span class="hl sym">, (</span><span class="hl num">1</span> <span class="hl sym">+</span> permutation<span class="hl sym">.[</span>i<span class="hl sym">]))</span>
+                    <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">()</span>
+                <span class="hl kwa">else</span>
+                    finished<span class="hl sym">&lt;-</span><span class="hl kwa">true</span>
+                    pos_right<span class="hl sym">&lt;-</span>n
 
-<span class="hl kwa">let rec</span> perm_inner func <span class="hl sym">=</span> <span class="hl kwa">function</span>
-    <span class="hl sym">| (</span>perm<span class="hl sym">,</span>x<span class="hl sym">,</span>_<span class="hl sym">)</span> <span class="hl kwa">when</span> x<span class="hl sym">&lt;=</span><span class="hl num">0</span> <span class="hl sym">-&gt; ()</span>
-    <span class="hl sym">| (</span>perm<span class="hl sym">,</span>x<span class="hl sym">,</span><span class="hl num">1</span><span class="hl sym">)           -&gt;</span>
-        perm_inner func <span class="hl sym">(</span>perm<span class="hl sym">,</span>x<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span>x<span class="hl sym">)</span>
-    <span class="hl sym">| (</span>perm<span class="hl sym">,</span>x<span class="hl sym">,</span>count<span class="hl sym">)       -&gt;</span>
-        perm_inner func <span class="hl sym">(</span>perm<span class="hl sym">,</span>x<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span>x<span class="hl sym">)</span>
-        <span class="hl kwa">let</span> perm2 <span class="hl sym">=</span> next_perm perm x
-        func perm2
-        perm_inner func <span class="hl sym">(</span>perm2<span class="hl sym">,</span> x<span class="hl sym">,</span>count<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+                <span class="hl kwa">if</span> not finished <span class="hl kwa">then</span>
+                    <span class="hl kwa">while</span> pos_left <span class="hl sym">&lt;&gt;</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+                        perm_remain<span class="hl sym">.[</span>pos_left <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] &lt;-</span> pos_left
+                        pos_left <span class="hl sym">&lt;-</span> pos_left <span class="hl sym">-</span> <span class="hl num">1</span>
+            <span class="hl kwa">else</span>
+                pos_left <span class="hl sym">&lt;-</span> pos_left <span class="hl sym">+</span> <span class="hl num">1</span>
+        pos_right <span class="hl sym">&lt;-</span> pos_right <span class="hl sym">+</span> <span class="hl num">1</span>
 
-<span class="hl kwa">let</span> part_of_permutation func n m <span class="hl sym">=</span>
-    <span class="hl kwa">let</span> perm <span class="hl sym">= [|</span><span class="hl num">1</span><span class="hl sym">..</span>n<span class="hl sym">|]</span>
-    <span class="hl kwa">let</span> tmp <span class="hl sym">=</span> perm<span class="hl sym">.[</span>m<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span>
-    perm<span class="hl sym">.[</span>m<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] &lt;-</span> perm<span class="hl sym">.[</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span>
-    perm<span class="hl sym">.[</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] &lt;-</span> tmp
-    func perm
-    perm_inner func <span class="hl sym">(</span>perm<span class="hl sym">,</span>n<span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">,</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+<span class="hl sym">//</span> <span class="hl kwd">Take</span> a permut array<span class="hl sym">,</span> continuously flipping until first element is <span class="hl kwb">'1'</span>
+<span class="hl sym">//</span> <span class="hl kwd">Return</span> flipping times
+<span class="hl kwa">let</span> public count_flip <span class="hl sym">(</span>perm_flip<span class="hl sym">:</span><span class="hl kwb">int</span> array<span class="hl sym">) =</span>
+    <span class="hl sym">//</span> cache first element<span class="hl sym">,</span> avoid swapping perm<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span> <span class="hl kwa">and</span> perm<span class="hl sym">[</span>k<span class="hl sym">]</span>
+    <span class="hl kwa">let mutable</span> v0 <span class="hl sym">=</span> perm_flip<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span>
+    <span class="hl kwa">let mutable</span> tmp <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">let mutable</span> flip_count <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">let mutable</span> finished <span class="hl sym">=</span> <span class="hl kwa">false</span>
+    <span class="hl kwa">while</span> not finished <span class="hl kwa">do</span>
+        <span class="hl kwa">let mutable</span> i <span class="hl sym">=</span> <span class="hl num">1</span>
+        <span class="hl kwa">let mutable</span> j <span class="hl sym">=</span> v0 <span class="hl sym">-</span> <span class="hl num">1</span>
+        <span class="hl kwa">while</span> i<span class="hl sym">&lt;</span>j <span class="hl kwa">do</span>
+            tmp <span class="hl sym">&lt;-</span> perm_flip<span class="hl sym">.[</span>i<span class="hl sym">]</span>
+            perm_flip<span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> perm_flip<span class="hl sym">.[</span>j<span class="hl sym">]</span>
+            perm_flip<span class="hl sym">.[</span>j<span class="hl sym">] &lt;-</span> tmp
+            i <span class="hl sym">&lt;-</span> i <span class="hl sym">+</span> <span class="hl num">1</span>
+            j <span class="hl sym">&lt;-</span> j <span class="hl sym">-</span> <span class="hl num">1</span>
 
-<span class="hl kwa">let</span> worker_common n m <span class="hl sym">=</span>
-    part_of_permutation go n m
+        tmp <span class="hl sym">&lt;-</span> perm_flip<span class="hl sym">.[</span>v0<span class="hl sym">]</span>
+        perm_flip<span class="hl sym">.[</span>v0<span class="hl sym">] &lt;-</span> v0
+        v0 <span class="hl sym">&lt;-</span> tmp<span class="hl sym">;</span>
 
-<span class="hl kwa">let</span> pworker n <span class="hl sym">=</span>
-    <span class="hl kwa">let</span> worker_inner m <span class="hl sym">=</span>
-        async <span class="hl sym">{</span>
-            return worker_common n m
-        <span class="hl sym">}</span>
-    <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">Parallel</span> <span class="hl sym">[</span> <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl sym">..</span>n <span class="hl sym">-&gt;</span> worker_inner i <span class="hl sym">]</span>
-    <span class="hl sym">|&gt;</span> <span class="hl kwc">Async</span><span class="hl sym">.</span><span class="hl kwd">Run</span>
-    <span class="hl sym">|&gt;</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>max
+        flip_count <span class="hl sym">&lt;-</span> flip_count <span class="hl sym">+</span> <span class="hl num">1</span>
+        finished <span class="hl sym">&lt;-</span> v0 <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">//</span> first element <span class="hl sym">==</span> <span class="hl kwb">'1'</span>
 
-<span class="hl kwa">let</span> worker n <span class="hl sym">=</span>
-    seq <span class="hl sym">{</span> <span class="hl num">1</span> <span class="hl sym">..</span> n <span class="hl sym">}</span>
-    <span class="hl sym">|&gt;</span> <span class="hl kwc">Seq</span><span class="hl sym">.</span>map <span class="hl sym">(</span>worker_common n<span class="hl sym">)</span>
-    <span class="hl sym">|&gt;</span> <span class="hl kwc">Seq</span><span class="hl sym">.</span>max
+    flip_count
 
-<span class="hl kwa">let</span> permutation func n <span class="hl sym">=</span>
-    <span class="hl kwa">let</span> perm <span class="hl sym">= [|</span><span class="hl num">1</span><span class="hl sym">..</span>n<span class="hl sym">|]</span>
-    func perm
-    perm_inner func <span class="hl sym">(</span>perm<span class="hl sym">,</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span>n<span class="hl sym">)</span>
+<span class="hl kwa">let</span> worker<span class="hl sym">() =</span>
+    <span class="hl kwa">let</span> permutation <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate n
+    <span class="hl kwa">let</span> perm_remain <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate n
+    <span class="hl kwa">let</span> perm_flip <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate n
 
-<span class="hl kwa">let</span> print_30_permut n <span class="hl sym">=</span>
-    <span class="hl kwa">try</span>
-        permutation go2 n
-    <span class="hl kwa">with</span> <span class="hl kwd">StopPrinting</span> <span class="hl sym">-&gt;</span>
-        <span class="hl sym">()</span>
+    <span class="hl kwa">let mutable</span> pos_right <span class="hl sym">=</span> <span class="hl kwc">Interlocked</span><span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(&amp;</span>remain_task<span class="hl sym">.</span>contents<span class="hl sym">)</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>pos_right <span class="hl sym">&lt;</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">do</span>
+        <span class="hl kwa">let mutable</span> flip_max <span class="hl sym">=</span> <span class="hl num">0</span>
 
-<span class="hl kwa">let</span> fannkuch n <span class="hl sym">=</span>
-    print_30_permut n
-    pworker n
-    result
+        <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">0</span><span class="hl sym">..</span>n<span class="hl sym">-</span><span class="hl num">2</span> <span class="hl kwa">do</span>
+            permutation<span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> i
+
+        permutation<span class="hl sym">.[</span>pos_right<span class="hl sym">] &lt;-</span> n <span class="hl sym">-</span> <span class="hl num">1</span>
+        permutation<span class="hl sym">.[</span>n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] &lt;-</span> pos_right
+
+        <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">1</span><span class="hl sym">..</span>n <span class="hl kwa">do</span>
+            perm_remain<span class="hl sym">.[</span>i <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] &lt;-</span> i
+
+        <span class="hl kwa">let mutable</span> pos_left <span class="hl sym">=</span> n <span class="hl sym">-</span> <span class="hl num">2</span>
+        <span class="hl kwa">while</span> pos_left <span class="hl sym">&lt;</span> n <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+            <span class="hl sym">//</span> rotate down perm<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">..</span>r<span class="hl sym">]</span> by one
+            next_perm<span class="hl sym">(</span>permutation<span class="hl sym">,</span> pos_left<span class="hl sym">)</span>
+
+            perm_remain<span class="hl sym">.[</span>pos_left<span class="hl sym">]&lt;-</span>perm_remain<span class="hl sym">.[</span>pos_left<span class="hl sym">] -</span> <span class="hl num">1</span>
+
+            <span class="hl kwa">if</span> perm_remain<span class="hl sym">.[</span>pos_left<span class="hl sym">] &gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+                <span class="hl kwa">while</span> pos_left<span class="hl sym">&lt;&gt;</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+                    perm_remain<span class="hl sym">.[</span>pos_left <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] &lt;-</span> pos_left
+                    pos_left <span class="hl sym">&lt;-</span> pos_left <span class="hl sym">-</span> <span class="hl num">1</span>
+
+                <span class="hl kwa">if</span> permutation<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">] &lt;&gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> permutation<span class="hl sym">.[</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]&lt;&gt;</span>n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">then</span>
+                    <span class="hl kwa">for</span> ip <span class="hl kwa">in</span> <span class="hl num">0</span><span class="hl sym">..</span>n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+                        perm_flip<span class="hl sym">.[</span>ip<span class="hl sym">] &lt;-</span> permutation<span class="hl sym">.[</span>ip<span class="hl sym">]</span>
+                    <span class="hl kwa">let</span> flipcount <span class="hl sym">=</span> count_flip<span class="hl sym">(</span>perm_flip<span class="hl sym">)</span>
+                    <span class="hl kwa">if</span> flip_max <span class="hl sym">&lt;</span> flipcount <span class="hl kwa">then</span>
+                        flip_max <span class="hl sym">&lt;-</span> flipcount
+            <span class="hl kwa">else</span>
+                pos_left<span class="hl sym">&lt;-</span>pos_left<span class="hl sym">+</span><span class="hl num">1</span>
+
+
+        <span class="hl sym">//</span> update max_flip foreach flipping position
+        flip_max_arr<span class="hl sym">.[</span>pos_right<span class="hl sym">] &lt;-</span> flip_max
+
+        pos_right <span class="hl sym">&lt;-</span> <span class="hl kwc">Interlocked</span><span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(&amp;</span>remain_task<span class="hl sym">.</span>contents<span class="hl sym">)</span>
+
+
+
+<span class="hl kwa">let</span> fank_game<span class="hl sym">() =</span>
+    <span class="hl kwa">let</span> th <span class="hl sym">:</span> <span class="hl kwd">Thread</span> array <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>init threads <span class="hl sym">(</span><span class="hl kwa">fun</span> i<span class="hl sym">-&gt;</span>
+                                                    <span class="hl kwa">let</span> th<span class="hl sym">=</span><span class="hl kwd">Thread</span><span class="hl sym">(</span>worker<span class="hl sym">)</span>
+                                                    th<span class="hl sym">.</span><span class="hl kwd">Start</span><span class="hl sym">()</span>
+                                                    th<span class="hl sym">)</span>
+    print_30_permut<span class="hl sym">()</span>
+
+    <span class="hl kwa">for</span> t <span class="hl kwa">in</span> th <span class="hl kwa">do</span> t<span class="hl sym">.</span><span class="hl kwd">Join</span><span class="hl sym">()</span>
+
+    <span class="hl kwa">let mutable</span> mx <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> flip_max_arr <span class="hl kwa">do</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>mx <span class="hl sym">&lt;</span> i<span class="hl sym">)</span> <span class="hl kwa">then</span>
+            mx <span class="hl sym">&lt;-</span> i
+    mx
+
 
 <span class="hl sym">[&lt;</span><span class="hl kwd">EntryPoint</span><span class="hl sym">&gt;]</span>
-<span class="hl kwa">let</span> main<span class="hl sym">(</span>args<span class="hl sym">) =</span>
-    <span class="hl kwa">let</span> x <span class="hl sym">=</span> <span class="hl kwa">if</span> args<span class="hl sym">.</span><span class="hl kwd">Length</span> <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl kwb">int</span> args<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span> <span class="hl kwa">else</span> <span class="hl num">7</span>
-    printfn <span class="hl str">&quot;Pfannkuchen(%d) = %d&quot;</span> x <span class="hl sym">(</span>fannkuch x<span class="hl sym">)</span>
+<span class="hl kwa">let</span> main args <span class="hl sym">=</span>
+    n <span class="hl sym">&lt;-</span> <span class="hl kwa">if</span> args<span class="hl sym">.</span><span class="hl kwd">Length</span> <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl kwb">int</span> args<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">]</span> <span class="hl kwa">else</span> <span class="hl num">7</span>
+    <span class="hl sym">//</span> hold flip_count result <span class="hl kwa">for</span> each swapping index
+    flip_max_arr <span class="hl sym">&lt;-</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>zeroCreate n
+    <span class="hl kwc">Console</span><span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;Pfannkuchen({0}) = {1}&quot;</span><span class="hl sym">,</span> n<span class="hl sym">,</span> fank_game<span class="hl sym">())</span>
     <span class="hl num">0</span>
