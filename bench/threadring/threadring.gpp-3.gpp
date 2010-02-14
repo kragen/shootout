@@ -1,0 +1,136 @@
+/*
+* The Computer Language Benchmarks Game
+* http://shootout.alioth.debian.org/
+* Based on C contribution by Premysl Hruby
+* Contributed by The Anh Tran
+*/
+
+/*
+   This program will create 503 OS threads.
+   Those threads will wait inside boost::asio::io_service.run() for some tasks.
+   Each task is a token passing run.
+*/
+
+#include <pthread.h>
+#include <cstdio>
+
+#include <boost/scoped_ptr.hpp>
+#include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
+using namespace boost;
+
+
+enum 
+{   
+   THREAD_COUNT   = 503,
+   STACK_SIZE      = 4*1024
+};
+
+
+// pthread handle
+pthread_t         threadid[THREAD_COUNT];
+// custom stack space
+char            stacks   [THREAD_COUNT][STACK_SIZE];
+
+
+// Task queue:
+// On Win:      NtIOCompletionPort
+// On Linux:   kqueue
+scoped_ptr<asio::io_service> iosv;
+
+
+// how many times remain to pass the token
+int token;
+
+// Rule 4: "pass the token from thread to thread N times"
+// Any (real OS) thread can pick up the task inside asio::io_service.
+// Therefore, this struct will encapsulate a "faked" thread that handle each 
+// token passing. The real thread will impersonate a faked thread, and pass token
+// to next faked thread.
+struct LogicalThread
+{
+   int my_id;
+   int next_id;
+   
+   void operator()() const;
+};
+LogicalThread   threads[THREAD_COUNT];
+
+
+void 
+LogicalThread::operator()() const
+{
+   if (token > 0)
+   {
+      --token;
+      // pass token to next
+      iosv->post(threads[next_id]);
+   }
+   else
+      printf("%d\n", my_id);   // done, print who is the final
+}
+
+
+static
+void* 
+thread_func( void* )
+{
+   // gather at task queue, waiting for job
+   // this run() func will return when queue is empty
+   iosv->run();   
+   return 0;
+}
+
+
+int 
+main(int argc, char** args)
+{
+   // create task queue
+   iosv.reset( new asio::io_service );
+
+
+   // parse input
+   if (argc >= 2)
+      token = lexical_cast<int>(args[1]);
+   else
+      token = 1000;
+
+
+   // Rule 2: "thread 503 should be linked to thread 1, forming an unbroken ring"
+   for (int i = 0; i < THREAD_COUNT; i++) 
+   {
+      threads[i].my_id = i +1;
+      threads[i].next_id = i +1;
+   }
+   threads[THREAD_COUNT -1].next_id = 0;
+
+
+   // Rule 3: "pass a token to thread 1"
+   // post first task to queue, so that task queue is not empty
+   // this task will be handled by "thread 0"
+   iosv->post(threads[0]);
+   
+
+   // Rule 1: "create 503 linked threads (named 1 to 503)"
+   // cannot use boost::thread here, b/c creating 503 threads with default 
+   // stack size will overflow process's working set
+   {
+      pthread_attr_t stack_attr;
+      pthread_attr_init(&stack_attr);
+
+      for (int i = 0; i < THREAD_COUNT; i++) 
+      {
+         // manually set stack space & stack size for each thread 
+         // to reduce virtual memory cost
+         pthread_attr_setstack( &stack_attr, &stacks[i], STACK_SIZE );
+
+         // create thread using customized stack space
+         pthread_create( &threadid[i], &stack_attr, &thread_func, 0 );
+      }
+   }
+   
+   // waiting
+   pthread_join( threadid[0], 0 );
+
+   return 0;
+}
