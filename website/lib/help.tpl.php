@@ -346,7 +346,7 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <b>Ubuntu&#8482; 9.04 Linux</b> Kernel 2.6.28-17-generic</p>
+<dd><p>We use <b>Ubuntu&#8482; 9.10 Linux</b> Kernel 2.6.31-19-generic</p>
 
 <p>The out-of-date measurements used Debian Linux 'unstable', Kernel 2.6.18-3-k7 and Gentoo Linux gentoo-sources-2.6.20-r6</p>
 </dd>
