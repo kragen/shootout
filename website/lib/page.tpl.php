@@ -39,5 +39,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 <p class="imgfooter">&nbsp; <a href="<?=CORE_SITE;?>">Home</a> &nbsp; <a href="<?=CORE_SITE;?>flawed-benchmarks.php">Flawed</a> &nbsp; <a href="<?=CORE_SITE;?>which-programming-language-is-fastest.php">Fastest</a> &nbsp; <a href="<?=CORE_SITE;?>license.php">License</a> &nbsp; <a href="<?=CORE_SITE;?>help.php">Help</a> &nbsp;</p>
 </div>
 
+<? include_once(IMAGE_PATH.'analyticstracking.php'); ?>
+
 </body>
 </html>
