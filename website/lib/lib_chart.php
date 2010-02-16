@@ -528,9 +528,9 @@ function axisT(){
 
 function axisYrMth(){
    return array(
-      array(2,"2006"), array(14,"2007"),
-      array(26,"2008"), array(38,"2009"),
-      array(50,"2010"), array(62,"2011")
+      array(1,"2007"),
+      array(13,"2008"), array(25,"2009"),
+      array(37,"2010"), array(49,"2011")
       );
 }
 
