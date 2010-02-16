@@ -1,13 +1,15 @@
 #!/usr/bin/php
 <?
 
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2010
+
 
 // CONSTANTS ////////////////////////////////////////////////
 
 define('HTTP_DIR', '/home/dunham/shootout/website/websites');
-//$Sites = array('gp4','debian');
-$Sites = array('u32q');
+define('DESC_DIR', '/home/dunham/shootout/website/desc');
+$Sites = array('gp4','debian','u32');
+//$Sites = array('u32');
 
 // FUNCTIONS ///////////////////////////////////////////
 
@@ -17,9 +19,10 @@ function extractLogDates($site){
    $h = opendir($d)
       or die("Couldn't open $d");
 
+   $datalist = data($site); 
    $fs = array();
    while ($each = readdir($h)){
-      if (preg_match('/\.log$/i',$each)){
+      if (preg_match('/\.log$/i',$each) && $datalist[$each]){
          $fs[] = $d.'/'.$each;
       }
    }
@@ -96,16 +99,29 @@ function month($s){
 define('INCL_LINK',0);
 
 function includes($site){
-   $a = array();
-   $f = @fopen(HTTP_DIR.'/'.$site.'/include.csv','r') or die('Cannot open ./include.csv');
-   $row = @fgetcsv($f,1024,','); // heading row
-   while (!@feof ($f)){
-      $row = @fgetcsv($f,1024,',');
-      if (!is_array($row)){ continue; }
-      if (isset($row[INCL_LINK]{0})){ $a[ $row[INCL_LINK] ] = 0; }
+   $incl = array();
+   $lines = @file(HTTP_DIR.'/'.$site.'/include.csv') or die('Cannot open '.HTTP_DIR.'/'.$site.'/include.csv');
+   // assume no header line
+   foreach($lines as $line) {
+      $incl[ chop($line) ] = TRUE;
    }
-   @fclose($f);
-   return $a;
+   return $incl;
+}
+
+function data($site){
+   $data = array();
+   $lines = @file(HTTP_DIR.'/'.$site.'/data/data.csv') or die ('Cannot open '.HTTP_DIR.'/'.$site.'/data/data.csv');
+   unset($lines[0]); // remove header line
+
+   foreach($lines as $line) {
+      $row = explode( ',', $line);
+      $test = $row[0];
+      $lang = $row[1];
+      $id = $row[2];
+      $key = $test.'.'.$id.'.'.$lang.'.log';
+      $data[$key] = TRUE;
+   }
+   return $data;
 }
 
 function CompareYearMonth($a,$b){
