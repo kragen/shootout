@@ -7,10 +7,16 @@
 
 /*
    This program will create 503 OS threads.
-   Those threads will wait inside boost::asio::io_service.run() for some tasks.
+   Those threads will wait inside boost::asio::io_service.run() queue,
+   if there is task in this queue, a thread will be dispatch to process it.
    Each task is a token passing run.
+
+   asio::io_service:
+      On Win:      NtIOCompletionPort
+      On Linux:   kqueue
 */
 
+#include <sched.h>
 #include <pthread.h>
 #include <cstdio>
 
@@ -34,8 +40,6 @@ char            stacks   [THREAD_COUNT][STACK_SIZE];
 
 
 // Task queue:
-// On Win:      NtIOCompletionPort
-// On Linux:   kqueue
 scoped_ptr<asio::io_service> iosv;
 
 
@@ -44,9 +48,9 @@ int token;
 
 // Rule 4: "pass the token from thread to thread N times"
 // Any (real OS) thread can pick up the task inside asio::io_service.
-// Therefore, this struct will encapsulate a "faked" thread that handle each 
-// token passing. The real thread will impersonate a faked thread, and pass token
-// to next faked thread.
+// In order to satisfy benchmark rule, this struct encapsulates a "faked" thread 
+// that handle each token passing run. 
+// The real thread impersonates a faked thread, and passes token to next faked thread.
 struct LogicalThread
 {
    int my_id;
@@ -64,7 +68,7 @@ LogicalThread::operator()() const
    {
       --token;
       // pass token to next
-      iosv->post(threads[next_id]);
+      iosv->post( threads[next_id] );
    }
    else
       printf("%d\n", my_id);   // done, print who is the final
@@ -81,13 +85,43 @@ thread_func( void* )
    return 0;
 }
 
+static
+void
+SetSingleCPU()
+{
+   cpu_set_t   aff_set;
+   CPU_ZERO(&aff_set);
+   
+   sched_getaffinity(0, sizeof(aff_set), &aff_set);
+   
+   int cpu_aff = 0, cpu_count = 0;
+   for (int i = 0; i < 64; ++i)
+   {
+      if (CPU_ISSET(i, &aff_set))
+      {
+         cpu_aff = i;
+         ++cpu_count;
+      }
+   }
+
+   if (cpu_count > 1)
+   {
+      CPU_ZERO(&aff_set);
+      CPU_SET(cpu_aff, &aff_set);
+      sched_setaffinity(0, sizeof(aff_set), &aff_set);
+   }
+}
+
 
 int 
 main(int argc, char** args)
 {
+   // set process affinity to 1 cpu,
+   // to avoid spreading thread context on all CPUs
+   SetSingleCPU();
+   
    // create task queue
    iosv.reset( new asio::io_service );
-
 
    // parse input
    if (argc >= 2)
@@ -108,7 +142,7 @@ main(int argc, char** args)
    // Rule 3: "pass a token to thread 1"
    // post first task to queue, so that task queue is not empty
    // this task will be handled by "thread 0"
-   iosv->post(threads[0]);
+   iosv->post( threads[0] );
    
 
    // Rule 1: "create 503 linked threads (named 1 to 503)"
@@ -116,7 +150,7 @@ main(int argc, char** args)
    // stack size will overflow process's working set
    {
       pthread_attr_t stack_attr;
-      pthread_attr_init(&stack_attr);
+      pthread_attr_init( &stack_attr );
 
       for (int i = 0; i < THREAD_COUNT; i++) 
       {
@@ -130,7 +164,8 @@ main(int argc, char** args)
    }
    
    // waiting
-   pthread_join( threadid[0], 0 );
+   iosv->run();
 
    return 0;
 }
+
