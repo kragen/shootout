@@ -1,0 +1,457 @@
+<span class="hl com">(*</span>
+<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** http://shootout.alioth.debian.org/</span>
+<span class="hl com">**</span>
+<span class="hl com">** contributed by Hongwei Xi</span>
+<span class="hl com">**</span>
+<span class="hl com">** compilation command:</span>
+<span class="hl com">**   atscc -O3 k-nucleotide2.dats -o k-nucleotide2 -D_ATS_GCATS</span>
+<span class="hl com">*)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload <span class="hl str">&quot;libc/SATS/stdio.sats&quot;</span>
+staload <span class="hl str">&quot;libc/SATS/stdlib.sats&quot;</span>
+staload <span class="hl str">&quot;libc/SATS/string.sats&quot;</span>
+staload _<span class="hl com">(*anonymous*)</span> <span class="hl sym">=</span> <span class="hl str">&quot;prelude/DATS/array.dats&quot;</span>
+staload _<span class="hl com">(*anonymous*)</span> <span class="hl sym">=</span> <span class="hl str">&quot;prelude/DATS/list_vt.dats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl slc">// The hashtable implementation is based on linear-probing</span>
+<span class="hl slc">// #include &quot;symtbl.dats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>^
+
+<span class="hl kwa">typedef</span> char <span class="hl sym">*</span>symbol_t <span class="hl sym">;</span>
+<span class="hl kwa">typedef struct</span> <span class="hl sym">{</span> symbol_t sym <span class="hl sym">;</span> int cnt <span class="hl sym">; }</span> tblent_t <span class="hl sym">;</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">abstype</span> dna_t <span class="hl slc">// boxed type</span>
+abst&#64;ype symbol_t <span class="hl sym">=</span> $extype <span class="hl str">&quot;symbol_t&quot;</span>
+<span class="hl kwa">abstype</span> symtbl_t <span class="hl slc">// boxed type</span>
+
+<span class="hl kwa">extern fun</span> symtbl_make <span class="hl sym">(</span>dna<span class="hl sym">:</span> dna_t<span class="hl sym">,</span> size<span class="hl sym">:</span> Nat<span class="hl sym">) :</span> symtbl_t
+<span class="hl kwa">extern fun</span> symtbl_clear <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_clear&quot;</span>
+
+<span class="hl kwa">extern fun</span> symtbl_search <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">,</span> name<span class="hl sym">:</span> String<span class="hl sym">) :</span> int
+  <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_search&quot;</span>
+<span class="hl kwa">extern fun</span> symtbl_insert <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">,</span> sym<span class="hl sym">:</span> symbol_t<span class="hl sym">,</span> cnt<span class="hl sym">:</span> int<span class="hl sym">) :</span> void
+  <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_insert&quot;</span>
+
+<span class="hl kwa">extern fun</span> symtbl_fold <span class="hl sym">{</span>a<span class="hl sym">:</span>viewt&#64;ype<span class="hl sym">}</span>
+  <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">,</span> f<span class="hl sym">: &amp;(</span>symbol_t<span class="hl sym">,</span> int<span class="hl sym">, &amp;</span>a<span class="hl sym">) -&lt;</span>clo<span class="hl sym">&gt;</span> void<span class="hl sym">,</span> res<span class="hl sym">: &amp;</span>a<span class="hl sym">) :</span> void
+
+<span class="hl kwa">extern fun</span> symtbl_dna_get <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">):</span> dna_t <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_dna_get&quot;</span>
+<span class="hl kwa">extern fun</span> symtbl_symlen_get <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_symlen_get&quot;</span>
+<span class="hl kwa">extern fun</span> symtbl_symlen_set <span class="hl sym">(</span>tbl<span class="hl sym">:</span> symtbl_t<span class="hl sym">,</span> len<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_symlen_set&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+abst&#64;ype tblent_t <span class="hl sym">=</span> $extype <span class="hl str">&quot;tblent_t&quot;</span>
+
+<span class="hl kwa">viewtypedef</span> symtbl <span class="hl sym">(</span>sz<span class="hl sym">:</span>int<span class="hl sym">,</span> n<span class="hl sym">:</span>int<span class="hl sym">,</span> l<span class="hl sym">:</span>addr<span class="hl sym">) =</span> &#64;<span class="hl sym">{</span>
+  dna<span class="hl sym">=</span> dna_t
+<span class="hl sym">,</span> ptr<span class="hl sym">=</span> ptr l
+<span class="hl sym">,</span> view_arr<span class="hl sym">=</span> &#64;<span class="hl sym">[</span>tblent_t<span class="hl sym">][</span>sz<span class="hl sym">]</span> &#64; l
+<span class="hl sym">,</span> view_arr_gc<span class="hl sym">=</span> free_gc_v l
+<span class="hl sym">,</span> size<span class="hl sym">=</span> int sz
+<span class="hl sym">,</span> symlen<span class="hl sym">=</span> int
+<span class="hl sym">,</span> nitm<span class="hl sym">=</span> int n
+<span class="hl sym">}</span>
+
+<span class="hl kwa">viewtypedef</span> symtbl0 <span class="hl sym">=</span> symtbl <span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> null<span class="hl sym">)</span>
+<span class="hl kwa">viewtypedef</span> symtbl <span class="hl sym">= [</span>sz<span class="hl sym">,</span>n<span class="hl sym">:</span>nat <span class="hl sym">|</span> sz <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">] [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> symtbl <span class="hl sym">(</span>sz<span class="hl sym">,</span> n<span class="hl sym">,</span> l<span class="hl sym">)</span>
+<span class="hl kwa">assume</span> symtbl_t <span class="hl sym">= [</span>l_tbl<span class="hl sym">:</span> addr<span class="hl sym">] (</span>vbox <span class="hl sym">(</span>symtbl &#64; l_tbl<span class="hl sym">) |</span> ptr l_tbl<span class="hl sym">)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">implement</span> symtbl_dna_get <span class="hl sym">(</span>tbl<span class="hl sym">) =</span> <span class="hl kwa">begin</span>
+  <span class="hl kwa">let val</span> <span class="hl sym">(</span>vbox pf_tbl <span class="hl sym">|</span> p_tbl<span class="hl sym">) =</span> tbl <span class="hl kwa">in</span> p_tbl<span class="hl sym">-&gt;</span>dna <span class="hl kwa">end</span>
+<span class="hl kwa">end</span> <span class="hl com">(* end of [symtbl_dna_get] *)</span>
+
+<span class="hl kwa">implement</span> symtbl_symlen_get <span class="hl sym">(</span>tbl<span class="hl sym">) =</span> <span class="hl kwa">begin</span>
+  <span class="hl kwa">let val</span> <span class="hl sym">(</span>vbox pf_tbl <span class="hl sym">|</span> p_tbl<span class="hl sym">) =</span> tbl <span class="hl kwa">in</span> p_tbl<span class="hl sym">-&gt;</span>symlen <span class="hl kwa">end</span>
+<span class="hl kwa">end</span> <span class="hl com">(* end of [symtbl_symlen_get] *)</span>
+
+<span class="hl kwa">implement</span> symtbl_symlen_set <span class="hl sym">(</span>tbl<span class="hl sym">,</span> len<span class="hl sym">) =</span> <span class="hl kwa">begin</span>
+  <span class="hl kwa">let val</span> <span class="hl sym">(</span>vbox pf_tbl <span class="hl sym">|</span> p_tbl<span class="hl sym">) =</span> tbl <span class="hl kwa">in</span> p_tbl<span class="hl sym">-&gt;</span>symlen <span class="hl sym">:=</span> len <span class="hl kwa">end</span>
+<span class="hl kwa">end</span> <span class="hl com">(* end of [symtbl_symlen_set] *)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> print_symbol <span class="hl sym">(</span>sym<span class="hl sym">:</span> symbol_t<span class="hl sym">,</span> len<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;print_symbol&quot;</span>
+
+<span class="hl sym">%{</span>^
+
+ats_void_type print_symbol
+  <span class="hl sym">(</span>symbol_t sym<span class="hl sym">,</span> ats_int_type len<span class="hl sym">) {</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>len <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span> fputc <span class="hl com">(*sym, stdout) ; --len ; ++sym ; }</span>
+<span class="hl com">  return ;</span>
+<span class="hl com">}</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun hash_string {n:nat} (s: string n, n: size_t n):&lt;&gt; uInt</span>
+<span class="hl com">  = &quot;hash_string&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun hash_symbol (sym: symbol_t, len: int):&lt;&gt; uInt</span>
+<span class="hl com">  = &quot;hash_symbol&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">%{^</span>
+<span class="hl com"></span>
+<span class="hl com">// a commonly used simple hash function</span>
+<span class="hl com"></span>
+<span class="hl com">static // inline</span>
+<span class="hl com">ats_uint_type hash_symbol (symbol_t sym, ats_int_type len) {</span>
+<span class="hl com">  unsigned int hash_val = 0 ;</span>
+<span class="hl com">  while (len &gt;= 4) {</span>
+<span class="hl com">    hash_val += hash_val * 33 ;</span>
+<span class="hl com">    hash_val += sym[0] &lt;&lt; 24 ;</span>
+<span class="hl com">    hash_val += sym[1] &lt;&lt; 16 ;</span>
+<span class="hl com">    hash_val += sym[2] &lt;&lt;  8 ;</span>
+<span class="hl com">    hash_val += sym[3] ;</span>
+<span class="hl com">    sym += 4 ; len -= 4 ;</span>
+<span class="hl com">  } // end of [while]</span>
+<span class="hl com">  if (len &gt;= 2) {</span>
+<span class="hl com">    hash_val = hash_val * 33 + (sym[0] &lt;&lt; 8) + sym[1] ;</span>
+<span class="hl com">    sym += 2 ; len -= 2 ;</span>
+<span class="hl com">  } // end of [if]</span>
+<span class="hl com">  if (len &gt;= 1) {</span>
+<span class="hl com">    hash_val = hash_val * 33 + sym[0] ;</span>
+<span class="hl com">  } // end of [while]</span>
+<span class="hl com">  return hash_val ;</span>
+<span class="hl com">}</span>
+<span class="hl com"></span>
+<span class="hl com">static inline</span>
+<span class="hl com">ats_uint_type</span>
+<span class="hl com">hash_string (ats_ptr_type str, ats_size_type len) {</span>
+<span class="hl com">  return hash_symbol (str, len) ;</span>
+<span class="hl com">}</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">%{^</span>
+<span class="hl com"></span>
+<span class="hl com">ats_ptr_type</span>
+<span class="hl com">tblent_array_make (ats_int_type sz) {</span>
+<span class="hl com">  return ats_calloc_gc (sz, sizeof(tblent_t)) ;</span>
+<span class="hl com">} /* end of [tblent_array_make] */</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun tblent_array_make {sz: nat} (sz: int sz)</span>
+<span class="hl com">  :&lt;&gt; [l:addr] (free_gc_v l, array_v (tblent_t, sz, l) | ptr l)</span>
+<span class="hl com">  = &quot;tblent_array_make&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">implement symtbl_make (dna, sz) = (pfbox | p_tbl) where {</span>
+<span class="hl com">  val sz = max (sz, 1)</span>
+<span class="hl com">  val (pf_tbl_gc, pf_tbl | p_tbl) = ptr_alloc_tsz {symtbl0} (sizeof&lt;symtbl0&gt;)</span>
+<span class="hl com">  val (pf_arr_gc, pf_arr | p_arr) = tblent_array_make (sz)</span>
+<span class="hl com"></span>
+<span class="hl com">  val () = begin</span>
+<span class="hl com">    p_tbl-&gt;dna := dna;</span>
+<span class="hl com">    p_tbl-&gt;ptr := p_arr;</span>
+<span class="hl com">    p_tbl-&gt;view_arr := pf_arr;</span>
+<span class="hl com">    p_tbl-&gt;view_arr_gc := pf_arr_gc;</span>
+<span class="hl com">    p_tbl-&gt;size := sz;</span>
+<span class="hl com">    p_tbl-&gt;symlen := 0;</span>
+<span class="hl com">    p_tbl-&gt;nitm := 0</span>
+<span class="hl com">  end (* end of [val] *)</span>
+<span class="hl com"></span>
+<span class="hl com">  prval () = free_gc_elim (pf_tbl_gc)</span>
+<span class="hl com">  val (pfbox | ()) = vbox_make_view_ptr (pf_tbl | p_tbl)</span>
+<span class="hl com">} // symtbl_make</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun tblent_array_clear {sz:nat} {l:addr}</span>
+<span class="hl com">  (pf: !array_v (tblent_t, sz, l) | p: ptr l, sz: int sz):&lt;&gt; void</span>
+<span class="hl com">  = &quot;tblent_array_clear&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">%{</span>
+<span class="hl com"></span>
+<span class="hl com">ats_void_type</span>
+<span class="hl com">tblent_array_clear</span>
+<span class="hl com">  (ats_ptr_type p, ats_int_type sz) {</span>
+<span class="hl com">  memset (p, 0, sz * sizeof(tblent_t)) ; return ;</span>
+<span class="hl com">} /* end of [tblent_array_clear] */</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">implement symtbl_clear (tbl) = () where {</span>
+<span class="hl com">  val (vbox pf_tbl | p_tbl) = tbl</span>
+<span class="hl com">  val () = tblent_array_clear (p_tbl-&gt;view_arr | p_tbl-&gt;ptr, p_tbl-&gt;size)</span>
+<span class="hl com">  val () = p_tbl-&gt;nitm := 0</span>
+<span class="hl com">} (* end of [symtbl_clear] *)</span>
+<span class="hl com"></span>
+<span class="hl com">//</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">// linear probing</span>
+<span class="hl com">extern fun symtbl_search_probe</span>
+<span class="hl com">  {sz,i:nat | i &lt; sz} {l:addr} (</span>
+<span class="hl com">  pf: !array_v(tblent_t, sz, l) | p: ptr l, sz: int sz, len: int, name: string, i: int i</span>
+<span class="hl com">  ) :&lt;&gt; int</span>
+<span class="hl com">  = &quot;symtbl_search_probe&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">%{</span>
+<span class="hl com"></span>
+<span class="hl com">ats_int_type symtbl_search_probe</span>
+<span class="hl com">  (ats_ptr_type p, ats_int_type sz, ats_int_type len, ats_ptr_type name, ats_int_type i) {</span>
+<span class="hl com">  tblent_t *ent ; symbol_t sym;</span>
+<span class="hl com">  ent = ((tblent_t*)p) + i ; while (1) {</span>
+<span class="hl com">    sym = ent-&gt;sym ;</span>
+<span class="hl com">    if (sym == (symbol_t)0) return 0 ; // the entry is unoccupied</span>
+<span class="hl com">    if (!strncmp (sym, (char*)name, len)) { return ent-&gt;cnt ; }</span>
+<span class="hl com">    i += 1 ;</span>
+<span class="hl com">    if (i &gt;= sz) { i = 0 ; ent = (tblent_t*)</span>p <span class="hl sym">; }</span> <span class="hl kwa">else</span> ent <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  <span class="hl sym">}</span> <span class="hl slc">// end of [while]</span>
+<span class="hl sym">}</span> <span class="hl com">/* end of [symtbl_search_probe] */</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl kwa">implement</span> symtbl_search <span class="hl sym">(</span>tbl<span class="hl sym">,</span> name<span class="hl sym">) =</span> <span class="hl kwa">let</span>
+
+<span class="hl kwa">val</span> hash_val <span class="hl sym">=</span> hash_string <span class="hl sym">(</span>name<span class="hl sym">,</span> string1_length name<span class="hl sym">)</span>
+<span class="hl com">(*</span>
+<span class="hl com">val () = begin</span>
+<span class="hl com">  prerr &quot;symtbl_search: hash_val = &quot;; prerr hash_val; prerr_newline ()</span>
+<span class="hl com">end // end [val]</span>
+<span class="hl com">*)</span>
+<span class="hl kwa">val</span> <span class="hl sym">(</span>vbox pf_tbl <span class="hl sym">|</span> p_tbl<span class="hl sym">) =</span> tbl
+<span class="hl kwa">val</span> i <span class="hl sym">=</span> hash_val uimod p_tbl<span class="hl sym">-&gt;</span>size
+
+<span class="hl kwa">in</span>
+
+symtbl_search_probe <span class="hl sym">(</span>
+  p_tbl<span class="hl sym">-&gt;</span>view_arr <span class="hl sym">|</span> p_tbl<span class="hl sym">-&gt;</span>ptr<span class="hl sym">,</span> p_tbl<span class="hl sym">-&gt;</span>size<span class="hl sym">,</span> p_tbl<span class="hl sym">-&gt;</span>symlen<span class="hl sym">,</span> name<span class="hl sym">,</span> i
+<span class="hl sym">)</span>
+
+<span class="hl kwa">end</span> <span class="hl slc">// end of [symtbl_search]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> symtbl_insert_probe <span class="hl sym">{</span>sz<span class="hl sym">,</span>i<span class="hl sym">:</span>nat <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> sz<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>array_v <span class="hl sym">(</span>tblent_t<span class="hl sym">,</span> sz<span class="hl sym">,</span> l<span class="hl sym">) |</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> len<span class="hl sym">:</span> int<span class="hl sym">,</span> sym<span class="hl sym">:</span> symbol_t<span class="hl sym">,</span> cnt<span class="hl sym">:</span> int<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">)</span>
+  <span class="hl sym">:&lt;&gt;</span> bool <span class="hl sym">=</span> <span class="hl str">&quot;symtbl_insert_probe&quot;</span>
+
+<span class="hl sym">%{</span>
+
+ats_bool_type symtbl_insert_probe
+  <span class="hl sym">(</span>ats_ptr_type p<span class="hl sym">,</span> ats_int_type sz<span class="hl sym">,</span> ats_int_type len<span class="hl sym">,</span> symbol_t sym<span class="hl sym">,</span> ats_int_type cnt<span class="hl sym">,</span> ats_int_type i<span class="hl sym">) {</span>
+  tblent_t <span class="hl sym">*</span>ent <span class="hl sym">;</span>
+  ent <span class="hl sym">= ((</span>tblent_t*)p<span class="hl sym">) +</span> i <span class="hl sym">;</span>
+  <span class="hl kwa">while</span> <span class="hl sym">(</span>ent<span class="hl sym">-&gt;</span>sym<span class="hl sym">) {</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>strncmp <span class="hl sym">(</span>ent<span class="hl sym">-&gt;</span>sym<span class="hl sym">,</span> sym<span class="hl sym">,</span> len<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>cnt <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> ent<span class="hl sym">-&gt;</span>cnt <span class="hl sym">=</span> cnt <span class="hl sym">;</span> <span class="hl kwa">else</span> ent<span class="hl sym">-&gt;</span>cnt <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">;</span>
+      return <span class="hl num">0</span> <span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+    i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">&gt;=</span> sz<span class="hl sym">) {</span> i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> ent <span class="hl sym">= (</span>tblent_t*)p <span class="hl sym">; }</span> <span class="hl kwa">else</span> ent <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  ent<span class="hl sym">-&gt;</span>sym <span class="hl sym">=</span> sym <span class="hl sym">;</span>
+  <span class="hl kwa">if</span> <span class="hl sym">(</span>cnt <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> ent<span class="hl sym">-&gt;</span>cnt <span class="hl sym">=</span> cnt <span class="hl sym">;</span> <span class="hl kwa">else</span> ent<span class="hl sym">-&gt;</span>cnt <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">;</span>
+  return <span class="hl num">1</span> <span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">implement</span> symtbl_insert <span class="hl sym">(</span>tbl<span class="hl sym">,</span> sym<span class="hl sym">,</span> cnt<span class="hl sym">) =</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>vbox pf_tbl <span class="hl sym">|</span> p_tbl<span class="hl sym">) =</span> tbl
+  <span class="hl kwa">val</span> len <span class="hl sym">=</span> p_tbl<span class="hl sym">-&gt;</span>symlen
+  <span class="hl kwa">val</span> hash_val <span class="hl sym">=</span> hash_symbol <span class="hl sym">(</span>sym<span class="hl sym">,</span> len<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> i <span class="hl sym">=</span> hash_val uimod p_tbl<span class="hl sym">-&gt;</span>size
+  <span class="hl kwa">val</span> is_new <span class="hl sym">=</span> symtbl_insert_probe
+    <span class="hl sym">(</span>p_tbl<span class="hl sym">-&gt;</span>view_arr <span class="hl sym">|</span> p_tbl<span class="hl sym">-&gt;</span>ptr<span class="hl sym">,</span> p_tbl<span class="hl sym">-&gt;</span>size<span class="hl sym">,</span> len<span class="hl sym">,</span> sym<span class="hl sym">,</span> cnt<span class="hl sym">,</span> i<span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  <span class="hl kwa">if</span> is_new <span class="hl kwa">then</span> p_tbl<span class="hl sym">-&gt;</span>nitm <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl sym">+</span> p_tbl<span class="hl sym">-&gt;</span>nitm <span class="hl kwa">else</span> <span class="hl sym">()</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [symtbl_insert]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> tblent_array_fold
+  <span class="hl sym">{</span>a<span class="hl sym">:</span>viewt&#64;ype<span class="hl sym">} {</span>sz<span class="hl sym">:</span> nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>
+    pf<span class="hl sym">: !</span>array_v <span class="hl sym">(</span>tblent_t<span class="hl sym">,</span> sz<span class="hl sym">,</span> l<span class="hl sym">)</span>
+  <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> sz<span class="hl sym">:</span> int sz<span class="hl sym">,</span> f<span class="hl sym">: &amp;(</span>symbol_t<span class="hl sym">,</span> int<span class="hl sym">, &amp;</span>a<span class="hl sym">) -&lt;</span>clo<span class="hl sym">&gt;</span> void<span class="hl sym">,</span> res<span class="hl sym">: &amp;</span>a
+  <span class="hl sym">) :&lt;&gt;</span> void
+  <span class="hl sym">=</span> <span class="hl str">&quot;tblent_array_fold&quot;</span>
+
+<span class="hl sym">%{</span>
+
+ats_void_type tblent_array_fold
+  <span class="hl sym">(</span>ats_ptr_type p<span class="hl sym">,</span> ats_int_type sz<span class="hl sym">,</span> ats_ref_type f<span class="hl sym">,</span> ats_ptr_type res<span class="hl sym">) {</span>
+  int i <span class="hl sym">;</span> tblent_t <span class="hl sym">*</span>ent <span class="hl sym">;</span>
+  i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">;</span> ent <span class="hl sym">= (</span>tblent_t*)p <span class="hl sym">;</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> sz<span class="hl sym">) {</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(!</span>ent<span class="hl sym">-&gt;</span>sym<span class="hl sym">) {</span> i <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span> ent <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl kwa">continue</span> <span class="hl sym">; }</span>
+    <span class="hl sym">((</span>ats_void_type <span class="hl com">(*)(ats_clo_ptr_type, symbol_t, ats_int_type, ats_ptr_type))(ats_closure_fun(f)))(f, ent-&gt;sym, ent-&gt;cnt, res) ;</span>
+<span class="hl com">    i += 1 ; ent += 1 ;</span>
+<span class="hl com">  } // end of [while]</span>
+<span class="hl com">  return ;</span>
+<span class="hl com">}</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">implement symtbl_fold {a} (tbl, f, res) = let</span>
+<span class="hl com">  val (vbox pf_tbl | p_tbl) = tbl</span>
+<span class="hl com">in</span>
+<span class="hl com">  tblent_array_fold {a} (p_tbl-&gt;view_arr | p_tbl-&gt;ptr, p_tbl-&gt;size, f, res)</span>
+<span class="hl com">end // end of [symtbl_insert]</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun dna_count {n,k:nat | k &lt;= n}</span>
+<span class="hl com">  (tbl: symtbl_t, n: size_t n, k: size_t k) : symtbl_t = &quot;dna_count&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">typedef symflt = &#64;(symbol_t, float)</span>
+<span class="hl com"></span>
+<span class="hl com">fn compare_symflt_symflt // [&gt;=]</span>
+<span class="hl com">  (x1: &amp;symflt, x2: &amp;symflt):&lt;&gt; Sgn = compare_float_float (x2.1, x1.1)</span>
+<span class="hl com">// end of [compare_symflt_symflt]</span>
+<span class="hl com"></span>
+<span class="hl com">viewtypedef frqlst = List_vt symflt</span>
+<span class="hl com"></span>
+<span class="hl com">// print and free</span>
+<span class="hl com">fun print_free_frqlst</span>
+<span class="hl com">  (kfs: frqlst, len: int): void = begin case+ kfs of</span>
+<span class="hl com">  | ~list_vt_cons (kf, kfs) =&gt; begin print_symbol (kf.0, len);</span>
+<span class="hl com">       printf (&quot; %.3f\n&quot;, &#64;(double_of kf.1)); print_free_frqlst (kfs, len)</span>
+<span class="hl com">    end // end of [FRQLSTcons]</span>
+<span class="hl com">  | ~list_vt_nil () =&gt; ()</span>
+<span class="hl com">end // end of [print_free_frqlst]</span>
+<span class="hl com"></span>
+<span class="hl com">fn write_frequencies {n,k:nat | k &lt;= n}</span>
+<span class="hl com">  (tbl: symtbl_t, n: size_t n, k: size_t k): void = let</span>
+<span class="hl com">  val tbl = dna_count (tbl, n, k)</span>
+<span class="hl com">  var total: int = (0: int)</span>
+<span class="hl com">  var !p_clo = &#64;lam (k: symbol_t, cnt: int, res: &amp;int): void =&lt;clo&gt;</span>
+<span class="hl com">    (res := res + cnt)</span>
+<span class="hl com">  val () = symtbl_fold {int} (tbl, !p_clo, total); val ftotal = float_of total</span>
+<span class="hl com">  var frqs: frqlst = list_vt_nil ()</span>
+<span class="hl com">  var !p_clo = &#64;lam</span>
+<span class="hl com">    (k: symbol_t, cnt: int, res: &amp;frqlst): void =&lt;clo&gt; let</span>
+<span class="hl com">    val f = (float_of 100) * float_of cnt / ftotal; val kf = &#64;(k, f) in</span>
+<span class="hl com">    res := list_vt_cons (kf, res)</span>
+<span class="hl com">  end // end of [f]</span>
+<span class="hl com">  val () = symtbl_fold {frqlst} (tbl, !p_clo, frqs)</span>
+<span class="hl com">  val () = list_vt_quicksort (frqs, compare_symflt_symflt)</span>
+<span class="hl com">in</span>
+<span class="hl com">  print_free_frqlst (frqs, symtbl_symlen_get tbl)</span>
+<span class="hl com">end // end of [write_frequencies]</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">fn write_count {n,k:nat}</span>
+<span class="hl com">  (tbl: symtbl_t, n: size_t n, seq: string k): void = let</span>
+<span class="hl com">  val k = string1_length seq</span>
+<span class="hl com">  val () = assert (k &lt;= n)</span>
+<span class="hl com">  val tbl = dna_count (tbl, n, k)</span>
+<span class="hl com">  val cnt = symtbl_search (tbl, seq)</span>
+<span class="hl com">in</span>
+<span class="hl com">  printf (&quot;%d\t%s\n&quot;, &#64;(cnt, seq))</span>
+<span class="hl com">end // end of [write_count]</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun getline (): string = &quot;__getline&quot;</span>
+<span class="hl com">extern fun getrest (sz: &amp;size_t? &gt;&gt; size_t n): #[n:nat] string n = &quot;__getrest&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">%{$</span>
+<span class="hl com"></span>
+<span class="hl com">#define LINEBUFSZ 1024</span>
+<span class="hl com">char theLineBuffer[LINEBUFSZ] ;</span>
+<span class="hl com">ats_ptr_type __getline () {</span>
+<span class="hl com">  fgets (theLineBuffer, LINEBUFSZ, stdin) ; return theLineBuffer ;</span>
+<span class="hl com">} /* end of [getline] */</span>
+<span class="hl com"></span>
+<span class="hl com">#define RESTBUFSZ (128 * 1024 * 1024)</span>
+<span class="hl com">char theRestBuffer[RESTBUFSZ] ;</span>
+<span class="hl com"></span>
+<span class="hl com">ats_ptr_type __getrest (ats_ref_type p_n) {</span>
+<span class="hl com">  int c ; size_t i ; char *s ;</span>
+<span class="hl com">  s = theRestBuffer ; i = 0 ;</span>
+<span class="hl com">  while ((c = fgetc(stdin)) != EOF) {</span>
+<span class="hl com">    if (c != '\n') { *s++ = toupper(c) ; i++ ; }</span>
+<span class="hl com">  }</span>
+<span class="hl com">  *s = '\000' ; *((size_t*)p_n) = i ;</span>
+<span class="hl com">  if (i &gt;= RESTBUFSZ) {</span>
+<span class="hl com">    fprintf (stderr, &quot;exit(ATS): too much data for processing\n&quot;) ; exit(1) ;</span>
+<span class="hl com">  }</span>
+<span class="hl com">  return theRestBuffer ;</span>
+<span class="hl com">} /* end of [__getrest] */</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">fun is_three (s: string): bool =</span>
+<span class="hl com">  if strncmp (s, &quot;&gt;THREE&quot;, 6) = 0 then true else false</span>
+<span class="hl com">// end of [is_three]</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">extern fun dna_of_string (s: string): dna_t = &quot;dna_of_string&quot;</span>
+<span class="hl com"></span>
+<span class="hl com">implement main (argc, argv) = let</span>
+<span class="hl com">  fun dna_three_get</span>
+<span class="hl com">    (n: &amp;size_t? &gt;&gt; size_t n): #[n:nat] string n = let</span>
+<span class="hl com">    val s = getline (); val is3 = is_three (s)</span>
+<span class="hl com">  in</span>
+<span class="hl com">    if is3 then getrest (n) else dna_three_get (n)</span>
+<span class="hl com">  end // end of [dna_three_get]</span>
+<span class="hl com">  var n: size_t // uninitialized</span>
+<span class="hl com">  val dna_three = dna_three_get (n)</span>
+<span class="hl com">  val () = assert (n &gt;= 2)</span>
+<span class="hl com">(*</span>
+<span class="hl com">  val () = (prerr &quot;main: n = &quot;; prerr n; prerr_newline ())</span>
+<span class="hl com">*)</span>
+<span class="hl com">  val dna3 =</span>
+<span class="hl com">    dna_of_string dna_three where {</span>
+<span class="hl com">    extern castfn dna_of_string (str: string): dna_t</span>
+<span class="hl com">  }</span>
+<span class="hl com">  val dna_table = symtbl_make (dna3, (*393241*)196613(*98317*))</span>
+<span class="hl com">in</span>
+<span class="hl com">  write_frequencies (dna_table, n, 1) ; print_newline () ;</span>
+<span class="hl com">  write_frequencies (dna_table, n, 2) ; print_newline () ;</span>
+<span class="hl com">  write_count (dna_table, n, &quot;GGT&quot;) ;</span>
+<span class="hl com">  write_count (dna_table, n, &quot;GGTA&quot;) ;</span>
+<span class="hl com">  write_count (dna_table, n, &quot;GGTATT&quot;) ;</span>
+<span class="hl com">  write_count (dna_table, n, &quot;GGTATTTTAATT&quot;) ;</span>
+<span class="hl com">  write_count (dna_table, n, &quot;GGTATTTTAATTTATAGT&quot;) ;</span>
+<span class="hl com">end (* end of [main] *)</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">%{$</span>
+<span class="hl com"></span>
+<span class="hl com">ats_ptr_type</span>
+<span class="hl com">dna_count (ats_ptr_type tbl, ats_size_type n, ats_size_type k) {</span>
+<span class="hl com">  char *sym ;</span>
+<span class="hl com">  symtbl_clear (tbl) ;</span>
+<span class="hl com">  symtbl_symlen_set (tbl, k) ;</span>
+<span class="hl com">  sym = (char*)symtbl_dna_get (tbl) ;</span>
+<span class="hl com">  while (n &gt;= k) {</span>
+<span class="hl com">    symtbl_insert (tbl, sym, 0) ; n -= 1 ; sym += 1 ;</span>
+<span class="hl com">  }</span>
+<span class="hl com">  return tbl ;</span>
+<span class="hl com">}</span>
+<span class="hl com"></span>
+<span class="hl com">%}</span>
+<span class="hl com"></span>
+<span class="hl com">(* ****** ****** *)</span>
+<span class="hl com"></span>
+<span class="hl com">(* end of [k-nucleotide2.dats] *)</span>
