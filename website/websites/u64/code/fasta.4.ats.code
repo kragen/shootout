@@ -1,0 +1,327 @@
+<span class="hl com">(*</span>
+<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** http://shootout.alioth.debian.org/</span>
+<span class="hl com">**</span>
+<span class="hl com">** Contributed by Hongwei Xi and Zhiqiang Ren, January 2010</span>
+<span class="hl com">**</span>
+<span class="hl com">** compilation command:</span>
+<span class="hl com">**   atscc -O3 fasta4.dats -msse2 -mfpmath=sse -o fasta4</span>
+<span class="hl com">*)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload <span class="hl str">&quot;libc/SATS/stdio.sats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">macdef</span> IM <span class="hl sym">=</span> <span class="hl num">139968U</span>
+<span class="hl kwa">macdef</span> IA <span class="hl sym">=</span> <span class="hl num">3877U</span>
+<span class="hl kwa">macdef</span> IC <span class="hl sym">=</span> <span class="hl num">29573U</span>
+
+<span class="hl dir">#define BUFLEN 60</span>
+<span class="hl dir">#define LOOKUP_SIZE 4096</span>
+<span class="hl kwa">macdef</span> LOOKUP_SCALE <span class="hl sym">= (</span>float_of<span class="hl sym">)(</span>LOOKUP_SIZE <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">typedef</span> random_t <span class="hl sym">=</span> uint <span class="hl slc">// unsigned int</span>
+<span class="hl kwa">extern typedef</span> <span class="hl str">&quot;random_t&quot;</span> <span class="hl sym">=</span> random_t
+
+<span class="hl kwa">extern fun</span> random_init
+  <span class="hl sym">(</span>seed<span class="hl sym">: &amp;</span>random_t? <span class="hl sym">&gt;&gt;</span> random_t<span class="hl sym">):&lt;&gt;</span> void <span class="hl sym">=</span> <span class="hl str">&quot;random_init&quot;</span>
+
+<span class="hl kwa">implement</span> random_init <span class="hl sym">(</span>seed<span class="hl sym">) =</span> seed <span class="hl sym">:=</span> <span class="hl num">42U</span>
+
+<span class="hl kwa">fn</span> random_next_lookup
+  <span class="hl sym">(</span>seed<span class="hl sym">: &amp;</span>random_t<span class="hl sym">):</span> float <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">extern</span> castfn float_of <span class="hl sym">(</span>x<span class="hl sym">:</span> uint<span class="hl sym">):</span> float
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> seed <span class="hl sym">:= (</span>seed <span class="hl sym">*</span> IA <span class="hl sym">+</span> IC<span class="hl sym">)</span> mod IM
+<span class="hl kwa">in</span>
+  <span class="hl sym">(</span>float_of<span class="hl sym">)</span>seed <span class="hl sym">* (</span>LOOKUP_SCALE <span class="hl sym">/ (</span>float_of<span class="hl sym">)</span>IM<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [random_next_lookup]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">typedef</span> amino_acid <span class="hl sym">=</span>
+  $extype_rec <span class="hl str">&quot;amino_acid&quot;</span> <span class="hl kwa">of</span> <span class="hl sym">{</span>
+  sym<span class="hl sym">=</span> char<span class="hl sym">,</span> prob<span class="hl sym">=</span> float<span class="hl sym">,</span> cprob_lookup<span class="hl sym">=</span> float
+<span class="hl sym">}</span> <span class="hl slc">// end of [amino_acid]</span>
+
+<span class="hl kwa">typedef</span> aminoarr <span class="hl sym">(</span>n<span class="hl sym">:</span>int<span class="hl sym">) =</span> &#64;<span class="hl sym">[</span>amino_acid<span class="hl sym">][</span>n<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern fun</span> fwrite_substring <span class="hl sym">{</span>m<span class="hl sym">,</span>p<span class="hl sym">,</span>n<span class="hl sym">:</span>nat <span class="hl sym">|</span> p <span class="hl sym">+</span> n <span class="hl sym">&lt;=</span> m<span class="hl sym">}</span>
+  <span class="hl sym">(</span>str<span class="hl sym">:</span> string m<span class="hl sym">,</span> beg<span class="hl sym">:</span> size_t p<span class="hl sym">,</span> n<span class="hl sym">:</span> size_t n<span class="hl sym">,</span> out<span class="hl sym">:</span> FILEref<span class="hl sym">):</span> void
+  <span class="hl sym">=</span> <span class="hl str">&quot;fwrite_substring&quot;</span>
+
+<span class="hl kwa">extern</span>
+<span class="hl kwa">fun</span> repeat_fasta <span class="hl sym">{</span>len<span class="hl sym">:</span>nat<span class="hl sym">} {</span>n<span class="hl sym">:</span>nat<span class="hl sym">}</span>
+  <span class="hl sym">(</span>out<span class="hl sym">:</span> FILEref<span class="hl sym">,</span> str<span class="hl sym">:</span> string len<span class="hl sym">,</span> n<span class="hl sym">:</span> size_t n<span class="hl sym">):</span> void
+  <span class="hl sym">=</span> <span class="hl str">&quot;repeat_fasta&quot;</span>
+
+<span class="hl kwa">implement</span> repeat_fasta
+  <span class="hl sym">{</span>len<span class="hl sym">} {</span>n<span class="hl sym">} (</span>out<span class="hl sym">,</span> str<span class="hl sym">,</span> n<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">macdef</span> BUFLEN_sz <span class="hl sym">=</span> size1_of_int1 <span class="hl sym">(</span>BUFLEN<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> len <span class="hl sym">=</span> string1_length str
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert <span class="hl sym">(</span>len <span class="hl sym">&gt;=</span> BUFLEN_sz<span class="hl sym">)</span>
+  <span class="hl kwa">fun</span> loop <span class="hl sym">{</span>n<span class="hl sym">,</span>pos<span class="hl sym">:</span>nat <span class="hl sym">|</span> pos <span class="hl sym">&lt;=</span> len<span class="hl sym">}</span>
+    <span class="hl sym">(</span>out<span class="hl sym">:</span> FILEref<span class="hl sym">,</span> n<span class="hl sym">:</span> size_t n<span class="hl sym">,</span> pos<span class="hl sym">:</span> size_t pos<span class="hl sym">):&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&gt;</span> BUFLEN_sz <span class="hl kwa">then let</span>
+      <span class="hl kwa">val</span> left <span class="hl sym">=</span> len <span class="hl sym">-</span> pos <span class="hl kwa">in</span>
+      <span class="hl kwa">if</span> left <span class="hl sym">&gt;=</span> BUFLEN_sz <span class="hl kwa">then let</span>
+        <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_substring <span class="hl sym">(</span>str<span class="hl sym">,</span> pos<span class="hl sym">,</span> BUFLEN_sz<span class="hl sym">,</span> out<span class="hl sym">)</span>
+        <span class="hl kwa">val</span> _err <span class="hl sym">=</span> fputc_err <span class="hl sym">(</span>'\n'<span class="hl sym">,</span> out<span class="hl sym">)</span>
+      <span class="hl kwa">in</span>
+        loop <span class="hl sym">(</span>out<span class="hl sym">,</span> n <span class="hl sym">-</span> BUFLEN_sz<span class="hl sym">,</span> pos <span class="hl sym">+</span> BUFLEN_sz<span class="hl sym">)</span>
+      <span class="hl kwa">end else let</span>
+        <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_substring <span class="hl sym">(</span>str<span class="hl sym">,</span> pos<span class="hl sym">,</span> left<span class="hl sym">,</span> out<span class="hl sym">)</span>
+        <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_substring <span class="hl sym">(</span>str<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> BUFLEN_sz <span class="hl sym">-</span> left<span class="hl sym">,</span> out<span class="hl sym">)</span>
+        <span class="hl kwa">val</span> _err <span class="hl sym">=</span> fputc_err <span class="hl sym">(</span>'\n'<span class="hl sym">,</span> out<span class="hl sym">)</span>
+      <span class="hl kwa">in</span>
+        loop <span class="hl sym">(</span>out<span class="hl sym">,</span> n <span class="hl sym">-</span> BUFLEN_sz<span class="hl sym">,</span> BUFLEN_sz <span class="hl sym">-</span> left<span class="hl sym">)</span>
+      <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+    <span class="hl kwa">end else let</span>
+      <span class="hl kwa">val</span> left <span class="hl sym">=</span> len <span class="hl sym">-</span> pos <span class="hl kwa">in</span>
+      <span class="hl kwa">if</span> left <span class="hl sym">&gt;=</span> n <span class="hl kwa">then let</span>
+        <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_substring <span class="hl sym">(</span>str<span class="hl sym">,</span> pos<span class="hl sym">,</span> n<span class="hl sym">,</span> out<span class="hl sym">)</span>
+        <span class="hl kwa">val</span> _err <span class="hl sym">=</span> fputc_err <span class="hl sym">(</span>'\n'<span class="hl sym">,</span> out<span class="hl sym">)</span>
+      <span class="hl kwa">in</span>
+        <span class="hl slc">// nothing</span>
+      <span class="hl kwa">end else let</span>
+        <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_substring <span class="hl sym">(</span>str<span class="hl sym">,</span> pos<span class="hl sym">,</span> left<span class="hl sym">,</span> out<span class="hl sym">)</span>
+        <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_substring <span class="hl sym">(</span>str<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> n<span class="hl sym">-</span>left<span class="hl sym">,</span> out<span class="hl sym">)</span>
+        <span class="hl kwa">val</span> _err <span class="hl sym">=</span> fputc_err <span class="hl sym">(</span>'\n'<span class="hl sym">,</span> out<span class="hl sym">)</span>
+      <span class="hl kwa">in</span>
+        <span class="hl slc">// nothing</span>
+      <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+    <span class="hl kwa">end</span> <span class="hl com">(* end of [if] *)</span>
+  <span class="hl slc">// end of [loop]</span>
+<span class="hl kwa">in</span>
+  loop <span class="hl sym">(</span>out<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [repeat_fasta]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">fun</span> fill_lookuparr <span class="hl sym">{</span>n0<span class="hl sym">:</span>pos<span class="hl sym">} (</span>
+    lookuparr<span class="hl sym">: &amp;(</span>&#64;<span class="hl sym">[</span>ptr?<span class="hl sym">][</span>LOOKUP_SIZE<span class="hl sym">]) &gt;&gt;</span> &#64;<span class="hl sym">[</span>ptr<span class="hl sym">][</span>LOOKUP_SIZE<span class="hl sym">]</span>
+  <span class="hl sym">,</span> aminoarr<span class="hl sym">: &amp;</span>aminoarr<span class="hl sym">(</span>n0<span class="hl sym">),</span> n0<span class="hl sym">:</span> size_t n0
+  <span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">typedef</span> T <span class="hl sym">=</span> amino_acid
+  <span class="hl kwa">fun</span> loop1 <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} .&lt;</span>n<span class="hl sym">&gt;.</span>
+    <span class="hl sym">(</span>pf<span class="hl sym">: !</span>array_v <span class="hl sym">(</span>T<span class="hl sym">,</span> n<span class="hl sym">,</span> l<span class="hl sym">) |</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> n<span class="hl sym">:</span> size_t n<span class="hl sym">,</span> acc<span class="hl sym">:</span> float<span class="hl sym">):&lt;&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then let</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">(</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">) =</span> array_v_uncons <span class="hl sym">{</span>T<span class="hl sym">} (</span>pf<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> acc <span class="hl sym">=</span> acc <span class="hl sym">+</span> p<span class="hl sym">-&gt;</span>prob
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> p<span class="hl sym">-&gt;</span>cprob_lookup <span class="hl sym">:=</span> acc <span class="hl sym">*</span> LOOKUP_SCALE
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop1 <span class="hl sym">(</span>pf2 <span class="hl sym">|</span> p <span class="hl sym">+</span> sizeof<span class="hl sym">&lt;</span>T<span class="hl sym">&gt;,</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span>  acc<span class="hl sym">)</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">() =</span> pf <span class="hl sym">:=</span> array_v_cons <span class="hl sym">{</span>T<span class="hl sym">} (</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      <span class="hl slc">// nothing</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl slc">// end of [loop1]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop1 <span class="hl sym">(</span>view&#64; aminoarr <span class="hl sym">| &amp;</span>aminoarr<span class="hl sym">,</span> n0<span class="hl sym">, (</span>float_of<span class="hl sym">)</span><span class="hl num">0.0</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> aminoarr<span class="hl sym">.[</span>n0<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">].</span>cprob_lookup <span class="hl sym">:=</span> LOOKUP_SCALE
+  <span class="hl kwa">fun</span> loop2 <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} .&lt;</span>n<span class="hl sym">&gt;. (</span>
+      pf<span class="hl sym">: !</span>array_v <span class="hl sym">(</span>ptr?<span class="hl sym">,</span> n<span class="hl sym">,</span> l<span class="hl sym">) &gt;&gt;</span> array_v <span class="hl sym">(</span>ptr<span class="hl sym">,</span> n<span class="hl sym">,</span> l<span class="hl sym">)</span>
+    <span class="hl sym">|</span> aminoarr<span class="hl sym">: &amp;(</span>&#64;<span class="hl sym">[</span>T<span class="hl sym">][</span>n0<span class="hl sym">]),</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> n<span class="hl sym">:</span> size_t n<span class="hl sym">,</span> fi<span class="hl sym">:</span> float<span class="hl sym">,</span> j0<span class="hl sym">:</span> natLt n0
+    <span class="hl sym">) :</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then let</span>
+      <span class="hl kwa">var</span> j<span class="hl sym">:</span> natLt n0 <span class="hl sym">=</span> j0
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">while</span><span class="hl sym">*</span>
+        <span class="hl sym">{</span>j<span class="hl sym">:</span>nat <span class="hl sym">|</span> j <span class="hl sym">&lt;</span> n0<span class="hl sym">} (</span>j<span class="hl sym">:</span> int j<span class="hl sym">): (</span>j<span class="hl sym">:</span> natLt n0<span class="hl sym">) =&gt;</span>
+        <span class="hl sym">(</span>aminoarr<span class="hl sym">.[</span>j<span class="hl sym">].</span>cprob_lookup <span class="hl sym">&lt;</span> fi<span class="hl sym">)</span> <span class="hl kwa">let</span>
+        <span class="hl kwa">prval</span> <span class="hl sym">() =</span> _meta_info <span class="hl sym">()</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+          <span class="hl kwa">extern prfun</span> _meta_info <span class="hl sym">(): [</span>j<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">&lt;</span> n0<span class="hl sym">]</span> void
+        <span class="hl sym">}</span>
+      <span class="hl kwa">in</span>
+        j <span class="hl sym">:=</span> j <span class="hl sym">+</span> <span class="hl num">1</span>
+      <span class="hl kwa">end</span> <span class="hl slc">// end of [val]</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">(</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">) =</span> array_v_uncons <span class="hl sym">{</span>ptr?<span class="hl sym">} (</span>pf<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() = !</span>p <span class="hl sym">:= &amp;</span>aminoarr<span class="hl sym">.[</span>j<span class="hl sym">]</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop2 <span class="hl sym">(</span>pf2 <span class="hl sym">|</span> aminoarr<span class="hl sym">,</span> p<span class="hl sym">+</span>sizeof<span class="hl sym">&lt;</span>ptr<span class="hl sym">&gt;,</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span> fi<span class="hl sym">+(</span>float_of<span class="hl sym">)</span><span class="hl num">1</span><span class="hl sym">,</span> j<span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      pf <span class="hl sym">:=</span> array_v_cons <span class="hl sym">{</span>ptr<span class="hl sym">} (</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">)</span>
+    <span class="hl kwa">end else let</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">() =</span> array_v_unnil <span class="hl sym">{</span>ptr?<span class="hl sym">}</span> pf
+      <span class="hl kwa">prval</span> <span class="hl sym">() =</span> pf <span class="hl sym">:=</span> array_v_nil <span class="hl sym">{</span>ptr<span class="hl sym">} ()</span>
+    <span class="hl kwa">in</span>
+      <span class="hl slc">// nothing</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl slc">// end of [loop2]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop2 <span class="hl sym">(</span>view&#64; lookuparr <span class="hl sym">|</span> aminoarr<span class="hl sym">, &amp;</span>lookuparr<span class="hl sym">,</span> LOOKUP_SIZE<span class="hl sym">, (</span>float_of<span class="hl sym">)</span><span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  <span class="hl slc">// nothing</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fill_lookuparr]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">typedef</span> lookuparr <span class="hl sym">=</span> &#64;<span class="hl sym">[</span>ptr<span class="hl sym">][</span>LOOKUP_SIZE<span class="hl sym">]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">extern</span>
+<span class="hl kwa">fun</span> randomize <span class="hl sym">{</span>n0<span class="hl sym">:</span>pos<span class="hl sym">} {</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>
+    aminoarr<span class="hl sym">: &amp;</span>aminoarr<span class="hl sym">(</span>n0<span class="hl sym">),</span> n0<span class="hl sym">:</span> size_t n0<span class="hl sym">,</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> seed<span class="hl sym">: &amp;</span>random_t
+  <span class="hl sym">) :</span> void
+  <span class="hl sym">=</span> <span class="hl str">&quot;randomize&quot;</span>
+
+<span class="hl kwa">implement</span> randomize
+  <span class="hl sym">(</span>aminoarr<span class="hl sym">,</span> n0<span class="hl sym">,</span> n<span class="hl sym">,</span> seed<span class="hl sym">) = ()</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">extern fun</span> fwrite_byte
+    <span class="hl sym">(</span>buf<span class="hl sym">:</span> ptr<span class="hl sym">,</span> n<span class="hl sym">:</span> int<span class="hl sym">,</span> out<span class="hl sym">:</span> FILEref<span class="hl sym">):&lt;&gt;</span> void <span class="hl sym">=</span> <span class="hl str">&quot;fwrite_byte&quot;</span>
+  <span class="hl slc">// end of [fwrite_byte]</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">var</span> <span class="hl sym">!</span>p_lookuparr <span class="hl kwa">with</span> pf_lookuparr <span class="hl sym">=</span> &#64;<span class="hl sym">[</span>ptr<span class="hl sym">][</span>LOOKUP_SIZE<span class="hl sym">]()</span>
+  <span class="hl kwa">var</span> <span class="hl sym">!</span>p_buf <span class="hl kwa">with</span> pf_buf <span class="hl sym">=</span> &#64;<span class="hl sym">[</span>char?<span class="hl sym">][</span>BUFLEN<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]()</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> p_buf<span class="hl sym">-&gt;[</span>BUFLEN<span class="hl sym">] :=</span> '\n'
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> fill_lookuparr <span class="hl sym">(!</span>p_lookuparr<span class="hl sym">,</span> aminoarr<span class="hl sym">,</span> n0<span class="hl sym">)</span>
+  <span class="hl kwa">var</span> i<span class="hl sym">:</span> Nat <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">and</span> j<span class="hl sym">:</span> natLte <span class="hl sym">(</span>BUFLEN<span class="hl sym">) =</span> <span class="hl num">0</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> n<span class="hl sym">)</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">if</span> <span class="hl sym">:(</span>j<span class="hl sym">:</span> natLt <span class="hl sym">(</span>BUFLEN<span class="hl sym">)) =&gt;</span>
+      <span class="hl sym">(</span>j <span class="hl sym">=</span> BUFLEN<span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl sym">(</span>fwrite_byte <span class="hl sym">(</span>p_buf<span class="hl sym">,</span> BUFLEN<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> stdout_ref<span class="hl sym">);</span> j <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl slc">// end of [if]</span>
+<span class="hl slc">//</span>
+    <span class="hl kwa">val</span> r <span class="hl sym">=</span> random_next_lookup <span class="hl sym">(</span>seed<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> ri <span class="hl sym">=</span> int_of_float <span class="hl sym">(</span>r<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">[</span>ri<span class="hl sym">:</span>int<span class="hl sym">]</span> ri <span class="hl sym">=</span> int1_of_int <span class="hl sym">(</span>ri<span class="hl sym">)</span>
+    <span class="hl kwa">prval</span> <span class="hl sym">() =</span> _meta_info <span class="hl sym">()</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+      <span class="hl kwa">extern prfun</span> _meta_info <span class="hl sym">(): [</span><span class="hl num">0</span> <span class="hl sym">&lt;=</span> ri <span class="hl sym">&amp;&amp;</span> ri <span class="hl sym">&lt;</span> LOOKUP_SIZE<span class="hl sym">]</span> void
+    <span class="hl sym">}</span>
+<span class="hl slc">//</span>
+    <span class="hl kwa">typedef</span> T <span class="hl sym">=</span> amino_acid
+    <span class="hl kwa">var</span> u<span class="hl sym">:</span> ptr <span class="hl sym">=</span> p_lookuparr<span class="hl sym">-&gt;[</span>ri<span class="hl sym">]</span>
+<span class="hl slc">//</span>
+    <span class="hl kwa">extern</span> castfn __cast <span class="hl sym">(</span>u<span class="hl sym">:</span> ptr<span class="hl sym">)</span>
+      <span class="hl sym">:&lt;&gt; [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>T &#64; l<span class="hl sym">,</span> T &#64; l <span class="hl sym">-&lt;</span>lin<span class="hl sym">,</span>prf<span class="hl sym">&gt;</span> void <span class="hl sym">|</span> ptr l<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>true<span class="hl sym">)</span> <span class="hl kwa">let</span>
+      <span class="hl kwa">val</span> <span class="hl sym">(</span>pf<span class="hl sym">,</span> fpf <span class="hl sym">|</span> u1<span class="hl sym">) =</span> __cast <span class="hl sym">(</span>u<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> r1 <span class="hl sym">=</span> u1<span class="hl sym">-&gt;</span>cprob_lookup
+      <span class="hl kwa">prval</span> <span class="hl sym">() =</span> fpf <span class="hl sym">(</span>pf<span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>r1 <span class="hl sym">&lt;</span> r<span class="hl sym">)</span> <span class="hl kwa">then</span> u <span class="hl sym">:=</span> u <span class="hl sym">+</span> sizeof<span class="hl sym">&lt;</span>T<span class="hl sym">&gt;</span> <span class="hl kwa">else break</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [val]</span>
+<span class="hl slc">//</span>
+    <span class="hl kwa">val</span> <span class="hl sym">(</span>pf<span class="hl sym">,</span> fpf <span class="hl sym">|</span> u1<span class="hl sym">) =</span> __cast <span class="hl sym">(</span>u<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> p_buf<span class="hl sym">-&gt;[</span>j<span class="hl sym">] :=</span> u1<span class="hl sym">-&gt;</span>sym
+    <span class="hl kwa">prval</span> <span class="hl sym">() =</span> fpf <span class="hl sym">(</span>pf<span class="hl sym">)</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">in</span>
+    i <span class="hl sym">:=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">:=</span> j <span class="hl sym">+</span> <span class="hl num">1</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [while]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> p_buf<span class="hl sym">-&gt;[</span>j<span class="hl sym">] :=</span> '\n'
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> fwrite_byte <span class="hl sym">(</span>p_buf<span class="hl sym">,</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> stdout_ref<span class="hl sym">)</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [randomize]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">implement</span> main_dummy <span class="hl sym">() = ()</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>$
+
+<span class="hl dir">#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))</span>
+
+ats_void_type
+mainats <span class="hl sym">(</span>
+  ats_int_type argc<span class="hl sym">,</span> ats_ptr_type argv0
+<span class="hl sym">) {</span>
+  char <span class="hl sym">**</span>argv <span class="hl sym">= (</span>char<span class="hl sym">*</span>*)argv0 <span class="hl sym">;</span>
+  int n <span class="hl sym">=</span> argc <span class="hl sym">&gt;</span> <span class="hl num">1</span> ? atoi<span class="hl sym">(</span> argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ) :</span> <span class="hl num">512</span><span class="hl sym">;</span>
+  random_t rand<span class="hl sym">;</span>
+  random_init<span class="hl sym">(&amp;</span>rand<span class="hl sym">);</span>
+<span class="hl slc">//</span>
+  fprintf<span class="hl sym">(</span>stdout<span class="hl sym">,</span> <span class="hl str">&quot;&gt;ONE Homo sapiens alu</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+  repeat_fasta<span class="hl sym">((</span>ats_ref_type<span class="hl sym">)</span>stdout<span class="hl sym">, (</span>ats_ptr_type<span class="hl sym">)</span>alu<span class="hl sym">,</span> n<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">);</span>
+<span class="hl slc">//</span>
+  fprintf<span class="hl sym">(</span>stdout<span class="hl sym">,</span> <span class="hl str">&quot;&gt;TWO IUB ambiguity codes</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+  randomize<span class="hl sym">(</span>aminoacids<span class="hl sym">,</span> ARRAY_SIZE<span class="hl sym">(</span>aminoacids<span class="hl sym">),</span> n<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">, &amp;</span>rand<span class="hl sym">);</span>
+<span class="hl slc">//</span>
+  fprintf<span class="hl sym">(</span>stdout<span class="hl sym">,</span> <span class="hl str">&quot;&gt;THREE Homo sapiens frequency</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+  randomize<span class="hl sym">(</span>homosapiens<span class="hl sym">,</span> ARRAY_SIZE<span class="hl sym">(</span>homosapiens<span class="hl sym">),</span> n<span class="hl sym">*</span><span class="hl num">5</span><span class="hl sym">, &amp;</span>rand<span class="hl sym">);</span>
+<span class="hl slc">//</span>
+  return<span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [val]</span>
+
+<span class="hl sym">%}</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>^
+
+<span class="hl kwa">typedef</span>
+<span class="hl kwa">struct</span> _amino_acid <span class="hl sym">{</span>
+  char sym<span class="hl sym">;</span>
+  float prob<span class="hl sym">;</span>
+  float cprob_lookup<span class="hl sym">;</span>
+<span class="hl sym">}</span> amino_acid <span class="hl sym">;</span>
+
+<span class="hl slc">//</span>
+<span class="hl slc">// let us do initialization in C to avoid many hassels</span>
+<span class="hl slc">//</span>
+
+amino_acid aminoacids<span class="hl sym">[] = {</span>
+   <span class="hl sym">{</span> 'a'<span class="hl sym">,</span> <span class="hl num">0.27</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'c'<span class="hl sym">,</span> <span class="hl num">0.12</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'g'<span class="hl sym">,</span> <span class="hl num">0.12</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 't'<span class="hl sym">,</span> <span class="hl num">0.27</span> <span class="hl sym">},</span>
+<span class="hl slc">//</span>
+   <span class="hl sym">{</span> 'B'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'D'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'H'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'K'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'M'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'N'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'R'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'S'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'V'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'W'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+   <span class="hl sym">{</span> 'Y'<span class="hl sym">,</span> <span class="hl num">0.02</span> <span class="hl sym">},</span>
+<span class="hl sym">} ;</span>
+
+amino_acid homosapiens<span class="hl sym">[] = {</span>
+  <span class="hl sym">{</span> 'a'<span class="hl sym">,</span> <span class="hl num">0.3029549426680</span> <span class="hl sym">},</span>
+  <span class="hl sym">{</span> 'c'<span class="hl sym">,</span> <span class="hl num">0.1979883004921</span> <span class="hl sym">},</span>
+  <span class="hl sym">{</span> 'g'<span class="hl sym">,</span> <span class="hl num">0.1975473066391</span> <span class="hl sym">},</span>
+  <span class="hl sym">{</span> 't'<span class="hl sym">,</span> <span class="hl num">0.3015094502008</span> <span class="hl sym">},</span>
+<span class="hl sym">} ;</span>
+
+static const char alu<span class="hl sym">[] =</span>
+<span class="hl str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTG&quot;</span>
+<span class="hl str">&quot;GGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGA&quot;</span>
+<span class="hl str">&quot;GACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAA&quot;</span>
+<span class="hl str">&quot;AATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAAT&quot;</span>
+<span class="hl str">&quot;CCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAAC&quot;</span>
+<span class="hl str">&quot;CCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTG&quot;</span>
+<span class="hl str">&quot;CACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span><span class="hl sym">;</span>
+
+<span class="hl slc">//</span>
+
+ats_void_type
+fwrite_substring <span class="hl sym">(</span>
+  ats_ptr_type str<span class="hl sym">,</span> ats_size_type beg
+<span class="hl sym">,</span> ats_size_type len<span class="hl sym">,</span> ats_ptr_type out
+<span class="hl sym">) {</span>
+  fwrite_unlocked<span class="hl sym">(((</span>char*)str<span class="hl sym">)+</span>beg<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> len<span class="hl sym">, (</span>FILE*)out<span class="hl sym">) ;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [fwrite_substring]</span>
+
+ats_void_type
+fwrite_byte
+  <span class="hl sym">(</span>ats_ptr_type buf<span class="hl sym">,</span> ats_int_type n<span class="hl sym">,</span> ats_ptr_type fil<span class="hl sym">) {</span>
+   fwrite_unlocked <span class="hl sym">((</span>void*)buf<span class="hl sym">, (</span>size_t<span class="hl sym">)</span><span class="hl num">1</span><span class="hl sym">, (</span>size_t<span class="hl sym">)</span>n<span class="hl sym">, (</span>FILE*)fil<span class="hl sym">) ;</span>
+   return <span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [fasta_fwrite_byte]</span>
+
+<span class="hl slc">//</span>
+
+static ats_void_type
+  mainats <span class="hl sym">(</span>ats_int_type argc<span class="hl sym">,</span> ats_ptr_type argv<span class="hl sym">) ;</span>
+
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{^]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl com">(* end of [fasta4.dats] *)</span>
