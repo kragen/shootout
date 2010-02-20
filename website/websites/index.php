@@ -169,7 +169,7 @@ $langs = array(
    array('java','Java 6 -server','ubiquitous jit server virtual machine','java',$allsites),
    array('ghc','Haskell GHC','lazy pure functional programming','haskell',$allsites),
    array('go','Go 6g 8g','types just are - Go is an experiment','',$allsites),
-   array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$u32sites),
+   array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$allsites),
    array('fsharp','F# Mono','higher-order type-safe programming (mono is not ms .net)','fsharp',$allsites),
    array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$allsites),
    array('clean','Clean','lazy &amp; strict pure functional programming','clean',$onecoresites),
