@@ -8,8 +8,8 @@
 
 define('HTTP_DIR', '/home/dunham/shootout/website/websites');
 define('DESC_DIR', '/home/dunham/shootout/website/desc');
-$Sites = array('gp4','debian','u32');
-//$Sites = array('u32');
+//$Sites = array('gp4','debian','u32');
+$Sites = array('u32');
 
 // FUNCTIONS ///////////////////////////////////////////
 
