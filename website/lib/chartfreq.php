@@ -34,7 +34,8 @@ $d = array(
  ,array(2008,19,'gp4',1.00)
        )
        ,array(
-  array(2007,1,'debian',0.14)
+  array(2006,0,'debian',0.00)
+ ,array(2007,1,'debian',0.14)
  ,array(2007,2,'debian',0.15)
  ,array(2007,3,'debian',0.16)
  ,array(2007,4,'debian',0.24)
@@ -50,8 +51,8 @@ $d = array(
  ,array(2008,14,'debian',1.00)
         )
        ,array(
-  array(2009,36,'u32q',0.04)
- ,array(2010,37,'u32q',0.52)
+  array(2009,36,'u32q',0.00)
+ ,array(2010,37,'u32q',0.48)
  ,array(2010,38,'u32q',1.00)
        ) );
        
