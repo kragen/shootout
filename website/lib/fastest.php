@@ -46,7 +46,7 @@ require_once(LIB_PATH.'lib_boxplot.php');
 $mark= MarkTime('u64q/');
 $mark = $mark.' Q6600';
 
-$Title = 'Which programming language is fastest?';
+$Title = 'Fastest programming language';
 $Body->set('Title', $Title);
 $TemplateName = 'fastest.tpl.php';
 $About = & new Template(ABOUT_PATH);
