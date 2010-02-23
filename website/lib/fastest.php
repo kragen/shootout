@@ -5,21 +5,20 @@
 
 require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB);
+require_once(LIB_PATH.'lib_data.php');
+
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
-define('DATA_TEST',0);
-define('DATA_LANG',1);
-define('DATA_ID',2);
-define('DATA_GZ',4);
-define('DATA_STATUS',7);
-// With quad-core we changed from CPU Time to Elapsed Time
-// but we still want to show the old stuff
-if (SITE_NAME == 'debian' || SITE_NAME == 'gp4'){
-   define('DATA_TIME',5);
-} else {
-   define('DATA_TIME',9);
-}
+define('STATS_SIZE',8);
+define('STAT_MIN',0);
+define('STAT_XLOWER',1);
+define('STAT_LOWER',2);
+define('STAT_MEDIAN',3);
+define('STAT_UPPER',4);
+define('STAT_XUPPER',5);
+define('STAT_MAX',6);
+define('STATS_N',7);
 
 // FUNCTIONS ///////////////////////////////////////////
 
