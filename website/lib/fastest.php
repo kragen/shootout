@@ -20,22 +20,6 @@ define('STAT_XUPPER',5);
 define('STAT_MAX',6);
 define('STATS_N',7);
 
-// FUNCTIONS ///////////////////////////////////////////
-
-// Some code duplication
-
-function MarkTime($PathRoot=''){
-   if (SITE_NAME == 'debian'){
-      $Mark = 'late 2007';
-   } elseif (SITE_NAME == 'gp4'){
-      $Mark = 'mid 2008';
-   } else {
-      $mtime = filemtime($PathRoot.DATA_PATH.'data.csv');
-      $Mark = gmdate("d M Y", $mtime);
-   }
-   return $Mark;
-}
-
 // DATA ///////////////////////////////////////////
 
 list($Incl,$Excl) = WhiteListInEx();
