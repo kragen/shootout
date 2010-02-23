@@ -8,6 +8,19 @@ require_once(LIB);
 require_once(LIB_PATH.'lib_data.php');
 
 
+// DATA LAYOUT ///////////////////////////////////////////////////
+
+
+define('STATS_SIZE',8);
+define('STAT_MIN',0);
+define('STAT_XLOWER',1);
+define('STAT_LOWER',2);
+define('STAT_MEDIAN',3);
+define('STAT_UPPER',4);
+define('STAT_XUPPER',5);
+define('STAT_MAX',6);
+define('STATS_N',7);
+
 // FUNCTIONS ///////////////////////////////////////////
 
 function SelectedLangs($Langs, $Action, $Vars){

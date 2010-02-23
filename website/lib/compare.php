@@ -87,7 +87,7 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
       if ($isLang1 || strpos($line,$prefixL2)){
          $row = explode( ',', $line);
          $test = $row[DATA_TEST];
-// do we need to check $test here?         
+// do we need to check $test here?  
 //         if (isset($Incl[$test])){
             if (isset($previous) && $previous != $test){ // assume ndata.csv is sorted by test
                AccumulateComparableRows(BestRows($rowsL1),BestRows($rowsL2),$measurements);
@@ -96,7 +96,7 @@ function HeadToHeadData($FileName,$Tests,$Langs,$Incl,$Excl,$L1,$L2,$HasHeading=
             }
             $previous = $test;
 
-            $key = $test.$L.$row[DATA_ID];
+            $key = $test.$row[DATA_LANG].$row[DATA_ID];
             settype($row[DATA_ID],'integer');
             // $L1 and $L2 have already been checked
             if (!isset($Excl[$key])){

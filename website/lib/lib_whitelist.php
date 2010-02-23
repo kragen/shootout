@@ -8,7 +8,6 @@ define('TEST_NAME',1);
 define('TEST_TAG',2);
 define('TEST_WEIGHT',3);
 define('TEST_META',4);
-define('TEST_DATE',5);
 
 define('LANG_LINK',0);
 define('LANG_FULL',1);
@@ -18,23 +17,6 @@ define('LANG_SELECT',4);
 define('LANG_COMPARE',5);
 define('LANG_SPECIALURL',6);
 
-define('INCL_LINK',0);
-define('INCL_NAME',1);
-
-define('EXCL_USE',0);
-define('EXCL_TEST',1);
-define('EXCL_LANG',2);
-define('EXCL_ID',3);
-
-define('STATS_SIZE',8);
-define('STAT_MIN',0);
-define('STAT_XLOWER',1);
-define('STAT_LOWER',2);
-define('STAT_MEDIAN',3);
-define('STAT_UPPER',4);
-define('STAT_XUPPER',5);
-define('STAT_MAX',6);
-define('STATS_N',7);
 
 // MEASUREMENT_RESCALE has to be big enough to rescale NO_MEASUREMENT
 // so the NO_MEASUREMENT information is passed to charts
@@ -87,13 +69,13 @@ function WhiteListEx(){
 
 
 
-function WhiteListUnique($FileName,$Incl,$HasHeading=TRUE){
+function WhiteListUnique($FileName,$Incl){
    $lines = @file(DESC_PATH.$FileName) or die ('Cannot open $FileName');
-   if ($HasHeading){ unset($lines[0]); } // remove header line
+   // assume no header line
    $rows = array();
    foreach($lines as $line) {
       $row = explode( ',', $line);
-      if (!is_array($row)){ continue; }
+//      if (!is_array($row)){ continue; }
 //######## Hardcoded assumption that $row[0] is a link name
       if (isset( $Incl[$row[0]] )){ $rows[ $row[0] ] = $row; }
    }

@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2010
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -12,6 +12,19 @@ SetChartCacheControl();
 
 $in = WhiteListIn();
 $WhiteListLangs = WhiteListUnique('lang.csv',$in);
+
+
+// DATA LAYOUT ///////////////////////////////////////////////////
+
+define('STATS_SIZE',8);
+define('STAT_MIN',0);
+define('STAT_XLOWER',1);
+define('STAT_LOWER',2);
+define('STAT_MEDIAN',3);
+define('STAT_UPPER',4);
+define('STAT_XUPPER',5);
+define('STAT_MAX',6);
+define('STATS_N',7);
 
 
 // DATA ////////////////////////////////////////////////////
