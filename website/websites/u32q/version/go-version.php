@@ -1,2 +1,1 @@
-<p>4850:00a1813e5bc5<br/>
-release.2010-02-04 4791:db4262ce882d</p>
+<p>8g version 4877 release release.2010-02-17</p>
