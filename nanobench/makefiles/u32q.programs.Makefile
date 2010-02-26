@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32q.programs.Makefile,v 1.37 2009-12-30 02:32:07 igouy-guest Exp $
+# $Id: u32q.programs.Makefile,v 1.38 2010-02-26 23:06:41 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -28,7 +28,7 @@ STD_COPTS := -O3 -fomit-frame-pointer -march=native
 
 %.gnat_run: %.gnat
 	-$(GNATCHOP) -r -w $<
-	-$(GNATC) $(GNATOPTS) $(STD_COPTS) -f $(TEST).adb -o $@
+	-$(GNATC) $(GNATOPTS) $(STD_COPTS) -f $(TEST).adb -o $@ $(GNATLDOPTS)
 
 
 

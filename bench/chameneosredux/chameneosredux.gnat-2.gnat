@@ -1,0 +1,1128 @@
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Pat Rogers
+--
+-- Based on the C++ version by Andrew Moon 
+-- and the C version by Dmitry Vyukov
+--
+-- A task (thread) is created for each chameneous.
+-- An atomic compare-and-swap operation is used
+-- for shared state manipulation.  A protected 
+-- type is used for completion notification.
+-- A cache-aligned memory allocator is used.
+
+
+-- Expected build command:
+-- gnatmake -gnatp  -gnatn  -fstrict-aliasing -O3 -fomit-frame-pointer -march=native -ffunction-sections -fdata-sections -f chameneosredux.adb -o chameneosredux.gnat_run   -largs -Wl,--gc-sections
+
+
+
+pragma Restrictions (No_Abort_Statements);
+pragma Restrictions (Max_Asynchronous_Select_Nesting => 0);
+
+with Chameneos.Games;       use Chameneos.Games;
+with Ada.Command_Line;      use Ada.Command_Line;
+with Chameneos.Processors;  use Chameneos.Processors;
+
+procedure ChameneosRedux is
+
+   use Chameneos;
+
+   N : Meeting_Count;
+
+   Game1_Creature_Colors : constant Color_List_Ref := new Color_List'(Blue, Red, Yellow);
+
+   Game2_Creature_Colors : constant Color_List_Ref :=
+      new Color_List'(Blue, Red, Yellow, Red, Yellow, Blue, Red, Yellow, Red, Blue);
+
+   Game1 : Game (Num_Creatures => Game1_Creature_Colors'Length);
+
+   Game2 : Game (Num_Creatures => Game2_Creature_Colors'Length);
+
+begin
+   Print_Color_Complements;
+
+   if Argument_Count < 1 then
+      N := 6_000_000;
+   else
+      N := Meeting_Count'Value (Argument (1));
+   end if;
+
+   if Processor_Count < 4 then  -- run the games sequentially
+      Game1.Start (Game1_Creature_Colors, N, Slot => 0);
+      Game1.Await_Completion;
+
+      Game2.Start (Game2_Creature_Colors, N, Slot => 0);
+      Game2.Await_Completion;
+   else -- run the games in parallel
+      Game1.Start (Game1_Creature_Colors, N, Slot => 1);
+      Game2.Start (Game2_Creature_Colors, N, Slot => 2);
+
+      Game1.Await_Completion;
+      Game2.Await_Completion;
+   end if;
+
+   Game1.Display;
+   Game2.Display;
+end ChameneosRedux;
+
+-------------------------------------------------------------------------------
+
+with Interfaces;                  use Interfaces;
+with Cache_Aligned_Storage_Pools; use Cache_Aligned_Storage_Pools;
+
+package Chameneos is
+
+   Storage : Cache_Aligned_Storage_Pool;
+   --  All allocators use this common pool, which is really just a wrapper for
+   --  the system allocator, but with additional constraints on the addresses
+   --  returned.
+
+   type String_Access is access all String;
+   for String_Access'Storage_Pool use Storage;
+
+   type Colors is (Blue, Red, Yellow);
+
+   Colors_Image : constant array (Colors) of String_Access :=
+                    (Blue   => new String'("blue"),
+                     Red    => new String'("red"),
+                     Yellow => new String'("yellow"));
+
+   type Colors_Complements is array (Colors, Colors) of Colors;
+
+   Complementary_Color : constant Colors_Complements :=
+                           (Blue   => (Blue   => Blue,
+                                       Red    => Yellow,
+                                       Yellow => Red),
+                            Red    => (Red    => Red,
+                                       Blue   => Yellow,
+                                       Yellow => Blue),
+                            Yellow => (Yellow => Yellow,
+                                       Blue   => Red,
+                                       Red    => Blue));
+
+   --  Print the Complementary_Color map
+   procedure Print_Color_Complements;
+
+   --  Returns a string representing the non-negative integer Value, in which
+   --  each digit of Value is spelled out as a distinct word
+   function Spelled (Value : Natural) return String;
+
+
+   type Color_List is array (Positive range <>) of Colors;
+
+   type Color_List_Ref is access constant Color_List;
+   for Color_List_Ref'Storage_Pool use Storage;
+
+
+   --  The efficiency of this design is due to the underlying use of a single
+   --  variable (per game) shared amongst all the creature threads. This
+   --  variable is used both for the count of the number of meetings completed
+   --  as well as an indication of the creatures present for meetings. Hence
+   --  some of the bits are used for the meeting count and some for the
+   --  creatures. The number of bits used for the creature mask, in combination
+   --  with the total number of bits in the shared variable, determine how many
+   --  creatures and how many total meetings are supported.
+
+   --  The number of bits allocated within the shared variable for identifying
+   --  creatures
+   Creature_Mask_Bits : constant := 4;
+
+   subtype Creature_Count is Unsigned_32 range 0 .. 2 ** Creature_Mask_Bits - 1;
+
+   --  The number of bits allocated within the shared variable for tracking the
+   --  total number of meetings completed
+   Meetings_Bits : constant := Unsigned_32'Size - Creature_Mask_Bits;
+
+   Max_Meetings : constant := 2 ** Meetings_Bits - 1;
+
+   subtype Meeting_Count is Unsigned_32 range 0 .. Max_Meetings;
+
+end Chameneos;
+
+-------------------------------------------------------------------------------
+
+with Chameneos.Meetings;
+with Chameneos.Countdown;
+with Chameneos.Processors;
+
+with System.Task_Info;  use System.Task_Info;
+
+package Chameneos.Creatures is
+
+   type Creature (Starting_Color : Colors) is tagged limited private;
+   --  Each creature has an initial color, but their current color is a function
+   --  of the colors of the other creatures met.
+
+   type Creature_Ref is access all Creature;
+   for Creature_Ref'Storage_Pool use Chameneos.Storage;
+
+   --  Tell the creature where all the creatures in the game are meeting, where
+   --  to signal when the creature is finished, and which slot to execute in.
+   procedure Start (This     : access Creature;
+                    Location : Chameneos.Meetings.Venue;
+                    Latch    : Chameneos.Countdown.Latch_Ref;
+                    Slot     : Natural);
+
+   --  The caller side of the rendezvous
+   procedure Meet (This : in out Creature;  Other : in out Creature);
+
+   --  The called side of the rendezvous
+   procedure Wait_Until_Met (This : in out Creature);
+
+   procedure Await_Completion (This : in out Creature);
+
+   procedure Set_Id (This : in out Creature;  To : Creature_Count);
+
+   function Id (This : Creature) return Creature_Count;
+
+   function Current_Color (This : Creature) return Colors;
+
+   function Initial_Color (This : Creature) return Colors;
+
+   procedure Display (This : in out Creature);
+
+   function Total_Met (This : Creature) return Natural;
+
+   pragma Inline (Set_Id, Id, Current_Color, Initial_Color, Total_Met);
+
+private
+
+   use Chameneos.Processors;
+
+   --  Objects of type Thread implement the active execution, i.e., the
+   --  symmetric rendezvous requirement, for their corresponding creatures.
+   --  Each thread instance has a discriminant designating the corresponding
+   --  creature. No state is maintained within the threads themselves. Each
+   --  thread instance executes in a given "slot" that specifies the cores it
+   --  can run upon, via processor affinities. The specific slot is also given
+   --  via discriminant.
+   task type Thread (This : access Creature;  Slot : Natural) is
+      pragma Task_Info (new Thread_Attributes'(CPU_Affinity => Affinity (Slot)));
+   end Thread;
+
+   type Thread_Ref is access all Thread;
+   for Thread_Ref'Storage_Pool use Chameneos.Storage;
+
+   type Creature (Starting_Color : Colors) is tagged limited
+      record
+         Met              : Boolean := False;
+         --  Met is set by other threads so the pragma is essential
+         pragma Volatile (Met);
+         Count            : Natural := 0;
+         Same_Count       : Natural := 0;
+         Color            : Colors := Starting_Color;
+         Id               : Creature_Count;
+         Rendezvous_Point : Meetings.Venue;
+         Completion       : Chameneos.Countdown.Latch_Ref;
+      end record;
+
+end Chameneos.Creatures;
+
+-------------------------------------------------------------------------------
+
+with Chameneos.Creatures;  use Chameneos.Creatures;
+with Chameneos.Meetings;
+with Chameneos.Countdown;
+
+package Chameneos.Games is
+
+   type Game (Num_Creatures : Creature_Count) is tagged limited private;
+
+   --  Allocates the creature threads and all other required data.
+   procedure Start
+     (This            : in out Game;
+      Creature_Colors : Color_List_Ref;
+      Num_Meetings    : Meeting_Count;
+      Slot            : Natural);
+
+   --  Waits for all creatures (threads) to finish.
+   procedure Await_Completion (This : Game);
+
+   procedure Display (This : Game);
+
+private
+
+   use Chameneos;
+
+   type Creatures_List is array (Creature_Count range <>) of Creature_Ref;
+
+   type Game (Num_Creatures : Creature_Count) is tagged limited
+      record
+         --  where all the creatures in the game meet
+         Rendezvous_Point : Meetings.Venue;
+         --  all the creatures in the game
+         Players : Creatures_List (1 .. Num_Creatures);
+         --  the common mechanism used for signalling creature completion
+         Latch : aliased Countdown.Latch (Num_Creatures);
+      end record;
+
+end Chameneos.Games;
+
+-------------------------------------------------------------------------------
+
+limited with Chameneos.Creatures;
+
+package Chameneos.Meetings is
+
+   type Place (Meetings_Expected : Meeting_Count) is tagged limited private;
+   --  Where creatures come to meet other creatures, potentially change colors,
+   --  and play the game. Creatures are required to meet until the required
+   --  number of total meetings has occurred. This number of required meetings
+   --  is specified by the discriminant Meetings_Expected.
+
+   type Venue is access all Place;
+   for Venue'Storage_Pool use Chameneos.Storage;
+
+   --  Assign a location for the creature designated by Player, within This place,
+   --  for the purpose of meeting any other creatures willing to meet.
+   procedure Register
+     (This   : in out Place;
+      Player : access Chameneos.Creatures.Creature);
+
+   --  Have creature Player iteratively meet other creatures with This place,
+   --  updating the count of the total number of creature meetings as they
+   --  occur, and updating individual creature states as well (including
+   --  individual meeting counts and color changes).
+   procedure Meet_Others
+     (This   : in out Place;
+      Player : access Chameneos.Creatures.Creature);
+
+private
+
+   type Creature_Reference_List is
+     array (Creature_Count range 1 .. Creature_Count'Last) of
+        access Chameneos.Creatures.Creature;
+
+   subtype Valid_Creature_Id is
+     Creature_Count range 1 .. Creature_Count'Last;
+
+   No_Creature : constant Creature_Count := Valid_Creature_Id'First - 1;
+   --  used in Meet_Others to determine whether any creatures are waiting
+
+   type Place (Meetings_Expected : Meeting_Count) is tagged limited
+      record
+         Id_Generator : Valid_Creature_Id := Valid_Creature_Id'First;
+         --  Used to assign unique id's to creature threads as they register.
+         Shared_State : aliased Unsigned_32 := Shift_Left (Meetings_Expected, Creature_Mask_Bits);
+         --  The essential aspect of this program's design is the use of this
+         --  shared variable accessed by all the creature threads in a given
+         --  game. This variable is used both for the count of the number of
+         --  meetings completed as well as an indication of creatures waiting
+         --  for meetings. Hence the initial value is the number of required
+         --  meetings, shifted into the dedicated bits, with no creatures yet
+         --  waiting.
+         pragma Volatile (Shared_State);
+         --  Shared_State is accessed and modified by all the threads within a
+         --  given game, so the pragma is essential!
+         Registered_Players : Creature_Reference_List;
+      end record;
+
+end Chameneos.Meetings;
+
+-------------------------------------------------------------------------------
+
+with System.Storage_Pools;
+with System.Storage_Elements;
+
+package Cache_Aligned_Storage_Pools is
+
+   package SSE renames System.Storage_Elements;
+   package SSP renames System.Storage_Pools;
+
+   type Cache_Aligned_Storage_Pool is
+     new SSP.Root_Storage_Pool with private;
+   --  A Cache_Aligned_Storage_Pool is a wrapper for the underlying operating
+   --  system storage allocator. Allocations using pool objects of this type
+   --  will return addresses that are aligned with the cache line size specified
+   --  below.
+
+   Cache_Line_Size : constant := 64;
+   --  The length of a cache line on this machine.  Change as necessary...
+
+   --  Allocates a block of storage such that Storage_Address is aligned with
+   --  Cache_Line_Size. Uses the system memory allocator to do the actual
+   --  allocation but asks for more storage than Requested_Size so that an
+   --  aligned address within the allocated block can be found.
+   procedure Allocate
+     (Pool            : in out Cache_Aligned_Storage_Pool;
+      Storage_Address : out System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count);
+
+   --  Uses the system memory routine to deallocate the entire block of storage
+   --  in which Storage_Address is contained.
+   procedure Deallocate
+     (Pool            : in out Cache_Aligned_Storage_Pool;
+      Storage_Address : System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count);
+
+   --  Returns a meaningless number since the system memory allocation and
+   --  deallocation routines are used.
+   function Storage_Size (Pool : Cache_Aligned_Storage_Pool)
+      return SSE.Storage_Count;
+
+private
+
+   procedure Allocate_Any
+     (Pool            : in out Cache_Aligned_Storage_Pool'Class;
+      Storage_Address : out System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count);
+
+   procedure Deallocate_Any
+     (Pool            : in out Cache_Aligned_Storage_Pool'Class;
+      Storage_Address : System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count);
+
+   type Cache_Aligned_Storage_Pool is
+     new SSP.Root_Storage_Pool with null record;  -- just a wrapper...
+
+end Cache_Aligned_Storage_Pools;
+
+-------------------------------------------------------------------------------
+
+package Chameneos.Countdown is
+
+   --  "Latch" is a non-cyclic traditional barrier abstraction. As a barrier it
+   --  provides a means of blocking callers to Wait until a specified number of
+   --  calls to Signal have occurred. At that point all of the prior calls to
+   --  Wait are allowed to execute and, therefore, their callers are no longer
+   --  blocked. The number of required calls to Signal is specified on a
+   --  per-object basis via discriminant when objects of the type are declared.
+   --  Latch is "non-cyclic", i.e., it does not block another set of waiters
+   --  after the first set is allowed to continue, because there is no
+   --  requirement in this application for cyclic behavior.
+   protected type Latch (Signallers : Creature_Count) is
+      entry Wait;
+      procedure Signal;
+   private
+      Count : Unsigned_32 := Signallers;
+   end Latch;
+
+   type Latch_Ref is access all Latch;
+   for Latch_Ref'Storage_Pool use Chameneos.Storage;
+
+end Chameneos.Countdown;
+
+-------------------------------------------------------------------------------
+
+with System.Task_Info;     use System.Task_Info;
+pragma Warnings (Off);
+with System.OS_Interface;  use System.OS_Interface;
+pragma Warnings (On);
+
+package Chameneos.Processors is
+   pragma Elaborate_Body;
+
+   Processor_Count : constant Positive := System.Task_Info.Number_Of_Processors;
+
+   Max_Slots : constant := 33;
+
+   --  Returns a bit mask indicating the cores on which a thread in Slot can
+   --  execute. A game is assigned to a given slot, and as a result all the
+   --  threads within that game will execute only on those cores, for the sake
+   --  of locality (ie performance).
+   function Affinity (Slot : Natural) return CPU_Set;
+
+   --  Each slot has an affinity mask consisting of a pair of cores
+   --  dedicated to that slot, except for slot 0 which is the global mask
+   --  returned by the OS (which shows all processors available).
+   --
+   --  For example, imagine that we get a mask with the first 8 bits
+   --  enabled, indicating that 8 processors (cores) are available.
+   --  The resulting data structure would be as follows:
+   --
+   --                     bit#
+   --   slot #         123456789...
+   --     0            1111111100
+   --     1            1100000000
+   --     2            0011000000
+   --     3            0000110000
+   --     4            0000001100
+   --     5            1100000000
+   --     6            0011000000
+   --    ...              ...
+
+end Chameneos.Processors;
+
+-------------------------------------------------------------------------------
+
+with Interfaces;   use Interfaces;
+
+package x86_Atomic_Swap_Utils is
+
+   -- Perform an atomic compare and swap: if the current value of
+   -- Destination.all is Comparand, then write New_Value into Destination.all.
+   -- Returns the content of Destination.all before the operation.
+   function Sync_Val_Compare_And_Swap
+     (Destination : access Unsigned_32;
+      Comparand   : Unsigned_32;
+      New_Value   : Unsigned_32)
+      return Unsigned_32;
+
+   pragma Inline_Always (Sync_Val_Compare_And_Swap);
+
+end x86_Atomic_Swap_Utils;
+
+-------------------------------------------------------------------------------
+
+with GNAT.IO; use GNAT.IO;
+with Ada.Strings.Unbounded;
+
+package body Chameneos is
+
+   Numbers_Image : constant array (0 .. 9) of String_Access :=
+                     (0 => new String'(" zero"),
+                      1 => new String'(" one"),
+                      2 => new String'(" two"),
+                      3 => new String'(" three"),
+                      4 => new String'(" four"),
+                      5 => new String'(" five"),
+                      6 => new String'(" six"),
+                      7 => new String'(" seven"),
+                      8 => new String'(" eight"),
+                      9 => new String'(" nine"));
+
+   -------------
+   -- Spelled --
+   -------------
+
+   function Spelled (Value : Natural) return String is
+      use Ada.Strings.Unbounded;
+      Result : Unbounded_String;
+      K      : Natural := Value;
+   begin
+      loop
+         Insert (Result, 1, Numbers_Image (K rem 10).all);
+         K := K / 10;
+         exit when K = 0;
+      end loop;
+      return To_String (Result);
+   end Spelled;
+
+   -------------------------
+   -- Print_Color_Changes --
+   -------------------------
+
+   procedure Print_Color_Complements is
+   begin
+      for Self in Colors loop
+         for Other in Colors loop
+            Put_Line (Colors_Image (Self).all & " + " &
+                      Colors_Image (Other).all & " -> " &
+                      Colors_Image (Complementary_Color (Self, Other)).all);
+         end loop;
+      end loop;
+      New_Line;
+   end Print_Color_Complements;
+
+end Chameneos;
+
+-------------------------------------------------------------------------------
+
+with GNAT.IO;  use GNAT.IO;
+
+package body Chameneos.Creatures is
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start
+     (This     : access Creature;
+      Location : Chameneos.Meetings.Venue;
+      Latch    : Chameneos.Countdown.Latch_Ref;
+      Slot     : Natural)
+   is
+      Player_To_Be_Named_Later : Thread_Ref;
+      pragma Unreferenced (Player_To_Be_Named_Later);
+   begin
+      This.Rendezvous_Point := Location;
+      This.Completion := Latch;
+      This.Rendezvous_Point.Register (This);
+      Player_To_Be_Named_Later := new Thread (This, Slot);
+        --  just launch the thread, no need to keep track of it
+   end Start;
+
+   ----------
+   -- Meet --
+   ----------
+
+   procedure Meet (This : in out Creature; Other : in out Creature) is
+      New_Color : Colors;
+   begin
+      if This.Id = Other.Id then
+         This.Same_Count := This.Same_Count + 1;
+         Other.Same_Count := Other.Same_Count + 1;
+      end if;
+
+      This.Count  := This.Count + 1;
+      Other.Count := Other.Count + 1;
+
+      New_Color := Complementary_Color (This.Color, Other.Color);
+      This.Color := New_Color;
+      Other.Color := New_Color;
+
+      Other.Met := True;
+   end Meet;
+
+   --------------------
+   -- Wait_Until_Met --
+   --------------------
+
+   procedure Wait_Until_Met (This : in out Creature) is
+   begin
+      if Processor_Count > 1 then
+         declare
+            Spin_Count : Integer := 0;
+         begin
+            while not This.Met loop
+               Spin_Count := Spin_Count + 1;
+               if Spin_Count > 20_000 then  -- arbitrary max
+                  delay 0.0;  -- yield
+                  Spin_Count := 0;
+               end if;
+            end loop;
+         end;
+      else
+         while not This.Met loop
+            delay 0.0; -- yield
+         end loop;
+      end if;
+      This.Met := False;
+   end Wait_Until_Met;
+
+   ----------------------
+   -- Await_Completion --
+   ----------------------
+
+   procedure Await_Completion (This : in out Creature) is
+   begin
+      This.Completion.Wait;
+   end Await_Completion;
+
+   ------------
+   -- Set_Id --
+   ------------
+
+   procedure Set_Id (This : in out Creature;  To : Creature_Count) is
+   begin
+      This.Id := To;
+   end Set_Id;
+
+   --------
+   -- Id --
+   --------
+
+   function Id (This : Creature) return Creature_Count is
+   begin
+      return This.Id;
+   end Id;
+
+   -------------------
+   -- Current_Color --
+   -------------------
+
+   function Current_Color (This : Creature) return Colors is
+   begin
+      return This.Color;
+   end Current_Color;
+
+   -------------------
+   -- Initial_Color --
+   -------------------
+
+   function Initial_Color (This : Creature) return Colors is
+   begin
+      return This.Starting_Color;
+   end Initial_Color;
+
+   -------------
+   -- Display --
+   -------------
+
+   procedure Display (This : in out Creature) is
+   begin
+      Put (This.Count);
+      Put_Line (Spelled (This.Same_Count));
+   end Display;
+
+   ---------------
+   -- Total_Met --
+   ---------------
+
+   function Total_Met (This : Creature) return Natural is
+   begin
+      return This.Count;
+   end Total_Met;
+
+   ------------
+   -- Thread --
+   ------------
+
+   task body Thread is
+      use Chameneos.Meetings;
+   begin
+      Meet_Others (This.Rendezvous_Point.all, Player => This);
+      This.Completion.Signal;
+   end Thread;
+
+end Chameneos.Creatures;
+
+-------------------------------------------------------------------------------
+
+with GNAT.IO;  use GNAT.IO;
+
+package body Chameneos.Games is
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start
+     (This            : in out Game;
+      Creature_Colors : Color_List_Ref;
+      Num_Meetings    : Meeting_Count;
+      Slot            : Natural)
+   is
+      Color_Index : Positive := Creature_Colors'First;
+      --  We use a separate index, instead of the index used to iterate over
+      --  This.Players, since the bounds need not be the same. The range of
+      --  This.Players is 1 .. Num_Creatures, where that upper bound is set as a
+      --  discriminant to the game when it is created. The actual value passed
+      --  to this discriminant comes from the length of an array of colors,
+      --  which is then passed to this procedure in Creature_Colors, so the
+      --  count will be the same. There is no guarantee of that, of course, but
+      --  in practice that will suffice.
+   begin
+      This.Rendezvous_Point := new Meetings.Place (Num_Meetings);
+      for K in This.Players'Range loop
+         This.Players (K) := new Creature (Creature_Colors (Color_Index));
+         This.Players (K).Start
+           (Location => This.Rendezvous_Point,
+            Latch    => This.Latch'Unchecked_Access,
+            Slot     => Slot);
+         Color_Index := Color_Index + 1;
+      end loop;
+   end Start;
+
+   ----------------------
+   -- Await_Completion --
+   ----------------------
+
+   procedure Await_Completion (This : Game) is
+   begin
+      for K in This.Players'Range loop
+         This.Players (K).Await_Completion;
+      end loop;
+   end Await_Completion;
+
+   -------------
+   -- Display --
+   -------------
+
+   procedure Display (This : Game) is
+      Grand_Total : Natural := 0;
+   begin
+      for K in This.Players'Range loop
+         Put( " " & Colors_Image (This.Players (K).Initial_Color).all);
+      end loop;
+      New_Line;
+
+      for K in This.Players'Range loop
+         This.Players (K).Display;
+         Grand_Total := Grand_Total + This.Players (K).Total_Met;
+      end loop;
+      Put_Line (Spelled (Grand_Total));
+      New_Line;
+   end Display;
+
+end Chameneos.Games;
+
+-------------------------------------------------------------------------------
+
+with Chameneos.Creatures;
+with x86_Atomic_Swap_Utils;  use x86_Atomic_Swap_Utils;
+
+package body Chameneos.Meetings is
+
+   --------------
+   -- Register --
+   --------------
+
+   procedure Register
+     (This   : in out Place;
+      Player : access Chameneos.Creatures.Creature)
+   is
+      Id : constant Creature_Count := This.Id_Generator;
+   begin
+      Player.Set_Id (Id);
+      This.Registered_Players (Id) := Player;
+      This.Id_Generator := This.Id_Generator + 1;
+   end Register;
+
+
+   --  the lower part of the shared variable State, used to represent those
+   --  chameneos wating for a meeting in the mall
+   Creature_Mask : constant := 2 ** Creature_Mask_Bits - 1;
+
+   --  the additional meeting count value due to the creature mask
+   Count_Offset : constant Unsigned_32 := Shift_Left (1, Creature_Mask_Bits);
+
+
+   -----------------
+   -- Meet_Others --
+   -----------------
+
+   procedure Meet_Others
+     (This   : in out Place;
+      Player : access Chameneos.Creatures.Creature)
+   is
+      Local_State       : Unsigned_32 := This.Shared_State;
+      Waiting           : Unsigned_32;
+      Target_State      : Unsigned_32;
+      State_Before_Swap : Unsigned_32;
+   begin
+      loop
+         --  get the Id of a creature waiting for a meeting, if any
+         Waiting := Local_State and Creature_Mask;
+         if Waiting /= No_Creature then
+            --  at least one creature is in the mall, waiting for a rendezvous,
+            --  so we set the target state to the current meeting count - 1 to
+            --  reflect the meeting we're about to attempt
+            Target_State := (Local_State and not Creature_Mask) - Count_Offset;
+         elsif Local_State /= 0 then
+            --  no creatures are waiting but there are meetings remaining so set
+            --  the target state to reflect Player, who is willing to meet
+            Target_State := Local_State or Player.Id;
+         else  --  no creatures waiting and no further meetings to be held
+            exit;
+         end if;
+
+         --  Attempt to update the shared game state. If the value of the shared
+         --  state is that of the local copy when the swap is attempted, then
+         --  the shared state will be updated, otherwise it is not changed.
+         State_Before_Swap := Sync_Val_Compare_And_Swap
+           (Destination => This.Shared_State'Access,
+            Comparand   => Local_State,
+            New_Value   => Target_State);
+
+         if State_Before_Swap = Local_State then -- we successfully updated it
+            if Waiting /= 0 then
+               Player.Meet (This.Registered_Players (Waiting).all);
+            else
+               Player.Wait_Until_Met;
+            end if;
+
+            Local_State := Target_State;
+         else  -- we did not update the shared state, so use the shared value
+            Local_State := State_Before_Swap;
+         end if;
+      end loop;
+   end Meet_Others;
+
+end Chameneos.Meetings;
+
+-------------------------------------------------------------------------------
+
+package body Chameneos.Countdown is
+
+   -----------
+   -- Latch --
+   -----------
+
+   protected body Latch is
+
+      ----------
+      -- Wait --
+      ----------
+
+      entry Wait when Count = 0 is
+      begin
+         null;
+      end Wait;
+
+      ------------
+      -- Signal --
+      ------------
+
+      procedure Signal is
+      begin
+         Count := Count - 1;
+      end Signal;
+
+   end Latch;
+
+end Chameneos.Countdown;
+
+-------------------------------------------------------------------------------
+
+with System.Memory;
+with Ada.Unchecked_Conversion;
+
+package body Cache_Aligned_Storage_Pools is
+
+   use System, System.Storage_Elements;
+
+   --  we cannot use System.Address'Size as the modulus so we use the same thing
+   --  that the compiler does (when declaring Address as a modular type in the
+   --  full definition)
+   type Unsigned_Address is mod System.Memory_Size;
+
+   function As_Unsigned_Address is new Ada.Unchecked_Conversion
+     (Source => Address,
+      Target => Unsigned_Address);
+
+   function As_Address is new Ada.Unchecked_Conversion
+     (Target => Address,
+      Source => Unsigned_Address);
+
+   type Address_Pointer is access all Address;
+   for Address_Pointer'Storage_Size use 0;
+
+   function As_Address_Pointer is new Ada.Unchecked_Conversion
+     (Source => Address,
+      Target => Address_Pointer);
+
+   --  size of an address in terms of storage units
+   Size_Of_Address : constant Storage_Offset := Address'Size / System.Storage_Unit;
+
+   Twice_Cache_Line_Size : constant := 2 * Cache_Line_Size;
+
+   --------------
+   -- Allocate --
+   --------------
+
+   procedure Allocate
+     (Pool            : in out Cache_Aligned_Storage_Pool;
+      Storage_Address : out System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count)
+   is
+      pragma Unreferenced (Pool);
+      pragma Unreferenced (Alignment);
+
+      Actual  : Address;
+      Aligned : Address;
+      Header  : Address;
+      Temp    : Unsigned_Address;
+   begin
+      Actual := Memory.Alloc (Memory.size_t (Requested_Size + Twice_Cache_Line_Size));
+      --  The call to Alloc returns an address whose alignment is compatible
+      --  with the worst case alignment requirement for the machine; thus the
+      --  Alignment argument can be safely ignored.
+
+      if Actual = Null_Address then
+         raise Storage_Error;
+      end if;
+
+      --  compute a cache-aligned address within the block allocated
+      Temp := As_Unsigned_Address (Actual + Cache_Line_Size) and not (Cache_Line_Size - 1);
+      Aligned := As_Address (Temp);
+      --  Put the address of the whole allocated block just before the address
+      --  given to the application so we can deallocate the whole block later
+      Header := Aligned - Size_of_Address;
+      As_Address_Pointer (Header).all := Actual;
+      Storage_Address := Aligned;
+   end Allocate;
+
+   ----------------
+   -- Deallocate --
+   ----------------
+
+   procedure Deallocate
+     (Pool            : in out Cache_Aligned_Storage_Pool;
+      Storage_Address : System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count)
+   is
+      pragma Unreferenced (Pool);
+      pragma Unreferenced (Requested_Size);
+      pragma Unreferenced (Alignment);
+
+      Actual : Address;
+      Header : Address;
+   begin
+      Header := Storage_Address - Size_of_Address;
+      Actual := As_Address_Pointer (Header).all;
+      Memory.Free (Actual);
+   end Deallocate;
+
+   ------------------
+   -- Storage_Size --
+   ------------------
+
+   function Storage_Size
+     (Pool  : Cache_Aligned_Storage_Pool)
+      return  SSE.Storage_Count
+   is
+      pragma Warnings (Off, Pool);
+   begin
+      return SSE.Storage_Count'Last;
+   end Storage_Size;
+
+   ------------------
+   -- Allocate_Any --
+   ------------------
+
+   procedure Allocate_Any
+     (Pool            : in out Cache_Aligned_Storage_Pool'Class;
+      Storage_Address : out System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count)
+   is
+   begin
+      Allocate (Pool, Storage_Address, Requested_Size, Alignment);
+   end Allocate_Any;
+
+   --------------------
+   -- Deallocate_Any --
+   --------------------
+
+   procedure Deallocate_Any
+     (Pool            : in out Cache_Aligned_Storage_Pool'Class;
+      Storage_Address : System.Address;
+      Requested_Size  : SSE.Storage_Count;
+      Alignment       : SSE.Storage_Count)
+   is
+   begin
+      Deallocate (Pool, Storage_Address, Requested_Size, Alignment);
+   end Deallocate_Any;
+
+end Cache_Aligned_Storage_Pools;
+
+-------------------------------------------------------------------------------
+
+with Interfaces.C;
+
+package body Chameneos.Processors is
+
+   Cores_Per_Slot : constant := 2;
+
+   Affinities : array (0 .. Max_Slots) of aliased CPU_Set;
+   --  we use the first slot (ie 0) for the global affinity mask, internally,
+   --  hence there are Max_Slots-1 total slots available to the application
+   --  threads, and a total of ((Max_Slots-1) * Cores_Per_Slot) cores supported
+
+   Slot_Modulus : Natural;
+
+   --------------
+   -- Affinity --
+   --------------
+
+   function Affinity (Slot : Natural) return cpu_set_t is
+   begin
+      if Slot = 0 then
+         return Affinities (Slot);
+      else
+         return Affinities ((Slot mod Slot_Modulus) + 1);
+      end if;
+   end Affinity;
+
+   -----------------------
+   -- sched_getaffinity --
+   -----------------------
+
+   function Sched_Getaffinity
+     (Pid : Pid_T;  Cpusetsize : Unsigned_32;  Mask : access CPU_Set)
+      return Interfaces.C.int;
+   pragma Import (C, sched_getaffinity);
+
+
+   subtype Bit_Number is Integer range bit_field'Range;
+
+   --------------
+   --  Set_Bit --
+   --------------
+
+   procedure Set_Bit (Bit : Bit_Number;  Within : in out CPU_Set) is
+   begin
+      Within.bits (Bit) := True;
+   end Set_Bit;
+
+   -------------------------------
+   -- Define_Affinities_By_Slot --
+   -------------------------------
+
+   procedure Define_Affinities_By_Slot is
+      Num_Bits_Set     : Natural := 0;
+      Global_Mask      : CPU_Set renames Affinities (0);
+      Result           : Int;
+      Global_Mask_Size : constant Unsigned_32 := Global_Mask'Size / System.Storage_Unit;
+      Next_Affinity    : Natural;
+      use type Interfaces.C.int;
+   begin
+      Result := sched_getaffinity (getpid, Global_Mask_Size, Global_Mask'Access);
+      if Result /= 0 then
+         raise Program_Error with "Could not get affinity";
+      end if;
+
+      for B in 1 .. CPU_SETSIZE loop
+         if Global_Mask.Bits (B) then
+            Next_Affinity := (Num_Bits_Set / Cores_Per_Slot) + 1;
+            if Next_Affinity not in Affinities'Range then
+               --  there are more processors enabled than we support, but
+               --  that is OK since we only want a few
+               exit;
+            end if;
+            Set_Bit (B, Affinities (Next_Affinity));
+            Num_Bits_Set := Num_Bits_Set + 1;
+         end if;
+      end loop;
+
+      if Num_Bits_Set > 2 then
+         Slot_Modulus := Num_Bits_Set / 2;
+      else
+         Slot_Modulus := 1;
+      end if;
+   end Define_Affinities_By_Slot;
+
+
+begin
+   for K in Affinities'Range loop
+      Affinities (K).bits := (others => False);
+   end loop;
+   Define_Affinities_By_Slot;
+end Chameneos.Processors;
+
+-------------------------------------------------------------------------------
+
+with System.Machine_Code;  use System.Machine_Code;
+
+package body x86_Atomic_Swap_Utils is
+
+   -------------------------------
+   -- Sync_Val_Compare_And_Swap --
+   -------------------------------
+
+   function Sync_Val_Compare_And_Swap
+     (Destination : access Unsigned_32;
+      Comparand   : Unsigned_32;
+      New_Value   : Unsigned_32)
+      return Unsigned_32
+   is
+      Prior_Value : Unsigned_32;
+      pragma Suppress (All_Checks);
+   begin
+      --  %eax := Comparand
+      --  if %eax = Destination.all then
+      --     Destination.all := New_Value
+      --  else
+      --     %eax := Destination.all
+      --  end if
+      Asm("lock cmpxchg %1, %2;",
+        Inputs  => (Unsigned_32'Asm_Input ("r", New_Value),        -- %1
+                    Unsigned_32'Asm_Input ("m", Destination.all),  -- %2
+                    Unsigned_32'Asm_Input ("a", Comparand)),
+        Outputs => (Unsigned_32'Asm_Output ("=a", Prior_Value)),   -- %0
+        Clobber => "memory, cc",
+        Volatile => True);
+      --  return %eax
+      return Prior_Value;
+   end Sync_Val_Compare_And_Swap;
+
+end x86_Atomic_Swap_Utils;
