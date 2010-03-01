@@ -65,7 +65,7 @@ function AccumulateComparableRows($rowsL1,$rowsL2,&$comparable){
       }
       if ($rowL1[DATA_STATUS] + $rowL2[DATA_STATUS] > PROGRAM_TIMEOUT){
          if ($rowL2[DATA_TIME]>0.0){ $time = $rowL1[DATA_TIME] / $rowL2[DATA_TIME]; }
-         if ($rowL2[DATA_MEMORY]>0.0){ $mem = $rowL1[DATA_MEMORY] / $rowL2[DATA_MEMORY]; }
+         if ($rowL2[DATA_MEMORY]>NO_VALUE){ $mem = $rowL1[DATA_MEMORY] / $rowL2[DATA_MEMORY]; } else { $mem = NO_VALUE; }
          if ($rowL2[DATA_GZ]>0.0){ $gz = $rowL1[DATA_GZ] / $rowL2[DATA_GZ]; }
       }
    }

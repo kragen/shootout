@@ -166,8 +166,13 @@ foreach($sorted as $k => $v){
    $name = $test[TEST_NAME];
    if (!empty($v)){
       printf('<tr><td>&nbsp;%s</td>', $name);
-      if ($name=='startup'){ $kb = 1.0; } else { $kb = $v[DATA_MEMORY]; }
-      printf('%s%s%s</tr>', PF($v[DATA_TIME]), PF($kb), PF($v[DATA_GZ]));
+      if ($v[DATA_MEMORY]==NO_VALUE){
+         $kb = '<td class="num2">?</td>';
+      } else {
+         if ($name=='startup'){ $kb = PF(1.0); }
+         else { $kb = PF($v[DATA_MEMORY]); }
+      }
+      printf('%s%s%s</tr>', PF($v[DATA_TIME]), $kb, PF($v[DATA_GZ]));
    }
 }
 ?>
