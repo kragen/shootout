@@ -138,7 +138,7 @@ $ExplanatoryHeader = '&nbsp;<strong>'.$LangName.'</strong>&nbsp;<b>used</b> what
    title=""
    width="480" height="300"
  /></p>
-<p>Look at speed in another way - <a href="which-programming-languages-are-fastest.php?<?=$SelectedLang;?>=on&amp;<?=$SelectedLang2;?>=on&amp;calc=chart" title="">compare Time-used boxplots</a>.</p>
+<p>Look at speed another way - <a href="which-programming-languages-are-fastest.php?<?=$SelectedLang;?>=on&amp;<?=$SelectedLang2;?>=on&amp;calc=chart" title="">look at a box plot of Time-used data</a>.</p>
 
 <h2><a href="#faster-programs-approximately" name="faster-programs-approximately">&nbsp;Step&nbsp;2&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <i>Approximately.</i></h2>
 
