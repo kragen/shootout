@@ -191,7 +191,7 @@ $mark = $mark.' '.SITE_NAME;
 
 $LangName = $Langs[$L][LANG_FULL];
 $LangName2 = $Langs[$L2][LANG_FULL];
-$Title = 'speed and size '.$LangName.'&nbsp;&#247;&nbsp;'.$LangName2;
+$Title = $LangName.'&nbsp;speed&nbsp;&#247;&nbsp;'.$LangName2.'&nbsp;speed';
 
 $bannerUrl = CORE_SITE;
 $faqUrl = CORE_SITE.'help.php';
