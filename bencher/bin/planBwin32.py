@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planBwin32.py,v 1.1 2010-03-06 03:37:32 igouy-guest Exp $
+# $Id: planBwin32.py,v 1.2 2010-03-06 17:05:42 igouy-guest Exp $
 
 """
 measure with win32 but not CPU affinity
@@ -9,7 +9,7 @@ __author__ =  'Isaac Gouy'
 
 try:
    from win32process import GetProcessTimes, GetProcessMemoryInfo
-   from win32api import GetTickCount
+   from win32api import GetTickCount, GetSystemInfo
    from win32event import WaitForSingleObject
 except ImportError, err:
    print 'please install Python Win32 Extensions'
@@ -71,12 +71,17 @@ def measure(arg,commandline,delay,maxtime,
             m.setTimedout()
          elif p.poll() == 0:
             m.setOkay()
+
             times = GetProcessTimes(hProcess)
-            mem = GetProcessMemoryInfo(hProcess)
             # ten million - the number of 100-nanosecond units in one second
             m.userSysTime = (times['UserTime'] + times['KernelTime'])/10000000.0
-            m.maxMem = 0
+
+            # seems to correspond to Peak Mem Usage K in Task Manager
+            mem = GetProcessMemoryInfo(hProcess)
+            m.maxMem = mem['PeakWorkingSetSize'] / 1024
+
             m.cpuLoad = "%"
+
          elif p.poll() == 2:
             m.setMissing()
          else:
