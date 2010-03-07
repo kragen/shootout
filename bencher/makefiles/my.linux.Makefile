@@ -27,6 +27,12 @@ COPTS := -O3 -fomit-frame-pointer
 %.compiledpython_run: %.compiledpython $(PYTHON)
 	-mv $< $*.py
 	-$(PYTHON) -OO -c "from py_compile import compile; compile('$*.py')"
+	
+
+# (For multiprocessing make sure the extension is .py)
+# %.python_run: %.python
+#	-copy $< $*.py
+
 
 
 ########################################

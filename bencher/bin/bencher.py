@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: bencher.py,v 1.1 2010-03-06 03:37:30 igouy-guest Exp $
+# $Id: bencher.py,v 1.2 2010-03-07 02:52:46 igouy-guest Exp $
 
 """
 Description: bencher does repeated measurements of program
@@ -32,12 +32,13 @@ from contextlib import nested
 from cStringIO import StringIO
 from domain import FileNameParts, LinkNameParts, Record
 from errno import ENOENT, EEXIST
+from filecmp import cmp
 from getopt import getopt, GetoptError
 from gzip import GzipFile
 from logging.handlers import RotatingFileHandler
 from os.path import expanduser, expandvars, normpath, isdir, join, realpath, \
    getmtime, isfile, getsize, split, splitext
-from shutil import copyfile,move, rmtree, copy2
+from shutil import copyfile, move, rmtree, copy2
 from subprocess import call, STDOUT
 from time import strftime, localtime, gmtime, time
 
@@ -114,6 +115,13 @@ testvalues = []
 outputmax = 10240
 affinitymask = None
 
+exes = set()
+makeExeName = 'make'
+ndiffExeName = 'ndiff'
+cmpExeName = 'cmp'
+diffExeName = 'diff'
+
+
 
 # =============================
 # initialize & configure
@@ -187,7 +195,7 @@ def configure(ini):
             elif o in ('logfilemax'):
                logfilemax = parser.getint(s,o)  
             elif o in ('outputmax'):
-               outputmax = parser.getint(s,o) 
+               outputmax = parser.getint(s,o)
             elif o in ('affinitymask'):
                affinitymask = parser.getint(s,o) 
 
@@ -201,7 +209,7 @@ def configure(ini):
 def checkDirectories():
    os.environ['NANO_BIN'] = join( dirs['nano'], 'bin')
 
-   if dirs['dat_sweep'] and not isdir(dirs['dat_sweep']): 
+   if dirs['dat_sweep'] and not isdir(dirs['dat_sweep']):
       if logger: logger.warn('no directory %s', dirs['dat_sweep'])
 
    if dirs['log_sweep'] and not isdir(dirs['log_sweep']): 
@@ -219,7 +227,7 @@ def makeSubDirectoriesFor(dirName):
    def ifNoneMkdir(path,name):
       d = join(path,name)
       if not isdir(d): 
-         os.mkdir(d) 
+         os.mkdir(d)
          if logger: logger.debug('mkdir %s' % d)
       return d
 
@@ -247,6 +255,29 @@ def configureLogger(logfilemax,loggerDir=None):
       logger.setLevel(logging.DEBUG)
 
 
+      
+def checkExes():
+
+   def check(exename):
+      try:
+         with open( nullName, 'w') as df:
+            call([exename],stdout=df,stderr=STDOUT)
+            exes.add(exename)
+      except OSError, (e,err):
+         if e == ENOENT: # No such file or directory
+            if logger: logger.debug('%s program not found', exename)
+
+   check(makeExeName)
+   check(ndiffExeName)
+   check(cmpExeName)
+   check(diffExeName)
+
+
+
+def isexe(exename):
+   return exename in exes
+
+
 
 # =============================
 # clean & filter files
@@ -258,7 +289,7 @@ def clean(d,srcSet):
 
    def cleanLocal(name,localDirName,ext,sweepDir=None,isSymlink=False):
       names = frozenset( [n.__getattribute__(name) for n in srcSet] )
-      
+
       localdir = join(dirs['root'],d,localDirName)
       filelist = os.listdir(localdir) if isdir(localdir) else []
       localNames = frozenset([f for f in os.listdir(localdir) if f.endswith(ext)])
@@ -420,13 +451,17 @@ def callMake(p):
    with open( makeName(), 'w') as mf: 
       mf.write('\nMAKE:\n')
 
-   cmd = 'make -f ' + makefile + ' ' + p.runName
+   cmd = makeExeName + ' -f ' + makefile + ' ' + p.runName
    with open( makeName(), 'a') as mf:
-      startmake = time()
-      call(cmd.split(),stdout=mf,stderr=STDOUT)
-      endmake = time()
-      print >>mf, '%0.2fs to complete and log all make actions' % (endmake - startmake)
-
+      if isexe(makeExeName):
+         startmake = time()
+         call(cmd.split(),stdout=mf,stderr=STDOUT)
+         endmake = time()
+         print >>mf, '%0.2fs to complete and log all make actions' % (endmake - startmake)
+      else:
+         print >>mf, '%s program not found' % (makeExeName)
+         if logger: logger.debug('%s %s - %s program not found', \
+            makeExeName, p.runName, makeExeName)
 
 
 def cmdTemplate(p):
@@ -534,11 +569,13 @@ def cleanTmpdirFor(p,allowed):
    os.chdir(testdir)
    tmpdir = join(testdir,tmpdirName)
 
-   try:
-      rmtree(tmpdir)
-   except OSError, (e,err):
-      if e == ENOENT:
-         if logger: logger.info('%s %s %s',e,err,tmpdir)
+   if isdir(tmpdir):
+      try:
+         rmtree(tmpdir)
+      except OSError, (e,err):
+         if logger: logger.error('%s %s',err,tmpdir)
+         print "Please exit all other programs using " + tmpdir
+         sys.exit(0)
 
    # make sure all build files and crash files are created in tmpdir
    os.mkdir(tmpdir)
@@ -622,22 +659,43 @@ def sizeCompressedSourceCode(p):
 
 
 def checkAndLog(m,outFile,logf):
+
+   def cmpCheck(f1,f2,df):
+      if not cmp(f1,f2):
+         print >>df, '\n %s %s differ\n' % (f1,f2)
+
+
    if m.isOkay():
       # assume outFile has been closed
       argFile = m.argString + _OUT
 
       # diff against expected output file
-      if isfile(argFile): 
+      if isfile(argFile):
          with open( diffName(), 'w') as df:
             try:
                # compare _OUT not outFile so short name will be shown in logf
+
                if ndiff.has_key(testname):
-                  optionkv = ndiff[testname].split()
-                  call(["ndiff",'-quiet',optionkv[0],optionkv[1],_OUT,argFile],stdout=df,stderr=STDOUT)
+                  if isexe(ndiffExeName):
+                     optionkv = ndiff[testname].split()
+                     call([ndiffExeName,'-quiet',optionkv[0],optionkv[1],_OUT,argFile], \
+                        stdout=df,stderr=STDOUT)
+                  elif isexe(diffExeName):
+                     call([diffExeName,_OUT,argFile],stdout=df,stderr=STDOUT)
+                  else:
+                     cmpCheck(_OUT,argFile,df)
+
                elif binarycmp.has_key(testname):
-                  call(["cmp",_OUT,argFile],stdout=df,stderr=STDOUT)
+                  if isexe(cmpExeName):
+                     call([cmpExeName,_OUT,argFile],stdout=df,stderr=STDOUT)
+                  else:
+                     cmpCheck(_OUT,argFile,df)
+
                else:
-                  call(["diff",_OUT,argFile],stdout=df,stderr=STDOUT)
+                  if isexe(diffExeName):
+                     call([diffExeName,_OUT,argFile],stdout=df,stderr=STDOUT)
+                  else:
+                     cmpCheck(_OUT,argFile,df)
 
             except OSError, (e,err):
                if e == ENOENT: # No such file or directory
@@ -705,7 +763,7 @@ def measureCheckAndLog(p,t,ms):
                   # append diff or ndiff or cmp output to log
                   if m.hasBadOutput():
                      with open(diffName(), 'r') as df:
-                        logf.write( df.read() )               
+                        logf.write( df.read() )
 
                   # append program output to log
                   if binarycmp.has_key(testname):
@@ -1027,24 +1085,30 @@ def force(items):
 
    for each in dirsToForce:
       d = join(dirs['root'],each,datdirName)
-      if logger: logger.info('remove %s/*.dat',d)
-      fs = fnmatch.filter( os.listdir(d), '*.*' )
-      for f in fs:
-         try:
-            os.remove( join(d,f) )
-         except OSError, (e,err):
-            if logger: logger.error('%s %s %s %s',e,err,d,f)
-
-   for each in onlydirs:
-      d = join(dirs['root'],each,datdirName)
-      for i in impsToForce:
-         fs = fnmatch.filter( os.listdir(d), '*.' + i + '_dat' )
+      if not isdir(d):
+         if logger: logger.info('no %s directory - no *.dat to remove',d)
+      else:
+         if logger: logger.info('remove %s/*.dat',d)
+         fs = fnmatch.filter( os.listdir(d), '*.*' )
          for f in fs:
             try:
                os.remove( join(d,f) )
-               if logger: logger.info('remove %s %s',d,f)
             except OSError, (e,err):
                if logger: logger.error('%s %s %s %s',e,err,d,f)
+
+   for each in onlydirs:
+      d = join(dirs['root'],each,datdirName)
+      if not isdir(d):
+         if logger: logger.info('no %s directory - no *.dat to remove',d)
+      else:
+         for i in impsToForce:
+            fs = fnmatch.filter( os.listdir(d), '*.' + i + '_dat' )
+            for f in fs:
+               try:
+                  os.remove( join(d,f) )
+                  if logger: logger.info('remove %s %s',d,f)
+               except OSError, (e,err):
+                  if logger: logger.error('%s %s %s %s',e,err,d,f)
 
 
 
@@ -1069,10 +1133,12 @@ def main():
             print 'please set [dirs] root: in *.ini'
             sys.exit(0)
 
+         checkExes()
+
          if remeasure:
             force(remeasure)
 
-         print planDesc 
+         print planDesc
          benchmarksGame(ini)
 
       else:

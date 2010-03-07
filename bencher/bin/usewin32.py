@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: usewin32.py,v 1.1 2010-03-06 03:37:33 igouy-guest Exp $
+# $Id: usewin32.py,v 1.2 2010-03-07 02:52:46 igouy-guest Exp $
 
 from planBwin32 import measure
 planDesc = 'measure cpu & elapsed time & memory & cpu load'

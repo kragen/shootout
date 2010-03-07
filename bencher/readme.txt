@@ -77,103 +77,134 @@
   [ python bin\bencher.py --conf makefiles\my.win32.ini ]
 
     measure cpu & elapsed time & memory & cpu load
-    Fri 18:01:21 .....OK binarytrees.python [4]
-    Fri 18:01:30 .....OK binarytrees.compiledpython [3]
-    Fri 18:01:41 .OK regexdna.python [2]
-    Fri 18:01:41 .OK regexdna.compiledpython [1]
+    Sat 18:06:02 .....OK nbody.python [4]
+    Sat 18:06:06 .MAKE ERROR nbody.compiledpython [3]
+    Sat 18:06:06 .OK regexdna.python [2]
+    Sat 18:06:06 .MAKE ERROR regexdna.compiledpython [1]
 
  4) look through tmp/bencher.log
 
   [ look through tmp\bencher.log ]
 
-    2010-03-05 18:01:21,430 DEBUG mkdir /home/dunham/bencher/tmp/binarytrees
-    2010-03-05 18:01:21,430 DEBUG mkdir /home/dunham/bencher/tmp/binarytrees/log
-    2010-03-05 18:01:21,430 DEBUG mkdir /home/dunham/bencher/tmp/binarytrees/dat
-    2010-03-05 18:01:21,430 DEBUG mkdir /home/dunham/bencher/tmp/binarytrees/code
-    2010-03-05 18:01:21,431 DEBUG mkdir /home/dunham/bencher/tmp/regexdna/log
-    2010-03-05 18:01:21,431 DEBUG mkdir /home/dunham/bencher/tmp/regexdna/dat
-    2010-03-05 18:01:21,431 DEBUG mkdir /home/dunham/bencher/tmp/regexdna/code
-    2010-03-05 18:01:21,431 INFO 2 No such file or directory /home/dunham/bencher/tmp/binarytrees/tmp
-    2010-03-05 18:01:30,732 INFO .....OK binarytrees.python [4]
-    2010-03-05 18:01:41,046 INFO .....OK binarytrees.compiledpython [3]
-    2010-03-05 18:01:41,047 INFO 2 No such file or directory /home/dunham/bencher/tmp/regexdna/tmp
-    2010-03-05 18:01:41,122 INFO .OK regexdna.python [2]
-    2010-03-05 18:01:41,300 INFO .OK regexdna.compiledpython [1]
-    2010-03-05 18:01:41,300 INFO mkcsv building csv files from binarytrees/dat
-    2010-03-05 18:01:41,301 INFO mkcsv building csv files from regexdna/dat
-    2010-03-05 18:01:41,302 INFO copy *.csv files to /home/dunham/bencher/summary
-    2010-03-05 18:01:41,302 INFO copy *.log files to /home/dunham/bencher/run_logs
+    2010-03-06 18:06:02,657 DEBUG make program not found
+    2010-03-06 18:06:02,657 DEBUG ndiff program not found
+    2010-03-06 18:06:02,657 DEBUG cmp program not found
+    2010-03-06 18:06:02,657 DEBUG diff program not found
+    2010-03-06 18:06:02,657 DEBUG mkdir c:\bencher\tmp\nbody
+    2010-03-06 18:06:02,657 DEBUG mkdir c:\bencher\tmp\nbody\log
+    2010-03-06 18:06:02,657 DEBUG mkdir c:\bencher\tmp\nbody\dat
+    2010-03-06 18:06:02,657 DEBUG mkdir c:\bencher\tmp\nbody\code
+    2010-03-06 18:06:02,671 DEBUG mkdir c:\bencher\tmp\regexdna\log
+    2010-03-06 18:06:02,671 DEBUG mkdir c:\bencher\tmp\regexdna\dat
+    2010-03-06 18:06:02,671 DEBUG mkdir c:\bencher\tmp\regexdna\code
+    2010-03-06 18:06:06,088 INFO .....OK nbody.python [4]
+    2010-03-06 18:06:06,088 DEBUG make nbody.compiledpython_run - make program not found
+    2010-03-06 18:06:06,119 INFO .MAKE ERROR nbody.compiledpython [3]
+    2010-03-06 18:06:06,213 INFO .OK regexdna.python [2]
+    2010-03-06 18:06:06,213 DEBUG make regexdna.compiledpython_run - make program not found
+    2010-03-06 18:06:06,259 INFO .MAKE ERROR regexdna.compiledpython [1]
+    2010-03-06 18:06:06,259 INFO mkcsv building csv files from nbody\dat
+    2010-03-06 18:06:06,259 INFO mkcsv building csv files from regexdna\dat
+    2010-03-06 18:06:06,259 INFO copy *.csv files to c:\bencher\summary
+    2010-03-06 18:06:06,259 INFO copy *.log files to c:\bencher\run_logs
 
  5) look through summary/measurements.csv
 
   [ look through summary\measurements.csv ]
 
     name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s)
-    binarytrees,compiledpython,1,8,0,0.180,0,0,20% 0% 7% 100%,0.147
-    binarytrees,compiledpython,1,10,0,0.320,0,0,40% 5% 30% 86%,0.204
-    binarytrees,compiledpython,1,12,0,1.120,33848,0,64% 50% 70% 63%,0.451
-    binarytrees,compiledpython,1,14,0,5.020,47308,0,79% 80% 71% 81%,1.581
-    binarytrees,compiledpython,1,16,0,25.150,109096,0,89% 77% 69% 86%,7.818
-    binarytrees,python,1,8,0,0.080,0,0,11% 0% 13% 75%,0.073
-    binarytrees,python,1,10,0,0.280,0,0,64% 36% 55% 100%,0.109
-    binarytrees,python,1,12,0,0.970,23040,0,73% 85% 22% 73%,0.388
-    binarytrees,python,1,14,0,4.950,46916,0,88% 87% 86% 74%,1.469
-    binarytrees,python,1,16,0,25.360,108288,0,93% 83% 82% 89%,7.243
-    regexdna,python,1,10000,0,0.070,0,0,0% 0% 100% 0%,0.071
-    regexdna,compiledpython,1,10000,0,0.100,0,0,100% 0% 0% 0%,0.093
+    nbody,python,1,10000,0,0.265,5572,0,%,0.258
+    nbody,python,1,20000,0,0.468,5572,0,%,0.463
+    nbody,python,1,30000,0,0.671,5572,0,%,0.677
+    nbody,python,1,40000,0,0.889,5580,0,%,0.892
+    nbody,python,1,50000,0,1.092,5572,0,%,1.106
+    regexdna,python,1,10000,0,0.094,5932,0,%,0.092
+
+
+
+ FIX THE MAKE PROBLEM AND DO_OVER
+
+ 3) python bin/bencher.py --conf makefiles/my.linux.ini compiledpython 
+
+  [ python bin\bencher.py --conf makefiles\my.win32.ini compiledpython ]
+
+    measure cpu & elapsed time & memory & cpu load
+    Sat 18:11:49 .....OK nbody.compiledpython [2]
+    Sat 18:11:53 .OK regexdna.compiledpython [1]
+
+
+ 4) look through tmp/bencher.log
+
+  [ look through tmp\bencher.log ]
+
+    2010-03-06 18:11:49,553 DEBUG ndiff program not found
+    2010-03-06 18:11:49,553 DEBUG cmp program not found
+    2010-03-06 18:11:49,553 DEBUG diff program not found
+    2010-03-06 18:11:49,553 INFO remove c:\bencher\tmp\regexdna\dat regexdna.1.compiledpython_dat
+    2010-03-06 18:11:49,553 INFO remove c:\bencher\tmp\nbody\dat nbody.1.compiledpython_dat
+    2010-03-06 18:11:53,328 INFO .....OK nbody.compiledpython [2]
+    2010-03-06 18:11:53,516 INFO .OK regexdna.compiledpython [1]
+    2010-03-06 18:11:53,516 INFO mkcsv building csv files from nbody\dat
+    2010-03-06 18:11:53,532 INFO mkcsv building csv files from regexdna\dat
+    2010-03-06 18:11:53,532 INFO copy *.csv files to c:\bencher\summary
+    2010-03-06 18:11:53,532 INFO copy *.log files to c:\bencher\run_logs
+
+
+ 5) look through summary/measurements.csv
+
+  [ look through summary\measurements.csv ]
+
+    name,lang,id,n,size(B),cpu(s),mem(KB),status,load,elapsed(s)
+    nbody,compiledpython,1,10000,0,0.250,5436,0,%,0.264
+    nbody,compiledpython,1,20000,0,0.484,5436,0,%,0.495
+    nbody,compiledpython,1,30000,0,0.733,5436,0,%,0.725
+    nbody,compiledpython,1,40000,0,0.952,5440,0,%,0.956
+    nbody,compiledpython,1,50000,0,1.186,5432,0,%,1.187
+    nbody,python,1,10000,0,0.265,5572,0,%,0.258
+    nbody,python,1,20000,0,0.468,5572,0,%,0.463
+    nbody,python,1,30000,0,0.671,5572,0,%,0.677
+    nbody,python,1,40000,0,0.889,5580,0,%,0.892
+    nbody,python,1,50000,0,1.092,5572,0,%,1.106
+    regexdna,compiledpython,1,10000,0,0.094,6052,0,%,0.091
+    regexdna,python,1,10000,0,0.094,5932,0,%,0.092
 
 
 
  LINUX FORCE DO-OVER [ WIN32 FORCE DO-OVER ]
-
- 3) python bin/bencher.py --conf makefiles/my.linux.ini python
-
-  [ python bin\bencher.py --conf makefiles\my.win32.ini python ]
-
-    measure cpu & elapsed time & memory & cpu load
-    Fri 18:04:15 .....OK binarytrees.python [2]
-    Fri 18:04:25 .OK regexdna.python [1]
-
-
-
- LINUX FORCE DO-OVER AGAIN [ WIN32 FORCE DO-OVER AGAIN ]
 
  3) python bin/bencher.py --conf makefiles/my.linux.ini python compiledpython
 
   [ python bin\bencher.py --conf makefiles\my.win32.ini python compiledpython ]
 
     measure cpu & elapsed time & memory & cpu load
-    Fri 18:04:37 .....OK binarytrees.python [4]
-    Fri 18:04:48 .....OK binarytrees.compiledpython [3]
-    Fri 18:04:58 .OK regexdna.python [2]
-    Fri 18:04:58 .OK regexdna.compiledpython [1]
+    Sat 18:16:26 .....OK nbody.python [4]
+    Sat 18:16:29 .....OK nbody.compiledpython [3]
+    Sat 18:16:33 .OK regexdna.python [2]
+    Sat 18:16:33 .OK regexdna.compiledpython [1]
 
 
-
- AND AGAIN [ AND AGAIN ]
+ LINUX FORCE DO-OVER AGAIN [ WIN32 FORCE DO-OVER AGAIN ]
 
  3) python bin/bencher.py --conf makefiles/my.linux.ini python regexdna
 
   [ python bin\bencher.py --conf makefiles\my.win32.ini python regexdna ]
 
     measure cpu & elapsed time & memory & cpu load
-    Fri 18:05:07 .....OK binarytrees.python [3]
-    Fri 18:05:17 .OK regexdna.python [2]
-    Fri 18:05:17 .OK regexdna.compiledpython [1]
-
+    Sat 18:17:45 .....OK nbody.python [3]
+    Sat 18:17:48 .OK regexdna.python [2]
+    Sat 18:17:48 .OK regexdna.compiledpython [1]
 
 
  AND AGAIN [ AND AGAIN ]
 
- 3) python bin/bencher.py --conf makefiles/my.linux.ini binarytrees python
+ 3) python bin/bencher.py --conf makefiles/my.linux.ini nbody python
 
-  [ python bin\bencher.py --conf makefiles\my.win32.ini binarytrees python ]
+  [ python bin\bencher.py --conf makefiles\my.win32.ini nbody python ]
 
     measure cpu & elapsed time & memory & cpu load
-    Fri 18:09:41 .....OK binarytrees.python [3]
-    Fri 18:09:52 .....OK binarytrees.compiledpython [2]
-    Fri 18:10:02 .OK regexdna.python [1]
-
+    Sat 18:18:31 .....OK nbody.python [3]
+    Sat 18:18:35 .....OK nbody.compiledpython [2]
+    Sat 18:18:39 .OK regexdna.python [1]
 
 
  OTHERWISE [ OTHERWISE ]
@@ -207,8 +238,7 @@
   [ python bin\bencher.py --conf makefiles\my.win32.ini ]
 
     measure cpu & elapsed time & memory & cpu load
-    Fri 18:30:35 .OK regexdna.python [1]
-
+    Sat 18:21:56 .OK regexdna.python [1]
 
 
  BASIC ASSUMPTIONS
@@ -218,15 +248,15 @@
  by file extension, for example:
 
   programs
-     binarytrees                     subdirectory
-        binarytrees.python           program source file
-        binarytrees.gcc              program source file
-        binarytrees.gcc-2.gcc        program source file
+     nbody			subdirectory
+        nbody.python		program source file
+        nbody.gcc		program source file
+        nbody.gcc-2.gcc		program source file
 
-     regexdna	                     subdirectory
-        regexdna.python              program source file
-        regexdna.gcc                 program source file
-        regexdna.perl-2.perl         program source file
+     regexdna			subdirectory
+        regexdna.python		program source file
+        regexdna.gcc		program source file
+        regexdna.perl-2.perl	program source file
 
 
  For each source code subdirectory in programs a matching directory 

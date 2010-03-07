@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planBwin32.py,v 1.2 2010-03-06 17:05:42 igouy-guest Exp $
+# $Id: planBwin32.py,v 1.3 2010-03-07 02:52:46 igouy-guest Exp $
 
 """
 measure with win32 but not CPU affinity
@@ -89,9 +89,8 @@ def measure(arg,commandline,delay,maxtime,
 
 
 
-      except OSError:
+      except (OSError,ValueError), (e,err):
          if logger: logger.error('%s %s',e,err)
-         p.terminate()
          m.setError()
 
       finally:

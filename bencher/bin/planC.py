@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planC.py,v 1.1 2010-03-06 03:37:33 igouy-guest Exp $
+# $Id: planC.py,v 1.2 2010-03-07 02:52:46 igouy-guest Exp $
 
 """
 measure without libgtop2
