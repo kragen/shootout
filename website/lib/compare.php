@@ -179,8 +179,19 @@ else {
       if (ereg("^[a-z0-9]+$",$X) && (isset($Langs[$X]) && isset($Incl[$X]))){ $L2 = $X; }
    }
 }
-if (!isset($L2)){
+if (!isset($L2) || $L2 == $L){
    $L2 = $Langs[$L][LANG_COMPARE];
+   
+   // just use ANY included language for comparison
+   // rather than have no comparison
+
+   if (!isset($Incl[$L2])){
+      foreach(array_keys($Langs) as $k){
+         if ($k != $L && isset($Incl[$k])){
+            $L2 = $k;
+         }
+      }
+   }
 }
 
 

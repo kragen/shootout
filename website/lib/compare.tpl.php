@@ -173,7 +173,13 @@ foreach($sorted as $k => $v){
          if ($name=='startup'){ $kb = PF(1.0); }
          else { $kb = PF($v[DATA_MEMORY]); }
       }
-      printf('%s%s%s</tr>', PF($v[DATA_TIME]), $kb, PF($v[DATA_GZ]));
+      if ($v[DATA_GZ]==NO_VALUE){
+         $gz = '<td class="num2">?</td>';
+      } else {
+         $gz = PF($v[DATA_GZ]);
+      }
+      
+      printf('%s%s%s</tr>', PF($v[DATA_TIME]), $kb, $gz);
    }
 }
 ?>
