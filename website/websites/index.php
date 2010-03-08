@@ -159,7 +159,7 @@ $langs = array(
    array('fpascal','Free Pascal','imperative programming plus objects','pascal',$allsites),
    array('ocaml','OCaml','modular type-safe strict functional programming plus objects','ocaml',$allsites),
    array('oz','Mozart/Oz','multi-multi-multi-paradigm distributed programming','oz',$basesite),
-   array('luajit','LuaJIT','jit compiler fully compatible with lua 5.1','luajit',$basesite),
+   array('luajit','LuaJIT','jit compiler fully compatible with lua 5.1','luajit',$onecoresites),
    array('lua','Lua','associative arrays for extensible embedded scripting','lua',$onecoresites),
    array('sbcl','Lisp SBCL','pioneering s-expression oriented programming','lisp',$allsites),
    array('v8','JavaScript V8','web-browser embedded scripting','javascript',$onecoresites),

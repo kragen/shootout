@@ -1,0 +1,224 @@
+<span class="hl slc">-- The Computer Language Shootout</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- contributed by Mike Pall</span>
+
+<span class="hl slc">-- Generate a decision tree based solver for the meteor puzzle.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">generatesolver</span><span class="hl sym">(</span>countinit<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> pairs<span class="hl sym">,</span> ipairs<span class="hl sym">,</span> <span class="hl kwb">format</span> <span class="hl sym">=</span> pairs<span class="hl sym">,</span> ipairs<span class="hl sym">,</span> <span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwb">format</span>
+  <span class="hl kwa">local</span> byte<span class="hl sym">,</span> <span class="hl kwb">min</span><span class="hl sym">,</span> <span class="hl kwb">sort</span> <span class="hl sym">=</span> <span class="hl kwb">string</span><span class="hl sym">.</span>byte<span class="hl sym">,</span> math<span class="hl sym">.</span><span class="hl kwb">min</span><span class="hl sym">,</span> <span class="hl kwb">table</span><span class="hl sym">.</span><span class="hl kwb">sort</span>
+
+  <span class="hl slc">-- Cached position to distance lookup.</span>
+  <span class="hl kwa">local</span> dist <span class="hl sym">=</span> <span class="hl kwd">setmetatable</span><span class="hl sym">({}, {</span> __index <span class="hl sym">=</span> <span class="hl kwa">function</span><span class="hl sym">(</span>t<span class="hl sym">,</span> xy<span class="hl sym">)</span>
+    <span class="hl kwa">local</span> x <span class="hl sym">=</span> xy<span class="hl sym">%</span><span class="hl num">10</span><span class="hl sym">;</span> <span class="hl kwa">local</span> y <span class="hl sym">= (</span>xy<span class="hl sym">-</span>x<span class="hl sym">)/</span><span class="hl num">10</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>x<span class="hl sym">+</span>y<span class="hl sym">)%</span><span class="hl num">2</span> <span class="hl sym">==</span> <span class="hl num">1</span> <span class="hl kwa">then</span> y <span class="hl sym">=</span> y <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> x <span class="hl sym">=</span> <span class="hl num">10</span> <span class="hl sym">-</span> x <span class="hl kwa">end</span>
+    <span class="hl kwa">local</span> d <span class="hl sym">=</span> xy <span class="hl sym">+</span> <span class="hl num">256</span><span class="hl sym">*</span>x<span class="hl sym">*</span>x <span class="hl sym">+</span> <span class="hl num">1024</span><span class="hl sym">*</span>y<span class="hl sym">*</span>y<span class="hl sym">;</span> t<span class="hl sym">[</span>xy<span class="hl sym">] =</span> d<span class="hl sym">;</span> <span class="hl kwa">return</span> d
+  <span class="hl kwa">end</span><span class="hl sym">})</span>
+
+  <span class="hl slc">-- Lookup table to validate a cell and to find its successor.</span>
+  <span class="hl kwa">local</span> ok <span class="hl sym">= {}</span>
+  <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">150</span> <span class="hl kwa">do</span> ok<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">false end</span>
+  <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">99</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">local</span> x <span class="hl sym">=</span> i<span class="hl sym">%</span><span class="hl num">10</span>
+    <span class="hl kwa">if</span> <span class="hl sym">((</span>i<span class="hl sym">-</span>x<span class="hl sym">)/</span><span class="hl num">10</span><span class="hl sym">+</span>x<span class="hl sym">)%</span><span class="hl num">2</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+      ok<span class="hl sym">[</span>i<span class="hl sym">] =</span> i <span class="hl sym">+ (</span>ok<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]</span> <span class="hl kwa">and</span> <span class="hl num">1</span> <span class="hl kwa">or</span> <span class="hl sym">(</span>ok<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">]</span> <span class="hl kwa">and</span> <span class="hl num">2</span> <span class="hl kwa">or</span> <span class="hl num">3</span><span class="hl sym">))</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  <span class="hl slc">-- Temporary board state for the island checks.</span>
+  <span class="hl kwa">local</span> islands<span class="hl sym">,</span> slide <span class="hl sym">= {}, {</span><span class="hl num">20</span><span class="hl sym">,</span><span class="hl num">22</span><span class="hl sym">,</span><span class="hl num">24</span><span class="hl sym">,</span><span class="hl num">26</span><span class="hl sym">,</span><span class="hl num">28</span><span class="hl sym">,</span><span class="hl num">31</span><span class="hl sym">,</span><span class="hl num">33</span><span class="hl sym">,</span><span class="hl num">35</span><span class="hl sym">,</span><span class="hl num">37</span><span class="hl sym">,</span><span class="hl num">39</span><span class="hl sym">}</span>
+  <span class="hl kwa">local</span> bbc<span class="hl sym">,</span> bb <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">, {}</span>
+  <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">19</span> <span class="hl kwa">do</span> bb<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> bb<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">80</span><span class="hl sym">] =</span> <span class="hl kwa">false end</span>
+  <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">20</span><span class="hl sym">,</span><span class="hl num">79</span> <span class="hl kwa">do</span> bb<span class="hl sym">[</span>i<span class="hl sym">] =</span> ok<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">end</span>
+
+  <span class="hl slc">-- Recursive flood fill algorithm.</span>
+  <span class="hl kwa">local function</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> p<span class="hl sym">)</span>
+    bbc <span class="hl sym">=</span> bbc <span class="hl sym">+</span> <span class="hl num">1</span>
+    <span class="hl kwa">local</span> n <span class="hl sym">=</span> p<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwa">if</span> bb<span class="hl sym">[</span>n<span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span>n<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> n<span class="hl sym">)</span> <span class="hl kwa">end</span>
+    n <span class="hl sym">=</span> p<span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwa">if</span> bb<span class="hl sym">[</span>n<span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span>n<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> n<span class="hl sym">)</span> <span class="hl kwa">end</span>
+    n <span class="hl sym">=</span> p<span class="hl sym">-</span><span class="hl num">9</span><span class="hl sym">;</span> <span class="hl kwa">if</span> bb<span class="hl sym">[</span>n<span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span>n<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> n<span class="hl sym">)</span> <span class="hl kwa">end</span>
+    n <span class="hl sym">=</span> p<span class="hl sym">-</span><span class="hl num">11</span><span class="hl sym">;</span> <span class="hl kwa">if</span> bb<span class="hl sym">[</span>n<span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span>n<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> n<span class="hl sym">)</span> <span class="hl kwa">end</span>
+    n <span class="hl sym">=</span> p<span class="hl sym">+</span><span class="hl num">9</span><span class="hl sym">;</span> <span class="hl kwa">if</span> bb<span class="hl sym">[</span>n<span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span>n<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> n<span class="hl sym">)</span> <span class="hl kwa">end</span>
+    n <span class="hl sym">=</span> p<span class="hl sym">+</span><span class="hl num">11</span><span class="hl sym">;</span> <span class="hl kwa">if</span> bb<span class="hl sym">[</span>n<span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span>n<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> n<span class="hl sym">)</span> <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  <span class="hl slc">-- Generate pruned, sliding decision trees.</span>
+  <span class="hl kwa">local</span> dtrees <span class="hl sym">= {{}, {}, {}, {}, {}, {}, {}, {}, {}, {}}</span>
+  <span class="hl kwa">local</span> rot <span class="hl sym">= {</span> <span class="hl kwa">nil</span><span class="hl sym">, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} }</span>
+  <span class="hl kwa">for</span> k<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">9</span> <span class="hl kwa">do</span>
+    <span class="hl slc">-- Generate 10 initial pieces from line noise. :-)</span>
+    <span class="hl kwa">local</span> t <span class="hl sym">= {</span> <span class="hl num">60</span><span class="hl sym">,</span> <span class="hl num">62</span><span class="hl sym">,</span> <span class="hl kwd">byte</span><span class="hl sym">(</span><span class="hl str">&quot;&#64;BMBIK&#64;KT&#64;GPIKR&#64;IKIKT&#64;GK&#64;KM&#64;BG&quot;</span><span class="hl sym">,</span> k<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> k<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">+</span><span class="hl num">3</span><span class="hl sym">) }</span>
+    rot<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] =</span> t
+    <span class="hl kwa">for</span> i<span class="hl sym">,</span>xy <span class="hl kwa">in</span> <span class="hl kwd">ipairs</span><span class="hl sym">(</span>t<span class="hl sym">)</span> <span class="hl kwa">do</span>
+      <span class="hl kwa">local</span> x <span class="hl sym">=</span> xy<span class="hl sym">%</span><span class="hl num">10</span><span class="hl sym">;</span> <span class="hl kwa">local</span> y <span class="hl sym">= (</span>xy<span class="hl sym">-</span>x<span class="hl sym">-</span><span class="hl num">60</span><span class="hl sym">)/</span><span class="hl num">10</span>
+      <span class="hl slc">-- Add 11 more variations by rotating and flipping.</span>
+      <span class="hl kwa">for</span> j<span class="hl sym">=</span><span class="hl num">2</span><span class="hl sym">,</span><span class="hl num">12</span> <span class="hl kwa">do</span>
+	<span class="hl kwa">if</span> j <span class="hl sym">==</span> <span class="hl num">7</span> <span class="hl kwa">then</span> y <span class="hl sym">= -</span>y <span class="hl kwa">else</span> x<span class="hl sym">,</span>y <span class="hl sym">= (</span>x<span class="hl sym">+</span><span class="hl num">3</span><span class="hl sym">*</span>y<span class="hl sym">)/</span><span class="hl num">2</span><span class="hl sym">, (</span>y<span class="hl sym">-</span>x<span class="hl sym">)/</span><span class="hl num">2</span> <span class="hl kwa">end</span>
+	rot<span class="hl sym">[</span>j<span class="hl sym">][</span>i<span class="hl sym">] =</span> x<span class="hl sym">+</span><span class="hl num">10</span><span class="hl sym">*</span>y
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">for</span> r<span class="hl sym">,</span>v <span class="hl kwa">in</span> <span class="hl kwd">ipairs</span><span class="hl sym">(</span>rot<span class="hl sym">)</span> <span class="hl kwa">do</span>
+      <span class="hl slc">-- Exploit symmetry and leave out half of the orientations of one piece.</span>
+      <span class="hl slc">-- The selected piece gives the best reduction of the solution space.</span>
+      <span class="hl kwa">if</span> k <span class="hl sym">~=</span> <span class="hl num">3</span> <span class="hl kwa">or</span> r<span class="hl sym">%</span><span class="hl num">2</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+	<span class="hl slc">-- Normalize to origin, add distance, sort by distance from origin.</span>
+	<span class="hl kwa">local</span> m <span class="hl sym">=</span> <span class="hl kwb">min</span><span class="hl sym">(</span>v<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> v<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> v<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span> v<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">],</span> v<span class="hl sym">[</span><span class="hl num">5</span><span class="hl sym">])</span>
+	<span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">5</span> <span class="hl kwa">do</span> v<span class="hl sym">[</span>i<span class="hl sym">] =</span> dist<span class="hl sym">[</span>v<span class="hl sym">[</span>i<span class="hl sym">]-</span>m<span class="hl sym">]</span> <span class="hl kwa">end</span>
+	<span class="hl kwb">sort</span><span class="hl sym">(</span>v<span class="hl sym">)</span>
+	<span class="hl kwa">local</span> v2<span class="hl sym">,</span> v3<span class="hl sym">,</span> v4<span class="hl sym">,</span> v5 <span class="hl sym">=</span> v<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">]%</span><span class="hl num">256</span><span class="hl sym">,</span> v<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">]%</span><span class="hl num">256</span><span class="hl sym">,</span> v<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">]%</span><span class="hl num">256</span><span class="hl sym">,</span> v<span class="hl sym">[</span><span class="hl num">5</span><span class="hl sym">]%</span><span class="hl num">256</span>
+	<span class="hl slc">-- Slide the piece across 2 rows, prune the tree, check for islands.</span>
+	<span class="hl kwa">for</span> j<span class="hl sym">,</span>p <span class="hl kwa">in</span> <span class="hl kwd">ipairs</span><span class="hl sym">(</span>slide<span class="hl sym">)</span> <span class="hl kwa">do</span>
+	  bb<span class="hl sym">[</span>p<span class="hl sym">] =</span> <span class="hl kwa">false</span>
+	  <span class="hl kwa">if</span> ok<span class="hl sym">[</span>p<span class="hl sym">+</span>v2<span class="hl sym">]</span> <span class="hl kwa">and</span> ok<span class="hl sym">[</span>p<span class="hl sym">+</span>v3<span class="hl sym">]</span> <span class="hl kwa">and</span> ok<span class="hl sym">[</span>p<span class="hl sym">+</span>v4<span class="hl sym">]</span> <span class="hl kwa">and</span> ok<span class="hl sym">[</span>p<span class="hl sym">+</span>v5<span class="hl sym">]</span> <span class="hl kwa">then</span> <span class="hl slc">-- Prune.</span>
+	    <span class="hl kwa">for</span> i<span class="hl sym">=</span>p<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">79</span> <span class="hl kwa">do</span> bb<span class="hl sym">[</span>i<span class="hl sym">] =</span> ok<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">end</span> <span class="hl slc">-- Clear remaining board.</span>
+	    bb<span class="hl sym">[</span>p<span class="hl sym">+</span>v2<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> bb<span class="hl sym">[</span>p<span class="hl sym">+</span>v3<span class="hl sym">] =</span> <span class="hl kwa">false</span> <span class="hl slc">-- Add piece.</span>
+	    bb<span class="hl sym">[</span>p<span class="hl sym">+</span>v4<span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> bb<span class="hl sym">[</span>p<span class="hl sym">+</span>v5<span class="hl sym">] =</span> <span class="hl kwa">false</span>
+	    bbc <span class="hl sym">=</span> j <span class="hl slc">-- Flood fill and count the filled positions.</span>
+	    <span class="hl kwa">if</span> bb<span class="hl sym">[</span><span class="hl num">71</span><span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span><span class="hl num">71</span><span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> <span class="hl num">71</span><span class="hl sym">)</span> <span class="hl kwa">end</span> <span class="hl slc">-- Lower left.</span>
+	    <span class="hl kwa">if</span> bb<span class="hl sym">[</span><span class="hl num">79</span><span class="hl sym">]</span> <span class="hl kwa">then</span> bb<span class="hl sym">[</span><span class="hl num">79</span><span class="hl sym">] =</span> <span class="hl kwa">false</span><span class="hl sym">;</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> <span class="hl num">79</span><span class="hl sym">)</span> <span class="hl kwa">end</span> <span class="hl slc">-- Lower right.</span>
+	    <span class="hl kwa">local</span> di <span class="hl sym">=</span> <span class="hl num">0</span>
+	    <span class="hl kwa">if</span> bbc <span class="hl sym">&lt;</span> <span class="hl num">22</span> <span class="hl kwa">then</span> bbc <span class="hl sym">=</span> <span class="hl num">26</span>
+	    <span class="hl kwa">elseif</span> bbc <span class="hl sym">&lt;</span> <span class="hl num">26</span> <span class="hl kwa">then</span> <span class="hl slc">-- Island found, locate it, fill from above.</span>
+	      <span class="hl kwa">for</span> i<span class="hl sym">=</span>p<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">,</span><span class="hl num">79</span> <span class="hl kwa">do if</span> bb<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">then</span> di <span class="hl sym">=</span> i<span class="hl sym">-</span>p<span class="hl sym">;</span> <span class="hl kwa">break end end</span>
+	      <span class="hl kwa">for</span> i<span class="hl sym">=</span>p<span class="hl sym">-</span><span class="hl num">9</span><span class="hl sym">,</span>p<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do if</span> ok<span class="hl sym">[</span>i<span class="hl sym">]</span> <span class="hl kwa">then</span> <span class="hl kwd">fill</span><span class="hl sym">(</span>bb<span class="hl sym">,</span> i<span class="hl sym">)</span> bbc <span class="hl sym">=</span> bbc <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">end end</span>
+	    <span class="hl kwa">end</span>
+	    <span class="hl kwa">if</span> bbc <span class="hl sym">==</span> <span class="hl num">26</span> <span class="hl kwa">then</span> <span class="hl slc">-- Prune boards with static islands.</span>
+	      <span class="hl kwa">local</span> tb <span class="hl sym">=</span> dtrees<span class="hl sym">[</span>j<span class="hl sym">]</span> <span class="hl slc">-- Build decision tree in distance order.</span>
+	      <span class="hl kwa">local</span> ta <span class="hl sym">=</span> tb<span class="hl sym">[</span>v2<span class="hl sym">];</span> <span class="hl kwa">if not</span> ta <span class="hl kwa">then</span> ta <span class="hl sym">= {};</span> tb<span class="hl sym">[</span>v2<span class="hl sym">] =</span> ta <span class="hl kwa">end</span>
+	      tb <span class="hl sym">=</span> ta<span class="hl sym">[</span>v3<span class="hl sym">];</span> <span class="hl kwa">if not</span> tb <span class="hl kwa">then</span> tb <span class="hl sym">= {};</span> ta<span class="hl sym">[</span>v3<span class="hl sym">] =</span> tb <span class="hl kwa">end</span>
+	      ta <span class="hl sym">=</span> tb<span class="hl sym">[</span>v4<span class="hl sym">];</span> <span class="hl kwa">if not</span> ta <span class="hl kwa">then</span> ta <span class="hl sym">= {};</span> tb<span class="hl sym">[</span>v4<span class="hl sym">] =</span> ta<span class="hl sym">;</span> islands<span class="hl sym">[</span>ta<span class="hl sym">] =</span> di
+	      <span class="hl kwa">elseif</span> islands<span class="hl sym">[</span>ta<span class="hl sym">] ~=</span> di <span class="hl kwa">then</span> islands<span class="hl sym">[</span>ta<span class="hl sym">] =</span> <span class="hl num">0</span> <span class="hl kwa">end</span>
+	      ta<span class="hl sym">[</span>v5<span class="hl sym">] =</span> di<span class="hl sym">*</span><span class="hl num">10</span><span class="hl sym">+</span>k <span class="hl slc">-- Leaves hold island check and piece number.</span>
+	    <span class="hl kwa">end</span>
+	  <span class="hl kwa">end</span>
+	<span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  <span class="hl kwa">local</span> s <span class="hl sym">=</span> <span class="hl str">&quot;local u0,u1,u2,u3,u4,u5,u6,u7,u8,u9&quot;</span> <span class="hl slc">-- Piece use flags.</span>
+  <span class="hl kwa">for</span> p<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">99</span> <span class="hl kwa">do if</span> ok<span class="hl sym">[</span>p<span class="hl sym">]</span> <span class="hl kwa">then</span> s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;,b&quot;</span><span class="hl sym">..</span>p <span class="hl kwa">end end</span> <span class="hl slc">-- Board cells.</span>
+  s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">..[[</span>
+<span class="hl kwa">local</span> countinit <span class="hl sym">= ...</span>
+<span class="hl kwa">local</span> count <span class="hl sym">=</span> countinit
+<span class="hl kwa">local</span> bmin<span class="hl sym">,</span> bmax<span class="hl sym">,</span> pcs <span class="hl sym">=</span> <span class="hl num">9</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, {}</span>
+<span class="hl kwa">local</span> smin<span class="hl sym">,</span> smax
+<span class="hl kwa">local</span> <span class="hl kwb">write</span><span class="hl sym">,</span> reverse <span class="hl sym">=</span> io<span class="hl sym">.</span><span class="hl kwb">write</span><span class="hl sym">,</span> <span class="hl kwb">string</span><span class="hl sym">.</span>reverse
+
+<span class="hl slc">-- Print min/max boards.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">printboard</span><span class="hl sym">(</span>s<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> flip <span class="hl sym">=</span> <span class="hl kwa">true</span>
+  <span class="hl kwa">for</span> x <span class="hl kwa">in</span> <span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwd">gmatch</span><span class="hl sym">(</span><span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwb">gsub</span><span class="hl sym">(</span>s<span class="hl sym">,</span> <span class="hl str">&quot;.&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;%1 &quot;</span><span class="hl sym">),</span> <span class="hl str">&quot;..........&quot;</span><span class="hl sym">)</span> <span class="hl kwa">do</span>
+    <span class="hl kwb">write</span><span class="hl sym">(</span>x<span class="hl sym">,</span> flip <span class="hl kwa">and</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span> <span class="hl str">&quot;</span> <span class="hl kwa">or</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+    flip <span class="hl sym">=</span> <span class="hl kwa">not</span> flip
+  <span class="hl kwa">end</span>
+  <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Print result.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">printresult</span><span class="hl sym">()</span>
+  <span class="hl kwb">write</span><span class="hl sym">(</span>countinit<span class="hl sym">-</span>count<span class="hl sym">,</span> <span class="hl str">&quot; solutions found</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwd">printboard</span><span class="hl sym">(</span>smin<span class="hl sym">)</span>
+  <span class="hl kwd">printboard</span><span class="hl sym">(</span>smax<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Generate piece lookup array from the order of use.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">genp</span><span class="hl sym">()</span>
+  <span class="hl kwa">local</span> p <span class="hl sym">=</span> pcs
+  p<span class="hl sym">[</span>u0<span class="hl sym">] =</span> <span class="hl str">&quot;0&quot;</span> p<span class="hl sym">[</span>u1<span class="hl sym">] =</span> <span class="hl str">&quot;1&quot;</span> p<span class="hl sym">[</span>u2<span class="hl sym">] =</span> <span class="hl str">&quot;2&quot;</span> p<span class="hl sym">[</span>u3<span class="hl sym">] =</span> <span class="hl str">&quot;3&quot;</span> p<span class="hl sym">[</span>u4<span class="hl sym">] =</span> <span class="hl str">&quot;4&quot;</span>
+  p<span class="hl sym">[</span>u5<span class="hl sym">] =</span> <span class="hl str">&quot;5&quot;</span> p<span class="hl sym">[</span>u6<span class="hl sym">] =</span> <span class="hl str">&quot;6&quot;</span> p<span class="hl sym">[</span>u7<span class="hl sym">] =</span> <span class="hl str">&quot;7&quot;</span> p<span class="hl sym">[</span>u8<span class="hl sym">] =</span> <span class="hl str">&quot;8&quot;</span> p<span class="hl sym">[</span>u9<span class="hl sym">] =</span> <span class="hl str">&quot;9&quot;</span>
+  <span class="hl kwa">return</span> p
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Goal function.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">f91</span><span class="hl sym">(</span>k<span class="hl sym">)</span>
+  <span class="hl kwa">if</span> k <span class="hl sym">~=</span> <span class="hl num">10</span> <span class="hl kwa">then return end</span>
+  count <span class="hl sym">=</span> count <span class="hl sym">-</span> <span class="hl num">2</span> <span class="hl slc">-- Need to count the symmetric solution, too.</span>
+  <span class="hl kwa">repeat</span>
+    <span class="hl slc">-- Quick precheck before constructing the string.</span>
+    <span class="hl kwa">local</span> b0<span class="hl sym">,</span> b99 <span class="hl sym">=</span> b0<span class="hl sym">,</span> b99
+    <span class="hl kwa">if</span> b0 <span class="hl sym">&lt;=</span> bmin <span class="hl kwa">then</span> bmin <span class="hl sym">=</span> b0 <span class="hl kwa">elseif</span> b0 <span class="hl sym">&gt;=</span> bmax <span class="hl kwa">then</span> bmax <span class="hl sym">=</span> b0
+    <span class="hl kwa">elseif</span> b99 <span class="hl sym">&lt;=</span> bmin <span class="hl kwa">then</span> bmin <span class="hl sym">=</span> b99 <span class="hl kwa">elseif</span> b99 <span class="hl sym">&gt;=</span> bmax <span class="hl kwa">then</span> bmax <span class="hl sym">=</span> b99
+    <span class="hl kwa">else break end</span>
+    <span class="hl slc">-- Translate the filled board to a string.</span>
+    <span class="hl kwa">local</span> p <span class="hl sym">=</span> <span class="hl kwd">genp</span><span class="hl sym">()</span>
+    <span class="hl kwa">local</span> s <span class="hl sym">=</span> p<span class="hl sym">[</span>b0<span class="hl sym">]</span> ]]
+  <span class="hl kwa">for</span> p<span class="hl sym">=</span><span class="hl num">2</span><span class="hl sym">,</span><span class="hl num">99</span> <span class="hl kwa">do if</span> ok<span class="hl sym">[</span>p<span class="hl sym">]</span> <span class="hl kwa">then</span> s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;..p[b&quot;</span><span class="hl sym">..</span>p<span class="hl sym">..</span><span class="hl str">&quot;]&quot;</span> <span class="hl kwa">end end</span>
+  s <span class="hl sym">=</span> s<span class="hl sym">..[[</span>
+    <span class="hl slc">-- Remember min/max boards, dito for the symmetric board.</span>
+    <span class="hl kwa">if not</span> smin <span class="hl kwa">then</span> smin <span class="hl sym">=</span> s<span class="hl sym">;</span> smax <span class="hl sym">=</span> s
+    <span class="hl kwa">elseif</span> s <span class="hl sym">&lt;</span> smin <span class="hl kwa">then</span> smin <span class="hl sym">=</span> s <span class="hl kwa">elseif</span> s <span class="hl sym">&gt;</span> smax <span class="hl kwa">then</span> smax <span class="hl sym">=</span> s <span class="hl kwa">end</span>
+    s <span class="hl sym">=</span> <span class="hl kwd">reverse</span><span class="hl sym">(</span>s<span class="hl sym">)</span>
+    <span class="hl kwa">if</span> s <span class="hl sym">&lt;</span> smin <span class="hl kwa">then</span> smin <span class="hl sym">=</span> s <span class="hl kwa">elseif</span> s <span class="hl sym">&gt;</span> smax <span class="hl kwa">then</span> smax <span class="hl sym">=</span> s <span class="hl kwa">end</span>
+  <span class="hl kwa">until true</span>
+  <span class="hl kwa">if</span> count <span class="hl sym">&lt;=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl kwb">error</span><span class="hl sym">()</span> <span class="hl kwa">end</span> <span class="hl slc">-- Early abort if max count given.</span>
+<span class="hl kwa">end</span>
+<span class="hl kwa">local</span> f93 <span class="hl sym">=</span> f91
+]]
+
+  <span class="hl slc">-- Recursively convert the decision tree to Lua code.</span>
+  <span class="hl kwa">local function</span> <span class="hl kwd">codetree</span><span class="hl sym">(</span>tree<span class="hl sym">,</span> d<span class="hl sym">,</span> p<span class="hl sym">,</span> pn<span class="hl sym">)</span>
+    <span class="hl kwa">local</span> found<span class="hl sym">,</span> s <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">,</span> <span class="hl str">&quot;&quot;</span>
+    d <span class="hl sym">=</span> d <span class="hl sym">+</span> <span class="hl num">1</span>
+    <span class="hl kwa">for</span> a<span class="hl sym">,</span>t <span class="hl kwa">in</span> <span class="hl kwd">pairs</span><span class="hl sym">(</span>tree<span class="hl sym">)</span> <span class="hl kwa">do</span>
+      <span class="hl kwa">local</span> b <span class="hl sym">=</span> p<span class="hl sym">+</span>a
+      <span class="hl kwa">if</span> b <span class="hl sym">&lt;</span> <span class="hl num">100</span> <span class="hl kwa">then</span> <span class="hl slc">-- Prune the tree at the lower border.</span>
+	<span class="hl kwa">local</span> pp <span class="hl sym">=</span> b <span class="hl sym">~=</span> pn <span class="hl kwa">and</span> pn <span class="hl kwa">or</span> ok<span class="hl sym">[</span>b<span class="hl sym">]</span> <span class="hl slc">-- Find maximum successor function.</span>
+	<span class="hl kwa">if</span> d <span class="hl sym">&gt;=</span> <span class="hl num">5</span> <span class="hl kwa">then</span> <span class="hl slc">-- Try to place the last cell of a piece and advance.</span>
+	  found <span class="hl sym">=</span> <span class="hl kwa">true</span>
+	  <span class="hl kwa">local</span> u <span class="hl sym">=</span> t<span class="hl sym">%</span><span class="hl num">10</span>
+	  <span class="hl kwa">local</span> di <span class="hl sym">= (</span>t<span class="hl sym">-</span>u<span class="hl sym">)/</span><span class="hl num">10</span>
+	  <span class="hl kwa">if</span> di <span class="hl sym">~=</span> <span class="hl num">0</span> <span class="hl kwa">and</span> d <span class="hl sym">==</span> <span class="hl num">5</span> <span class="hl kwa">then</span>
+	    di <span class="hl sym">=</span> di <span class="hl sym">+</span> p<span class="hl sym">;</span> <span class="hl kwa">if</span> pp <span class="hl sym">==</span> di <span class="hl kwa">then</span> pp <span class="hl sym">=</span> ok<span class="hl sym">[</span>di<span class="hl sym">]</span> <span class="hl kwa">end</span>
+	    s <span class="hl sym">=</span> <span class="hl kwb">format</span><span class="hl sym">(</span><span class="hl str">&quot;%sif b%d and not u%d and not b%d then b%d=k u%d=k f%d(k) u%d=N b%d=N end</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+		       s<span class="hl sym">,</span> di<span class="hl sym">,</span> u<span class="hl sym">,</span> b<span class="hl sym">,</span> b<span class="hl sym">,</span> u<span class="hl sym">,</span> pp<span class="hl sym">,</span> u<span class="hl sym">,</span> b<span class="hl sym">)</span>
+	  <span class="hl kwa">else</span>
+	    s <span class="hl sym">=</span> <span class="hl kwb">format</span><span class="hl sym">(</span><span class="hl str">&quot;%sif not u%d and not b%d then b%d=k u%d=k f%d(k) u%d=N b%d=N end</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+		       s<span class="hl sym">,</span> u<span class="hl sym">,</span> b<span class="hl sym">,</span> b<span class="hl sym">,</span> u<span class="hl sym">,</span> pp<span class="hl sym">,</span> u<span class="hl sym">,</span> b<span class="hl sym">)</span>
+	  <span class="hl kwa">end</span>
+	<span class="hl kwa">else</span> <span class="hl slc">-- Try to place an intermediate cell.</span>
+	  <span class="hl kwa">local</span> di <span class="hl sym">=</span> d <span class="hl sym">~=</span> <span class="hl num">4</span> <span class="hl kwa">and</span> <span class="hl num">0</span> <span class="hl kwa">or</span> islands<span class="hl sym">[</span>t<span class="hl sym">]</span>
+	  <span class="hl kwa">if</span> di <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+	    <span class="hl kwa">local</span> st <span class="hl sym">=</span> <span class="hl kwd">codetree</span><span class="hl sym">(</span>t<span class="hl sym">,</span> d<span class="hl sym">,</span> p<span class="hl sym">,</span> pp<span class="hl sym">)</span>
+	    <span class="hl kwa">if</span> st <span class="hl kwa">then</span>
+	      found <span class="hl sym">=</span> <span class="hl kwa">true</span>
+	      s <span class="hl sym">=</span> <span class="hl kwb">format</span><span class="hl sym">(</span><span class="hl str">&quot;%sif not b%d then b%d=k</span><span class="hl esc">\n</span><span class="hl str">%sb%d=N end</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> b<span class="hl sym">,</span> b<span class="hl sym">,</span> st<span class="hl sym">,</span> b<span class="hl sym">)</span>
+	    <span class="hl kwa">end</span>
+	  <span class="hl kwa">else</span> <span class="hl slc">-- Combine island checks.</span>
+	    di <span class="hl sym">=</span> di <span class="hl sym">+</span> p<span class="hl sym">;</span> <span class="hl kwa">if</span> pp <span class="hl sym">==</span> di <span class="hl kwa">then</span> pp <span class="hl sym">=</span> ok<span class="hl sym">[</span>di<span class="hl sym">]</span> <span class="hl kwa">end</span>
+	    <span class="hl kwa">local</span> st <span class="hl sym">=</span> <span class="hl kwd">codetree</span><span class="hl sym">(</span>t<span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">,</span> p<span class="hl sym">,</span> pp<span class="hl sym">)</span>
+	    <span class="hl kwa">if</span> st <span class="hl kwa">then</span>
+	      found <span class="hl sym">=</span> <span class="hl kwa">true</span>
+	      s <span class="hl sym">=</span> <span class="hl kwb">format</span><span class="hl sym">(</span><span class="hl str">&quot;%sif b%d and not b%d then b%d=k</span><span class="hl esc">\n</span><span class="hl str">%sb%d=N end</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> di<span class="hl sym">,</span> b<span class="hl sym">,</span> b<span class="hl sym">,</span> st<span class="hl sym">,</span> b<span class="hl sym">)</span>
+	    <span class="hl kwa">end</span>
+	  <span class="hl kwa">end</span>
+	<span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    <span class="hl kwa">return</span> found <span class="hl kwa">and</span> s
+  <span class="hl kwa">end</span>
+
+  <span class="hl slc">-- Embed the decision tree into a function hierarchy.</span>
+  <span class="hl kwa">local</span> j <span class="hl sym">=</span> <span class="hl num">5</span>
+  <span class="hl kwa">for</span> p<span class="hl sym">=</span><span class="hl num">88</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">local</span> pn <span class="hl sym">=</span> ok<span class="hl sym">[</span>p<span class="hl sym">]</span>
+    <span class="hl kwa">if</span> pn <span class="hl kwa">then</span>
+      s <span class="hl sym">=</span> <span class="hl kwb">format</span><span class="hl sym">(</span><span class="hl str">&quot;%slocal function f%d(k)</span><span class="hl esc">\n</span><span class="hl str">local N if b%d then return f%d(k) end k=k+1 b%d=k</span><span class="hl esc">\n</span><span class="hl str">%sb%d=N end</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
+	    s<span class="hl sym">,</span> p<span class="hl sym">,</span> p<span class="hl sym">,</span> pn<span class="hl sym">,</span> p<span class="hl sym">,</span> <span class="hl kwd">codetree</span><span class="hl sym">(</span>dtrees<span class="hl sym">[</span>j<span class="hl sym">],</span> <span class="hl num">1</span><span class="hl sym">,</span> p<span class="hl sym">,</span> pn<span class="hl sym">),</span> p<span class="hl sym">)</span>
+      j <span class="hl sym">=</span> j <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl kwa">if</span> j <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span> j <span class="hl sym">=</span> <span class="hl num">10</span> <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  <span class="hl slc">-- Compile and return solver function and result getter.</span>
+  <span class="hl kwa">return</span> <span class="hl kwd">loadstring</span><span class="hl sym">(</span>s<span class="hl sym">..</span><span class="hl str">&quot;return f0, printresult</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;solver&quot;</span><span class="hl sym">)(</span>countinit<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Generate the solver function hierarchy.</span>
+<span class="hl kwa">local</span> solver<span class="hl sym">,</span> printresult <span class="hl sym">=</span> <span class="hl kwd">generatesolver</span><span class="hl sym">(</span><span class="hl kwb">tonumber</span><span class="hl sym">(</span>arg <span class="hl kwa">and</span> arg<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span> <span class="hl kwa">or</span> <span class="hl num">10000</span><span class="hl sym">)</span>
+
+<span class="hl slc">-- The optimizer for LuaJIT 1.1.x is not helpful here, so turn it off.</span>
+<span class="hl kwa">if</span> jit <span class="hl kwa">and</span> jit<span class="hl sym">.</span>opt <span class="hl kwa">and</span> jit<span class="hl sym">.</span>version_num <span class="hl sym">&lt;</span> <span class="hl num">10200</span> <span class="hl kwa">then</span> jit<span class="hl sym">.</span>opt<span class="hl sym">.</span><span class="hl kwd">start</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">end</span>
+
+<span class="hl slc">-- Run the solver protected to get partial results (max count or ctrl-c).</span>
+<span class="hl kwd">pcall</span><span class="hl sym">(</span>solver<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwd">printresult</span><span class="hl sym">()</span>
+

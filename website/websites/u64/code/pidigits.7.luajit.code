@@ -1,0 +1,75 @@
+
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- contributed by Wim Couwenberg</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- requires LGMP &quot;A GMP package for Lua 5.1&quot;</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- 21 September 2008</span>
+
+<span class="hl kwa">local</span> gmp<span class="hl sym">,</span> aux <span class="hl sym">= {}, {}</span>
+require <span class="hl str">&quot;c-gmp&quot;</span> <span class="hl sym">(</span>gmp<span class="hl sym">,</span> aux<span class="hl sym">)</span>
+<span class="hl kwa">local</span> add<span class="hl sym">,</span> mul<span class="hl sym">,</span> div <span class="hl sym">=</span> gmp<span class="hl sym">.</span>mpz_add<span class="hl sym">,</span> gmp<span class="hl sym">.</span>mpz_mul_ui<span class="hl sym">,</span> gmp<span class="hl sym">.</span>mpz_fdiv_q
+<span class="hl kwa">local</span> addmul<span class="hl sym">,</span> submul <span class="hl sym">=</span> gmp<span class="hl sym">.</span>mpz_addmul_ui<span class="hl sym">,</span> gmp<span class="hl sym">.</span>mpz_submul_ui
+<span class="hl kwa">local</span> init<span class="hl sym">,</span> get<span class="hl sym">,</span> set <span class="hl sym">=</span> gmp<span class="hl sym">.</span>mpz_init_set_d<span class="hl sym">,</span> gmp<span class="hl sym">.</span>mpz_get_d<span class="hl sym">,</span> gmp<span class="hl sym">.</span>mpz_set
+
+<span class="hl slc">--</span>
+<span class="hl slc">-- Production:</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- [m11 m12]     [m11 m12][k  4*k+2]</span>
+<span class="hl slc">-- [ 0  m22] &lt;-- [ 0  m22][0  2*k+1]</span>
+<span class="hl slc">--</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">produce</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> k<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> p <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">*</span>k <span class="hl sym">+</span> <span class="hl num">1</span>
+  <span class="hl kwd">mul</span><span class="hl sym">(</span>m12<span class="hl sym">,</span> p<span class="hl sym">,</span> m12<span class="hl sym">)</span>
+  <span class="hl kwd">addmul</span><span class="hl sym">(</span>m12<span class="hl sym">,</span> m11<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">*</span>p<span class="hl sym">)</span>
+  <span class="hl kwd">mul</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> k<span class="hl sym">,</span> m11<span class="hl sym">)</span>
+  <span class="hl kwd">mul</span><span class="hl sym">(</span>m22<span class="hl sym">,</span> p<span class="hl sym">,</span> m22<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">--</span>
+<span class="hl slc">-- Extraction:</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- [m11 m12]     [10 -10*d][m11 m12]</span>
+<span class="hl slc">-- [ 0  m22] &lt;-- [ 0   1  ][ 0  m22]</span>
+<span class="hl slc">--</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">extract</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> d<span class="hl sym">)</span>
+  <span class="hl kwd">submul</span><span class="hl sym">(</span>m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> d<span class="hl sym">)</span>
+  <span class="hl kwd">mul</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">,</span> m11<span class="hl sym">)</span>
+  <span class="hl kwd">mul</span><span class="hl sym">(</span>m12<span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">,</span> m12<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">--</span>
+<span class="hl slc">-- Get integral part of p/q where</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- [p]   [m11 m12][d]</span>
+<span class="hl slc">-- [q] = [ 0  m22][1]</span>
+<span class="hl slc">--</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">digit</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> d<span class="hl sym">,</span> tmp<span class="hl sym">)</span>
+  <span class="hl kwd">set</span><span class="hl sym">(</span>tmp<span class="hl sym">,</span> m12<span class="hl sym">)</span>
+  <span class="hl kwd">addmul</span><span class="hl sym">(</span>tmp<span class="hl sym">,</span> m11<span class="hl sym">,</span> d<span class="hl sym">)</span>
+  <span class="hl kwd">div</span><span class="hl sym">(</span>tmp<span class="hl sym">,</span> m22<span class="hl sym">,</span> tmp<span class="hl sym">)</span>
+  <span class="hl kwa">return</span> <span class="hl kwd">get</span><span class="hl sym">(</span>tmp<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Generate successive digits of PI.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">pidigits</span><span class="hl sym">(</span>N<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> <span class="hl kwb">write</span> <span class="hl sym">=</span> io<span class="hl sym">.</span><span class="hl kwb">write</span>
+  <span class="hl kwa">local</span> m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> tmp <span class="hl sym">=</span> <span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">),</span> <span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span> <span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">),</span> <span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+  <span class="hl kwa">local</span> k<span class="hl sym">,</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span>
+  <span class="hl kwa">while</span> i <span class="hl sym">&lt;</span> N <span class="hl kwa">do</span>
+    <span class="hl kwa">local</span> d <span class="hl sym">=</span> <span class="hl kwd">digit</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">,</span> tmp<span class="hl sym">)</span>
+    <span class="hl kwa">if</span> d <span class="hl sym">==</span> <span class="hl kwd">digit</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> <span class="hl num">4</span><span class="hl sym">,</span> tmp<span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl kwb">write</span><span class="hl sym">(</span>d<span class="hl sym">)</span>
+      <span class="hl kwd">extract</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> d<span class="hl sym">)</span>
+      i <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl kwa">if</span> i <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">:&quot;</span><span class="hl sym">,</span> i<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span> <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwd">produce</span><span class="hl sym">(</span>m11<span class="hl sym">,</span> m12<span class="hl sym">,</span> m22<span class="hl sym">,</span> k<span class="hl sym">)</span>
+      k <span class="hl sym">=</span> k <span class="hl sym">+</span> <span class="hl num">1</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+  <span class="hl kwa">if</span> i <span class="hl sym">%</span> <span class="hl num">10</span> <span class="hl sym">~=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwd">rep</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">,</span> <span class="hl num">10</span> <span class="hl sym">-</span> N <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">),</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">:&quot;</span><span class="hl sym">,</span> N<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span> <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">local</span> N <span class="hl sym">=</span> <span class="hl kwb">tonumber</span><span class="hl sym">(</span>arg <span class="hl kwa">and</span> arg<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span> <span class="hl kwa">or</span> <span class="hl num">27</span>
+<span class="hl kwd">pidigits</span><span class="hl sym">(</span>N<span class="hl sym">)</span>
