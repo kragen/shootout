@@ -1,4 +1,5 @@
-# The Computer Language Benchmarks Game - linux
+# The Computer Language Benchmarks Game
+# $Id: my.linux.Makefile,v 1.3 2010-03-09 20:36:50 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir

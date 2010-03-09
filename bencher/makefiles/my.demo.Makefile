@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: my.win32.Makefile,v 1.4 2010-03-09 20:36:50 igouy-guest Exp $
+# $Id: my.demo.Makefile,v 1.1 2010-03-09 20:37:55 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a copy of the program source in tmpdir
@@ -26,17 +26,9 @@ COPTS := -O3 -fomit-frame-pointer
 # Python
 ########################################
 
+%.python_run: %.python
 
-
-%.compiledpython_run: %.compiledpython
 	-copy $< $*.py
-	-$(PYTHON) -OO -c "from py_compile import compile; compile('$*.py')"
-
-
-# (For multiprocessing make sure the extension is .py)
-
-#%.python_run: %.python
-#	-copy $< $*.py
 
 
 

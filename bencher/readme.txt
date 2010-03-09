@@ -1,3 +1,5 @@
+# The Computer Language Benchmarks Game
+# $Id: readme.txt,v 1.3 2010-03-09 20:36:46 igouy-guest Exp $
 
 	bencher - The Computer Language Benchmarks Game - March 2010
 
@@ -26,7 +28,8 @@
 
  bencher will try to measure elapsed times when unable to measure
  memory use and cpu load; bencher will try a basic check when diff
- is not available.
+ is not available; bencher will give a basic size for source code
+ when highlight is not available.
 
  bencher usually writes good news to the console; for the bad news
  look through bencher/tmp/bencher.log
@@ -36,15 +39,6 @@
  REQUIREMENTS
 
  Python 2.5+ (these are Python scripts)
- GNU make (to compile programs for compiled languages)
- GNU diff & cmp (to check program output is as expected)
- ndiff (to check program output more selectively)
-    see http://www.math.utah.edu/~beebe/software/ndiff/
-
- LINUX SPECIFIC REQUIREMENTS
-
- libgtop2 dev files and Python bindings
-    (for cpu load and resident memory measurement)
 
  [ WIN32 SPECIFIC REQUIREMENTS ]
 
@@ -53,6 +47,26 @@
 
    (add \Python26 to the system path)
 
+
+ RECOMMENDATIONS
+
+ ndiff (to check program output more selectively)
+    see http://www.math.utah.edu/~beebe/software/ndiff/
+
+ highlight: code & syntax highlighting
+   see http://www.andre-simon.de/doku/highlight/en/highlight.html
+
+
+ LINUX SPECIFIC RECOMMENDATIONS
+ 
+ GNU make (to compile programs for compiled languages)
+ GNU diff & cmp (to check program output is as expected)
+
+ libgtop2 dev files and Python bindings
+    (for cpu load and resident memory measurement)
+
+ [ WIN32 SPECIFIC RECOMMENDATIONS ]
+
  GNU Make for Windows
    see http://gnuwin32.sourceforge.net/packages/make.htm
 
@@ -60,6 +74,8 @@
    see http://gnuwin32.sourceforge.net/packages/diffutils.htm
 
    (add GnuWin32\bin to the system path)
+
+   (add highlight to the system path)
 
 
 
@@ -122,7 +138,7 @@
 
 
 
- FIX THE MAKE PROBLEM AND DO_OVER
+ INSTALL GNU MAKE AND DO_OVER
 
  3) python bin/bencher.py --conf makefiles/my.linux.ini compiledpython 
 

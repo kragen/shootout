@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: bencher.py,v 1.4 2010-03-09 15:45:11 igouy-guest Exp $
+# $Id: bencher.py,v 1.5 2010-03-09 20:36:47 igouy-guest Exp $
 
 """
 Description: bencher does repeated measurements of program
@@ -101,12 +101,11 @@ filters = {
    }
 
 alias = {}
-binarycmp = {}
 commandlines = {}
 make = frozenset()
 makefile = ''
-ndiff = {}
-notchecked = {}
+ndiff_outputcheck = {}
+outputcheck = {}
 testname = None
 testdata = {}
 testenv = {}
@@ -144,7 +143,7 @@ def configure(ini):
          dirs[k] = normpath( expandvars( expanduser( v )))
 
       for k,v in parser.items('filters'):
-         filters[k] = v.split() 
+         filters[k] = v.split()
       filters['onlydirs'] = frozenset( filters['onlydirs'])
 
       for k,v in parser.items('alias'):
@@ -166,14 +165,11 @@ def configure(ini):
       for k,v in parser.items('testdata'):
          testdata[k] = v
 
-      for k,v in parser.items('binarycmp'):
-         binarycmp[k] = v
+      for k,v in parser.items('outputcheck'):
+         outputcheck[k] = frozenset( v.split() )
 
-      for k,v in parser.items('ndiff'):
-         ndiff[k] = v
-         
-      for k,v in parser.items('notchecked'):
-         notchecked[k] = v
+      for k,v in parser.items('ndiff_outputcheck'):
+         ndiff_outputcheck[k] = v
 
       # test specific shell vars
       default = {}
@@ -199,7 +195,7 @@ def configure(ini):
             elif o in ('delay'):
                delay = parser.getfloat(s,o)
             elif o in ('maxtime'):
-               maxtime = parser.getint(s,o)  
+               maxtime = parser.getint(s,o)
             elif o in ('logfilemax'):
                logfilemax = parser.getint(s,o)  
             elif o in ('outputmax'):
@@ -667,6 +663,21 @@ def sizeCompressedSourceCode(p):
 
 
 
+def isNotChecked(testname):
+   return testname in outputcheck['notchecked']
+
+
+
+def isCheckNDiff(testname):
+   return ndiff_outputcheck.has_key(testname)
+
+
+
+def isCheckCmp(testname):
+   return testname in outputcheck['binarycmp']
+
+
+
 def checkAndLog(m,outFile,logf):
 
    def cmpCheck(f1,f2,df):
@@ -683,14 +694,14 @@ def checkAndLog(m,outFile,logf):
          with open( diffName(), 'w') as df:
             try:
             
-               if notchecked.has_key(testname):
+               if isNotChecked(testname):
                   pass
 
                # compare _OUT not outFile so short name will be shown in logf
 
-               elif ndiff.has_key(testname):
+               elif isCheckNDiff(testname):
                   if isexe(ndiffExeName):
-                     optionkv = ndiff[testname].split()
+                     optionkv = ndiff_outputcheck[testname].split()
                      call([ndiffExeName,'-quiet',optionkv[0],optionkv[1],_OUT,argFile], \
                         stdout=df,stderr=STDOUT)
                   elif isexe(diffExeName):
@@ -698,7 +709,7 @@ def checkAndLog(m,outFile,logf):
                   else:
                      cmpCheck(_OUT,argFile,df)
 
-               elif binarycmp.has_key(testname):
+               elif isCheckCmp(testname):
                   if isexe(cmpExeName):
                      call([cmpExeName,_OUT,argFile],stdout=df,stderr=STDOUT)
                   else:
@@ -829,7 +840,10 @@ def measureCheckAndLog(p,t,ms):
                         logf.write( df.read() )
 
                   # append program output to log
-                  if binarycmp.has_key(testname):
+                  if isNotChecked(testname):
+                     logf.write( '\nPROGRAM OUTPUT NOT CHECKED:\n' )
+                     logf.write( of.read() )
+                  elif isCheckCmp(testname):
                      logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
                   elif getsize(ofName) > outputmax:
                      of.truncate(outputmax)
@@ -981,10 +995,10 @@ def measureCheckAndLogRepeatLargest(p,t,ms):
                         logf.write( df.read() )
 
                   # append program output to log
-                  if notchecked.has_key(testname):
+                  if isNotChecked(testname):
                      logf.write( '\nPROGRAM OUTPUT NOT CHECKED:\n' )
                      logf.write( of.read() )
-                  elif binarycmp.has_key(testname):
+                  elif isCheckCmp(testname):
                      logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
                   elif getsize(ofName) > outputmax:
                      of.truncate(outputmax)
@@ -1324,16 +1338,14 @@ def force(items):
 
 
 def main():
+   print 'bencher release 0.6'
    try:
-      options,remeasure = getopt(sys.argv[1:],'h',['conf=','help'])
+      options,remeasure = getopt(sys.argv[1:],'',['conf='])
 
       ini = None
 
       for o, v in options:
-         if o in ('-h', '--help'):
-            print __doc__
-            sys.exit(0)
-         elif o in ('--conf'):
+         if o in ('--conf'):
             ini = v
 
       if ini:
