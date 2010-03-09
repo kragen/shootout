@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: bencher.py,v 1.3 2010-03-09 01:49:27 igouy-guest Exp $
+# $Id: bencher.py,v 1.4 2010-03-09 15:45:11 igouy-guest Exp $
 
 """
 Description: bencher does repeated measurements of program
@@ -121,6 +121,7 @@ makeExeName = 'make'
 ndiffExeName = 'ndiff'
 cmpExeName = 'cmp'
 diffExeName = 'diff'
+highlightExeName = 'highlight'
 
 
 
@@ -265,19 +266,20 @@ def configureLogger(logfilemax,loggerDir=None):
       
 def checkExes():
 
-   def check(exename):
+   def check(cmd):
       try:
          with open( nullName, 'w') as df:
-            call([exename],stdout=df,stderr=STDOUT)
-            exes.add(exename)
+            call(cmd,stdout=df,stderr=STDOUT)
+            exes.add(cmd[0])
       except OSError, (e,err):
          if e == ENOENT: # No such file or directory
-            if logger: logger.debug('%s program not found', exename)
+            if logger: logger.debug('%s program not found', cmd[0])
 
-   check(makeExeName)
-   check(ndiffExeName)
-   check(cmpExeName)
-   check(diffExeName)
+   check([makeExeName])
+   check([ndiffExeName])
+   check([cmpExeName])
+   check([diffExeName])
+   check([highlightExeName,' -h'])
 
 
 
@@ -607,7 +609,7 @@ def cleanTmpdirFor(p,allowed):
 def callHighlightSourceCodeMarkup(p):
    hidir = join( dirs['nano'], 'highlight')
 
-   cmd = ['highlight','--fragment'
+   cmd = [highlightExeName,'--fragment'
          ,'--add-data-dir=' + hidir + '/'
          ,'--add-config-dir=' + hidir + '/'
          ,'--style=typical'
@@ -882,9 +884,12 @@ def measurePrograms(name,programs,allowed,total):
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
 
-      #callHighlightSourceCodeMarkup(p)
-      #srcSize = sizeCompressedSourceCode(p)
-      srcSize = 0
+      if isexe(highlightExeName):
+         callHighlightSourceCodeMarkup(p)
+      else:
+         copyfile( join(codedir,p.codeName), join(codedir,p.highlightName) )
+
+      srcSize = sizeCompressedSourceCode(p)
 
       if hasMake(p.imp):
          callMake(p)   
@@ -1036,12 +1041,15 @@ def measureProgramsRepeatLargest(name,programs,allowed,total):
       sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
       sys.stdout.flush()
 
-      #callHighlightSourceCodeMarkup(p)
-      #srcSize = sizeCompressedSourceCode(p)
-      srcSize = 0
+      if isexe(highlightExeName):
+         callHighlightSourceCodeMarkup(p)
+      else:
+         copyfile( join(codedir,p.codeName), join(codedir,p.highlightName) )
+
+      srcSize = sizeCompressedSourceCode(p)
 
       if hasMake(p.imp):
-         callMake(p)   
+         callMake(p)
 
       loggerLine = StringIO()
       t = cmdTemplate(p)
