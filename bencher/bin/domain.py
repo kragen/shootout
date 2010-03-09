@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: domain.py,v 1.2 2010-03-07 02:52:46 igouy-guest Exp $
+# $Id: domain.py,v 1.3 2010-03-09 01:49:28 igouy-guest Exp $
 
 
 __author__ =  'Isaac Gouy'

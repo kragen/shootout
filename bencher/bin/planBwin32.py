@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planBwin32.py,v 1.3 2010-03-07 02:52:46 igouy-guest Exp $
+# $Id: planBwin32.py,v 1.4 2010-03-09 01:49:29 igouy-guest Exp $
 
 """
 measure with win32 but not CPU affinity

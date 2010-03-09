@@ -25,13 +25,16 @@ COPTS := -O3 -fomit-frame-pointer
 # Python
 ########################################
 
+
+
 %.compiledpython_run: %.compiledpython
 	-copy $< $*.py
 	-$(PYTHON) -OO -c "from py_compile import compile; compile('$*.py')"
 
 
 # (For multiprocessing make sure the extension is .py)
-# %.python_run: %.python
+
+#%.python_run: %.python
 #	-copy $< $*.py
 
 
@@ -40,10 +43,10 @@ COPTS := -O3 -fomit-frame-pointer
 # java
 ########################################
 
-%.java_run: %.java $(JDKRUN)
+%.java_run: %.java 
 	-copy $< $(TEST).java
 	-$(JDKC) $(TEST).java
 
-%.javaxint_run: %.javaxint $(JDKRUN)
+%.javaxint_run: %.javaxint 
 	-copy $< $(TEST).java
 	-$(JDKC) $(TEST).java

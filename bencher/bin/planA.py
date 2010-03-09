@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: planA.py,v 1.2 2010-03-07 02:52:46 igouy-guest Exp $
+# $Id: planA.py,v 1.3 2010-03-09 01:49:28 igouy-guest Exp $
 
 """
 measure with libgtop2 and CPU affinity

@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: bencher.py,v 1.2 2010-03-07 02:52:46 igouy-guest Exp $
+# $Id: bencher.py,v 1.3 2010-03-09 01:49:27 igouy-guest Exp $
 
 """
 Description: bencher does repeated measurements of program
@@ -106,6 +106,7 @@ commandlines = {}
 make = frozenset()
 makefile = ''
 ndiff = {}
+notchecked = {}
 testname = None
 testdata = {}
 testenv = {}
@@ -130,7 +131,8 @@ diffExeName = 'diff'
 
 
 def configure(ini):
-   global runs, cutoff, delay, maxtime, logfilemax, outputmax, make, makefile, affinitymask
+   global runs, repeatevery, cutoff, delay, maxtime, logfilemax, outputmax, \
+      make, makefile, affinitymask
 
    try:
       parser = ConfigParser()
@@ -158,7 +160,7 @@ def configure(ini):
       commandlines.update( parser.items('commandlines') )
 
       for k,v in parser.items('testrange'):
-         testrange[k] = v.split() 
+         testrange[k] = v.split()
 
       for k,v in parser.items('testdata'):
          testdata[k] = v
@@ -168,6 +170,9 @@ def configure(ini):
 
       for k,v in parser.items('ndiff'):
          ndiff[k] = v
+         
+      for k,v in parser.items('notchecked'):
+         notchecked[k] = v
 
       # test specific shell vars
       default = {}
@@ -186,6 +191,8 @@ def configure(ini):
          for o in parser.options(s):
             if o in ('runs'):
                runs = parser.getint(s,o)
+            elif o in ('repeatevery'):
+               repeatevery = parser.getboolean(s,o)
             elif o in ('cutoff'):
                cutoff = parser.getint(s,o)
             elif o in ('delay'):
@@ -300,7 +307,7 @@ def clean(d,srcSet):
          os.remove( join(localdir,f) )
 
       if sweepDir:
-         sweepNames = frozenset( 
+         sweepNames = frozenset(
             [f for f in os.listdir( sweepDir) if f.endswith(ext)])
          obsolete = sweepNames - names
          if obsolete and logger: logger.debug('cleaning %s directory', sweepDir)
@@ -673,9 +680,13 @@ def checkAndLog(m,outFile,logf):
       if isfile(argFile):
          with open( diffName(), 'w') as df:
             try:
+            
+               if notchecked.has_key(testname):
+                  pass
+
                # compare _OUT not outFile so short name will be shown in logf
 
-               if ndiff.has_key(testname):
+               elif ndiff.has_key(testname):
                   if isexe(ndiffExeName):
                      optionkv = ndiff[testname].split()
                      call([ndiffExeName,'-quiet',optionkv[0],optionkv[1],_OUT,argFile], \
@@ -712,6 +723,56 @@ def checkAndLog(m,outFile,logf):
    if not m.isOkay():
       extra = '' if not m.hasTimedout() else '%s %d%s' % ('after',maxtime,'s')
       print >>logf, '\n%s%s\n' % (m.statusStr(),extra)
+
+
+
+def measureOnly(a,t,ms):
+   for i in range(1,runs):
+      cmd = cmdWithArg(t,a)
+      with open( outName(i), 'w') as of:
+
+         # pass the test data file to program stdin
+         if testdata.get(testname,None):
+            dfName = dataName(testdata[testname],a)
+            with open(dfName,'r') as df:
+               m = measure(a,qsplit(cmd),delay,maxtime,of,STDOUT,df,
+                  logger=logger,affinitymask=affinitymask)
+
+         # pass the test value as a command line argument in cmd
+         else:
+               m = measure(a,qsplit(cmd),delay,maxtime,of,STDOUT,
+                  logger=logger,affinitymask=affinitymask)
+
+         # add to the measurements
+         ms.append(m)
+
+      sys.stdout.write('.'); sys.stdout.flush()
+      loggerLine.write('.')
+
+
+
+# =============================
+# Code Duplication BEGIN
+# =============================
+# There a 2 different versions of measureCheckAndLog
+# There a 2 different versions of measurePrograms
+#
+# The differences are slight and one-day may be factored
+# out - but not today.
+#
+# 1)
+# measureCheckAndLog does repeat measurements at every
+# value in [testrange]
+# measurePrograms does repeat measurements at every
+# value in [testrange]
+#
+# 2)
+# measureCheckAndLogRepeatLargest only does repeat measurements
+# at the largest value in [testrange]
+# measureProgramsRepeatLargest only does repeat measurements
+# at the largest value in [testrange]
+#
+# =============================
 
 
 
@@ -803,31 +864,6 @@ def measureCheckAndLog(p,t,ms):
 
 
 
-def measureOnly(a,t,ms):
-   for i in range(1,runs):
-      cmd = cmdWithArg(t,a)
-      with open( outName(i), 'w') as of:
-
-         # pass the test data file to program stdin
-         if testdata.get(testname,None):
-            dfName = dataName(testdata[testname],a)
-            with open(dfName,'r') as df:
-               m = measure(a,qsplit(cmd),delay,maxtime,of,STDOUT,df,
-                  logger=logger,affinitymask=affinitymask)
-
-         # pass the test value as a command line argument in cmd
-         else:
-               m = measure(a,qsplit(cmd),delay,maxtime,of,STDOUT,
-                  logger=logger,affinitymask=affinitymask)
-
-         # add to the measurements
-         ms.append(m)
-
-      sys.stdout.write('.'); sys.stdout.flush()
-      loggerLine.write('.')
-
-
-
 def measurePrograms(name,programs,allowed,total):
    global loggerLine
 
@@ -880,6 +916,166 @@ def measurePrograms(name,programs,allowed,total):
       loggerLine.close()
 
    return total
+
+
+
+# =============================
+# Duplicates
+# =============================
+
+
+
+def measureCheckAndLogRepeatLargest(p,t,ms):
+   repeatTestValue = None
+
+   for a in testvalues:
+      cmd = cmdWithArg(t,a)
+      ofName = outName(0)
+
+      # a logged Empty record will reveal a nanobench failure
+      m = Record() 
+
+      try:
+         with open(logName(p),'w') as logf:
+            with open(ofName,'w') as of:
+               # append timestamp to log
+               print >>logf, '\n', strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
+
+               # append Make output to log
+               if hasMake(p.imp):
+                  with open( makeName(), 'r') as mf:
+                     logf.write( mf.read() ) 
+
+               with open(errName(),'w+') as ef:
+                  # append command line showing redirected test data file to log
+                  if testdata.get(testname,None):
+                     dfName = dataName(testdata[testname],a)
+                     print >>logf, '\nCOMMAND LINE:\n', cmd, '<', split(dfName)[1]
+                     with open(dfName,'r') as df:
+                        m = measure(a,qsplit(cmd),delay,maxtime,of,ef,df,
+                           logger=logger,affinitymask=affinitymask)
+
+                  # append command line showing test value argument to log
+                  else:
+                     print >>logf, '\nCOMMAND LINE:\n', cmd
+                     m = measure(a,qsplit(cmd),delay,maxtime,of,ef,
+                        logger=logger,affinitymask=affinitymask)
+
+            # check the program output was as expected
+            checkAndLog(m,ofName,logf)
+
+            # add to the measurements
+            ms.append(m)
+
+            # if there was a problem finding the program just ignore the program output
+            if not m.isMissing():
+               with open(ofName,'r+') as of:
+                  # append diff or ndiff or cmp output to log
+                  if m.hasBadOutput():
+                     with open(diffName(), 'r') as df:
+                        logf.write( df.read() )
+
+                  # append program output to log
+                  if notchecked.has_key(testname):
+                     logf.write( '\nPROGRAM OUTPUT NOT CHECKED:\n' )
+                     logf.write( of.read() )
+                  elif binarycmp.has_key(testname):
+                     logf.write( '\n(BINARY) PROGRAM OUTPUT NOT SHOWN\n' )
+                  elif getsize(ofName) > outputmax:
+                     of.truncate(outputmax)
+                     logf.write( '\n(TRUNCATED) PROGRAM OUTPUT:\n' )
+                     logf.write( of.read() )
+                  else:
+                     logf.write( '\nPROGRAM OUTPUT:\n' )
+                     logf.write( of.read() )
+
+                  # append program stderr to log
+                  if getsize(errName()):
+                     with open(errName(), 'r') as ef:
+                        logf.write( '\n' )
+                        logf.write( ef.read() )               
+
+         if m.isOkay():
+            if m.hasExceeded(cutoff):
+               repeatTestValue = None
+            else:
+               repeatTestValue = a
+         else:
+            break
+
+
+      except IOError, err:
+         if logger: logger.error(err)
+
+      finally:
+         sys.stdout.write('.'); sys.stdout.flush()
+         loggerLine.write('.')
+
+   sys.stdout.write( m.statusStr() ); sys.stdout.flush()
+   loggerLine.write( m.statusStr() )
+
+   return repeatTestValue
+
+
+
+def measureProgramsRepeatLargest(name,programs,allowed,total):
+   global loggerLine
+
+   def fillInMissingRecords(ms):
+      for a in testvalues[len(ms):]:
+         c = copy.deepcopy(ms[-1:])
+         if c:
+            c[0].argString = a
+            ms.append(c[0])
+
+   setVariables(name)
+
+   for p in programs:
+      cleanTmpdirFor(p,allowed)
+
+      sys.stdout.write('%s ' % strftime('%a %H:%M:%S', localtime()))
+      sys.stdout.flush()
+
+      #callHighlightSourceCodeMarkup(p)
+      #srcSize = sizeCompressedSourceCode(p)
+      srcSize = 0
+
+      if hasMake(p.imp):
+         callMake(p)   
+
+      loggerLine = StringIO()
+      t = cmdTemplate(p)
+      ms = []
+      repeatTestValue = measureCheckAndLogRepeatLargest(p,t,ms)
+      fillInMissingRecords(ms)
+      if repeatTestValue:
+         measureOnly(repeatTestValue,t,ms)
+
+      # Write compressed dat file once, when all data is available
+      try:
+         datf = bz2.BZ2File( join(datdir,p.datName) ,'w')
+         for m in ms:
+            m.gz = srcSize
+            print >>datf, m
+      except IOError, err:
+         if logger: logger.error(err)
+      finally:
+         datf.close()
+
+      loggerLine.write('%s [%d]' % (p.programName,total))
+      sys.stdout.write('%s [%d]\n' % (p.programName,total)); sys.stdout.flush()
+      total -= 1
+
+      if logger: logger.info( loggerLine.getvalue() )
+      loggerLine.close()
+
+   return total
+   
+
+
+# =============================
+# Code Duplication END
+# =============================
 
 
 
@@ -994,7 +1190,7 @@ def makeSummaryFiles(iniName):
    ndatacsv = 'ndata.csv'
    bulkdatacsv = 'measurements.csv'
 
-   with nested( open( join(datacsv), 'w'), 
+   with nested( open( join(datacsv), 'w'),
                 open( join(ndatacsv), 'w')) as (df,ndf):
 
       try:
@@ -1067,14 +1263,21 @@ def benchmarksGame(ini):
       if logger: logger.info('nothing to be done - measurements are up-to-date')
 
    else:
-      for d,s,a in w:
-         total = measurePrograms(d,s,a,total) 
+      # do repeated measurements at every [testrange] value
+      if repeatevery:
+         for d,s,a in w:
+            total = measurePrograms(d,s,a,total)
+
+      # do repeated measurements at largest [testrange] value
+      else:
+         for d,s,a in w:
+            total = measureProgramsRepeatLargest(d,s,a,total)
 
       _,iniName= split(ini)
       iniName,_ = splitext(iniName)
       makeSummaryFiles(iniName)
       sweepLogAndCodeFiles()
-   
+
 
 
 def force(items):
@@ -1088,7 +1291,7 @@ def force(items):
       if not isdir(d):
          if logger: logger.info('no %s directory - no *.dat to remove',d)
       else:
-         if logger: logger.info('remove %s/*.dat',d)
+         if logger: logger.info('remove %s *.dat',d)
          fs = fnmatch.filter( os.listdir(d), '*.*' )
          for f in fs:
             try:
@@ -1157,5 +1360,3 @@ def main():
            
 if __name__ == "__main__":
    main()
-
-
