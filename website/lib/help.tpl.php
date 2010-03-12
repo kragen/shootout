@@ -88,7 +88,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <dt><a href="#cpuload" name="cpuload">How did you measure <b>&asymp; CPU Load?</b></a></dt>
 <dd><p>The GTop cpu idle and GTop cpu total was taken before forking the child-process and after the child-process exits, The percentages represent the proportion of cpu not-idle to cpu total for each core.</p>
-<p><i>On win32 - GetSystemTimes <a href="http://msdn.microsoft.com/en-us/library/ms724400(VS.85).aspx">UserTime and IdleTime</a> was taken before forking the child-process and after the child-process exits. The percentage represents the proportion of Job CPU secs to UserTime + IdleTime (because that's like the percentage you'll see in Task Manager).</i></p>
+<p><i>On win32 - GetSystemTimes <a href="http://msdn.microsoft.com/en-us/library/ms724400(VS.85).aspx">UserTime and IdleTime</a> was taken before forking the child-process and after the child-process exits. The percentage represents the proportion of TotalUserTime to UserTime+IdleTime (because that's like the percentage you'll see in Task Manager).</i></p>
 </dd>
 
 </dl>
