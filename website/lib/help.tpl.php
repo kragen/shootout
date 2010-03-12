@@ -220,14 +220,15 @@ language, benchmark, your-name, date, (version)<br />
 <dt><a href="#languagex" name="languagex">Why don't you include language X?</a></dt>
 <dd>
 <p><b>Why don't you</b> use our measurement scripts and publish measurements for language X?</p>
-<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unpack into your ~ directory and read the license before use.</p>
+<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p>
 <p>As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 
 <dt><a href="#win32" name="win32">Why don't you include Microsoft&#174; Windows&#174;?</a></dt>
 <dd>
 <p><b>Why don't you</b> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
-<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.tar.bz2"><b>download bencher</b></a> and unzip into your c:\ directory, check the requirements and recommendations, and read the license before use.</p>
+<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.tar.bz2"><b>download bencher</b></a> and unzip into your c:\ directory, check the  <a href="http://sourceforge.net/projects/pywin32/" title="Python Win32 Extensions">requirements</a> and <a href="http://gnuwin32.sourceforge.net/packages/make.htm" title="GNU Make for Windows, GNU DiffUtils for Windows">recommendations</a>, and read the license before use.</p>
+<p>The Python script bencher.py has <a href="http://shootout.alioth.debian.org/demo/python.php">demo'd</a> on Windows Vista.</p>
 </dd>
 
 <dt><a href="#java" name="java"><b>What about Java</b>&#174;?</a></dt>
