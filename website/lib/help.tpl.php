@@ -69,10 +69,17 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <li><b>Elapsed&nbsp;secs</b>: The time was taken before forking the child-process and after the child-process exits, using <a href="http://docs.python.org/library/time.html?highlight=time.time#time.time">time.time()</a></li>
 </ul>
 <p><strong>Time measurements include program startup time.</strong></p>
+<p><i>On win32 -
+<ul>
+<li>CPU&nbsp;secs: QueryInformationJobObject(hJob,JobObjectBasicAccountingInformation) <a href="http://msdn.microsoft.com/en-us/library/ms684143(VS.85).aspx">TotalKernelTime+TotalUserTime</a><br /></li>
+<li>Elapsed&nbsp;secs: The time was taken before forking the child-process and after the child-process exits, using <a href="http://msdn.microsoft.com/en-us/library/ms644904(VS.85).aspx">QueryPerformanceCounter</a></li>
+</ul>
+</i></p>
 </dd>
 
 <dt><a href="#memory" name="memory">How did you measure <strong>Memory-used?</strong></a></dt>
 <dd><p>By sampling GTop proc_mem for the program and it's child processes every 0.2 seconds. Obviously those measurements are unlikely to be reliable for programs that run for less than 0.2 seconds.</p>
+<p><i>On win32 - QueryInformationJobObject(hJob,JobObjectExtendedLimitInformation) <a href="http://msdn.microsoft.com/en-us/library/ms684156(VS.85).aspx">PeakJobMemoryUsed</a></i></p>
 </dd>
 
 <dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>Code-used?</strong></a></dt>
@@ -81,6 +88,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <dt><a href="#cpuload" name="cpuload">How did you measure <b>&asymp; CPU Load?</b></a></dt>
 <dd><p>The GTop cpu idle and GTop cpu total was taken before forking the child-process and after the child-process exits, The percentages represent the proportion of cpu not-idle to cpu total for each core.</p>
+<p><i>On win32 - GetSystemTimes <a href="http://msdn.microsoft.com/en-us/library/ms724400(VS.85).aspx">UserTime and IdleTime</a> was taken before forking the child-process and after the child-process exits. The percentage represents the proportion of Job CPU secs to UserTime + IdleTime (because that's like the percentage you'll see in Task Manager).</i></p>
 </dd>
 
 </dl>
@@ -216,7 +224,13 @@ language, benchmark, your-name, date, (version)<br />
 <p>As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 
-<dt><a href="#java" name="java"><b>What about Java</b>?</a></dt>
+<dt><a href="#win32" name="win32">Why don't you include Microsoft&#174; Windows&#174;?</a></dt>
+<dd>
+<p><b>Why don't you</b> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
+<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.tar.bz2"><b>download bencher</b></a> and unzip into your c:\ directory, check the requirements and recommendations, and read the license before use.</p>
+</dd>
+
+<dt><a href="#java" name="java"><b>What about Java</b>&#174;?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
 <p>The usual startup measurements and the "Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
 
