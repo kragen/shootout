@@ -13,7 +13,6 @@ import (
    "bufio"
    "flag"
    "os"
-   "strings"
    "strconv"
 )
 
@@ -135,7 +134,7 @@ func main() {
    AccumulateProbabilities(iub)
    AccumulateProbabilities(homosapiens)
 
-   alu := strings.Bytes(
+   alu := []byte(
       "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +
          "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +
          "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +

@@ -13,7 +13,6 @@ import (
    "io/ioutil"
    "os"
    "sort"
-   "strings"
 )
 
 var in *bufio.Reader
@@ -82,7 +81,7 @@ func print(m map[string]int) {
 
 func main() {
    in = bufio.NewReader(os.Stdin)
-   three := strings.Bytes(">THREE ")
+   three := []byte(">THREE ")
    for {
       line, err := in.ReadSlice('\n')
       if err != nil {
