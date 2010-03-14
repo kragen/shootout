@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 
@@ -229,10 +229,9 @@ language, benchmark, your-name, date, (version)<br />
 <p>As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
 </dd>
 
-<dt><a href="#onlyonecore" name="onlyonecore">Why don't you include language X quad-core measurements?</a></dt>
+<dt><a href="#onlyonecore" name="onlyonecore">Why do you only include language X one core measurements?</a></dt>
 <dd>
-<p>Probably because no one has contributed language X programs that use more than one core.</p>
-<p><b>Why don't you</b> contribute language X programs that use more than one core?</p>
+<p>Probably because no one has contributed language X programs that use more than one core. Why don't you contribute language X programs that use more than one core?</p>
 </dd>
 
 <dt><a href="#win32" name="win32">Why don't you include Microsoft&#174; Windows&#174;?</a></dt>
