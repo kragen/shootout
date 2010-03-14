@@ -219,7 +219,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#included" name="included">Is language X included?</a></dt>
 <dd>
-<p>Page search the <a href="http://shootout.alioth.debian.org/">"Programming language performance comparisons Z to A"</a>.</p>
+<p>Page search <a href="http://shootout.alioth.debian.org/">"Programming language performance comparisons Z to A"</a>.</p>
 </dd>
 
 <dt><a href="#languagex" name="languagex">Why don't you include language X?</a></dt>
@@ -393,7 +393,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 <dt><a href="#history" name="history">Why do you continue to show out-of-date measurements?</a></dt>
 
 <dd>
-<p><img src="<?=IMAGE_PATH;?>fresh_png_21feb2010.php"
+<p><img src="<?=IMAGE_PATH;?>fresh_png_14mar2010.php"
    alt=""
    title=""
    width="400" height="225"

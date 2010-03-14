@@ -135,7 +135,7 @@ unset($pagechoices);
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
 <p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a>
 
-<p>Compare performance on both 32 bit and 64 bit Ubuntu&#8482;,<br/> both when programs are allowed to use quad-core<br/> and when programs are forced to use one core.</p>
+<p>Compare performance on both 32 bit and 64 bit Ubuntu&#8482;<br/> - both when programs are allowed to use quad-core<br/> and when programs are forced to use one core.</p>
 
 <h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
 
