@@ -217,6 +217,11 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <dl>
 
+<dt><a href="#included" name="included">Is language X included?</a></dt>
+<dd>
+<p>Page search the <a href="http://shootout.alioth.debian.org/">"Programming language performance comparisons Z to A"</a>.</p>
+</dd>
+
 <dt><a href="#languagex" name="languagex">Why don't you include language X?</a></dt>
 <dd>
 <p><b>Why don't you</b> use our measurement scripts and publish measurements for language X?</p>

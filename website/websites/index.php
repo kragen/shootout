@@ -133,8 +133,9 @@ unset($pagechoices);
 <div id="home">
 <h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> and &asymp;1100 programs</h5>
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
-<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Compare performance</strong></a> on both 32 bit and 64 bit Ubuntu&#8482;.</p>
-<p>Compare performance both when programs are allowed to use <br/>quad-core and when programs are forced to use one core.</p>
+<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a>
+
+<p>Compare performance on both 32 bit and 64 bit Ubuntu&#8482;.<br/> Compare performance both when programs are allowed to use <br/>quad-core and when programs are forced to use one core.</p>
 
 <h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
 
