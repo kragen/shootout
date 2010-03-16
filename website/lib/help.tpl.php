@@ -222,16 +222,16 @@ language, benchmark, your-name, date, (version)<br />
 <p>Page search <a href="http://shootout.alioth.debian.org/">"Programming language performance comparisons Z to A"</a>.</p>
 </dd>
 
+<dt><a href="#onlyonecore" name="onlyonecore">Why do you only include language X one core measurements?</a></dt>
+<dd>
+<p>Probably because no one has contributed language X programs that use more than one core. Why don't you contribute language X programs that use more than one core?</p>
+</dd>
+
 <dt><a href="#languagex" name="languagex">Why don't you include language X?</a></dt>
 <dd>
 <p><b>Why don't you</b> use our measurement scripts and publish measurements for language X?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p>
 <p>As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a></p>
-</dd>
-
-<dt><a href="#onlyonecore" name="onlyonecore">Why do you only include language X one core measurements?</a></dt>
-<dd>
-<p>Probably because no one has contributed language X programs that use more than one core. Why don't you contribute language X programs that use more than one core?</p>
 </dd>
 
 <dt><a href="#win32" name="win32">Why don't you include Microsoft&#174; Windows&#174;?</a></dt>
