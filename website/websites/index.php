@@ -155,6 +155,7 @@ $langs = array(
    array('yarv','Ruby 1.9','the new Ruby','',$onecoresites),
    array('python','CPython','uncluttered imperative programming plus objects','python',$u32sites),
    array('python3','Python 3','the new Python','python3',$allsites),
+   array('pypy','PyPy','jit compiler compatible with python 2.5','',$basesite),
    array('php','PHP','scripts embedded in html and much more','php',$u32sites),
    array('perl','Perl','server-side shell &amp; cgi scripts','perl',$u32sites),
    array('fpascal','Free Pascal','imperative programming plus objects','pascal',$allsites),
