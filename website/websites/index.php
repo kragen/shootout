@@ -102,9 +102,6 @@ $pagechoices = array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
    ,array(
-      '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
-   ,array(
       '/code-used-time-used-shapes.php'
       ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
    ,array(
