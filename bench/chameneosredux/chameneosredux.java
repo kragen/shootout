@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * are set up as a thread pool and meeting requests are pushed onto a
  * queue that feeds the thread pool.
  */
-
 public final class chameneosredux {
 
     enum Colour {
@@ -84,13 +83,10 @@ public final class chameneosredux {
             } while (!creatureRef.compareAndSet(first, next));
 
             if (first != null) {
-                final int meetings = meetingsLeft.getAndDecrement();
-                if (meetings > 1) {
-                    first.setColour(incoming.id, newColour, false);
-                    incoming.setColour(first.id, newColour, false);
-                } else if (meetings == 1) {
-                    first.setColour(incoming.id, newColour, true);
-                    incoming.setColour(first.id, newColour, true);
+                final int meetings = meetingsLeft.decrementAndGet();
+                if (meetings >= 0) {
+                    first.setColour(incoming.id, newColour);
+                    incoming.setColour(first.id, newColour);
                 } else {
                     first.complete();
                     incoming.complete();
@@ -126,7 +122,8 @@ public final class chameneosredux {
         private int sameCount = 0;
         private Colour colour;
 
-        public Creature(final MeetingPlace place, final Colour colour, final BlockingQueue<Creature> q, final CountDownLatch latch) {
+        public Creature(final MeetingPlace place, final Colour colour,
+                        final BlockingQueue<Creature> q, final CountDownLatch latch) {
             this.id = System.identityHashCode(this);
             this.place = place;
             this.latch = latch;
@@ -138,17 +135,11 @@ public final class chameneosredux {
             latch.countDown();
         }
 
-        public void setColour(final int id, final Colour newColour, final boolean isComplete) {
+        public void setColour(final int id, final Colour newColour) {
             this.colour = newColour;
             count++;
-
             sameCount += 1 ^ Integer.signum(abs(this.id - id));
-
-            if (!isComplete) {
-                q.add(this);
-            } else {
-                complete();
-            }
+            q.add(this);
         }
 
         private int abs(final int x) {
@@ -186,6 +177,7 @@ public final class chameneosredux {
         final Thread[] ts = new Thread[len];
         for (int i = 0, h = ts.length; i < h; i++) {
             ts[i] = new Thread(new Dispatcher(q));
+            ts[i].setDaemon(true);
             ts[i].start();
         }
 
@@ -195,12 +187,14 @@ public final class chameneosredux {
 
         try {
             latch.await();
+            for (final Thread t : ts) {
+                t.interrupt();
+            }
+            for (final Thread t : ts) {
+                t.join();
+            }
         } catch (final InterruptedException e1) {
             System.err.println("Existing with error: " + e1);
-        }
-
-        for (final Thread t : ts) {
-            t.interrupt();
         }
 
         int total = 0;
@@ -229,16 +223,6 @@ public final class chameneosredux {
         run(n, Colour.blue, Colour.red, Colour.yellow);
         run(n, Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.yellow,
                Colour.blue, Colour.red, Colour.yellow, Colour.red, Colour.blue);
-    }
-
-    public static class Pair {
-        public final boolean sameId;
-        public final Colour colour;
-
-        public Pair(final boolean sameId, final Colour c) {
-            this.sameId = sameId;
-            this.colour = c;
-        }
     }
 
     private static final String[] NUMBERS = {
