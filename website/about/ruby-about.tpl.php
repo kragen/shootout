@@ -2,6 +2,6 @@
 
 <?=$Version;?>
 
-<p>Home Page: <a href="http://www.ruby-lang.org/en/">Ruby is</a></p>
+<p>Home Page: <a href="http://www.ruby-lang.org/en/">Ruby is…</a></p>
 
 <p>Download: <a href="http://www.ruby-lang.org/en/downloads/">Download Ruby</a></p>
