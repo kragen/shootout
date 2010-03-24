@@ -173,6 +173,7 @@ $langs = array(
    array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$allsites),
    array('gpp','C++ GNU','c plus objects plus generics','cpp',$allsites),
    array('csharp','C# Mono','oo plus functional style (mono is not ms .net)','csharp',$allsites),
+   array('clean','Clean','lazy &amp; strict pure functional programming','clean',$onecoresites),
    array('gcc','C GNU','unchecked low-level programming','c',$allsites),
    array('ats','ATS','dependent types &amp; linear types plus theorem proving','ats',$allsites),
    array('gnat','Ada 2005 GNAT','large-scale safety-critical software','ada',$allsites)
