@@ -30,28 +30,6 @@ JNIEXPORT void JNICALL Java_GmpUtil_mpz_1clear
 
 /*
  * Class:     GmpUtil
- * Method:    mpz_mul_si
- * Signature: (JJI)V
- */
-JNIEXPORT void JNICALL Java_GmpUtil_mpz_1mul_1si
-  (JNIEnv *x, jclass y, jlong dest, jlong src, jint val)
-{
-  __gmpz_mul_si( *((mpz_t*)dest), *((mpz_t*)src), (long) val);
-}
-
-/*
- * Class:     GmpUtil
- * Method:    mpz_add
- * Signature: (JJJ)V
- */
-JNIEXPORT void JNICALL Java_GmpUtil_mpz_1add
-  (JNIEnv *x, jclass y, jlong dest, jlong src, jlong val)
-{
-  __gmpz_add( *((mpz_t*)dest), *((mpz_t*)src), *((mpz_t*)val) );
-}
-
-/*
- * Class:     GmpUtil
  * Method:    mpz_set_si
  * Signature: (JI)V
  */
@@ -85,6 +63,50 @@ JNIEXPORT jint JNICALL Java_GmpUtil_mpz_1cmp
 
 /*
  * Class:     GmpUtil
+ * Method:    mpz_add
+ * Signature: (JJJ)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1add
+  (JNIEnv *x, jclass y, jlong dest, jlong src, jlong val)
+{
+  __gmpz_add( *((mpz_t*)dest), *((mpz_t*)src), *((mpz_t*)val) );
+}
+
+/*
+ * Class:     GmpUtil
+ * Method:    mpz_sub
+ * Signature: (JJJ)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1sub
+  (JNIEnv *x, jclass y, jlong dest, jlong src, jlong val)
+{
+  __gmpz_sub( *((mpz_t*)dest), *((mpz_t*)src), *((mpz_t*)val) );
+}
+
+/*
+ * Class:     GmpUtil
+ * Method:    mpz_mul_si
+ * Signature: (JJI)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1mul_1si
+  (JNIEnv *x, jclass y, jlong dest, jlong src, jint val)
+{
+  __gmpz_mul_si( *((mpz_t*)dest), *((mpz_t*)src), (long) val);
+}
+
+/*
+ * Class:     GmpUtil
+ * Method:    mpz_divexact
+ * Signature: (JJJ)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1divexact
+  (JNIEnv *x, jclass y, jlong quot, jlong n, jlong d)
+{
+  __gmpz_divexact( *((mpz_t*)quot), *((mpz_t*)n), *((mpz_t*)d));
+}
+
+/*
+ * Class:     GmpUtil
  * Method:    mpz_tdiv_qr
  * Signature: (JJJJ)V
  */
@@ -92,4 +114,15 @@ JNIEXPORT void JNICALL Java_GmpUtil_mpz_1tdiv_1qr
   (JNIEnv *x, jclass y, jlong q, jlong r, jlong n, jlong d)
 {
   __gmpz_tdiv_qr( *((mpz_t*)q), *((mpz_t*)r), *((mpz_t*)n), *((mpz_t*)d) );
+}
+
+/*
+ * Class:     GmpUtil
+ * Method:    mpz_gcd
+ * Signature: (JJJ)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1gcd
+  (JNIEnv *x, jclass y, jlong r, jlong a, jlong b)
+{
+  __gmpz_gcd( *((mpz_t*)r), *((mpz_t*)a), *((mpz_t*)b) );
 }
