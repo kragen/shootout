@@ -73,6 +73,22 @@ JNIEXPORT void JNICALL Java_GmpUtil_mpz_1mul_1si
 
 /*
  * Class:     GmpUtil
+ * Method:    mpz_addmul_ui
+ * Signature: (JJI)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1addmul_1ui
+  (JNIEnv *x, jclass y, jlong dest, jlong a, jint b);
+  
+/*
+ * Class:     GmpUtil
+ * Method:    mpz_submul_ui
+ * Signature: (JJI)V
+ */
+JNIEXPORT void JNICALL Java_GmpUtil_mpz_1submul_1ui
+  (JNIEnv *x, jclass y, jlong dest, jlong a, jint b);
+  
+/*
+ * Class:     GmpUtil
  * Method:    mpz_divexact
  * Signature: (JJJ)V
  */
