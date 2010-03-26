@@ -228,7 +228,7 @@ $About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
 
 // META ////////////////////////////////////////////////
 
-$MetaKeywords = '<meta name="description" content="Compare the speed and size of '.$LangName.' programs against '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
+$MetaKeywords = '<meta name="description" content="Compare the speed of '.$LangName.' programs against the speed of '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
          
 $metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
 if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
