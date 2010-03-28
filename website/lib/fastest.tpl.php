@@ -11,7 +11,7 @@
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#time">Time-used</a> (<?=$TimeUsed;?>).</p>
 
-<p>For this comparison, the 4 sets of up-to-date measurements have been combined. This comparison includes measurements both for Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core and one-core; both for x64&nbsp;and x86&nbsp;Ubuntu&#8482;. <i>This comparison blurs the differences</i>.</p>
+<p>For this comparison, the <a href="<?=CORE_SITE;?>help.php#compare">4 sets of up-to-date measurements</a> have been combined. This comparison includes measurements both for Intel&#174;&nbsp;Q6600&#174;&nbsp;<a href="./u64q/which-programming-languages-are-fastest.php">quad-core</a> and <a href="./u32/which-programming-languages-are-fastest.php">one-core</a>; both for <a href="./u64/which-programming-languages-are-fastest.php">x64</a>&nbsp;and <a href="./u32q/which-programming-languages-are-fastest.php">x86</a>&nbsp;Ubuntu&#8482;. <i>This comparison blurs the differences</i>.</p>
 
 <p>Each chart box shows the middle 50% of program times measured for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time measured.</p>
 
