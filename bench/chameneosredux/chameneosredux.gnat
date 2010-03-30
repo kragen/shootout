@@ -1,0 +1,371 @@
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Francois Fabien (29 Mars 2010)
+--
+-- Based on the original Ada version by
+-- Claude Kaiser and Jean-Francois Pradat-Peyre (CEDRIC - CNAM Paris)
+--
+-- Chameneos are Ada tasks and the meeting place is a protected body
+-- Fully portable :
+--            No machine/OS dependency
+--            No dependency of GNAT-compiler specific features
+--
+-- Expected build command:
+-- gnatmake -gnatpn05 -O3 -funroll-loops -march=native -f chameneosredux.adb
+------------------------------------------------------------------------------
+with Chameneos;        use Chameneos;
+with Ada.Command_Line; use Ada.Command_Line;
+with System;
+
+procedure ChameneosRedux is
+   pragma Priority (System.Max_Priority);
+   -- required to have higher priority than the chameneos tasks
+   Meeting_count : Integer;
+begin
+   Meeting_count := 600;
+
+   if Argument_Count > 0 then
+      begin
+         Meeting_count := Integer'Value (Argument (1));
+      exception
+         when others =>
+            -- When bad argument, keep meetings := 600
+            null;
+      end;
+   end if;
+
+   Chameneos.Print_Colours;
+   Chameneos.Run (Meeting_count, (Blue, Red, Yellow));
+   Chameneos.Run
+     (Meeting_count,
+      (Blue, Red, Yellow, Red, Yellow, Blue, Red, Yellow, Red, Blue));
+end ChameneosRedux;
+-------------------------------------------------------------------------------
+-- Root package
+-- Definitions and test procedure (run)
+-------------------------------------------------------------------------------
+
+package Chameneos is
+
+   type Colour is (Blue, Red, Yellow);
+
+   type Colour_Complement is array (Colour, Colour) of Colour;
+
+   Complementary_Colour : constant Colour_Complement :=
+     (Blue   => (Blue => Blue, Red => Yellow, Yellow => Red),
+      Red    => (Red => Red, Blue => Yellow, Yellow => Blue),
+      Yellow => (Yellow => Yellow, Blue => Red, Red => Blue));
+
+   -- The creature Name
+   subtype Id_Type is Positive;
+
+   type Colour_Set is array (Id_Type range <>) of Colour;
+
+   function Do_Complement (C1, C2 : Colour) return Colour;
+   -- since this function is heavily used, make it inline to speed up
+   pragma Inline (Do_Complement);
+
+   -- Stuff required for the measurement
+   type Measure_Type is record
+      Meetings_Made : Natural := 0;
+      Meetings_Same : Natural := 0;
+   end record;
+
+   type Result_Type is array (Id_Type range <>) of Measure_Type;
+
+   -- The test procedure
+   procedure Run
+     (Meetings : Integer;
+      Set      : Colour_Set);
+
+   --  Ancilliary procedure used for output
+   procedure Print_Colours;
+
+end Chameneos;
+-------------------------------------------------------------------------------
+with Ada.Text_IO;           use Ada.Text_IO;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Chameneos.Creatures;    use Chameneos.Creatures;
+with Chameneos.Mall;        use Chameneos.Mall;
+
+package body Chameneos is
+
+   package Int_Io is new Ada.Text_IO.Integer_IO (Integer);
+
+   function Do_Complement (C1, C2 : Colour) return Colour is
+   begin
+      return Complementary_Colour (C1, C2);
+   end Do_Complement;
+
+   function To_US (Source : String) return Unbounded_String renames
+     To_Unbounded_String;
+
+   Colour_Image : constant array (Colour) of Unbounded_String :=
+     (Blue   => To_US ("blue"),
+      Red    => To_US ("red"),
+      Yellow => To_US ("yellow"));
+
+   function Spelled (Value : Natural) return String;
+
+   procedure Run (Meetings : Integer; Set : Colour_Set) is
+      Measures       : Chameneos.Result_Type (Set'Range);
+      Total_Meetings : Natural;
+      -- Chameneos are created here
+      Creature_Set   : array (Set'Range) of Creature;
+
+   begin
+      for I in Set'Range loop
+         Put (To_String (Colour_Image (Set (I))) & " ");
+      end loop;
+      New_Line;
+      -- Meeting Place initialization
+      Mall.Init (Meetings);
+
+      for I in Set'Range loop
+         Creature_Set (I).Start (I, Set (I));
+      end loop;
+
+      -- Rendez-vous : Waiting for the test to finish
+      for I in Set'Range loop
+         Creature_Set (I).Restitute (I, Measures (I));
+      end loop;
+
+      for I in Set'Range loop
+         Int_Io.Put (Measures (I).Meetings_Made, Width => 10);
+         Put ("  " & Spelled (Value => Measures (I).Meetings_Same));
+         New_Line;
+      end loop;
+
+      Total_Meetings := 0;
+      for I in Set'Range loop
+         Total_Meetings := Total_Meetings + Measures (I).Meetings_Made;
+      end loop;
+      Put ((Spelled (Value => Total_Meetings)));
+      New_Line (2);
+
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line
+           ("Test failed cause :=" & Exception_Information (E));
+   end Run;
+
+   procedure Print_Colours is
+      procedure Print_Colours (C1, C2 : Colour) is
+      begin
+         Put_Line
+           (To_String (Colour_Image (C1)) &
+            " + " &
+            To_String (Colour_Image (C2)) &
+            " -> " &
+            To_String (Colour_Image (Complementary_Colour (C1, C2))));
+      end Print_Colours;
+   begin
+      for Self in Colour loop
+         for Other in Colour loop
+            Print_Colours (Self, Other);
+         end loop;
+      end loop;
+      New_Line;
+   end Print_Colours;
+
+   Numbers_Image : constant array (0 .. 9) of Unbounded_String :=
+     (0 => To_US ("zero "),
+      1 => To_US ("one "),
+      2 => To_US ("two "),
+      3 => To_US ("three "),
+      4 => To_US ("four "),
+      5 => To_US ("five "),
+      6 => To_US ("six "),
+      7 => To_US ("seven "),
+      8 => To_US ("eight "),
+      9 => To_US ("nine "));
+
+   function Spelled (Value : Natural) return String is
+      Result : Unbounded_String := Null_Unbounded_String;
+      K      : Natural          := Value;
+   begin
+      loop
+         Result := Numbers_Image (K rem 10) & Result;
+         K      := K / 10;
+         exit when K = 0;
+      end loop;
+      return To_String (Result);
+   end Spelled;
+
+end Chameneos;
+------------------------------------------------------------------------------
+-- The chameneos description
+-------------------------------------------------------------------------------
+package Chameneos.Creatures is
+
+   --A chameneos is an Ada task
+   task type Creature is
+      entry Start (Id : in Id_Type; C : in Colour);
+      entry Restitute (Id : in Id_Type; Measure : out Measure_Type);
+   end Creature;
+
+end Chameneos.Creatures;
+-------------------------------------------------------------------------------
+with Chameneos.Mall;
+with Ada.Text_IO; use Ada.Text_IO;
+
+package body Chameneos.Creatures is
+
+   task body Creature is
+      My_Id, Other_Id         : Id_Type;
+      My_Colour, Other_Colour : Colour;
+      Meetings_Made           : Natural := 0;
+      Meetings_Same           : Natural := 0;
+      Mall_Open               : Boolean;
+   begin
+      accept Start (Id : in Id_Type; C : in Colour) do
+         My_Id     := Id;
+         My_Colour := C;
+      end Start;
+
+      loop
+         Mall.Cooperation
+           (X            => My_Id,
+            C            => My_Colour,
+            Open         => Mall_Open,
+            Other_Name   => Other_Id,
+            Other_Colour => Other_Colour);
+         if not Mall_Open then
+            -- the test is finished
+            exit;
+         end if;
+         My_Colour     := Do_Complement (My_Colour, Other_Colour);
+         Meetings_Made := Meetings_Made + 1;
+         if Other_Id = My_Id then
+            Meetings_Same := Meetings_Same + 1;
+         end if;
+
+      end loop;
+      -- Give the results and die.
+      accept Restitute (Id : in Id_Type; Measure : out Measure_Type) do
+         Measure.Meetings_Made := Meetings_Made;
+         Measure.Meetings_Same := Meetings_Same;
+      end Restitute;
+   end Creature;
+
+end Chameneos.Creatures;
+-------------------------------------------------------------------------------
+-- The meeting place
+-- Details of implementation are hidden to the user
+-------------------------------------------------------------------------------
+package Chameneos.Mall is
+
+   procedure Init (Max_Count : in Natural);
+
+   procedure Cooperation
+     (X            : in Id_Type;
+      C            : in Colour;
+      Open         : out Boolean;
+      Other_Name   : out Id_Type;
+      Other_Colour : out Colour);
+   pragma Inline (Cooperation);
+
+end Chameneos.Mall;
+-------------------------------------------------------------------------------
+-- Implementation of the meeting place using a protected body
+--
+package body Chameneos.Mall is
+
+   protected Coop_Synchro is
+
+      procedure Init (Max_Count : in Natural);
+      entry Cooperate
+        (X          : in Id_Type;
+         C          : in Colour;
+         Mall_Open  : out Boolean;
+         Name_Other : out Id_Type;
+         C_Other    : out Colour);
+
+   private
+      entry Waiting
+        (X          : in Id_Type;
+         C          : in Colour;
+         Mall_Open  : out Boolean;
+         Name_Other : out Id_Type;
+         C_Other    : out Colour);
+
+      First_Call         : Boolean;
+      A_Colour, B_Colour : Colour;
+      A_Name, B_Name     : Id_Type;
+      Meetings_Counter   : Natural;
+
+   end Coop_Synchro;
+
+   protected body Coop_Synchro is
+
+      procedure Init (Max_Count : in Natural) is
+      begin
+         Meetings_Counter := Max_Count;
+         First_Call       := True;
+      end Init;
+
+      entry Cooperate
+        (X          : in Id_Type;
+         C          : in Colour;
+         Mall_Open  : out Boolean;
+         Name_Other : out Id_Type;
+         C_Other    : out Colour) when True
+      is
+      begin
+         if (Meetings_Counter = 0) then
+            -- The test is finished
+            Mall_Open := False;
+            -- must give dummy values that will not be used anyway
+            C_Other    := C;
+            Name_Other := 1;
+         else
+            Mall_Open := True;
+            if (First_Call) then
+               A_Colour   := C;
+               A_Name     := X;
+               First_Call := False;
+               requeue Waiting;
+            else
+               B_Colour         := C;
+               B_Name           := X;
+               C_Other          := A_Colour;
+               Name_Other       := A_Name;
+               First_Call       := True;
+               Meetings_Counter := Meetings_Counter - 1;
+            end if;
+         end if;
+      end Cooperate;
+
+      entry Waiting
+        (X          : in Id_Type;
+         C          : in Colour;
+         Mall_Open  : out Boolean;
+         Name_Other : out Id_Type;
+         C_Other    : out Colour) when First_Call
+      is
+      begin
+         Mall_Open  := True;
+         C_Other    := B_Colour;
+         Name_Other := B_Name;
+      end Waiting;
+   end Coop_Synchro;
+
+   procedure Init (Max_Count : in Natural) is
+   begin
+      Coop_Synchro.Init (Max_Count);
+   end Init;
+
+   procedure Cooperation
+     (X            : in Id_Type;
+      C            : in Colour;
+      Open         : out Boolean;
+      Other_Name   : out Id_Type;
+      Other_Colour : out Colour)
+   is
+   begin
+      Coop_Synchro.Cooperate (X, C, Open, Other_Name, Other_Colour);
+   end Cooperation;
+
+end Chameneos.Mall;
