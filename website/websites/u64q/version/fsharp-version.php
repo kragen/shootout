@@ -1,1 +1,1 @@
-<p>F# Version 1.9.7.8, compiling for .NET Framework Version v2.0.50727</p>
+<p>Microsoft (R) F# 2.0 Compiler build 1.9.9.9</p>
