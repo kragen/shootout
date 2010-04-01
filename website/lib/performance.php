@@ -164,7 +164,7 @@ $faqUrl = CORE_SITE.'help.php';
 $Data = BenchmarkData(DATA_PATH.'data.csv',$T,$Langs, $Incl,$Excl,$S);
 
 $timeUsed = 'Elapsed secs';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
    $timeUsed = 'CPU secs';
 }
 

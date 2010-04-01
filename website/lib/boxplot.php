@@ -198,7 +198,7 @@ if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-a
 $metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
 $MetaKeywords = '<meta name="description" content="Which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') and how your favorite language compares." />';
 
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
 }
 

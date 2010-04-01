@@ -71,7 +71,7 @@ $faqUrl = CORE_SITE.'help.php';
 $Body->set('Data', LanguageData(DATA_PATH.'ndata.csv',$Langs,$Incl,$Excl,$L));
 
 $timeUsed = 'Elapsed secs';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
+if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
    $timeUsed = 'CPU secs';
 }
 
