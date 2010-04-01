@@ -357,7 +357,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
 
-<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled the JVM continues using the <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><b>on-stack-replacement</b></a>. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
+<p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled, the JVM continues using the <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><b>on-stack-replacement</b></a>. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
 
 <p>To highlight that mismatch, "Java 6 steady state" approximations are shown in the measurement tables alongside the usual startup measurements.</p>
 </dd>
