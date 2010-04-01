@@ -1,0 +1,243 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by Isaac Gouy</span>
+<span class="hl com"> * modified by Uffe Seerup</span>
+<span class="hl com"> * Add multithread by The Anh Tran</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">using</span> System<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Text<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Text<span class="hl sym">.</span>RegularExpressions<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Collections<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Threading<span class="hl sym">;</span>
+
+<span class="hl kwa">sealed class</span> RegexDNA
+<span class="hl sym">{</span>
+   <span class="hl kwa">private static</span> ArrayList source_as_segments<span class="hl sym">,</span> source_as_lines<span class="hl sym">;</span>
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">string</span>   search_result<span class="hl sym">;</span>
+   <span class="hl kwa">private static</span> <span class="hl kwb">int</span>      replace_len<span class="hl sym">;</span>
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">int</span> nthreads <span class="hl sym">=</span> Environment<span class="hl sym">.</span>ProcessorCount<span class="hl sym">;</span>
+   <span class="hl kwa">private static</span> Barrier<span class="hl sym">[]</span> barriers<span class="hl sym">;</span>
+
+   <span class="hl kwa">static</span> <span class="hl kwb">void</span> <span class="hl kwd">Main</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">string</span> input <span class="hl sym">=</span> <span class="hl kwd">ReadInput</span><span class="hl sym">();</span>
+      <span class="hl kwb">int</span> init_len <span class="hl sym">=</span> input<span class="hl sym">.</span>Length<span class="hl sym">;</span>
+
+      <span class="hl kwb">int</span> strip_len <span class="hl sym">=</span> <span class="hl kwd">StripHeader</span><span class="hl sym">(</span>input<span class="hl sym">);</span>
+      input <span class="hl sym">=</span> <span class="hl kwa">null</span><span class="hl sym">;</span>
+
+      barriers <span class="hl sym">=</span> <span class="hl kwa">new</span> Barrier<span class="hl sym">[</span>r_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">];</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> barriers<span class="hl sym">.</span>Length<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+         barriers<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwd">Barrier</span><span class="hl sym">(</span>nthreads<span class="hl sym">);</span>
+
+      <span class="hl slc">// spawn threads</span>
+      Thread<span class="hl sym">[]</span> threads <span class="hl sym">=</span> <span class="hl kwa">new</span> Thread<span class="hl sym">[</span>nthreads<span class="hl sym">];</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> threads<span class="hl sym">.</span>Length<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         threads<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwd">Thread</span><span class="hl sym">(</span>worker_function<span class="hl sym">);</span>
+         threads<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">Start</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl kwa">foreach</span> <span class="hl sym">(</span>Thread t <span class="hl kwa">in</span> threads<span class="hl sym">)</span>
+         t<span class="hl sym">.</span><span class="hl kwd">Join</span><span class="hl sym">();</span>
+
+      Console<span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;{0}</span><span class="hl esc">\n</span><span class="hl str">{1}</span><span class="hl esc">\n</span><span class="hl str">{2}</span><span class="hl esc">\n</span><span class="hl str">{3}&quot;</span><span class="hl sym">,</span>
+         search_result<span class="hl sym">,</span> init_len<span class="hl sym">,</span> strip_len<span class="hl sym">,</span> replace_len<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">string</span> <span class="hl kwd">ReadInput</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">string</span> input <span class="hl sym">=</span> Console<span class="hl sym">.</span>In<span class="hl sym">.</span><span class="hl kwd">ReadToEnd</span><span class="hl sym">();</span>
+      <span class="hl kwa">return</span> input<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">int</span> <span class="hl kwd">StripHeader</span><span class="hl sym">(</span><span class="hl kwb">string</span> input<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      Regex r <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Regex</span><span class="hl sym">(</span><span class="hl str">&quot;&gt;.*</span><span class="hl esc">\n</span><span class="hl str">|</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> RegexOptions<span class="hl sym">.</span>Compiled<span class="hl sym">);</span>
+      Match match <span class="hl sym">=</span> r<span class="hl sym">.</span><span class="hl kwd">Match</span><span class="hl sym">(</span>input<span class="hl sym">);</span>
+
+      source_as_segments <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ArrayList</span><span class="hl sym">();</span>
+      source_as_lines <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ArrayList</span><span class="hl sym">(</span>input<span class="hl sym">.</span>Length <span class="hl sym">/</span> <span class="hl num">60</span> <span class="hl sym">+</span> <span class="hl num">8</span><span class="hl sym">);</span>
+
+      StringBuilder segment <span class="hl sym">=</span> <span class="hl kwa">null</span><span class="hl sym">;</span>
+      <span class="hl kwb">char</span><span class="hl sym">[]</span> line <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">char</span><span class="hl sym">[</span><span class="hl num">256</span><span class="hl sym">];</span>
+      <span class="hl kwb">int</span> copy_index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwb">int</span> strip_len <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>match<span class="hl sym">.</span>Success<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>match<span class="hl sym">.</span>Length <span class="hl sym">&gt;</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl slc">// header line</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>segment <span class="hl sym">!=</span> <span class="hl kwa">null</span><span class="hl sym">)</span>
+               source_as_segments<span class="hl sym">.</span><span class="hl kwd">Add</span><span class="hl sym">(</span>segment<span class="hl sym">.</span><span class="hl kwd">ToString</span><span class="hl sym">());</span>
+            segment <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">StringBuilder</span><span class="hl sym">();</span>
+         <span class="hl sym">}</span>
+
+         <span class="hl kwb">int</span> copy_len <span class="hl sym">=</span> match<span class="hl sym">.</span>Index <span class="hl sym">-</span> copy_index<span class="hl sym">;</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>copy_len <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            input<span class="hl sym">.</span><span class="hl kwd">CopyTo</span><span class="hl sym">(</span>copy_index<span class="hl sym">,</span> line<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> copy_len<span class="hl sym">);</span>
+            segment<span class="hl sym">.</span><span class="hl kwd">Append</span><span class="hl sym">(</span>line<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> copy_len<span class="hl sym">);</span>
+
+            String tmp <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">String</span><span class="hl sym">(</span>line<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> copy_len<span class="hl sym">);</span>
+            source_as_lines<span class="hl sym">.</span><span class="hl kwd">Add</span><span class="hl sym">(</span>tmp<span class="hl sym">);</span>
+
+            strip_len <span class="hl sym">+=</span> copy_len<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+
+         copy_index <span class="hl sym">=</span> match<span class="hl sym">.</span>Index <span class="hl sym">+</span> match<span class="hl sym">.</span>Length<span class="hl sym">;</span>
+         match <span class="hl sym">=</span> match<span class="hl sym">.</span><span class="hl kwd">NextMatch</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>segment <span class="hl sym">!=</span> <span class="hl kwa">null</span><span class="hl sym">)</span>
+         source_as_segments<span class="hl sym">.</span><span class="hl kwd">Add</span><span class="hl sym">(</span>segment<span class="hl sym">.</span><span class="hl kwd">ToString</span><span class="hl sym">());</span>
+
+      <span class="hl kwa">return</span> strip_len<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">void</span> <span class="hl kwd">worker_function</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">CountMatch</span><span class="hl sym">();</span>
+      <span class="hl kwd">Replace</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// C# doesn't allow static var inside function scope :|</span>
+   <span class="hl slc">// =&gt; have to put static var here for multithread sharing</span>
+   <span class="hl kwa">private static</span> <span class="hl kwb">string</span><span class="hl sym">[]</span> c_search_pattern <span class="hl sym">=</span>
+   <span class="hl sym">{</span>
+       <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span><span class="hl sym">,</span>
+       <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
+   <span class="hl sym">};</span>
+
+    <span class="hl slc">// this array stores: how many segments are processed of pattern X</span>
+    <span class="hl slc">// Eg: ptn_processed[3] = 2 means there are 2 segments have been processed by pattern 4th &quot;agg[act]taaa|ttta[agt]cct&quot;</span>
+    <span class="hl kwa">private static</span> <span class="hl kwb">int</span><span class="hl sym">[]</span>    c_pattern_processed <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>c_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">];</span>
+
+    <span class="hl slc">// this array stores: how many matched of pattern X</span>
+    <span class="hl kwa">private static</span> <span class="hl kwb">int</span><span class="hl sym">[]</span>    c_counting_results  <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>c_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">];</span>
+   <span class="hl kwa">private static</span> <span class="hl kwb">int</span>      c_nthread_passed    <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">void</span> <span class="hl kwd">CountMatch</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> total_segment <span class="hl sym">=</span> source_as_segments<span class="hl sym">.</span>Count<span class="hl sym">;</span>
+
+        <span class="hl slc">// foreach search pattern</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> ptn_idx <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ptn_idx <span class="hl sym">&lt;</span> c_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">; ++</span>ptn_idx<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+            <span class="hl slc">// build engine</span>
+         Regex rx_engine <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Regex</span><span class="hl sym">(</span>c_search_pattern<span class="hl sym">[</span>ptn_idx<span class="hl sym">],</span> RegexOptions<span class="hl sym">.</span>Compiled<span class="hl sym">);</span>
+
+         <span class="hl kwb">int</span> fetch_segment_index<span class="hl sym">;</span>
+         <span class="hl kwa">while</span> <span class="hl sym">((</span>fetch_segment_index <span class="hl sym">=</span> Interlocked<span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(</span><span class="hl kwa">ref</span> c_pattern_processed<span class="hl sym">[</span>ptn_idx<span class="hl sym">]) -</span> <span class="hl num">1</span><span class="hl sym">) &lt;</span> total_segment<span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            String fetched_segment <span class="hl sym">= (</span>String<span class="hl sym">)</span>source_as_segments<span class="hl sym">[</span>fetch_segment_index<span class="hl sym">];</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span>Match m <span class="hl sym">=</span> rx_engine<span class="hl sym">.</span><span class="hl kwd">Match</span><span class="hl sym">(</span>fetched_segment<span class="hl sym">);</span> m<span class="hl sym">.</span>Success<span class="hl sym">;</span> m <span class="hl sym">=</span> m<span class="hl sym">.</span><span class="hl kwd">NextMatch</span><span class="hl sym">())</span>
+               Interlocked<span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(</span><span class="hl kwa">ref</span> c_counting_results<span class="hl sym">[</span>ptn_idx<span class="hl sym">]);</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl slc">// Allow only the last thread reaching this code block to print result</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>Interlocked<span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(</span><span class="hl kwa">ref</span> c_nthread_passed<span class="hl sym">) ==</span> nthreads<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         StringBuilder s <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">StringBuilder</span><span class="hl sym">();</span>
+
+         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> ptn_idx <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ptn_idx <span class="hl sym">&lt;</span> c_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">; ++</span>ptn_idx<span class="hl sym">)</span>
+            s<span class="hl sym">.</span><span class="hl kwd">AppendFormat</span><span class="hl sym">(</span><span class="hl str">&quot;{0} {1}</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> c_search_pattern<span class="hl sym">[</span>ptn_idx<span class="hl sym">],</span> c_counting_results<span class="hl sym">[</span>ptn_idx<span class="hl sym">]);</span>
+
+         search_result <span class="hl sym">=</span> s<span class="hl sym">.</span><span class="hl kwd">ToString</span><span class="hl sym">();</span>
+         source_as_segments <span class="hl sym">=</span> <span class="hl kwa">null</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+
+   <span class="hl kwa">private static</span> <span class="hl kwb">string</span><span class="hl sym">[]</span> r_search_pattern <span class="hl sym">=</span>
+   <span class="hl sym">{</span>
+      <span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;K&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;M&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;N&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;R&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;S&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;Y&quot;</span>
+   <span class="hl sym">};</span>
+   <span class="hl kwa">private static</span> <span class="hl kwb">string</span><span class="hl sym">[]</span> r_replace_pattern <span class="hl sym">=</span>
+   <span class="hl sym">{</span>
+      <span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">,</span>
+      <span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span>
+   <span class="hl sym">};</span>
+
+   <span class="hl slc">// this array stores: how many lines are processed of pattern X</span>
+   <span class="hl slc">// Eg: ptn_processed[3] = 123 means there are 123 lines have been processed by pattern &quot;K&quot;</span>
+   <span class="hl kwa">private static</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> r_pattern_processed <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>r_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">];</span>
+
+    <span class="hl kwa">private static</span> <span class="hl kwb">void</span> <span class="hl kwd">Replace</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">int</span> total_lines <span class="hl sym">=</span> source_as_lines<span class="hl sym">.</span>Count<span class="hl sym">;</span>
+
+      <span class="hl slc">// foreach search pattern</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> ptn_idx <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> ptn_idx <span class="hl sym">&lt;</span> r_search_pattern<span class="hl sym">.</span>Length<span class="hl sym">; ++</span>ptn_idx<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl slc">// build regex engine</span>
+         Regex rx_engine <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Regex</span><span class="hl sym">(</span>r_search_pattern<span class="hl sym">[</span>ptn_idx<span class="hl sym">],</span> RegexOptions<span class="hl sym">.</span>Compiled<span class="hl sym">);</span>
+
+         <span class="hl slc">// fetch not yet processed line</span>
+         <span class="hl kwb">int</span> line_fetch_index<span class="hl sym">;</span>
+         <span class="hl kwa">while</span> <span class="hl sym">((</span>line_fetch_index <span class="hl sym">=</span> Interlocked<span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(</span><span class="hl kwa">ref</span> r_pattern_processed<span class="hl sym">[</span>ptn_idx<span class="hl sym">]) -</span> <span class="hl num">1</span><span class="hl sym">) &lt;</span> total_lines<span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+                <span class="hl slc">// get ref to line object from container</span>
+            String data_line <span class="hl sym">= (</span>String<span class="hl sym">)</span>source_as_lines<span class="hl sym">[</span>line_fetch_index<span class="hl sym">];</span>
+
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>rx_engine<span class="hl sym">.</span><span class="hl kwd">IsMatch</span><span class="hl sym">(</span>data_line<span class="hl sym">))</span> <span class="hl slc">// skip line that doesn't match</span>
+               source_as_lines<span class="hl sym">[</span>line_fetch_index<span class="hl sym">] =</span> rx_engine<span class="hl sym">.</span><span class="hl kwd">Replace</span><span class="hl sym">(</span>data_line<span class="hl sym">,</span> r_replace_pattern<span class="hl sym">[</span>ptn_idx<span class="hl sym">]);</span>
+
+            <span class="hl slc">// if this is the last pattern, update replace_len</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>ptn_idx <span class="hl sym">==</span> r_search_pattern<span class="hl sym">.</span>Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+               String ln <span class="hl sym">= (</span>String<span class="hl sym">)</span>source_as_lines<span class="hl sym">[</span>line_fetch_index<span class="hl sym">];</span>
+               Interlocked<span class="hl sym">.</span><span class="hl kwd">Add</span><span class="hl sym">(</span><span class="hl kwa">ref</span> replace_len<span class="hl sym">,</span> ln<span class="hl sym">.</span>Length<span class="hl sym">);</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+
+         <span class="hl slc">// threads have to wait at the end of each replace pattern</span>
+         <span class="hl slc">// to avoid concurrent modifying the same data line (at different ptn_idx values)</span>
+         barriers<span class="hl sym">[</span>ptn_idx<span class="hl sym">].</span><span class="hl kwd">Wait</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+
+        source_as_lines <span class="hl sym">=</span> <span class="hl kwa">null</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">internal sealed class</span> Barrier
+<span class="hl sym">{</span>
+   <span class="hl kwa">private</span> volatile <span class="hl kwb">int</span> barrier<span class="hl sym">;</span>
+   <span class="hl kwa">private</span> <span class="hl kwb">int</span> nthreads<span class="hl sym">;</span>
+
+   <span class="hl kwa">public</span> <span class="hl kwd">Barrier</span><span class="hl sym">(</span><span class="hl kwb">int</span> nthreads<span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwa">this</span><span class="hl sym">.</span>barrier <span class="hl sym">=</span> <span class="hl kwa">this</span><span class="hl sym">.</span>nthreads <span class="hl sym">=</span> nthreads<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">Wait</span><span class="hl sym">()</span>
+   <span class="hl sym">{</span>
+      System<span class="hl sym">.</span>Threading<span class="hl sym">.</span>Monitor<span class="hl sym">.</span><span class="hl kwd">Enter</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+      <span class="hl sym">--</span>barrier<span class="hl sym">;</span>
+
+      <span class="hl kwa">if</span> <span class="hl sym">((</span><span class="hl num">0</span> <span class="hl sym">&lt;</span> barrier<span class="hl sym">) &amp;&amp; (</span>barrier <span class="hl sym">&lt;</span> nthreads<span class="hl sym">))</span>
+         System<span class="hl sym">.</span>Threading<span class="hl sym">.</span>Monitor<span class="hl sym">.</span><span class="hl kwd">Wait</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+      <span class="hl kwa">else</span>
+      <span class="hl sym">{</span>
+         barrier <span class="hl sym">=</span> nthreads<span class="hl sym">;</span>
+         System<span class="hl sym">.</span>Threading<span class="hl sym">.</span>Monitor<span class="hl sym">.</span><span class="hl kwd">PulseAll</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+
+      System<span class="hl sym">.</span>Threading<span class="hl sym">.</span>Monitor<span class="hl sym">.</span><span class="hl kwd">Exit</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>

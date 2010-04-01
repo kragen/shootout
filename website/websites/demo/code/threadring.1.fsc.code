@@ -1,0 +1,49 @@
+<span class="hl com">(*  The Computer Language Benchmarks Game</span>
+<span class="hl com">    http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">    Contributed by Frank Thomsen</span>
+<span class="hl com"></span>
+<span class="hl com">    Note:   This version uses regular OS-threads since it</span>
+<span class="hl com">            is unclear whether or not we are allowed to</span>
+<span class="hl com">            use the thread pool.</span>
+<span class="hl com">*)</span>
+
+#light
+#nowarn <span class="hl str">&quot;20&quot;</span>
+
+<span class="hl kwa">open</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">Threading</span>
+
+<span class="hl kwa">let</span> ringLength <span class="hl sym">=</span> <span class="hl num">503</span>
+
+<span class="hl kwa">type</span> <span class="hl kwd">RingThread</span><span class="hl sym">(</span>name<span class="hl sym">:</span><span class="hl kwb">int</span><span class="hl sym">) =</span>
+    static <span class="hl kwa">let</span> ring<span class="hl sym">:</span><span class="hl kwb">option</span><span class="hl sym">&lt;</span><span class="hl kwd">RingThread</span><span class="hl sym">&gt;[] =</span>  <span class="hl kwa">let</span> x <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>create ringLength <span class="hl kwd">None</span>
+                                            <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl num">0</span><span class="hl sym">..</span>ringLength<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl kwa">do</span>
+                                                x<span class="hl sym">.[</span>i<span class="hl sym">] &lt;-</span> <span class="hl kwd">Some</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwd">RingThread</span><span class="hl sym">(</span>i<span class="hl sym">))</span>
+                                                x<span class="hl sym">.[</span>i<span class="hl sym">].</span><span class="hl kwc">Value</span><span class="hl sym">.</span><span class="hl kwd">StartThread</span><span class="hl sym">()</span>
+                                            x
+
+    <span class="hl kwa">let</span> waitHandle <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">AutoResetEvent</span><span class="hl sym">(</span><span class="hl kwa">false</span><span class="hl sym">)</span>
+    <span class="hl kwa">let mutable</span> token <span class="hl sym">= -</span><span class="hl num">1</span>
+
+    <span class="hl kwa">let</span> next<span class="hl sym">() =</span> ring<span class="hl sym">.[(</span>name<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)%</span>ringLength<span class="hl sym">].</span><span class="hl kwd">Value</span>
+    <span class="hl kwa">let rec</span> threadFunc<span class="hl sym">() =</span>
+        waitHandle<span class="hl sym">.</span><span class="hl kwd">WaitOne</span><span class="hl sym">()</span>
+        <span class="hl kwa">match</span> token <span class="hl kwa">with</span>
+        <span class="hl sym">| -</span><span class="hl num">1</span> <span class="hl sym">-&gt;</span> printfn <span class="hl str">&quot;%d&quot;</span> name
+                next<span class="hl sym">().</span><span class="hl kwd">GiveToken</span><span class="hl sym">(-</span><span class="hl num">2</span><span class="hl sym">) //</span>halt
+        <span class="hl sym">| -</span><span class="hl num">2</span> <span class="hl sym">-&gt;</span> next<span class="hl sym">().</span><span class="hl kwd">GiveToken</span><span class="hl sym">(-</span><span class="hl num">2</span><span class="hl sym">) //</span>halt
+        <span class="hl sym">|</span> _ <span class="hl sym">-&gt;</span>  next<span class="hl sym">().</span><span class="hl kwd">GiveToken</span><span class="hl sym">(</span>token<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+                threadFunc<span class="hl sym">()</span>
+
+    member tfs<span class="hl sym">.</span><span class="hl kwd">Name</span> <span class="hl kwa">with</span> get<span class="hl sym">() =</span> name
+    member tfs<span class="hl sym">.</span><span class="hl kwd">GiveToken</span><span class="hl sym">(</span>t<span class="hl sym">:</span><span class="hl kwb">int</span><span class="hl sym">) =</span>
+        token <span class="hl sym">&lt;-</span> t
+        waitHandle<span class="hl sym">.</span><span class="hl kwd">Set</span><span class="hl sym">()</span>
+        <span class="hl sym">()</span>
+    member tfs<span class="hl sym">.</span><span class="hl kwd">StartThread</span><span class="hl sym">() =</span>
+        <span class="hl kwa">let</span> t <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Thread</span><span class="hl sym">(</span><span class="hl kwd">ThreadStart</span><span class="hl sym">(</span>threadFunc<span class="hl sym">))</span>
+        t<span class="hl sym">.</span><span class="hl kwd">Start</span><span class="hl sym">()</span>
+        <span class="hl sym">()</span>
+    static member <span class="hl kwd">StartRing</span><span class="hl sym">(</span>startToken<span class="hl sym">:</span><span class="hl kwb">int</span><span class="hl sym">) =</span> ring<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">].</span><span class="hl kwc">Value</span><span class="hl sym">.</span><span class="hl kwd">GiveToken</span><span class="hl sym">(</span>startToken<span class="hl sym">)</span>
+
+RingThread<span class="hl sym">.</span><span class="hl kwd">StartRing</span><span class="hl sym">(</span><span class="hl kwa">try</span> <span class="hl kwc">Int32</span><span class="hl sym">.</span>of_string <span class="hl kwc">Sys</span><span class="hl sym">.</span>argv<span class="hl sym">.[</span><span class="hl num">1</span><span class="hl sym">]</span> <span class="hl kwa">with</span> _ <span class="hl sym">-&gt;</span> <span class="hl num">10000000</span><span class="hl sym">)</span>
