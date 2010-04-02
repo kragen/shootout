@@ -1,5 +1,7 @@
 <?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
+<p>"&#8230;After all, facts are facts, and although we may quote one to another with a chuckle the words of the Wise Statesman, 'Lies--damned lies--and statistics,' still there are some easy figures the simplest must understand, and the astutest cannot wriggle out of."</p>
+
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 
 <dl>
