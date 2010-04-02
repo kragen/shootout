@@ -22,36 +22,27 @@ func count(data string, n int) map[string]int {
    top := len(data) - n
    for i := 0; i <= top; i++ {
       s := data[i : i+n]
-      if k, ok := counts[s]; ok {
-         counts[s] = k + 1
-      } else {
-         counts[s] = 1
-      }
+      counts[s]++
    }
    return counts
 }
 
 func countOne(data string, s string) int {
-   counts := count(data, len(s))
-   if i, ok := counts[s]; ok {
-      return i
-   }
-   return 0
+   return count(data, len(s))[s]
 }
 
-
 type kNuc struct {
-   name   string
-   count   int
+   name  string
+   count int
 }
 
 type kNucArray []kNuc
 
 func (kn kNucArray) Len() int      { return len(kn) }
-func (kn kNucArray) Swap(i, j int)   { kn[i], kn[j] = kn[j], kn[i] }
+func (kn kNucArray) Swap(i, j int) { kn[i], kn[j] = kn[j], kn[i] }
 func (kn kNucArray) Less(i, j int) bool {
    if kn[i].count == kn[j].count {
-      return kn[i].name > kn[j].name   // sort down
+      return kn[i].name > kn[j].name // sort down
    }
    return kn[i].count > kn[j].count
 }
@@ -101,7 +92,7 @@ func main() {
    j := 0
    for i := 0; i < len(data); i++ {
       if data[i] != '\n' {
-         data[j] = data[i] &^ ' '   // upper case
+         data[j] = data[i] &^ ' ' // upper case
          j++
       }
    }
