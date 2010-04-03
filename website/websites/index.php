@@ -132,7 +132,7 @@ unset($pagechoices);
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
 <p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a>
 
-<p><i>"&#8230;After all, facts are facts, and although we may quote one to <br/>another with a chuckle the words of the Wise Statesman, <br/>'Lies--damned lies--and statistics,' still there are some easy figures <br/>the simplest must understand, and the astutest cannot wriggle out of."</i></p>
+<p>"After all, facts are facts, and although we may quote one to <br/>another with a chuckle the words of the Wise Statesman, <br/>'Lies--damned lies--and statistics,' still there are some easy figures <br/>the simplest must understand, and the astutest cannot wriggle out of." <span class="smaller">Leonard Henry Courtney, 1895</span></p>
 
 
 
