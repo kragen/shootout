@@ -1,0 +1,420 @@
+/* The Computer Language Benchmarks Game
+http://shootout.alioth.debian.org/
+
+Based on original C contribution by Alex Burlyga.
+Based on thread pool + request queue in Java contribution by Michael Barker.
+Based on single atomic ops, and pthread affinity in C contribution by Dmitry Vyukov.
+Based on C++ contribution by Andrew Moon.
+Contributed by The Anh Tran.
+
+This entry creates N kernel threads. All threads will wait inside 
+boost::asio::io_service queue object. If there is a request posted to io_service 
+queue, a thread will be dispatched to handle it.
+
+Each creature will submit "i want to go to meeting place" request to io_service.
+Atomic compare-and-set is used to change meeting place state.
+*/
+
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <map>
+#include <sstream>
+
+#include <cstdlib>
+#include <cstdio>
+#include <cassert>
+#include <cmath>
+#include <memory.h>
+
+#include <pthread.h>
+#include <sched.h>
+
+#include <boost/xpressive/xpressive_static.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/smart_ptr.hpp>
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+
+
+
+typedef unsigned int uint;
+typedef boost::asio::io_service QUEUE_T;
+
+
+#define CPU_INFO_STR   "/proc/cpuinfo"
+#define L2_ALIGN      __attribute__((aligned(64)))
+
+enum COLOR {   BLUE = 0,   RED = 1,   YELLOW = 2   };
+COLOR 
+operator ^ (COLOR c1, COLOR c2)
+{
+   switch (c1)   // game rule
+   {
+   case BLUE:   switch (c2)
+            {
+            case BLUE:      return BLUE;
+            case RED:      return YELLOW;
+            case YELLOW:   return RED;
+            }
+
+   case RED:   switch (c2)
+            {
+            case BLUE:      return YELLOW;
+            case RED:      return RED;
+            case YELLOW:   return BLUE;
+            }
+
+   case YELLOW:   switch (c2)
+            {
+            case BLUE:      return RED;
+            case RED:      return BLUE;
+            case YELLOW:   return YELLOW;
+            }
+   }
+
+   assert(false);
+   return BLUE;
+}
+
+
+std::ostream& 
+operator << (std::ostream &os, COLOR c) 
+{   
+   static char const * ColorName[3]   = {"blue", "red", "yellow"};
+   os << ColorName[c];
+   return os;
+}
+
+
+std::string
+SpellNumber(uint n)
+{
+   static char const* NumberStr[] = 
+   {
+      "zero ", "one ", "two ", "three ", "four ",
+      "five ", "six ", "seven ", "eight ", "nine "
+   };
+   
+   std::string num;
+   
+   while ( n >= 10 )
+   {
+      uint m = n % 10;
+      n /= 10;
+
+      num.insert(0, NumberStr[m]);
+   }
+
+   num.insert(0, NumberStr[n]);
+   return num;
+}
+
+/*   Place where a creature meet another.
+   stage_exchange stores 2 informations:
+   _ how many meeting times to go. 28 bit from bit 0 -> 27.
+   _ is there any creature waiting. 4 highest bit, 28 -> 31
+*/
+struct MeetingPlace
+{
+private:
+   L2_ALIGN
+   uint volatile   state_exchange_;
+
+public:
+   MeetingPlace(uint N) :   state_exchange_(N)   {   }
+
+/*
+   State_exchange = 32 bit
+   4 bit MSB: id of creature which is waiting. Can support up to 15 creatures.
+   28 bit: counter of how many meeting times that needs to run
+*/
+   int EnterMeetingRoom( uint cr_id )   // id starts from 1.
+   {
+      assert((0 < cr_id) && (cr_id <= 15));
+      
+      while (true)
+      {
+         uint old_state = state_exchange_;
+         uint meeting_left = old_state & 0x0FFFFFFF;
+
+         if (meeting_left > 0)
+         {
+            uint cr_waiting = old_state >> 28;
+            uint new_state;
+
+            if (cr_waiting == 0)   // no one inside, me is 1st
+               new_state = meeting_left | (cr_id << 28);
+            else   // there is a creature waiting
+               new_state = meeting_left -1;
+
+            if (__sync_bool_compare_and_swap(&state_exchange_, old_state, new_state))
+               return cr_waiting;
+         }
+         else
+            return -1;
+      }
+   }
+};
+
+
+struct Creature
+{
+   QUEUE_T*            p_queue_;
+   MeetingPlace*         p_meetingplace_;
+   Creature*            p_cr_list_;
+
+   COLOR               color_;
+   uint               count_;
+   uint               id_;      // creature id start from 1
+   uint               same_count_;
+
+   Creature() : color_(BLUE), count_(0), id_(0), same_count_(0)   {}
+
+   void 
+   Start(   MeetingPlace* mp, COLOR color , uint id, 
+         QUEUE_T* queue,  Creature* pcrl)
+   {
+      color_   = color;
+      id_      = id +1;
+
+      p_queue_      = queue;
+      p_meetingplace_   = mp;
+      p_cr_list_      = pcrl;
+
+      // post "go to meeting place" request
+      p_queue_->post(boost::bind(&Creature::PlayGame, this));
+   }
+
+   // request granted, meeting action executes here
+   void 
+   PlayGame()   
+   {   
+      int other_cr_id = p_meetingplace_->EnterMeetingRoom(id_);
+
+      // meeting_place returns other creature?
+      if (other_cr_id > 0)
+         SayHello( p_cr_list_[other_cr_id -1] );
+
+      // if me is the 1st one entering meeting_place, do nothing. 
+      // 2nd arrival creature will submit next meeting request for me.
+   }
+
+   void 
+   SayHello(Creature &other)
+   {
+      if (__builtin_expect(id_ == other.id_, false))
+      {
+         ++same_count_;
+         ++other.same_count_;
+      }
+      
+      ++count_;
+      ++other.count_;
+
+      COLOR new_color   = this->color_ ^ other.color_;
+      other.color_   = color_   = new_color;
+
+      timespec ts = {0};
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      
+      if (ts.tv_nsec & 1)
+      {
+         // submit another meeting request, for current creature + other creature.
+         p_queue_->post(boost::bind(&Creature::PlayGame, this));
+         p_queue_->post(boost::bind(&Creature::PlayGame, &other));
+      }
+      else
+      {
+         p_queue_->post(boost::bind(&Creature::PlayGame, &other));
+         p_queue_->post(boost::bind(&Creature::PlayGame, this));
+      }
+   }
+} L2_ALIGN;
+
+
+
+template <int ncolor>
+struct Game
+{
+   MeetingPlace   mplace;
+   QUEUE_T         queue;
+   Creature      cr_list[ncolor];   // list of all creatures
+
+   std::ostringstream   game_output;
+   boost::thread_group   cr_thread_group;         // 1 standard OS thread for each creature
+
+   Game(uint n, COLOR const (&color)[ncolor], cpu_set_t * aff = 0)   
+      :   mplace(n)   
+   {
+      boost::format fmt("%1% ");
+      
+      // print initial color of each creature
+      for (int i = 0; i < ncolor; ++i)
+      {
+         game_output << (fmt % (color[i]) );
+         cr_list[i].Start( &mplace, color[i], i, &queue, cr_list );
+      }
+      game_output << std::endl;
+
+      // Create N kernel threads. All threads will wait inside boost::asio::io_service
+      // queue object. If there is a request posted to io_service queue, a thread
+      // will be dispatched to handle it.
+      for (int i = 0; i < ncolor; ++i)
+      {
+         boost::thread* t = cr_thread_group.create_thread(boost::bind(&QUEUE_T::run, &queue));
+      
+         if(aff != 0)
+            pthread_setaffinity_np(t->native_handle(), sizeof(cpu_set_t), aff);
+      }
+   }
+
+   std::string
+   WaitAndGetResult()
+   {
+      // wait until meeting times = 0
+      cr_thread_group.join_all();
+
+      uint total = 0;
+      boost::format fmt("%1% %2%\n");
+
+      // print meeting times of each creature
+      for (int i = 0; i < ncolor; i++)
+      {
+         total += cr_list[i].count_;
+         game_output << (fmt 
+                     % cr_list[i].count_ 
+                     % SpellNumber(cr_list[i].same_count_)   );
+      }
+
+      // print total meeting times
+      fmt = boost::format(" %1%\n\n");
+      game_output << (fmt % SpellNumber(total));
+
+      return game_output.str();
+   }
+};
+
+void 
+PrintColors()
+{
+   boost::format fmt("%1% + %2% -> %3%\n");
+   
+   for (int c1 = BLUE; c1 <= YELLOW; ++c1)
+   {
+      for (int c2 = BLUE; c2 <= YELLOW; ++c2)
+         std::cout << (fmt % (COLOR)c1 % (COLOR)c2 % ((COLOR)c1 ^ (COLOR)c2));
+   }
+
+   std::cout << std::endl;
+}
+
+// Detect multi / single thread benchmark
+int 
+GetThreadCount()
+{
+   cpu_set_t cs;
+   CPU_ZERO(&cs);
+   sched_getaffinity(0, sizeof(cs), &cs);
+
+   int count = 0;
+   for (int i = 0; i < 16; ++i)
+   {
+      if (CPU_ISSET(i, &cs))
+         ++count;
+   }
+   return count;
+}
+
+// Parse /proc/cpuinfo
+// Return a list of cpu cores sharing 1 L2 cache
+std::auto_ptr<std::vector<cpu_set_t> >
+GetAffinityList()
+{
+   std::ifstream file(CPU_INFO_STR);
+   std::istreambuf_iterator<char> is(file), ise;
+
+   // load file to vector<char>
+   std::vector<char> buf;
+   std::copy(is, ise, std::back_inserter(buf));
+   file.close();
+   
+
+   // map processors to L2 cache unit
+   typedef std::map<int, cpu_set_t> MAP_T;
+   MAP_T l2_set;
+
+   {
+      using namespace boost::xpressive;
+      namespace bx = boost::xpressive;
+
+      typedef std::vector<char>::iterator      VI_T;
+      typedef bx::basic_regex<VI_T>         RE_T;
+      typedef bx::regex_iterator<VI_T>      IRE_T;
+
+      RE_T re(
+         as_xpr("processor") >> +(_s|':') >> (s1 = +_d)
+         >> -+(~_n|_n)
+         >> "apicid" >> +(_s|':') >> (s2 = +_d) );
+
+      IRE_T it(buf.begin(), buf.end(), re), it_end;
+
+      for (; it != it_end; ++it)
+      {
+         int core = boost::lexical_cast<int>( (*it)[1].str() );
+         int apic = boost::lexical_cast<int>( (*it)[2].str() );
+         
+         // q6600 has 4 cores, 2 cores share 1 L2 cache
+         // 2 cores + 1 L2 = 1 package
+         int package = apic >> 1;
+
+         CPU_SET(core, &(l2_set[package]));
+      }
+   }
+
+   std::auto_ptr<std::vector<cpu_set_t> > aff(new std::vector<cpu_set_t>);
+   typedef MAP_T::value_type VT;
+
+   foreach ( VT &i, l2_set )
+      aff->push_back(i.second);
+
+   return aff;
+}
+
+
+int 
+main(int argc, char** argv)
+{
+   PrintColors();
+
+   COLOR const r1[] = {   BLUE, RED, YELLOW   };
+   COLOR const r2[] = {   BLUE, RED, YELLOW, RED, YELLOW, BLUE, RED, YELLOW, RED, BLUE   };
+   
+   int n = (argc >= 2) ? boost::lexical_cast<int>(argv[1]) : 600;
+   
+   if (GetThreadCount() > 1)
+   {
+      std::auto_ptr<std::vector<cpu_set_t> > affset( GetAffinityList() );
+
+      Game<3> cg1( n, r1, &((*affset)[0]) );
+      Game<10> cg2( n, r2, &((*affset)[1]) );
+      
+      std::cout << cg1.WaitAndGetResult();
+      std::cout << cg2.WaitAndGetResult();
+   }
+   else
+   {
+      Game<3> cg1( n, r1 );
+      std::cout << cg1.WaitAndGetResult();
+
+      Game<10> cg2( n, r2 );
+      std::cout << cg2.WaitAndGetResult();
+   }
+
+   return 0;
+}

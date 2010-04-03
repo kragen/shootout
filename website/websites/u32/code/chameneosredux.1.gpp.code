@@ -1,286 +1,320 @@
 <span class="hl com">/* The Computer Language Benchmarks Game</span>
 <span class="hl com">http://shootout.alioth.debian.org/</span>
 <span class="hl com"></span>
-<span class="hl com">Based on C contribution by Alex Burlyga</span>
-<span class="hl com">Based on Java contribution by Michael Barker</span>
-<span class="hl com">Contributed by The Anh Tran</span>
+<span class="hl com">Based on original C contribution by Alex Burlyga.</span>
+<span class="hl com">Based on thread pool + request queue in Java contribution by Michael Barker.</span>
+<span class="hl com">Based on single atomic ops, and pthread affinity in C contribution by Dmitry Vyukov.</span>
+<span class="hl com">Based on C++ contribution by Andrew Moon.</span>
+<span class="hl com">Contributed by The Anh Tran.</span>
 <span class="hl com"></span>
-<span class="hl com">   Each chameneous creature is a standard OS's thread.</span>
-<span class="hl com">   Thread scheduling is OS scheduler.</span>
-<span class="hl com">   Data exchange mechanism is x86 atomic ops.</span>
+<span class="hl com">This entry creates N kernel threads. All threads will wait inside</span>
+<span class="hl com">boost::asio::io_service queue object. If there is a request posted to io_service</span>
+<span class="hl com">queue, a thread will be dispatched to handle it.</span>
+<span class="hl com"></span>
+<span class="hl com">Each creature will submit &quot;i want to go to meeting place&quot; request to io_service.</span>
+<span class="hl com">Atomic compare-and-set is used to change meeting place state.</span>
 <span class="hl com">*/</span>
 
-
+<span class="hl dir">#include &lt;fstream&gt;</span>
 <span class="hl dir">#include &lt;iostream&gt;</span>
 <span class="hl dir">#include &lt;string&gt;</span>
+<span class="hl dir">#include &lt;map&gt;</span>
+<span class="hl dir">#include &lt;sstream&gt;</span>
 
 <span class="hl dir">#include &lt;cstdlib&gt;</span>
 <span class="hl dir">#include &lt;cstdio&gt;</span>
+<span class="hl dir">#include &lt;cassert&gt;</span>
 <span class="hl dir">#include &lt;cmath&gt;</span>
 <span class="hl dir">#include &lt;memory.h&gt;</span>
 
 <span class="hl dir">#include &lt;pthread.h&gt;</span>
 <span class="hl dir">#include &lt;sched.h&gt;</span>
 
+<span class="hl dir">#include &lt;boost/xpressive/xpressive_static.hpp&gt;</span>
 <span class="hl dir">#include &lt;boost/lexical_cast.hpp&gt;</span>
 <span class="hl dir">#include &lt;boost/format.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/asio.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/thread.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/bind.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/smart_ptr.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/foreach.hpp&gt;</span>
 
-<span class="hl kwa">using namespace</span> std<span class="hl sym">;</span>
-<span class="hl kwa">using namespace</span> boost<span class="hl sym">;</span>
-
-
-<span class="hl kwb">int const</span>   STACK_SIZE <span class="hl sym">=</span> <span class="hl num">16</span><span class="hl sym">*</span><span class="hl num">1024</span><span class="hl sym">;</span>
-<span class="hl kwb">char</span>      stacks<span class="hl sym">[</span><span class="hl num">16</span><span class="hl sym">][</span>STACK_SIZE<span class="hl sym">];</span>
-<span class="hl kwb">bool</span>      multi_core<span class="hl sym">;</span>
-
-
-<span class="hl kwb">enum</span> COLOR <span class="hl sym">{</span>   BLUE   <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span>   RED      <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span>   YELLOW   <span class="hl sym">=</span> <span class="hl num">2</span>   <span class="hl sym">};</span>
-<span class="hl kwb">char const</span> <span class="hl sym">*</span> <span class="hl kwb">const</span> ColorName<span class="hl sym">[]   = {</span><span class="hl str">&quot;blue&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;red&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;yellow&quot;</span><span class="hl sym">};</span>
+<span class="hl dir">#define foreach BOOST_FOREACH</span>
 
 
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned int</span> uint<span class="hl sym">;</span>
+<span class="hl kwc">typedef</span> boost<span class="hl sym">::</span>asio<span class="hl sym">::</span>io_service QUEUE_T<span class="hl sym">;</span>
+
+
+<span class="hl dir">#define CPU_INFO_STR</span>   <span class="hl dstr">&quot;/proc/cpuinfo&quot;</span><span class="hl dir"></span>
+<span class="hl dir">#define L2_ALIGN      __attribute__((aligned(64)))</span>
+
+<span class="hl kwb">enum</span> COLOR <span class="hl sym">{</span>   BLUE <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span>   RED <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span>   YELLOW <span class="hl sym">=</span> <span class="hl num">2</span>   <span class="hl sym">};</span>
 COLOR
-<span class="hl kwd">ColorCompliment</span><span class="hl sym">(</span>COLOR c1<span class="hl sym">,</span> COLOR c2<span class="hl sym">)</span>
+<span class="hl kwc">operator</span> ^ <span class="hl sym">(</span>COLOR c1<span class="hl sym">,</span> COLOR c2<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c1<span class="hl sym">)</span>
+   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c1<span class="hl sym">)</span>   <span class="hl slc">// game rule</span>
    <span class="hl sym">{</span>
-   <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>
-      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-      <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>      <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
-      <span class="hl kwa">case</span> RED<span class="hl sym">:</span>      <span class="hl kwa">return</span> YELLOW<span class="hl sym">;</span>
-      <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">return</span> RED<span class="hl sym">;</span>
-      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+            <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>      <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> RED<span class="hl sym">:</span>      <span class="hl kwa">return</span> YELLOW<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">return</span> RED<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
 
-   <span class="hl kwa">case</span> RED<span class="hl sym">:</span>
-      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-      <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>      <span class="hl kwa">return</span> YELLOW<span class="hl sym">;</span>
-      <span class="hl kwa">case</span> RED<span class="hl sym">:</span>      <span class="hl kwa">return</span> RED<span class="hl sym">;</span>
-      <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
-      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> RED<span class="hl sym">:</span>   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+            <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>      <span class="hl kwa">return</span> YELLOW<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> RED<span class="hl sym">:</span>      <span class="hl kwa">return</span> RED<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
 
-   <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>
-      <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-      <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>      <span class="hl kwa">return</span> RED<span class="hl sym">;</span>
-      <span class="hl kwa">case</span> RED<span class="hl sym">:</span>      <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
-      <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">return</span> YELLOW<span class="hl sym">;</span>
-      <span class="hl sym">}</span>
+   <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+            <span class="hl kwa">case</span> BLUE<span class="hl sym">:</span>      <span class="hl kwa">return</span> RED<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> RED<span class="hl sym">:</span>      <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> YELLOW<span class="hl sym">:</span>   <span class="hl kwa">return</span> YELLOW<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
    <span class="hl sym">}</span>
 
-   cerr <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;Invalid color</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+   <span class="hl kwd">assert</span><span class="hl sym">(</span><span class="hl kwa">false</span><span class="hl sym">);</span>
    <span class="hl kwa">return</span> BLUE<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
 
-string
-<span class="hl kwd">SpellNumber</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">)</span>
+std<span class="hl sym">::</span>ostream<span class="hl sym">&amp;</span>
+<span class="hl kwc">operator</span> <span class="hl sym">&lt;&lt; (</span>std<span class="hl sym">::</span>ostream <span class="hl sym">&amp;</span>os<span class="hl sym">,</span> COLOR c<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">static char const</span><span class="hl sym">*</span> <span class="hl kwb">const</span> NumberStr<span class="hl sym">[] =</span>
+   <span class="hl kwb">static char const</span> <span class="hl sym">*</span> ColorName<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">]   = {</span><span class="hl str">&quot;blue&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;red&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;yellow&quot;</span><span class="hl sym">};</span>
+   os <span class="hl sym">&lt;&lt;</span> ColorName<span class="hl sym">[</span>c<span class="hl sym">];</span>
+   <span class="hl kwa">return</span> os<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+std<span class="hl sym">::</span>string
+<span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>uint n<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl kwb">static char const</span><span class="hl sym">*</span> NumberStr<span class="hl sym">[] =</span>
    <span class="hl sym">{</span>
       <span class="hl str">&quot;zero &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;one &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;two &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;three &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;four &quot;</span><span class="hl sym">,</span>
       <span class="hl str">&quot;five &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;six &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;seven &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;eight &quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;nine &quot;</span>
    <span class="hl sym">};</span>
-   string num<span class="hl sym">;</span>
+
+   std<span class="hl sym">::</span>string num<span class="hl sym">;</span>
 
    <span class="hl kwa">while</span> <span class="hl sym">(</span> n <span class="hl sym">&gt;=</span> <span class="hl num">10</span> <span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      <span class="hl kwb">int</span> m <span class="hl sym">=</span> n <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
+      uint m <span class="hl sym">=</span> n <span class="hl sym">%</span> <span class="hl num">10</span><span class="hl sym">;</span>
       n <span class="hl sym">/=</span> <span class="hl num">10</span><span class="hl sym">;</span>
 
-      num <span class="hl sym">=</span> NumberStr<span class="hl sym">[</span>m<span class="hl sym">] +</span> num<span class="hl sym">;</span>
+      num<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> NumberStr<span class="hl sym">[</span>m<span class="hl sym">]);</span>
    <span class="hl sym">}</span>
 
-   num <span class="hl sym">=</span> NumberStr<span class="hl sym">[</span>n<span class="hl sym">] +</span> num<span class="hl sym">;</span>
+   num<span class="hl sym">.</span><span class="hl kwd">insert</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> NumberStr<span class="hl sym">[</span>n<span class="hl sym">]);</span>
    <span class="hl kwa">return</span> num<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-
-
-<span class="hl kwb">struct</span> Creature<span class="hl sym">;</span>
+<span class="hl com">/*   Place where a creature meet another.</span>
+<span class="hl com">   stage_exchange stores 2 informations:</span>
+<span class="hl com">   _ how many meeting times to go. 28 bit from bit 0 -&gt; 27.</span>
+<span class="hl com">   _ is there any creature waiting. 4 highest bit, 28 -&gt; 31</span>
+<span class="hl com">*/</span>
 <span class="hl kwb">struct</span> MeetingPlace
 <span class="hl sym">{</span>
-   <span class="hl kwb">int</span>   <span class="hl kwc">volatile</span>   _meetings_left<span class="hl sym">;</span>
-   Creature<span class="hl sym">*</span>      _creature_waiting<span class="hl sym">;</span>
+<span class="hl kwc">private</span><span class="hl sym">:</span>
+   L2_ALIGN
+   uint <span class="hl kwc">volatile</span>   state_exchange_<span class="hl sym">;</span>
 
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   <span class="hl kwd">MeetingPlace</span><span class="hl sym">(</span>uint N<span class="hl sym">) :</span>   <span class="hl kwd">state_exchange_</span><span class="hl sym">(</span>N<span class="hl sym">)   {   }</span>
 
-   <span class="hl kwd">MeetingPlace</span><span class="hl sym">(</span><span class="hl kwb">int</span> N<span class="hl sym">) :</span>   <span class="hl kwd">_meetings_left</span><span class="hl sym">(</span>N<span class="hl sym">),</span>    <span class="hl kwd">_creature_waiting</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)   {   }</span>
+<span class="hl com">/*</span>
+<span class="hl com">   State_exchange = 32 bit</span>
+<span class="hl com">   4 bit MSB: id of creature which is waiting. Can support up to 15 creatures.</span>
+<span class="hl com">   28 bit: counter of how many meeting times that needs to run</span>
+<span class="hl com">*/</span>
+   <span class="hl kwb">int</span> <span class="hl kwd">EnterMeetingRoom</span><span class="hl sym">(</span> uint cr_id <span class="hl sym">)</span>   <span class="hl slc">// id starts from 1.</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwd">assert</span><span class="hl sym">((</span><span class="hl num">0</span> <span class="hl sym">&lt;</span> cr_id<span class="hl sym">) &amp;&amp; (</span>cr_id <span class="hl sym">&lt;=</span> <span class="hl num">15</span><span class="hl sym">));</span>
 
-   <span class="hl kwb">bool</span> <span class="hl kwd">GotoMeet</span><span class="hl sym">(</span> Creature<span class="hl sym">*</span> cr1<span class="hl sym">,</span> Creature<span class="hl sym">* &amp;</span>cr2 <span class="hl sym">);</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         uint old_state <span class="hl sym">=</span> state_exchange_<span class="hl sym">;</span>
+         uint meeting_left <span class="hl sym">=</span> old_state <span class="hl sym">&amp;</span> <span class="hl num">0x0FFFFFFF</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>meeting_left <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            uint cr_waiting <span class="hl sym">=</span> old_state <span class="hl sym">&gt;&gt;</span> <span class="hl num">28</span><span class="hl sym">;</span>
+            uint new_state<span class="hl sym">;</span>
+
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>cr_waiting <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>   <span class="hl slc">// no one inside, me is 1st</span>
+               new_state <span class="hl sym">=</span> meeting_left <span class="hl sym">| (</span>cr_id <span class="hl sym">&lt;&lt;</span> <span class="hl num">28</span><span class="hl sym">);</span>
+            <span class="hl kwa">else</span>   <span class="hl slc">// there is a creature waiting</span>
+               new_state <span class="hl sym">=</span> meeting_left <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+
+            <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__sync_bool_compare_and_swap</span><span class="hl sym">(&amp;</span>state_exchange_<span class="hl sym">,</span> old_state<span class="hl sym">,</span> new_state<span class="hl sym">))</span>
+               <span class="hl kwa">return</span> cr_waiting<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">else</span>
+            <span class="hl kwa">return</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
 <span class="hl sym">};</span>
 
 
 <span class="hl kwb">struct</span> Creature
 <span class="hl sym">{</span>
-   MeetingPlace <span class="hl sym">*</span>      _place<span class="hl sym">;</span>
-   COLOR            _color<span class="hl sym">;</span>
+   QUEUE_T<span class="hl sym">*</span>            p_queue_<span class="hl sym">;</span>
+   MeetingPlace<span class="hl sym">*</span>         p_meetingplace_<span class="hl sym">;</span>
+   Creature<span class="hl sym">*</span>            p_cr_list_<span class="hl sym">;</span>
 
-   <span class="hl kwb">int</span>               _count<span class="hl sym">;</span>
-   <span class="hl kwb">int</span>               _same_count<span class="hl sym">;</span>
-   <span class="hl kwb">bool</span> <span class="hl kwc">volatile</span>      _met<span class="hl sym">;</span>
+   COLOR               color_<span class="hl sym">;</span>
+   uint               count_<span class="hl sym">;</span>
+   uint               id_<span class="hl sym">;</span>      <span class="hl slc">// creature id start from 1</span>
+   uint               same_count_<span class="hl sym">;</span>
 
-   <span class="hl kwb">int</span>               _id<span class="hl sym">;</span>
-   pthread_t         _hthread<span class="hl sym">;</span>
-   <span class="hl kwb">double</span>            _dummy<span class="hl sym">;</span>
-
-
-   <span class="hl kwd">Creature</span><span class="hl sym">()   {</span>   <span class="hl kwd">memset</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(*</span><span class="hl kwa">this</span><span class="hl sym">));   }</span>
+   <span class="hl kwd">Creature</span><span class="hl sym">() :</span> <span class="hl kwd">color_</span><span class="hl sym">(</span>BLUE<span class="hl sym">),</span> <span class="hl kwd">count_</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span> <span class="hl kwd">id_</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">),</span> <span class="hl kwd">same_count_</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)   {}</span>
 
    <span class="hl kwb">void</span>
-   <span class="hl kwd">Start</span><span class="hl sym">(</span> MeetingPlace <span class="hl sym">*</span> mp<span class="hl sym">,</span> COLOR color<span class="hl sym">,</span> <span class="hl kwb">void</span><span class="hl sym">*</span> stack <span class="hl sym">)</span>
+   <span class="hl kwd">Start</span><span class="hl sym">(</span>   MeetingPlace<span class="hl sym">*</span> mp<span class="hl sym">,</span> COLOR color <span class="hl sym">,</span> uint id<span class="hl sym">,</span>
+         QUEUE_T<span class="hl sym">*</span> queue<span class="hl sym">,</span>  Creature<span class="hl sym">*</span> pcrl<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      _place   <span class="hl sym">=</span> mp<span class="hl sym">;</span>
-      _color   <span class="hl sym">=</span> color<span class="hl sym">;</span>
+      color_   <span class="hl sym">=</span> color<span class="hl sym">;</span>
+      id_      <span class="hl sym">=</span> id <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
 
-      pthread_attr_t   stack_att<span class="hl sym">;</span>
+      p_queue_      <span class="hl sym">=</span> queue<span class="hl sym">;</span>
+      p_meetingplace_   <span class="hl sym">=</span> mp<span class="hl sym">;</span>
+      p_cr_list_      <span class="hl sym">=</span> pcrl<span class="hl sym">;</span>
 
-      <span class="hl kwd">pthread_attr_init</span><span class="hl sym">( &amp;</span>stack_att <span class="hl sym">);</span>
-      <span class="hl kwd">pthread_attr_setstack</span><span class="hl sym">( &amp;</span>stack_att<span class="hl sym">,</span> stack<span class="hl sym">,</span> STACK_SIZE <span class="hl sym">);</span>
-
-      <span class="hl kwd">pthread_create</span><span class="hl sym">( &amp;</span>_hthread<span class="hl sym">, &amp;</span>stack_att<span class="hl sym">, &amp;</span>Creature<span class="hl sym">::</span>ThreadRun<span class="hl sym">,</span> <span class="hl kwa">reinterpret_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">void</span><span class="hl sym">*&gt;(</span><span class="hl kwa">this</span><span class="hl sym">) );</span>
+      <span class="hl slc">// post &quot;go to meeting place&quot; request</span>
+      p_queue_<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Creature<span class="hl sym">::</span>PlayGame<span class="hl sym">,</span> <span class="hl kwa">this</span><span class="hl sym">));</span>
    <span class="hl sym">}</span>
 
-   <span class="hl kwb">static</span>
-   <span class="hl kwb">void</span><span class="hl sym">*</span>
-   <span class="hl kwd">ThreadRun</span><span class="hl sym">(</span><span class="hl kwb">void</span><span class="hl sym">*</span> param<span class="hl sym">)</span>
-   <span class="hl sym">{</span>
-      <span class="hl sym">(</span><span class="hl kwa">reinterpret_cast</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">*&gt;(</span>param<span class="hl sym">))-&gt;</span><span class="hl kwd">Run</span><span class="hl sym">();</span>
-      <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl sym">}</span>
-
+   <span class="hl slc">// request granted, meeting action executes here</span>
    <span class="hl kwb">void</span>
-   <span class="hl kwd">Run</span><span class="hl sym">()</span>
+   <span class="hl kwd">PlayGame</span><span class="hl sym">()</span>
    <span class="hl sym">{</span>
-      _dummy <span class="hl sym">=</span> _id <span class="hl sym">=</span> <span class="hl kwd">pthread_self</span><span class="hl sym">();</span>
+      <span class="hl kwb">int</span> other_cr_id <span class="hl sym">=</span> p_meetingplace_<span class="hl sym">-&gt;</span><span class="hl kwd">EnterMeetingRoom</span><span class="hl sym">(</span>id_<span class="hl sym">);</span>
 
-      <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-         _met <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
-         Creature<span class="hl sym">*</span> other <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl slc">// meeting_place returns other creature?</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>other_cr_id <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl kwd">SayHello</span><span class="hl sym">(</span> p_cr_list_<span class="hl sym">[</span>other_cr_id <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] );</span>
 
-         <span class="hl kwa">if</span> <span class="hl sym">(</span>_place<span class="hl sym">-&gt;</span><span class="hl kwd">GotoMeet</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">,</span> other<span class="hl sym">))</span>
-         <span class="hl sym">{</span>
-            <span class="hl kwa">if</span> <span class="hl sym">(</span>other <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>   <span class="hl slc">// 2nd arrive, go to meet the 2nd creature</span>
-               <span class="hl kwd">Meet</span><span class="hl sym">(*</span>other<span class="hl sym">);</span>
-            <span class="hl kwa">else</span>          <span class="hl slc">// me is the 1st creature, have to wait</span>
-            <span class="hl sym">{</span>
-               <span class="hl kwa">while</span> <span class="hl sym">((</span>_met <span class="hl sym">==</span> <span class="hl kwa">false</span><span class="hl sym">) &amp;&amp; (</span>_place<span class="hl sym">-&gt;</span>_meetings_left <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">))</span>
-               <span class="hl sym">{</span>
-                  <span class="hl kwa">if</span> <span class="hl sym">(</span>multi_core<span class="hl sym">)</span>
-                     <span class="hl sym">++</span>_dummy<span class="hl sym">;</span>
-                  <span class="hl kwa">else</span>
-                     <span class="hl kwd">sched_yield</span><span class="hl sym">();</span>
-               <span class="hl sym">}</span>
-            <span class="hl sym">}</span>
-         <span class="hl sym">}</span>
-         <span class="hl kwa">else</span>
-            <span class="hl kwa">return</span><span class="hl sym">;</span>
-      <span class="hl sym">}</span>
+      <span class="hl slc">// if me is the 1st one entering meeting_place, do nothing.</span>
+      <span class="hl slc">// 2nd arrival creature will submit next meeting request for me.</span>
    <span class="hl sym">}</span>
 
    <span class="hl kwb">void</span>
-   <span class="hl kwd">Meet</span><span class="hl sym">(</span>Creature <span class="hl sym">&amp;</span>other<span class="hl sym">)</span>
+   <span class="hl kwd">SayHello</span><span class="hl sym">(</span>Creature <span class="hl sym">&amp;</span>other<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>_id <span class="hl sym">==</span> other<span class="hl sym">.</span>_id<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">))</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>id_ <span class="hl sym">==</span> other<span class="hl sym">.</span>id_<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">))</span>
       <span class="hl sym">{</span>
-         <span class="hl sym">++</span>_same_count<span class="hl sym">;</span>
-         <span class="hl sym">++</span>other<span class="hl sym">.</span>_same_count<span class="hl sym">;</span>
+         <span class="hl sym">++</span>same_count_<span class="hl sym">;</span>
+         <span class="hl sym">++</span>other<span class="hl sym">.</span>same_count_<span class="hl sym">;</span>
       <span class="hl sym">}</span>
 
-      <span class="hl sym">++</span>_count<span class="hl sym">;</span>
-      <span class="hl sym">++</span>other<span class="hl sym">.</span>_count<span class="hl sym">;</span>
+      <span class="hl sym">++</span>count_<span class="hl sym">;</span>
+      <span class="hl sym">++</span>other<span class="hl sym">.</span>count_<span class="hl sym">;</span>
 
-      COLOR new_color   <span class="hl sym">=</span> <span class="hl kwd">ColorCompliment</span><span class="hl sym">(</span> _color<span class="hl sym">,</span> other<span class="hl sym">.</span>_color <span class="hl sym">);</span>
-      other<span class="hl sym">.</span>_color   <span class="hl sym">=</span> _color   <span class="hl sym">=</span> new_color<span class="hl sym">;</span>
-      other<span class="hl sym">.</span>_met      <span class="hl sym">=</span> _met      <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
-   <span class="hl sym">}</span>
+      COLOR new_color   <span class="hl sym">=</span> <span class="hl kwa">this</span><span class="hl sym">-&gt;</span>color_ ^ other<span class="hl sym">.</span>color_<span class="hl sym">;</span>
+      other<span class="hl sym">.</span>color_   <span class="hl sym">=</span> color_   <span class="hl sym">=</span> new_color<span class="hl sym">;</span>
 
-<span class="hl sym">};</span>
+      timespec ts <span class="hl sym">= {</span><span class="hl num">0</span><span class="hl sym">};</span>
+      <span class="hl kwd">clock_gettime</span><span class="hl sym">(</span>CLOCK_MONOTONIC<span class="hl sym">, &amp;</span>ts<span class="hl sym">);</span>
 
-<span class="hl kwb">bool</span>
-MeetingPlace<span class="hl sym">::</span><span class="hl kwd">GotoMeet</span><span class="hl sym">(</span> Creature<span class="hl sym">*</span> cr_in<span class="hl sym">,</span> Creature<span class="hl sym">* &amp;</span>cr_out <span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwa">true</span><span class="hl sym">)</span> <span class="hl slc">// spin wait</span>
-   <span class="hl sym">{</span>
-      <span class="hl slc">// store pointer to first creature</span>
-      Creature<span class="hl sym">*</span> first <span class="hl sym">=</span> <span class="hl kwa">reinterpret_cast</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">*&gt;(</span><span class="hl kwd">__sync_val_compare_and_swap</span><span class="hl sym">(&amp;</span>_creature_waiting<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> cr_in<span class="hl sym">));</span>
-
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>first <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>   <span class="hl slc">// first arrive</span>
-         <span class="hl kwa">return</span> <span class="hl sym">(</span>_meetings_left <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
-      <span class="hl kwa">else</span>         <span class="hl slc">// second arrive</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>ts<span class="hl sym">.</span>tv_nsec <span class="hl sym">&amp;</span> <span class="hl num">1</span><span class="hl sym">)</span>
       <span class="hl sym">{</span>
-         <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__sync_bool_compare_and_swap</span><span class="hl sym">(&amp;</span>_creature_waiting<span class="hl sym">,</span> first<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">))</span>
-         <span class="hl sym">{</span>
-            <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__sync_fetch_and_sub</span><span class="hl sym">(&amp;</span>_meetings_left<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">) &gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
-            <span class="hl sym">{</span>
-               cr_out <span class="hl sym">=</span> first<span class="hl sym">;</span>
-               <span class="hl kwa">return true</span><span class="hl sym">;</span>
-            <span class="hl sym">}</span>
-            <span class="hl kwa">else</span>
-               <span class="hl kwa">return false</span><span class="hl sym">;</span>
-         <span class="hl sym">}</span>
+         <span class="hl slc">// submit another meeting request, for current creature + other creature.</span>
+         p_queue_<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Creature<span class="hl sym">::</span>PlayGame<span class="hl sym">,</span> <span class="hl kwa">this</span><span class="hl sym">));</span>
+         p_queue_<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Creature<span class="hl sym">::</span>PlayGame<span class="hl sym">, &amp;</span>other<span class="hl sym">));</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span>
+      <span class="hl sym">{</span>
+         p_queue_<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Creature<span class="hl sym">::</span>PlayGame<span class="hl sym">, &amp;</span>other<span class="hl sym">));</span>
+         p_queue_<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>Creature<span class="hl sym">::</span>PlayGame<span class="hl sym">,</span> <span class="hl kwa">this</span><span class="hl sym">));</span>
       <span class="hl sym">}</span>
    <span class="hl sym">}</span>
-<span class="hl sym">}</span>
+<span class="hl sym">}</span> L2_ALIGN<span class="hl sym">;</span>
+
 
 
 <span class="hl kwc">template</span> <span class="hl sym">&lt;</span><span class="hl kwb">int</span> ncolor<span class="hl sym">&gt;</span>
-<span class="hl kwb">void</span>
-<span class="hl kwd">RunGame</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">,</span> COLOR <span class="hl kwb">const</span> <span class="hl sym">(&amp;</span>color<span class="hl sym">)[</span>ncolor<span class="hl sym">])</span>
+<span class="hl kwb">struct</span> Game
 <span class="hl sym">{</span>
-   MeetingPlace   <span class="hl kwd">place</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
-   Creature      cr<span class="hl sym">[</span>ncolor<span class="hl sym">];</span>
+   MeetingPlace   mplace<span class="hl sym">;</span>
+   QUEUE_T         queue<span class="hl sym">;</span>
+   Creature      cr_list<span class="hl sym">[</span>ncolor<span class="hl sym">];</span>   <span class="hl slc">// list of all creatures</span>
 
-   format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%1% &quot;</span><span class="hl sym">);</span>
-   <span class="hl slc">// print initial color of each creature</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+   std<span class="hl sym">::</span>ostringstream   game_output<span class="hl sym">;</span>
+   boost<span class="hl sym">::</span>thread_group   cr_thread_group<span class="hl sym">;</span>         <span class="hl slc">// 1 standard OS thread for each creature</span>
+
+   <span class="hl kwd">Game</span><span class="hl sym">(</span>uint n<span class="hl sym">,</span> COLOR <span class="hl kwb">const</span> <span class="hl sym">(&amp;</span>color<span class="hl sym">)[</span>ncolor<span class="hl sym">],</span> cpu_set_t <span class="hl sym">*</span> aff <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl sym">:</span>   <span class="hl kwd">mplace</span><span class="hl sym">(</span>n<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      cout <span class="hl sym">&lt;&lt; (</span>fmt <span class="hl sym">%</span> ColorName<span class="hl sym">[</span>color<span class="hl sym">[</span>i<span class="hl sym">]] );</span>
-      cr<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">Start</span><span class="hl sym">( &amp;</span>place<span class="hl sym">,</span> color<span class="hl sym">[</span>i<span class="hl sym">],</span> stacks<span class="hl sym">[</span>i<span class="hl sym">] );</span>
+      boost<span class="hl sym">::</span>format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%1% &quot;</span><span class="hl sym">);</span>
+
+      <span class="hl slc">// print initial color of each creature</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         game_output <span class="hl sym">&lt;&lt; (</span>fmt <span class="hl sym">% (</span>color<span class="hl sym">[</span>i<span class="hl sym">]) );</span>
+         cr_list<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">Start</span><span class="hl sym">( &amp;</span>mplace<span class="hl sym">,</span> color<span class="hl sym">[</span>i<span class="hl sym">],</span> i<span class="hl sym">, &amp;</span>queue<span class="hl sym">,</span> cr_list <span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+      game_output <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
+
+      <span class="hl slc">// Create N kernel threads. All threads will wait inside boost::asio::io_service</span>
+      <span class="hl slc">// queue object. If there is a request posted to io_service queue, a thread</span>
+      <span class="hl slc">// will be dispatched to handle it.</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         boost<span class="hl sym">::</span>thread<span class="hl sym">*</span> t <span class="hl sym">=</span> cr_thread_group<span class="hl sym">.</span><span class="hl kwd">create_thread</span><span class="hl sym">(</span>boost<span class="hl sym">::</span><span class="hl kwd">bind</span><span class="hl sym">(&amp;</span>QUEUE_T<span class="hl sym">::</span>run<span class="hl sym">, &amp;</span>queue<span class="hl sym">));</span>
+
+         <span class="hl kwa">if</span><span class="hl sym">(</span>aff <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+            <span class="hl kwd">pthread_setaffinity_np</span><span class="hl sym">(</span>t<span class="hl sym">-&gt;</span><span class="hl kwd">native_handle</span><span class="hl sym">(),</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cpu_set_t<span class="hl sym">),</span> aff<span class="hl sym">);</span>
+      <span class="hl sym">}</span>
    <span class="hl sym">}</span>
 
-   cout <span class="hl sym">&lt;&lt;</span> endl<span class="hl sym">;</span>
-
-
-   <span class="hl slc">// wait for them to meet</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-      <span class="hl kwd">pthread_join</span><span class="hl sym">(</span> cr<span class="hl sym">[</span>i<span class="hl sym">].</span>_hthread<span class="hl sym">,</span> <span class="hl num">0</span> <span class="hl sym">);</span>
-
-
-   <span class="hl kwb">int</span> total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   fmt <span class="hl sym">=</span> <span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;%1% %2%</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
-   <span class="hl slc">// print meeting times of each creature</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+   std<span class="hl sym">::</span>string
+   <span class="hl kwd">WaitAndGetResult</span><span class="hl sym">()</span>
    <span class="hl sym">{</span>
-      total <span class="hl sym">+=</span> cr<span class="hl sym">[</span>i<span class="hl sym">].</span>_count<span class="hl sym">;</span>
-      cout <span class="hl sym">&lt;&lt; (</span>fmt <span class="hl sym">%</span> cr<span class="hl sym">[</span>i<span class="hl sym">].</span>_count <span class="hl sym">%</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>cr<span class="hl sym">[</span>i<span class="hl sym">].</span>_same_count<span class="hl sym">));</span>
-   <span class="hl sym">}</span>
+      <span class="hl slc">// wait until meeting times = 0</span>
+      cr_thread_group<span class="hl sym">.</span><span class="hl kwd">join_all</span><span class="hl sym">();</span>
 
-   <span class="hl slc">// print total meeting times</span>
-   fmt <span class="hl sym">=</span> <span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot; %1%</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
-   cout <span class="hl sym">&lt;&lt; (</span>fmt <span class="hl sym">%</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>total<span class="hl sym">));</span>
-<span class="hl sym">}</span>
+      uint total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      boost<span class="hl sym">::</span>format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%1% %2%</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+
+      <span class="hl slc">// print meeting times of each creature</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> ncolor<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+      <span class="hl sym">{</span>
+         total <span class="hl sym">+=</span> cr_list<span class="hl sym">[</span>i<span class="hl sym">].</span>count_<span class="hl sym">;</span>
+         game_output <span class="hl sym">&lt;&lt; (</span>fmt
+                     <span class="hl sym">%</span> cr_list<span class="hl sym">[</span>i<span class="hl sym">].</span>count_
+                     <span class="hl sym">%</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>cr_list<span class="hl sym">[</span>i<span class="hl sym">].</span>same_count_<span class="hl sym">)   );</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl slc">// print total meeting times</span>
+      fmt <span class="hl sym">=</span> boost<span class="hl sym">::</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot; %1%</span><span class="hl esc">\n\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+      game_output <span class="hl sym">&lt;&lt; (</span>fmt <span class="hl sym">%</span> <span class="hl kwd">SpellNumber</span><span class="hl sym">(</span>total<span class="hl sym">));</span>
+
+      <span class="hl kwa">return</span> game_output<span class="hl sym">.</span><span class="hl kwd">str</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">};</span>
 
 <span class="hl kwb">void</span>
 <span class="hl kwd">PrintColors</span><span class="hl sym">()</span>
 <span class="hl sym">{</span>
-   format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%1% + %2% -&gt; %3%</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
+   boost<span class="hl sym">::</span>format <span class="hl kwd">fmt</span><span class="hl sym">(</span><span class="hl str">&quot;%1% + %2% -&gt; %3%</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">);</span>
 
    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> c1 <span class="hl sym">=</span> BLUE<span class="hl sym">;</span> c1 <span class="hl sym">&lt;=</span> YELLOW<span class="hl sym">; ++</span>c1<span class="hl sym">)</span>
    <span class="hl sym">{</span>
       <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> c2 <span class="hl sym">=</span> BLUE<span class="hl sym">;</span> c2 <span class="hl sym">&lt;=</span> YELLOW<span class="hl sym">; ++</span>c2<span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-         cout <span class="hl sym">&lt;&lt; (</span>fmt
-                  <span class="hl sym">%</span> ColorName<span class="hl sym">[</span>c1<span class="hl sym">]</span>
-                  <span class="hl sym">%</span> ColorName<span class="hl sym">[</span>c2<span class="hl sym">]</span>
-                  <span class="hl sym">%</span> ColorName<span class="hl sym">[</span><span class="hl kwd">ColorCompliment</span><span class="hl sym">( (</span>COLOR<span class="hl sym">)</span>c1<span class="hl sym">, (</span>COLOR<span class="hl sym">)</span>c2 <span class="hl sym">)]  );</span>
-      <span class="hl sym">}</span>
+         std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt; (</span>fmt <span class="hl sym">% (</span>COLOR<span class="hl sym">)</span>c1 <span class="hl sym">% (</span>COLOR<span class="hl sym">)</span>c2 <span class="hl sym">% ((</span>COLOR<span class="hl sym">)</span>c1 ^ <span class="hl sym">(</span>COLOR<span class="hl sym">)</span>c2<span class="hl sym">));</span>
    <span class="hl sym">}</span>
 
-   cout <span class="hl sym">&lt;&lt;</span> endl<span class="hl sym">;</span>
+   std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-
+<span class="hl slc">// Detect multi / single thread benchmark</span>
 <span class="hl kwb">int</span>
 <span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
 <span class="hl sym">{</span>
@@ -297,27 +331,90 @@ MeetingPlace<span class="hl sym">::</span><span class="hl kwd">GotoMeet</span><s
    <span class="hl kwa">return</span> count<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
+<span class="hl slc">// Parse /proc/cpuinfo</span>
+<span class="hl slc">// Return a list of cpu cores sharing 1 L2 cache</span>
+std<span class="hl sym">::</span>auto_ptr<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>cpu_set_t<span class="hl sym">&gt; &gt;</span>
+<span class="hl kwd">GetAffinityList</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+   std<span class="hl sym">::</span>ifstream <span class="hl kwd">file</span><span class="hl sym">(</span>CPU_INFO_STR<span class="hl sym">);</span>
+   std<span class="hl sym">::</span>istreambuf_iterator<span class="hl sym">&lt;</span><span class="hl kwb">char</span><span class="hl sym">&gt;</span> <span class="hl kwd">is</span><span class="hl sym">(</span>file<span class="hl sym">),</span> ise<span class="hl sym">;</span>
+
+   <span class="hl slc">// load file to vector&lt;char&gt;</span>
+   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">char</span><span class="hl sym">&gt;</span> buf<span class="hl sym">;</span>
+   std<span class="hl sym">::</span><span class="hl kwd">copy</span><span class="hl sym">(</span>is<span class="hl sym">,</span> ise<span class="hl sym">,</span> std<span class="hl sym">::</span><span class="hl kwd">back_inserter</span><span class="hl sym">(</span>buf<span class="hl sym">));</span>
+   file<span class="hl sym">.</span><span class="hl kwd">close</span><span class="hl sym">();</span>
+
+
+   <span class="hl slc">// map processors to L2 cache unit</span>
+   <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>map<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">,</span> cpu_set_t<span class="hl sym">&gt;</span> MAP_T<span class="hl sym">;</span>
+   MAP_T l2_set<span class="hl sym">;</span>
+
+   <span class="hl sym">{</span>
+      <span class="hl kwa">using namespace</span> boost<span class="hl sym">::</span>xpressive<span class="hl sym">;</span>
+      <span class="hl kwa">namespace</span> bx <span class="hl sym">=</span> boost<span class="hl sym">::</span>xpressive<span class="hl sym">;</span>
+
+      <span class="hl kwc">typedef</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">char</span><span class="hl sym">&gt;::</span>iterator      VI_T<span class="hl sym">;</span>
+      <span class="hl kwc">typedef</span> bx<span class="hl sym">::</span>basic_regex<span class="hl sym">&lt;</span>VI_T<span class="hl sym">&gt;</span>         RE_T<span class="hl sym">;</span>
+      <span class="hl kwc">typedef</span> bx<span class="hl sym">::</span>regex_iterator<span class="hl sym">&lt;</span>VI_T<span class="hl sym">&gt;</span>      IRE_T<span class="hl sym">;</span>
+
+      RE_T <span class="hl kwd">re</span><span class="hl sym">(</span>
+         <span class="hl kwd">as_xpr</span><span class="hl sym">(</span><span class="hl str">&quot;processor&quot;</span><span class="hl sym">) &gt;&gt; +(</span>_s<span class="hl sym">|</span><span class="hl str">':'</span><span class="hl sym">) &gt;&gt; (</span>s1 <span class="hl sym">= +</span>_d<span class="hl sym">)</span>
+         <span class="hl sym">&gt;&gt; -+(~</span>_n<span class="hl sym">|</span>_n<span class="hl sym">)</span>
+         <span class="hl sym">&gt;&gt;</span> <span class="hl str">&quot;apicid&quot;</span> <span class="hl sym">&gt;&gt; +(</span>_s<span class="hl sym">|</span><span class="hl str">':'</span><span class="hl sym">) &gt;&gt; (</span>s2 <span class="hl sym">= +</span>_d<span class="hl sym">) );</span>
+
+      IRE_T <span class="hl kwd">it</span><span class="hl sym">(</span>buf<span class="hl sym">.</span><span class="hl kwd">begin</span><span class="hl sym">(),</span> buf<span class="hl sym">.</span><span class="hl kwd">end</span><span class="hl sym">(),</span> re<span class="hl sym">),</span> it_end<span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> <span class="hl sym">(;</span> it <span class="hl sym">!=</span> it_end<span class="hl sym">; ++</span>it<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwb">int</span> core <span class="hl sym">=</span> boost<span class="hl sym">::</span>lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;( (*</span>it<span class="hl sym">)[</span><span class="hl num">1</span><span class="hl sym">].</span><span class="hl kwd">str</span><span class="hl sym">() );</span>
+         <span class="hl kwb">int</span> apic <span class="hl sym">=</span> boost<span class="hl sym">::</span>lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;( (*</span>it<span class="hl sym">)[</span><span class="hl num">2</span><span class="hl sym">].</span><span class="hl kwd">str</span><span class="hl sym">() );</span>
+
+         <span class="hl slc">// q6600 has 4 cores, 2 cores share 1 L2 cache</span>
+         <span class="hl slc">// 2 cores + 1 L2 = 1 package</span>
+         <span class="hl kwb">int</span> package <span class="hl sym">=</span> apic <span class="hl sym">&gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+
+         <span class="hl kwd">CPU_SET</span><span class="hl sym">(</span>core<span class="hl sym">, &amp;(</span>l2_set<span class="hl sym">[</span>package<span class="hl sym">]));</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   std<span class="hl sym">::</span>auto_ptr<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>cpu_set_t<span class="hl sym">&gt; &gt;</span> <span class="hl kwd">aff</span><span class="hl sym">(</span><span class="hl kwa">new</span> std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>cpu_set_t<span class="hl sym">&gt;);</span>
+   <span class="hl kwc">typedef</span> MAP_T<span class="hl sym">::</span>value_type VT<span class="hl sym">;</span>
+
+   <span class="hl kwd">foreach</span> <span class="hl sym">(</span> VT <span class="hl sym">&amp;</span>i<span class="hl sym">,</span> l2_set <span class="hl sym">)</span>
+      aff<span class="hl sym">-&gt;</span><span class="hl kwd">push_back</span><span class="hl sym">(</span>i<span class="hl sym">.</span>second<span class="hl sym">);</span>
+
+   <span class="hl kwa">return</span> aff<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
 
 <span class="hl kwb">int</span>
 <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">**</span> argv<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   sched_param pri<span class="hl sym">;</span>
-   pri<span class="hl sym">.</span>sched_priority <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
-   <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">sched_setscheduler</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> SCHED_RR<span class="hl sym">, &amp;</span>pri<span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">)</span>
-   <span class="hl sym">{</span>
-      <span class="hl slc">// meeting times will largely vary</span>
-   <span class="hl sym">}</span>
-
    <span class="hl kwd">PrintColors</span><span class="hl sym">();</span>
-   multi_core <span class="hl sym">=</span> <span class="hl kwd">GetThreadCount</span><span class="hl sym">() &gt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
 
    COLOR <span class="hl kwb">const</span> r1<span class="hl sym">[] = {</span>   BLUE<span class="hl sym">,</span> RED<span class="hl sym">,</span> YELLOW   <span class="hl sym">};</span>
    COLOR <span class="hl kwb">const</span> r2<span class="hl sym">[] = {</span>   BLUE<span class="hl sym">,</span> RED<span class="hl sym">,</span> YELLOW<span class="hl sym">,</span> RED<span class="hl sym">,</span> YELLOW<span class="hl sym">,</span> BLUE<span class="hl sym">,</span> RED<span class="hl sym">,</span> YELLOW<span class="hl sym">,</span> RED<span class="hl sym">,</span> BLUE   <span class="hl sym">};</span>
 
-   <span class="hl kwb">int</span> n <span class="hl sym">= (</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span> ? lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">600</span><span class="hl sym">;</span>
-   <span class="hl kwd">RunGame</span><span class="hl sym">(</span> n<span class="hl sym">,</span> r1 <span class="hl sym">);</span>
-   <span class="hl kwd">RunGame</span><span class="hl sym">(</span> n<span class="hl sym">,</span> r2 <span class="hl sym">);</span>
+   <span class="hl kwb">int</span> n <span class="hl sym">= (</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span> ? boost<span class="hl sym">::</span>lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">600</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">GetThreadCount</span><span class="hl sym">() &gt;</span> <span class="hl num">1</span><span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      std<span class="hl sym">::</span>auto_ptr<span class="hl sym">&lt;</span>std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span>cpu_set_t<span class="hl sym">&gt; &gt;</span> <span class="hl kwd">affset</span><span class="hl sym">(</span> <span class="hl kwd">GetAffinityList</span><span class="hl sym">() );</span>
+
+      Game<span class="hl sym">&lt;</span><span class="hl num">3</span><span class="hl sym">&gt;</span> <span class="hl kwd">cg1</span><span class="hl sym">(</span> n<span class="hl sym">,</span> r1<span class="hl sym">, &amp;((*</span>affset<span class="hl sym">)[</span><span class="hl num">0</span><span class="hl sym">]) );</span>
+      Game<span class="hl sym">&lt;</span><span class="hl num">10</span><span class="hl sym">&gt;</span> <span class="hl kwd">cg2</span><span class="hl sym">(</span> n<span class="hl sym">,</span> r2<span class="hl sym">, &amp;((*</span>affset<span class="hl sym">)[</span><span class="hl num">1</span><span class="hl sym">]) );</span>
+
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> cg1<span class="hl sym">.</span><span class="hl kwd">WaitAndGetResult</span><span class="hl sym">();</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> cg2<span class="hl sym">.</span><span class="hl kwd">WaitAndGetResult</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">else</span>
+   <span class="hl sym">{</span>
+      Game<span class="hl sym">&lt;</span><span class="hl num">3</span><span class="hl sym">&gt;</span> <span class="hl kwd">cg1</span><span class="hl sym">(</span> n<span class="hl sym">,</span> r1 <span class="hl sym">);</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> cg1<span class="hl sym">.</span><span class="hl kwd">WaitAndGetResult</span><span class="hl sym">();</span>
+
+      Game<span class="hl sym">&lt;</span><span class="hl num">10</span><span class="hl sym">&gt;</span> <span class="hl kwd">cg2</span><span class="hl sym">(</span> n<span class="hl sym">,</span> r2 <span class="hl sym">);</span>
+      std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> cg2<span class="hl sym">.</span><span class="hl kwd">WaitAndGetResult</span><span class="hl sym">();</span>
+   <span class="hl sym">}</span>
 
    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
-

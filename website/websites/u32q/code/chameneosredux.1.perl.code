@@ -1,0 +1,139 @@
+<span class="hl slc"># The Computer Language Benchmark Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc"># contributed by Daniel Green 2010-4-1</span>
+<span class="hl slc">#  a transliteration of Python 3 #2</span>
+
+<span class="hl kwa">use</span> <span class="hl num">5.10.0</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> <span class="hl kwd">strict</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> <span class="hl kwd">threads</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> threads<span class="hl sym">::</span><span class="hl kwd">shared</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> POSIX<span class="hl sym">::</span>RT<span class="hl sym">::</span><span class="hl kwd">Semaphore</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> List<span class="hl sym">::</span>Util <span class="hl kwd">qw</span><span class="hl sym">(</span>sum<span class="hl sym">);</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">&#64;creature_colors</span> <span class="hl sym">=</span> <span class="hl kwd">qw</span><span class="hl sym">(</span>blue red yellow<span class="hl sym">);</span>
+
+<span class="hl kwa">sub</span> complement <span class="hl sym">{</span>
+    <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$c1</span><span class="hl sym">,</span> <span class="hl kwb">$c2</span><span class="hl sym">) =</span> <span class="hl kwb">&#64;_</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwb">$c1</span> <span class="hl kwa">eq</span> <span class="hl kwb">$c2</span><span class="hl sym">) {</span>
+        <span class="hl kwa">return</span> <span class="hl kwb">$c1</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span> <span class="hl kwa">elsif</span> <span class="hl sym">(</span><span class="hl kwb">$c1</span> <span class="hl kwa">eq</span> <span class="hl str">'blue'</span><span class="hl sym">) {</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwb">$c2</span> <span class="hl kwa">eq</span> <span class="hl str">'red'</span><span class="hl sym">) {</span>
+            <span class="hl kwa">return</span> <span class="hl str">'yellow'</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            <span class="hl kwa">return</span> <span class="hl str">'red'</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span> <span class="hl kwa">elsif</span> <span class="hl sym">(</span><span class="hl kwb">$c1</span> <span class="hl kwa">eq</span> <span class="hl str">'red'</span><span class="hl sym">) {</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwb">$c2</span> <span class="hl kwa">eq</span> <span class="hl str">'blue'</span><span class="hl sym">) {</span>
+            <span class="hl kwa">return</span> <span class="hl str">'yellow'</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            <span class="hl kwa">return</span> <span class="hl str">'blue'</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span> <span class="hl kwa">elsif</span> <span class="hl sym">(</span><span class="hl kwb">$c2</span> <span class="hl kwa">eq</span> <span class="hl str">'blue'</span><span class="hl sym">) {</span>
+        <span class="hl kwa">return</span> <span class="hl str">'red'</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+        <span class="hl kwa">return</span> <span class="hl str">'blue'</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">%compl_dict</span><span class="hl sym">;</span>
+<span class="hl kwa">foreach</span> <span class="hl kwc">my</span> <span class="hl kwb">$c1</span> <span class="hl sym">(</span><span class="hl kwb">&#64;creature_colors</span><span class="hl sym">) {</span>
+    <span class="hl kwa">foreach</span> <span class="hl kwc">my</span> <span class="hl kwb">$c2</span> <span class="hl sym">(</span><span class="hl kwb">&#64;creature_colors</span><span class="hl sym">) {</span>
+        <span class="hl kwb">$compl_dict</span><span class="hl sym">{</span><span class="hl str">&quot;$c1,$c2&quot;</span><span class="hl sym">} =</span> <span class="hl kwd">complement</span><span class="hl sym">(</span><span class="hl kwb">$c1</span><span class="hl sym">,</span> <span class="hl kwb">$c2</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">sub</span> check_complement <span class="hl sym">{</span>
+    <span class="hl kwa">foreach</span> <span class="hl kwc">my</span> <span class="hl kwb">$c1</span> <span class="hl sym">(</span><span class="hl kwb">&#64;creature_colors</span><span class="hl sym">) {</span>
+        <span class="hl kwa">foreach</span> <span class="hl kwc">my</span> <span class="hl kwb">$c2</span> <span class="hl sym">(</span><span class="hl kwb">&#64;creature_colors</span><span class="hl sym">) {</span>
+            say <span class="hl str">&quot;$c1 + $c2 -&gt; &quot;</span> <span class="hl sym">.</span> <span class="hl kwb">$compl_dict</span><span class="hl sym">{</span><span class="hl str">&quot;$c1,$c2&quot;</span><span class="hl sym">};</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    say <span class="hl str">''</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">sub</span> spellout <span class="hl sym">{</span>
+    <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$n</span><span class="hl sym">) =</span> <span class="hl kwb">&#64;_</span><span class="hl sym">;</span>
+
+    <span class="hl kwc">my</span> <span class="hl kwb">&#64;numbers</span> <span class="hl sym">=</span> <span class="hl kwd">qw</span><span class="hl sym">(</span>zero one two three four five six seven eight nine<span class="hl sym">);</span>
+
+    <span class="hl kwa">return</span> <span class="hl str">' '</span> <span class="hl sym">.</span> <span class="hl kwd">join</span><span class="hl sym">(</span><span class="hl str">' '</span><span class="hl sym">,</span> map <span class="hl sym">{</span> <span class="hl kwb">$numbers</span><span class="hl sym">[</span><span class="hl kwb">$_</span><span class="hl sym">] }</span> split <span class="hl kwc">//</span><span class="hl sym">,</span> <span class="hl kwb">$n</span><span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">sub</span> report <span class="hl sym">{</span>
+    <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$input_zoo</span><span class="hl sym">,</span> <span class="hl kwb">$met</span><span class="hl sym">,</span> <span class="hl kwb">$self_met</span><span class="hl sym">) =</span> <span class="hl kwb">&#64;_</span><span class="hl sym">;</span>
+
+    say <span class="hl str">' '</span> <span class="hl sym">.</span> <span class="hl kwd">join</span><span class="hl sym">(</span><span class="hl str">' '</span><span class="hl sym">,</span> &#64;<span class="hl sym">{</span><span class="hl kwb">$input_zoo</span><span class="hl sym">});</span>
+
+    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwc">my</span> <span class="hl kwb">$x</span> <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> <span class="hl kwb">$x</span> <span class="hl sym">&lt;</span> scalar &#64;<span class="hl sym">{</span><span class="hl kwb">$met</span><span class="hl sym">};</span> <span class="hl kwb">$x</span><span class="hl sym">++) {</span>
+        say <span class="hl kwb">$met</span><span class="hl sym">-&gt;[</span><span class="hl kwb">$x</span><span class="hl sym">] .</span> <span class="hl kwd">spellout</span><span class="hl sym">(</span><span class="hl kwb">$self_met</span><span class="hl sym">-&gt;[</span><span class="hl kwb">$x</span><span class="hl sym">]);</span>
+    <span class="hl sym">}</span>
+
+    say <span class="hl kwd">spellout</span><span class="hl sym">(</span><span class="hl kwd">sum</span><span class="hl sym">(</span>&#64;<span class="hl sym">{</span><span class="hl kwb">$met</span><span class="hl sym">})) .</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">sub</span> creature <span class="hl sym">{</span>
+    <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$my_id</span><span class="hl sym">,</span> <span class="hl kwb">$venue</span><span class="hl sym">,</span> <span class="hl kwb">$my_lock</span><span class="hl sym">,</span> <span class="hl kwb">$in_lock</span><span class="hl sym">,</span> <span class="hl kwb">$out_lock</span><span class="hl sym">) =</span> <span class="hl kwb">&#64;_</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) {</span>
+        <span class="hl kwb">$my_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+        <span class="hl kwb">$in_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+
+        <span class="hl kwb">$venue</span><span class="hl sym">-&gt;[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl kwb">$my_id</span><span class="hl sym">;</span>
+        <span class="hl kwb">$out_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">sub</span> let_them_meet <span class="hl sym">{</span>
+    <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$meetings_left</span><span class="hl sym">,</span> <span class="hl kwb">$input_zoo</span><span class="hl sym">) =</span> <span class="hl kwb">&#64;_</span><span class="hl sym">;</span>
+
+    <span class="hl kwc">my</span> <span class="hl kwb">$c_no</span> <span class="hl sym">=</span> scalar &#64;<span class="hl sym">{</span><span class="hl kwb">$input_zoo</span><span class="hl sym">};</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">&#64;venue</span> <span class="hl sym">:</span>shared <span class="hl sym">= (-</span><span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">&#64;met</span> <span class="hl sym">= (</span><span class="hl num">0</span><span class="hl sym">)</span> x <span class="hl kwb">$c_no</span><span class="hl sym">;</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">&#64;self_met</span> <span class="hl sym">= (</span><span class="hl num">0</span><span class="hl sym">)</span> x <span class="hl kwb">$c_no</span><span class="hl sym">;</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">&#64;colors</span> <span class="hl sym">=</span> &#64;<span class="hl sym">{</span><span class="hl kwb">$input_zoo</span><span class="hl sym">};</span>
+
+    <span class="hl kwc">my</span> <span class="hl kwb">$in_lock</span> <span class="hl sym">=</span> POSIX<span class="hl sym">::</span>RT<span class="hl sym">::</span>Semaphore<span class="hl sym">-&gt;</span><span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl kwb">$in_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">$out_lock</span> <span class="hl sym">=</span> POSIX<span class="hl sym">::</span>RT<span class="hl sym">::</span>Semaphore<span class="hl sym">-&gt;</span><span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl kwb">$out_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">&#64;locks</span><span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl kwc">my</span> <span class="hl kwb">$x</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">..</span> <span class="hl kwb">$c_no</span><span class="hl sym">) {</span>
+        <span class="hl kwb">$locks</span><span class="hl sym">[</span><span class="hl kwb">$x</span><span class="hl sym">]  =</span> POSIX<span class="hl sym">::</span>RT<span class="hl sym">::</span>Semaphore<span class="hl sym">-&gt;</span><span class="hl kwd">init</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">for</span> <span class="hl kwc">my</span> <span class="hl kwb">$ci</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">..</span> <span class="hl kwb">$c_no</span><span class="hl sym">) {</span>
+       threads<span class="hl sym">-&gt;</span><span class="hl kwd">new</span><span class="hl sym">(</span>\<span class="hl sym">&amp;</span>creature<span class="hl sym">,</span> <span class="hl kwb">$ci</span><span class="hl sym">,</span> \<span class="hl kwb">&#64;venue</span><span class="hl sym">,</span> <span class="hl kwb">$locks</span><span class="hl sym">[</span><span class="hl kwb">$ci</span><span class="hl sym">],</span> <span class="hl kwb">$in_lock</span><span class="hl sym">,</span> <span class="hl kwb">$out_lock</span><span class="hl sym">)-&gt;</span><span class="hl kwd">detach</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwb">$in_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">();</span>
+    <span class="hl kwb">$out_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">$id1</span> <span class="hl sym">=</span> <span class="hl kwb">$venue</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+    <span class="hl kwa">while</span> <span class="hl sym">(</span><span class="hl kwb">$meetings_left</span> <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        <span class="hl kwb">$in_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">();</span>
+        <span class="hl kwb">$out_lock</span><span class="hl sym">-&gt;</span><span class="hl kwd">wait</span><span class="hl sym">();</span>
+        <span class="hl kwc">my</span> <span class="hl kwb">$id2</span> <span class="hl sym">=</span> <span class="hl kwb">$venue</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwb">$id1</span> <span class="hl sym">!=</span> <span class="hl kwb">$id2</span><span class="hl sym">) {</span>
+            <span class="hl kwc">my</span> <span class="hl kwb">$new_color</span> <span class="hl sym">=</span> <span class="hl kwb">$compl_dict</span><span class="hl sym">{</span><span class="hl str">&quot;$colors[$id1],$colors[$id1]&quot;</span><span class="hl sym">};</span>
+            <span class="hl kwb">$colors</span><span class="hl sym">[</span><span class="hl kwb">$id1</span><span class="hl sym">] =</span> <span class="hl kwb">$new_color</span><span class="hl sym">;</span>
+            <span class="hl kwb">$colors</span><span class="hl sym">[</span><span class="hl kwb">$id2</span><span class="hl sym">] =</span> <span class="hl kwb">$new_color</span><span class="hl sym">;</span>
+            <span class="hl kwb">$met</span><span class="hl sym">[</span><span class="hl kwb">$id1</span><span class="hl sym">] +=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl kwb">$met</span><span class="hl sym">[</span><span class="hl kwb">$id2</span><span class="hl sym">] +=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            <span class="hl kwb">$self_met</span><span class="hl sym">[</span><span class="hl kwb">$id1</span><span class="hl sym">] +=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl kwb">$met</span><span class="hl sym">[</span><span class="hl kwb">$id1</span><span class="hl sym">] +=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwb">$meetings_left</span> <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwb">$meetings_left</span> <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+            <span class="hl kwb">$locks</span><span class="hl sym">[</span><span class="hl kwb">$id1</span><span class="hl sym">]-&gt;</span><span class="hl kwd">post</span><span class="hl sym">();</span>
+            <span class="hl kwb">$id1</span> <span class="hl sym">=</span> <span class="hl kwb">$id2</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            <span class="hl kwd">report</span><span class="hl sym">(</span><span class="hl kwb">$input_zoo</span><span class="hl sym">,</span> \<span class="hl kwb">&#64;met</span><span class="hl sym">,</span> \<span class="hl kwb">&#64;self_met</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwd">check_complement</span><span class="hl sym">();</span>
+<span class="hl kwd">let_them_meet</span><span class="hl sym">(</span><span class="hl kwb">$ARGV</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], [</span><span class="hl str">'blue'</span><span class="hl sym">,</span> <span class="hl str">'red'</span><span class="hl sym">,</span> <span class="hl str">'yellow'</span><span class="hl sym">]);</span>
+<span class="hl kwd">let_them_meet</span><span class="hl sym">(</span><span class="hl kwb">$ARGV</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">], [</span><span class="hl str">'blue'</span><span class="hl sym">,</span> <span class="hl str">'red'</span><span class="hl sym">,</span> <span class="hl str">'yellow'</span><span class="hl sym">,</span> <span class="hl str">'red'</span><span class="hl sym">,</span> <span class="hl str">'yellow'</span><span class="hl sym">,</span> <span class="hl str">'blue'</span><span class="hl sym">,</span> <span class="hl str">'red'</span><span class="hl sym">,</span> <span class="hl str">'yellow'</span><span class="hl sym">,</span> <span class="hl str">'red'</span><span class="hl sym">,</span> <span class="hl str">'blue'</span><span class="hl sym">]);</span>
