@@ -1,8 +1,10 @@
 <span class="hl com">(*</span>
-<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** The Computer Language Shootout</span>
 <span class="hl com">** http://shootout.alioth.debian.org/</span>
 <span class="hl com">** contributed by Hongwei Xi</span>
-<span class="hl com"></span>
+<span class="hl com">**</span>
+<span class="hl com">** multicore version of regex-dna benchmark using PCRE</span>
+<span class="hl com">**</span>
 <span class="hl com">** compilation command:</span>
 <span class="hl com">**   atscc -D_ATS_MULTITHREAD -O3 -fomit-frame-pointer regex-dna_smp.dats -o regex-dna_smp -lpthread -lpcre</span>
 <span class="hl com">*)</span>
@@ -10,11 +12,9 @@
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl sym">%{</span>^
-
 <span class="hl dir">#include &lt;pcre.h&gt;</span>
 <span class="hl dir">#include &lt;pthread.h&gt;</span>
-
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{^]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
@@ -23,10 +23,10 @@ staload _<span class="hl com">(*anonymous*)</span> <span class="hl sym">=</span>
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">extern fun</span> malloc_atm <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">}</span>
-  <span class="hl sym">(</span>n<span class="hl sym">:</span> int n<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> ptr l<span class="hl sym">) =</span> <span class="hl str">&quot;malloc_atm&quot;</span>
+  <span class="hl sym">(</span>n<span class="hl sym">:</span> int n<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes n &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">) =</span> <span class="hl str">&quot;malloc_atm&quot;</span>
 
 <span class="hl kwa">extern fun</span> free_atm <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;free_atm&quot;</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes n &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;free_atm&quot;</span>
 
 <span class="hl sym">%{</span>^
 
@@ -46,7 +46,7 @@ ats_void_type free_atm <span class="hl sym">(</span>ats_ptr_type p<span class="h
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl kwa">viewdef</span> block_v <span class="hl sym">(</span>sz<span class="hl sym">:</span>int<span class="hl sym">,</span> l<span class="hl sym">:</span>addr<span class="hl sym">) =</span> bytes_v <span class="hl sym">(</span>sz<span class="hl sym">,</span> l<span class="hl sym">)</span>
+<span class="hl kwa">viewdef</span> block_v <span class="hl sym">(</span>sz<span class="hl sym">:</span>int<span class="hl sym">,</span> l<span class="hl sym">:</span>addr<span class="hl sym">) =</span> bytes <span class="hl sym">(</span>sz<span class="hl sym">)</span> &#64; l
 <span class="hl kwa">dataviewtype</span> blocklst <span class="hl sym">(</span>int<span class="hl sym">) =</span>
   <span class="hl sym">| {</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>sz<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span> blocklst_cons <span class="hl sym">(</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">of</span>
       <span class="hl sym">(</span>block_v <span class="hl sym">(</span>sz<span class="hl sym">,</span> l<span class="hl sym">) |</span> int sz<span class="hl sym">,</span> ptr l<span class="hl sym">,</span> blocklst n<span class="hl sym">)</span>
@@ -55,17 +55,8 @@ ats_void_type free_atm <span class="hl sym">(</span>ats_ptr_type p<span class="h
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl com">(*</span>
-<span class="hl com">extern typedef &quot;blocklst_cons_pstruct&quot; =</span>
-<span class="hl com">  blocklst_cons_pstruct (void | int, ptr, blocklst)</span>
-<span class="hl com">*)</span>
-
-<span class="hl sym">%{</span>^
-<span class="hl sym">//</span> this is to circumvent a bug <span class="hl kwa">in</span> version <span class="hl num">0.0.1</span>
-<span class="hl kwa">typedef struct</span> <span class="hl sym">{</span>
-ats_int_type atslab_0 <span class="hl sym">;</span> ats_ptr_type atslab_1 <span class="hl sym">;</span> ats_ptr_type atslab_2 <span class="hl sym">;</span>
-<span class="hl sym">} *</span>blocklst_cons_pstruct <span class="hl sym">;</span>
-<span class="hl sym">%}</span>
+<span class="hl kwa">extern typedef</span> <span class="hl str">&quot;blocklst_cons_pstruct&quot;</span> <span class="hl sym">=</span>
+  blocklst_cons_pstruct <span class="hl sym">(</span>void <span class="hl sym">|</span> int<span class="hl sym">,</span> ptr<span class="hl sym">,</span> blocklst<span class="hl sym">)</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
@@ -87,7 +78,7 @@ fread_stdin_block <span class="hl sym">(</span>ats_int_type sz0<span class="hl s
   return <span class="hl sym">(</span>sz0 <span class="hl sym">-</span> sz<span class="hl sym">) ;</span>
 <span class="hl sym">}</span>
 
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{$]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
@@ -106,17 +97,17 @@ fread_stdin_block <span class="hl sym">(</span>ats_int_type sz0<span class="hl s
       <span class="hl sym">!</span>res1 <span class="hl sym">:=</span> blocklst_nil <span class="hl sym">();</span> fold&#64; res
     <span class="hl kwa">end else begin</span>
       loop <span class="hl sym">(</span>pf_tot <span class="hl sym">|</span> sz<span class="hl sym">,</span> p_tot<span class="hl sym">, !</span>res1<span class="hl sym">);</span> fold&#64; res
-    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
-  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>loop<span class="hl sym">]</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [loop]</span>
   <span class="hl kwa">var</span> res<span class="hl sym">:</span> blocklst<span class="hl sym">;</span> <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop <span class="hl sym">(</span>view&#64; tot <span class="hl sym">|</span> sz<span class="hl sym">, &amp;</span>tot<span class="hl sym">,</span> res<span class="hl sym">)</span>
 <span class="hl kwa">in</span>
   res
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fread_stdin_blocklst<span class="hl sym">]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fread_stdin_blocklst]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">extern fun</span> blocklst_concat_and_free
-  <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>n<span class="hl sym">:</span> int n<span class="hl sym">,</span> blks<span class="hl sym">:</span> blocklst<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> ptr l<span class="hl sym">)</span>
+  <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>n<span class="hl sym">:</span> int n<span class="hl sym">,</span> blks<span class="hl sym">:</span> blocklst<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes <span class="hl sym">(</span>n<span class="hl sym">)</span> &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">)</span>
   <span class="hl sym">=</span> <span class="hl str">&quot;blocklst_concat_and_free&quot;</span>
 
 <span class="hl sym">%{</span>$
@@ -145,7 +136,7 @@ blocklst_concat_and_free
   return res0 <span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{$]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
@@ -167,18 +158,18 @@ ats_int_type count_pattern_match
   return count <span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{$]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">extern fun</span> count_pattern_match <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> pat<span class="hl sym">:</span> string<span class="hl sym">):</span> int
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes n &#64; l <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> pat<span class="hl sym">:</span> string<span class="hl sym">):</span> int
   <span class="hl sym">=</span> <span class="hl str">&quot;count_pattern_match&quot;</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl dir">#define variants_length 9</span>
-<span class="hl kwa">val</span> variants<span class="hl sym">:</span> array <span class="hl sym">(</span>string<span class="hl sym">,</span> variants_length<span class="hl sym">) =</span> array_make_arraysize &#64;<span class="hl sym">[</span>string<span class="hl sym">][</span>
+<span class="hl kwa">val</span> variants<span class="hl sym">:</span> array <span class="hl sym">(</span>string<span class="hl sym">,</span> variants_length<span class="hl sym">) =</span> array_make_arraysize $arrsz<span class="hl sym">{</span>string<span class="hl sym">}(</span>
   <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
@@ -188,16 +179,16 @@ ats_int_type count_pattern_match
 <span class="hl sym">,</span> <span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span>
-<span class="hl sym">]</span>
+<span class="hl sym">)</span>
 
-<span class="hl sym">//</span> a linear list would be better<span class="hl sym">,</span> but <span class="hl sym">...</span>
+<span class="hl slc">// a linear list would be better, but ...</span>
 <span class="hl kwa">val</span> answers<span class="hl sym">:</span> array <span class="hl sym">(</span>int<span class="hl sym">,</span> variants_length<span class="hl sym">) =</span> array_make_elt<span class="hl sym">&lt;</span>int<span class="hl sym">&gt; (</span>variants_length<span class="hl sym">,</span> ~<span class="hl num">1</span><span class="hl sym">)</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl sym">%{</span>^
 
-<span class="hl sym">//</span> this is all standard <span class="hl kwa">and</span> should probably go into a library
+<span class="hl slc">// this is all standard and should probably go into a library</span>
 static pthread_mutex_t mutex_fin <span class="hl sym">=</span> PTHREAD_MUTEX_INITIALIZER<span class="hl sym">;</span>
 
 static inline
@@ -216,8 +207,8 @@ ats_void_type thread_v_return <span class="hl sym">() {</span>
   n <span class="hl sym">=</span> the_nthread <span class="hl sym">;</span> the_nthread <span class="hl sym">=</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
   pthread_mutex_unlock <span class="hl sym">(&amp;</span>mutex_nthread<span class="hl sym">) ;</span>
   <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">==</span> <span class="hl num">1</span><span class="hl sym">) {</span>
-    pthread_mutex_unlock <span class="hl sym">(&amp;</span>mutex_fin<span class="hl sym">) ; //</span> conditional wait?
-  <span class="hl sym">} //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+    pthread_mutex_unlock <span class="hl sym">(&amp;</span>mutex_fin<span class="hl sym">) ;</span> <span class="hl slc">// conditional wait?</span>
+  <span class="hl sym">}</span> <span class="hl slc">// end of [if]</span>
   return <span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
@@ -245,16 +236,13 @@ ats_void_type nthread_init <span class="hl sym">(</span>ats_int_type n<span clas
 
 <span class="hl kwa">extern fun</span> thread_v_return
   <span class="hl sym">(</span>pf<span class="hl sym">:</span> thread_v <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;thread_v_return&quot;</span>
-
 <span class="hl kwa">extern prfun</span> nthread_v_take <span class="hl sym">{</span>n<span class="hl sym">:</span>pos<span class="hl sym">}</span>
   <span class="hl sym">(</span>pf<span class="hl sym">: !</span>nthread_v n <span class="hl sym">&gt;&gt;</span> nthread_v <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)):</span> thread_v
-
 <span class="hl kwa">extern prfun</span> nthread_v_elim <span class="hl sym">(</span>pf<span class="hl sym">:</span> nthread_v <span class="hl num">0</span><span class="hl sym">):&lt;&gt;</span> void
-
 <span class="hl kwa">extern fun</span> nticket_get
   <span class="hl sym">(</span>pf<span class="hl sym">: !</span>thread_v <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">):</span> Nat <span class="hl sym">=</span> <span class="hl str">&quot;nticket_get&quot;</span>
 
-<span class="hl sym">// [!</span>ref<span class="hl sym">]</span> prevents it from being called <span class="hl kwa">in</span> a thread
+<span class="hl slc">// [!ref] prevents it from being called in a thread</span>
 <span class="hl kwa">extern fun</span> nthread_init <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>n<span class="hl sym">:</span> int n<span class="hl sym">):&lt;!</span>ref<span class="hl sym">&gt; (</span>nthread_v n <span class="hl sym">|</span> void<span class="hl sym">)</span>
   <span class="hl sym">=</span> <span class="hl str">&quot;nthread_init&quot;</span>
 
@@ -264,13 +252,13 @@ staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl dir">#define NTHREAD variants_length // does not have be exactly the same</span>
-
+<span class="hl dir">#define NTHREAD variants_length</span> <span class="hl slc">// does not have be exactly the same</span>
+<span class="hl dir"></span>
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">fun</span> count_worker <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf1<span class="hl sym">:</span> thread_v<span class="hl sym">,</span> pf2<span class="hl sym">:</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
-  <span class="hl kwa">extern prfun</span> bytes_v_elim <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">)):</span> void
+  <span class="hl sym">(</span>pf1<span class="hl sym">:</span> thread_v<span class="hl sym">,</span> pf2<span class="hl sym">:</span> bytes n &#64; l <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">extern prfun</span> bytes_v_elim <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes n &#64; l<span class="hl sym">):</span> void
   <span class="hl kwa">val</span> i <span class="hl sym">=</span> nticket_get <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">)</span>
 <span class="hl kwa">in</span>
   <span class="hl kwa">case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
@@ -278,17 +266,17 @@ staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
       <span class="hl kwa">val</span> <span class="hl sym">() =</span> answers<span class="hl sym">[</span>i<span class="hl sym">] :=</span> count_pattern_match <span class="hl sym">(</span>pf2 <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">,</span> variants<span class="hl sym">[</span>i<span class="hl sym">])</span>
     <span class="hl kwa">in</span>
       count_worker <span class="hl sym">(</span>pf1<span class="hl sym">,</span> pf2 <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">)</span>
-    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_ <span class="hl kwa">when</span> <span class="hl sym">...]</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [_ when ...]</span>
   <span class="hl sym">|</span> _ <span class="hl sym">=&gt;</span> <span class="hl kwa">let</span>
       <span class="hl kwa">prval</span> <span class="hl sym">() =</span> bytes_v_elim <span class="hl sym">(</span>pf2<span class="hl sym">)</span> <span class="hl kwa">in</span> thread_v_return <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> <span class="hl com">(*none*)</span><span class="hl sym">)</span>
-    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>_<span class="hl sym">]</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>count_one<span class="hl sym">]</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [_]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [count_one]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">fun</span> count_all <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
-  <span class="hl kwa">extern prfun</span> bytes_v_make <span class="hl sym">():</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">)</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes n &#64; l <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">extern prfun</span> bytes_v_make <span class="hl sym">():</span> bytes n &#64; l
   <span class="hl kwa">fun</span> workerlst_gen <span class="hl sym">{</span>t<span class="hl sym">:</span>nat<span class="hl sym">}</span>
     <span class="hl sym">(</span>pf_nthread<span class="hl sym">:</span> nthread_v t <span class="hl sym">|</span> t<span class="hl sym">:</span> int t<span class="hl sym">):&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
     <span class="hl kwa">if</span> t <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then let</span>
@@ -296,17 +284,17 @@ staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
       <span class="hl kwa">prval</span> pf1 <span class="hl sym">=</span> nthread_v_take <span class="hl sym">(</span>pf_nthread<span class="hl sym">)</span>
       <span class="hl kwa">val</span> <span class="hl sym">() =</span> pthread_create_detached_cloptr <span class="hl sym">(</span>
         <span class="hl kwa">lam</span> <span class="hl sym">() =&lt;</span>lin<span class="hl sym">,</span>cloptr1<span class="hl sym">&gt;</span> count_worker <span class="hl sym">(</span>pf1<span class="hl sym">,</span> pf2 <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">)</span>
-      <span class="hl sym">) //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>pthread_create_detached_cloptr<span class="hl sym">]</span>
+      <span class="hl sym">)</span> <span class="hl slc">// end of [pthread_create_detached_cloptr]</span>
     <span class="hl kwa">in</span>
       workerlst_gen <span class="hl sym">(</span>pf_nthread <span class="hl sym">|</span> t<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
     <span class="hl kwa">end else begin</span>
       <span class="hl kwa">let prval</span> <span class="hl sym">() =</span> nthread_v_elim <span class="hl sym">(</span>pf_nthread<span class="hl sym">)</span> <span class="hl kwa">in</span> <span class="hl sym">()</span> <span class="hl kwa">end</span>
-    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
   <span class="hl kwa">val</span> <span class="hl sym">(</span>pf_nthread <span class="hl sym">| ()) =</span> nthread_init <span class="hl sym">(</span>NTHREAD<span class="hl sym">)</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> workerlst_gen <span class="hl sym">(</span>pf_nthread <span class="hl sym">|</span> NTHREAD<span class="hl sym">)</span>
 <span class="hl kwa">in</span>
-  <span class="hl sym">//</span> empty
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>count_all<span class="hl sym">]</span>
+  <span class="hl slc">// empty</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [count_all]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
@@ -317,8 +305,8 @@ staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
       <span class="hl kwa">val</span> <span class="hl sym">() = (</span>print pat <span class="hl sym">;</span> print ' '<span class="hl sym">;</span> print cnt <span class="hl sym">;</span> print_newline <span class="hl sym">())</span>
     <span class="hl kwa">in</span>
       loop <span class="hl sym">(</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
-    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
-<span class="hl sym">} //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>count_print<span class="hl sym">]</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [count_print]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
@@ -379,26 +367,26 @@ int_ptr_type subst_pattern_string
     <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
      <span class="hl sym">*</span>sgs_ptr <span class="hl sym">= (</span>seglst_cons_pstruct<span class="hl sym">)</span><span class="hl num">0</span> <span class="hl sym">;</span> <span class="hl kwa">break</span> <span class="hl sym">;</span>
     <span class="hl sym">}</span>
-  <span class="hl sym">} //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">for</span><span class="hl sym">]</span>
+  <span class="hl sym">}</span> <span class="hl slc">// end of [for]</span>
   dst <span class="hl sym">=</span> malloc_atm <span class="hl sym">(</span>ndst<span class="hl sym">) ;</span>
   ans<span class="hl sym">.</span>atslab_1 <span class="hl sym">=</span> ndst <span class="hl sym">;</span> ans<span class="hl sym">.</span>atslab_2 <span class="hl sym">=</span> dst <span class="hl sym">;</span>
   subst_copy <span class="hl sym">(</span>dst<span class="hl sym">,</span> src<span class="hl sym">,</span> nsrc<span class="hl sym">,</span> sgs0<span class="hl sym">,</span> sub<span class="hl sym">,</span> nsub<span class="hl sym">) ;</span>
   return ans <span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{$]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">extern fun</span> subst_pattern_string <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> pat<span class="hl sym">:</span> string<span class="hl sym">,</span> sub<span class="hl sym">:</span> string<span class="hl sym">)</span>
-  <span class="hl sym">: [</span>n<span class="hl sym">:</span>nat<span class="hl sym">] [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> int n<span class="hl sym">,</span> ptr l<span class="hl sym">)</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes n &#64; l <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> pat<span class="hl sym">:</span> string<span class="hl sym">,</span> sub<span class="hl sym">:</span> string<span class="hl sym">)</span>
+  <span class="hl sym">: [</span>n<span class="hl sym">:</span>nat<span class="hl sym">] [</span>l<span class="hl sym">:</span>addr<span class="hl sym">]</span> &#64;<span class="hl sym">(</span>bytes n &#64; l <span class="hl sym">|</span> int n<span class="hl sym">,</span> ptr l<span class="hl sym">)</span>
   <span class="hl sym">=</span> <span class="hl str">&quot;subst_pattern_string&quot;</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl dir">#define subst_length 22</span>
-<span class="hl kwa">val</span> subst<span class="hl sym">:</span> array <span class="hl sym">(</span>string<span class="hl sym">,</span> subst_length<span class="hl sym">) =</span> array_make_arraysize &#64;<span class="hl sym">[</span>string<span class="hl sym">][</span>
+<span class="hl kwa">val</span> subst<span class="hl sym">:</span> array <span class="hl sym">(</span>string<span class="hl sym">,</span> subst_length<span class="hl sym">) =</span> array_make_arraysize $arrsz<span class="hl sym">{</span>string<span class="hl sym">}(</span>
   <span class="hl str">&quot;B&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|g|t)&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;D&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|g|t)&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;H&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|t)&quot;</span>
@@ -410,12 +398,12 @@ int_ptr_type subst_pattern_string
 <span class="hl sym">,</span> <span class="hl str">&quot;V&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|c|g)&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span>
 <span class="hl sym">,</span> <span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span>
-<span class="hl sym">]</span>
+<span class="hl sym">)</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">fun</span> subst_loop <span class="hl sym">{</span>i<span class="hl sym">:</span>nat<span class="hl sym">} {</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">):</span> int <span class="hl sym">=</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">:</span> bytes n &#64; l <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">):</span> int <span class="hl sym">=</span>
   <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> subst_length <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">then let</span>
     <span class="hl kwa">val</span> pat <span class="hl sym">=</span> subst<span class="hl sym">[</span>i<span class="hl sym">];</span> <span class="hl kwa">val</span> sub <span class="hl sym">=</span> subst<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]</span>
     <span class="hl kwa">val</span> <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">) =</span> subst_pattern_string <span class="hl sym">(</span>pf <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">,</span> pat<span class="hl sym">,</span> sub<span class="hl sym">)</span>
@@ -424,19 +412,19 @@ int_ptr_type subst_pattern_string
     subst_loop <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">,</span> i <span class="hl sym">+</span> <span class="hl num">2</span><span class="hl sym">)</span>
   <span class="hl kwa">end else begin</span>
     <span class="hl kwa">let val</span> <span class="hl sym">() =</span> free_atm <span class="hl sym">(</span>pf <span class="hl sym">|</span> p<span class="hl sym">)</span> <span class="hl kwa">in</span> n <span class="hl kwa">end</span>
-  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
 
 <span class="hl kwa">fn</span> subst_top <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
-  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes_v <span class="hl sym">(</span>n<span class="hl sym">,</span> l<span class="hl sym">) |</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl sym">(</span>pf<span class="hl sym">: !</span>bytes n &#64; l <span class="hl sym">|</span> n<span class="hl sym">:</span> int n<span class="hl sym">,</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
   <span class="hl kwa">val</span> pat <span class="hl sym">=</span> subst<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span> <span class="hl kwa">val</span> sub <span class="hl sym">=</span> subst<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]</span>
   <span class="hl kwa">val</span> <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">) =</span> subst_pattern_string <span class="hl sym">(</span>pf <span class="hl sym">|</span> n<span class="hl sym">,</span> p<span class="hl sym">,</span> pat<span class="hl sym">,</span> sub<span class="hl sym">)</span>
 <span class="hl kwa">in</span>
   subst_loop <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> n1<span class="hl sym">,</span> p1<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">)</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>subst_top<span class="hl sym">]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [subst_top]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl dir">#define BLOCKSIZE 0x10000 // 0x4000000</span>
+<span class="hl dir">#define BLOCKSIZE 0x10000</span>
 
 <span class="hl kwa">implement</span> main <span class="hl sym">() =</span> <span class="hl kwa">let</span>
   <span class="hl kwa">var</span> n0<span class="hl sym">:</span> int <span class="hl sym">=</span> <span class="hl num">0</span>
@@ -458,7 +446,7 @@ int_ptr_type subst_pattern_string
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> count_print <span class="hl sym">()</span>
 <span class="hl kwa">in</span>
   printf <span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%i</span><span class="hl esc">\n</span><span class="hl str">%i</span><span class="hl esc">\n</span><span class="hl str">%i</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>n0<span class="hl sym">,</span> n1<span class="hl sym">,</span> n_last<span class="hl sym">))</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>main<span class="hl sym">]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [main]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
