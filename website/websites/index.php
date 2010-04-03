@@ -130,9 +130,9 @@ unset($pagechoices);
 <div id="home">
 <h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> and &asymp;1100 programs</h5>
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
-<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a>
+<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a></p>
 
-<p>"After all, facts are facts, <br/> and although we may quote one to another with a chuckle <br/> the words of the Wise Statesman, 'Lies--damned lies--and statistics,' <br/> still there are some easy figures the simplest must understand, <br/> and the astutest cannot wriggle out of." <span class="smaller">Leonard Henry Courtney, 1895</span></p>
+<p><br/>After all, facts are facts, <br/> and although we may quote one to another with a chuckle <br/> the words of the Wise Statesman, 'Lies--damned lies--and statistics,' <br/> still there are some easy figures the simplest must understand, <br/> and the astutest cannot wriggle out of. <span class="smaller">Leonard Henry Courtney, 1895</span></p>
 
 
 
