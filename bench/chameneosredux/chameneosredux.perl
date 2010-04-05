@@ -5,9 +5,10 @@
 
 use 5.10.0;
 use strict;
+use warnings;
 use threads;
 use threads::shared;
-use POSIX::RT::Semaphore;
+use Thread::Semaphore;
 use List::Util qw(sum);
 
 my @creature_colors = qw(blue red yellow);
@@ -71,17 +72,17 @@ sub report {
     }
 
     say spellout(sum(@{$met})) . "\n";
-}  
+}
 
 sub creature {
     my ($my_id, $venue, $my_lock, $in_lock, $out_lock) = @_;
 
     while (1) {
-        $my_lock->wait();
-        $in_lock->wait();
+        $my_lock->down();
+        $in_lock->down();
 
         $venue->[0] = $my_id;
-        $out_lock->post();
+        $out_lock->up();
     }
 }
 
@@ -94,25 +95,23 @@ sub let_them_meet {
     my @self_met = (0) x $c_no;
     my @colors = @{$input_zoo};
 
-    my $in_lock = POSIX::RT::Semaphore->init(0, 1);
-    $in_lock->wait();
-    my $out_lock = POSIX::RT::Semaphore->init(0, 1);
-    $out_lock->wait();
+    my $in_lock = Thread::Semaphore->new();
+    $in_lock->down();
+    my $out_lock = Thread::Semaphore->new();
+    $out_lock->down();
+    
     my @locks;
-    for my $x (0 .. $c_no) {
-        $locks[$x]  = POSIX::RT::Semaphore->init(0, 1);
+    for my $ci (0 .. $c_no - 1) {
+        $locks[$ci] = Thread::Semaphore->new();
+        threads->new(\&creature, $ci, \@venue, $locks[$ci], $in_lock, $out_lock)->detach();
     }
 
-    for my $ci (0 .. $c_no) {
-       threads->new(\&creature, $ci, \@venue, $locks[$ci], $in_lock, $out_lock)->detach();
-    }
-
-    $in_lock->post();
-    $out_lock->wait();
+    $in_lock->up();
+    $out_lock->down();
     my $id1 = $venue[0];
     while ($meetings_left > 0) {
-        $in_lock->post();
-        $out_lock->wait();
+        $in_lock->up();
+        $out_lock->down();
         my $id2 = $venue[0];
         if ($id1 != $id2) {
             my $new_color = $compl_dict{"$colors[$id1],$colors[$id1]"};
@@ -126,7 +125,7 @@ sub let_them_meet {
         }
         $meetings_left -= 1;
         if ($meetings_left > 0) {
-            $locks[$id1]->post();
+            $locks[$id1]->up();
             $id1 = $id2;
         } else {
             report($input_zoo, \@met, \@self_met);
