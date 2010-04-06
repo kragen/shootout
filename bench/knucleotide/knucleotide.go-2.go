@@ -13,6 +13,7 @@ import (
    "io/ioutil"
    "os"
    "sort"
+   "runtime"
 )
 
 func count(data string, n int) map[string]int {
@@ -68,6 +69,7 @@ func printKnucs(a kNucArray) {
 }
 
 func main() {
+   runtime.GOMAXPROCS(4)
    in := bufio.NewReader(os.Stdin)
    three := []byte(">THREE ")
    for {
