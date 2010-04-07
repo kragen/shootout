@@ -6,119 +6,138 @@
 <span class="hl com">   OpenMP by The Anh Tran</span>
 <span class="hl com">*/</span>
 
-<span class="hl dir">#include &lt;stdio.h&gt;</span>
-<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;cassert&gt;</span>
+<span class="hl dir">#include &lt;cstdio&gt;</span>
+<span class="hl dir">#include &lt;cstdlib&gt;</span>
+<span class="hl dir">#include &lt;algorithm&gt;</span>
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+<span class="hl dir">#include &lt;memory.h&gt;</span>
+
 <span class="hl dir">#include &lt;omp.h&gt;</span>
 
+
+<span class="hl dir">#define L2_CACHE_LINE   64</span>
+<span class="hl dir">#define BYTE_A_TIME      L2_CACHE_LINE</span>
+<span class="hl dir">#define COLUMN_FETCH    (BYTE_A_TIME * 8)</span>
+<span class="hl dir">#define ALIGN         __attribute__ ((aligned(L2_CACHE_LINE)))</span>
+
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">unsigned char</span> byte<span class="hl sym">;</span>
 <span class="hl kwc">typedef</span> <span class="hl kwb">double</span>   v2d   <span class="hl kwd">__attribute__</span> <span class="hl sym">((</span><span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">16</span><span class="hl sym">)));</span> <span class="hl slc">// vector of two doubles</span>
 
+<span class="hl kwb">const</span> v2d v10   <span class="hl sym">= {</span> <span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span> <span class="hl sym">};</span>
+<span class="hl kwb">const</span> v2d v15   <span class="hl sym">= {</span> <span class="hl num">1.5</span><span class="hl sym">,</span> <span class="hl num">1.5</span> <span class="hl sym">};</span>
+<span class="hl kwb">const</span> v2d v40   <span class="hl sym">= {</span> <span class="hl num">4.0</span><span class="hl sym">,</span> <span class="hl num">4.0</span> <span class="hl sym">};</span>
 
-<span class="hl kwb">void</span> <span class="hl kwd">mandelbrot</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">*</span> data<span class="hl sym">,</span> <span class="hl kwb">int</span><span class="hl sym">*</span> nbyte_each_line<span class="hl sym">,</span> <span class="hl kwb">int</span> width<span class="hl sym">,</span> <span class="hl kwb">int</span> height<span class="hl sym">)</span>
+v2d inv_2n<span class="hl sym">;</span>   <span class="hl slc">// {2.0/N, 2.0/N}</span>
+
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">GetThreadCount</span><span class="hl sym">()</span>
 <span class="hl sym">{</span>
-   v2d v10   <span class="hl sym">= {</span> <span class="hl num">1.0</span><span class="hl sym">,</span> <span class="hl num">1.0</span> <span class="hl sym">};</span>
-   v2d v15   <span class="hl sym">= {</span> <span class="hl num">1.5</span><span class="hl sym">,</span> <span class="hl num">1.5</span> <span class="hl sym">};</span>
-   v2d four   <span class="hl sym">= {</span> <span class="hl num">4.0</span><span class="hl sym">,</span> <span class="hl num">4.0</span> <span class="hl sym">};</span>
+   cpu_set_t cs<span class="hl sym">;</span>
+   <span class="hl kwd">CPU_ZERO</span><span class="hl sym">(&amp;</span>cs<span class="hl sym">);</span>
+   <span class="hl kwd">sched_getaffinity</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>cs<span class="hl sym">), &amp;</span>cs<span class="hl sym">);</span>
 
-   v2d inverse_w <span class="hl sym">= {</span><span class="hl num">2.0</span> <span class="hl sym">/</span> width<span class="hl sym">,</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> width<span class="hl sym">};</span>
-   v2d inverse_h <span class="hl sym">= {</span><span class="hl num">2.0</span> <span class="hl sym">/</span> height<span class="hl sym">,</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> height <span class="hl sym">};</span>
-
-   <span class="hl dir">#pragma omp parallel default(shared)</span>
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> CPU_SETSIZE<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
    <span class="hl sym">{</span>
-      <span class="hl dir">#pragma omp for schedule(guided) nowait</span>
-      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> height<span class="hl sym">; ++</span>y<span class="hl sym">)</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">CPU_ISSET</span><span class="hl sym">(</span>i<span class="hl sym">, &amp;</span>cs<span class="hl sym">))</span>
+         <span class="hl sym">++</span>count<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">void</span>
+<span class="hl kwd">mandelbrot</span><span class="hl sym">(</span><span class="hl kwb">int</span> N<span class="hl sym">,</span> byte<span class="hl sym">*</span> data<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// counter of each line, how many columns are processed</span>
+   ALIGN <span class="hl kwb">int</span> jobs<span class="hl sym">[</span>N<span class="hl sym">];</span>
+   <span class="hl kwd">memset</span><span class="hl sym">(</span>jobs<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>jobs<span class="hl sym">));</span>
+
+   <span class="hl dir">#pragma omp parallel default(shared) firstprivate(data) num_threads(GetThreadCount())</span>
+   <span class="hl sym">{</span>
+      <span class="hl slc">// foreach line</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> N<span class="hl sym">; ++</span>y<span class="hl sym">,</span> data <span class="hl sym">+= (</span>N <span class="hl sym">&gt;&gt;</span> <span class="hl num">3</span><span class="hl sym">))</span>
       <span class="hl sym">{</span>
-         <span class="hl kwb">int</span> bit_num <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-         <span class="hl kwb">int</span> byte_acc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-
+         <span class="hl slc">// Calculate C.img = y*2/N -1.0</span>
          v2d Civ <span class="hl sym">= {</span>y<span class="hl sym">,</span> y<span class="hl sym">};</span>
-         Civ <span class="hl sym">=</span> Civ <span class="hl sym">*</span> inverse_h <span class="hl sym">-</span> v10<span class="hl sym">;</span>
+         Civ <span class="hl sym">=</span> Civ <span class="hl sym">*</span> inv_2n <span class="hl sym">-</span> v10<span class="hl sym">;</span>
 
-         <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> width<span class="hl sym">;</span> x <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+         <span class="hl slc">// Divide task for each thread here:</span>
+         <span class="hl slc">// claim that me (this thread) will handle K-not-yet-process columns</span>
+         <span class="hl kwb">int</span> x<span class="hl sym">;</span>
+         <span class="hl kwa">while</span> <span class="hl sym">((</span>x <span class="hl sym">=</span> <span class="hl kwd">__sync_fetch_and_add</span><span class="hl sym">(</span>jobs <span class="hl sym">+</span> y<span class="hl sym">,</span> COLUMN_FETCH<span class="hl sym">)) &lt;</span> N<span class="hl sym">)</span>
          <span class="hl sym">{</span>
-            v2d Crv <span class="hl sym">= {</span>x <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> x<span class="hl sym">};</span>
-            Crv <span class="hl sym">=</span> Crv <span class="hl sym">*</span> inverse_w <span class="hl sym">-</span> v15<span class="hl sym">;</span>
+            <span class="hl kwb">int</span> limit <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">min</span><span class="hl sym">(</span>x <span class="hl sym">+</span>COLUMN_FETCH<span class="hl sym">,</span> N<span class="hl sym">);</span>
+            <span class="hl kwb">int</span> byte_acc <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
 
-            <span class="hl slc">// avoid (2 multiplies and 2 adds) in 1st iteration: zero*zero + zero*zero + Civ</span>
-            v2d Zrv   <span class="hl sym">=</span> Crv<span class="hl sym">;</span>
-            <span class="hl slc">// avoid (1 sub and 1 add): zero - zero + Crv</span>
-            v2d Ziv   <span class="hl sym">=</span> Civ<span class="hl sym">;</span>
-            v2d Trv   <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Zrv<span class="hl sym">;</span>
-            v2d Tiv   <span class="hl sym">=</span> Ziv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span>
-
-            <span class="hl slc">// assume that element [x, y] and element [x+1, y] belong to mandelbrot set</span>
-            <span class="hl kwb">int</span> result <span class="hl sym">=</span> <span class="hl num">3</span><span class="hl sym">;</span>
-
-            <span class="hl slc">// skip zero*zero =&gt; start from 1</span>
-            <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
-            <span class="hl kwa">do</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(;</span> x <span class="hl sym">&lt;</span> limit<span class="hl sym">;</span> x <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">)</span>
             <span class="hl sym">{</span>
-               Ziv <span class="hl sym">= (</span>Zrv<span class="hl sym">*</span>Ziv<span class="hl sym">) + (</span>Zrv<span class="hl sym">*</span>Ziv<span class="hl sym">) +</span> Civ<span class="hl sym">;</span>
-               Zrv <span class="hl sym">=</span> Trv <span class="hl sym">-</span> Tiv <span class="hl sym">+</span> Crv<span class="hl sym">;</span>
+               v2d   Crv <span class="hl sym">= {</span>x<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> x<span class="hl sym">};</span>
+               Crv <span class="hl sym">=</span> Crv <span class="hl sym">*</span> inv_2n <span class="hl sym">-</span> v15<span class="hl sym">;</span>
+               v2d Zrv <span class="hl sym">=</span> Crv<span class="hl sym">;</span>
+               v2d Ziv <span class="hl sym">=</span> Civ<span class="hl sym">;</span>
+               v2d Trv <span class="hl sym">=</span> Crv <span class="hl sym">*</span> Crv<span class="hl sym">;</span>
+               v2d Tiv <span class="hl sym">=</span> Civ <span class="hl sym">*</span> Civ<span class="hl sym">;</span>
 
-               Trv <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Zrv<span class="hl sym">;</span>
-               Tiv <span class="hl sym">=</span> Ziv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span>
+               <span class="hl kwb">int</span> result <span class="hl sym">=</span> <span class="hl num">3</span><span class="hl sym">;</span> <span class="hl slc">// assume that 2 elements belong to MB set</span>
 
-               v2d delta <span class="hl sym">=</span> four <span class="hl sym">- (</span>Trv <span class="hl sym">+</span> Tiv<span class="hl sym">);</span>
+               <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+               <span class="hl kwa">while</span> <span class="hl sym">(</span> result <span class="hl sym">&amp;&amp; (</span>i<span class="hl sym">++ &lt;</span> <span class="hl num">50</span><span class="hl sym">) )</span>
+               <span class="hl sym">{</span>
+                  v2d ZZ <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span>
+                  Zrv <span class="hl sym">=</span> Trv <span class="hl sym">-</span> Tiv <span class="hl sym">+</span> Crv<span class="hl sym">;</span>
+                  Ziv <span class="hl sym">=</span> ZZ <span class="hl sym">+</span> ZZ <span class="hl sym">+</span> Civ<span class="hl sym">;</span>
+                  Trv <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Zrv<span class="hl sym">;</span>
+                  Tiv <span class="hl sym">=</span> Ziv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span>
 
-               <span class="hl slc">// sign bit is zero if 4.0 - (Trv + Tiv) &gt;= 0.0 (i.e. |Z| &lt;= 4.0)</span>
-               <span class="hl slc">// Z1 is [x, y]   Z2 is [x+1, y]</span>
-               <span class="hl slc">// mask = 0 &lt;=&gt; |Z2| &lt;= 4   |Z1| &lt;= 4</span>
-               <span class="hl slc">// mask = 1 &lt;=&gt; |Z2| &gt; 4   |Z1| &lt;= 4</span>
-               <span class="hl slc">// mask = 2 &lt;=&gt; |Z2| &lt;= 4   |Z1| &gt; 4</span>
-               <span class="hl slc">// mask = 3 &lt;=&gt; |Z2| &gt; 4    |Z1| &gt; 4</span>
-               <span class="hl kwb">int</span> mask <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_movmskpd</span><span class="hl sym">(</span>delta<span class="hl sym">);</span>
+                  <span class="hl slc">// delta = (Trv + Tiv) &lt;= 4.0 ? 0xff : 0x00</span>
+                  v2d delta <span class="hl sym">= (</span>v2d<span class="hl sym">)</span><span class="hl kwd">__builtin_ia32_cmplepd</span><span class="hl sym">( (</span>Trv <span class="hl sym">+</span> Tiv<span class="hl sym">),</span> v40 <span class="hl sym">);</span>
+                  <span class="hl slc">// mask-out elements that goes outside MB set</span>
+                  result <span class="hl sym">&amp;=</span> <span class="hl kwd">__builtin_ia32_movmskpd</span><span class="hl sym">(</span>delta<span class="hl sym">);</span>
+               <span class="hl sym">}</span>
 
-               <span class="hl slc">// mask-out not-mandelbrot element</span>
-               result <span class="hl sym">&amp;= ~</span>mask<span class="hl sym">;</span>
-            <span class="hl sym">}</span>
-            <span class="hl kwa">while</span> <span class="hl sym">( (++</span>i <span class="hl sym">&lt;</span> <span class="hl num">50</span><span class="hl sym">)   &amp;&amp;   (</span>result <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">) );</span>
+               byte_acc <span class="hl sym">&lt;&lt;=</span> <span class="hl num">2</span><span class="hl sym">;</span>
+               byte_acc <span class="hl sym">|=</span> result<span class="hl sym">;</span>
 
-            byte_acc <span class="hl sym">&lt;&lt;=</span> <span class="hl num">2</span><span class="hl sym">;</span>
-            byte_acc <span class="hl sym">|=</span> result<span class="hl sym">;</span>
-
-            bit_num <span class="hl sym">+=</span> <span class="hl num">2</span><span class="hl sym">;</span>
-            <span class="hl kwa">if</span> <span class="hl sym">(</span> bit_num <span class="hl sym">==</span> <span class="hl num">8</span> <span class="hl sym">)</span>
-            <span class="hl sym">{</span>
-               <span class="hl kwb">int</span> <span class="hl sym">*</span> xbc <span class="hl sym">= &amp;(</span>nbyte_each_line<span class="hl sym">[</span>y<span class="hl sym">]);</span>
-               data<span class="hl sym">[</span> y <span class="hl sym">*</span> width <span class="hl sym">+ (*</span>xbc<span class="hl sym">)  ] = (</span><span class="hl kwb">char</span><span class="hl sym">)</span>byte_acc<span class="hl sym">;</span>
-
-               bit_num <span class="hl sym">=</span> byte_acc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-               <span class="hl sym">*</span>xbc <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
-            <span class="hl sym">}</span>
-         <span class="hl sym">}</span> <span class="hl slc">// end foreach( column )</span>
-
-         <span class="hl kwa">if</span> <span class="hl sym">(</span> bit_num <span class="hl sym">!=</span> <span class="hl num">0</span> <span class="hl sym">)</span>
-         <span class="hl sym">{</span>
-            byte_acc <span class="hl sym">&lt;&lt;= (</span><span class="hl num">8</span> <span class="hl sym">- (</span>width <span class="hl sym">&amp;</span> <span class="hl num">7</span><span class="hl sym">));</span>
-
-            <span class="hl kwb">int</span> <span class="hl sym">*</span> xbc <span class="hl sym">= &amp;(</span>nbyte_each_line<span class="hl sym">[</span>y<span class="hl sym">]);</span>
-            data<span class="hl sym">[</span> y <span class="hl sym">*</span> width <span class="hl sym">+ (*</span>xbc<span class="hl sym">)  ] = (</span><span class="hl kwb">char</span><span class="hl sym">)</span>byte_acc<span class="hl sym">;</span>
-
-            <span class="hl sym">*</span>xbc <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+               <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>byte_acc <span class="hl sym">&amp; ~</span><span class="hl num">0xFF</span><span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">))</span>
+               <span class="hl sym">{</span>
+                  data<span class="hl sym">[</span>x <span class="hl sym">&gt;&gt;</span> <span class="hl num">3</span><span class="hl sym">] =</span> <span class="hl kwa">static_cast</span><span class="hl sym">&lt;</span>byte<span class="hl sym">&gt;(</span>byte_acc<span class="hl sym">);</span>
+                  byte_acc <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+               <span class="hl sym">}</span>
+            <span class="hl sym">}</span> <span class="hl slc">// end foreach (column)</span>
          <span class="hl sym">}</span>
-      <span class="hl sym">}</span>   <span class="hl slc">// end foreach( line )</span>
+      <span class="hl sym">}</span> <span class="hl slc">// end foreach (line)</span>
    <span class="hl sym">}</span> <span class="hl slc">// end parallel region</span>
 <span class="hl sym">}</span>
 
-<span class="hl kwb">int</span> <span class="hl kwd">main</span> <span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">)</span>
+
+<span class="hl kwb">int</span>
+<span class="hl kwd">main</span> <span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span>argv<span class="hl sym">)</span>
 <span class="hl sym">{</span>
-   <span class="hl kwb">int</span> width <span class="hl sym">=</span> <span class="hl num">200</span><span class="hl sym">,</span> height <span class="hl sym">=</span> <span class="hl num">200</span><span class="hl sym">;</span>
+   <span class="hl kwb">int</span> N <span class="hl sym">= (</span>argc <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">200</span><span class="hl sym">;</span>
+   <span class="hl kwd">assert</span><span class="hl sym">((</span>N <span class="hl sym">%</span> <span class="hl num">8</span><span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">);</span>
 
-   <span class="hl kwa">if</span>  <span class="hl sym">(</span>argc <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">)</span>
-      width <span class="hl sym">=</span> height <span class="hl sym">=</span> <span class="hl kwd">atoi</span><span class="hl sym">(</span> argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] );</span>
-   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> width<span class="hl sym">,</span> height<span class="hl sym">);</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> N<span class="hl sym">,</span> N<span class="hl sym">);</span>
+   <span class="hl kwb">int</span> width_bytes <span class="hl sym">=</span> N <span class="hl sym">&gt;&gt;</span> <span class="hl num">3</span><span class="hl sym">;</span>
 
-   <span class="hl kwb">char</span> <span class="hl sym">*</span>data <span class="hl sym">= (</span><span class="hl kwb">char</span><span class="hl sym">*)</span><span class="hl kwd">malloc</span><span class="hl sym">(</span> width <span class="hl sym">*</span> height <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">char</span><span class="hl sym">) );</span>
-   <span class="hl kwb">int</span><span class="hl sym">*</span> nbyte_each_line <span class="hl sym">= (</span><span class="hl kwb">int</span><span class="hl sym">*)</span><span class="hl kwd">calloc</span><span class="hl sym">(</span> height<span class="hl sym">,</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">int</span><span class="hl sym">) );</span>
+   <span class="hl sym">{</span>
+      <span class="hl kwb">double</span> t<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">];</span>
+      t<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> t<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] =</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> N<span class="hl sym">;</span>
+      inv_2n <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_loadupd</span><span class="hl sym">(</span>t<span class="hl sym">);</span>
+   <span class="hl sym">}</span>
 
-   <span class="hl kwd">mandelbrot</span><span class="hl sym">(</span>data<span class="hl sym">,</span> nbyte_each_line<span class="hl sym">,</span> width<span class="hl sym">,</span> height<span class="hl sym">);</span>
+   byte<span class="hl sym">*</span> data <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwd">assert</span><span class="hl sym">(</span>   <span class="hl kwd">posix_memalign</span><span class="hl sym">(</span><span class="hl kwa">reinterpret_cast</span><span class="hl sym">&lt;</span><span class="hl kwb">void</span><span class="hl sym">**&gt;(&amp;</span>data<span class="hl sym">),</span> L2_CACHE_LINE<span class="hl sym">,</span> width_bytes <span class="hl sym">*</span> N<span class="hl sym">)</span>
+         <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">);</span>
 
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> y <span class="hl sym">&lt;</span> height<span class="hl sym">;</span> y<span class="hl sym">++)</span>
-      <span class="hl kwd">fwrite</span><span class="hl sym">( &amp;(</span>data<span class="hl sym">[</span>y <span class="hl sym">*</span> width<span class="hl sym">]),</span> nbyte_each_line<span class="hl sym">[</span>y<span class="hl sym">],</span> <span class="hl num">1</span><span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+   <span class="hl kwd">mandelbrot</span><span class="hl sym">(</span>N<span class="hl sym">,</span> data<span class="hl sym">);</span>
 
+   <span class="hl kwd">fwrite</span><span class="hl sym">(</span> data<span class="hl sym">,</span> width_bytes<span class="hl sym">,</span> N<span class="hl sym">,</span> stdout<span class="hl sym">);</span>
+   <span class="hl kwd">fflush</span><span class="hl sym">(</span>stdout<span class="hl sym">);</span>
    <span class="hl kwd">free</span><span class="hl sym">(</span>data<span class="hl sym">);</span>
-   <span class="hl kwd">free</span><span class="hl sym">(</span>nbyte_each_line<span class="hl sym">);</span>
 
    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
-

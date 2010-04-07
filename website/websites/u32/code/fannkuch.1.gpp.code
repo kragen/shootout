@@ -1,142 +1,129 @@
 <span class="hl com">/*</span>
-<span class="hl com"> * The Computer Lannguage Benchmarks Game</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
 <span class="hl com"> * http://shootout.alioth.debian.org/</span>
 <span class="hl com"> *</span>
-<span class="hl com"> * Originial c version contributed by Heiner Marxen</span>
-<span class="hl com"> * slightly adapted by Marc Halbruegge</span>
-<span class="hl com"> * OpenMP parallelize by The Anh Tran</span>
-<span class="hl com"> */</span>
+<span class="hl com"> * Contributed by Andrew Moon</span>
+<span class="hl com"> * Based on the C++ code by The Anh Tran</span>
+<span class="hl com"> * Based on the C code by Eckehard Berns</span>
+<span class="hl com">*/</span>
 
-
-<span class="hl dir">#include &lt;omp.h&gt;</span>
-
-<span class="hl dir">#include &lt;iostream&gt;</span>
-<span class="hl dir">#include &lt;vector&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;memory.h&gt;</span>
 <span class="hl dir">#include &lt;algorithm&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
 
+<span class="hl kwb">struct</span> worker <span class="hl sym">{</span>
+   <span class="hl kwd">worker</span><span class="hl sym">(</span> <span class="hl kwb">int</span> ndigits<span class="hl sym">,</span> <span class="hl kwb">int</span> pos<span class="hl sym">,</span> worker <span class="hl sym">*</span>head <span class="hl sym">=</span> NULL <span class="hl sym">) :</span>
+      <span class="hl kwd">digits</span><span class="hl sym">(</span>ndigits<span class="hl sym">),</span> <span class="hl kwd">pos_right</span><span class="hl sym">(</span>pos<span class="hl sym">),</span> <span class="hl kwd">next</span><span class="hl sym">(</span>head<span class="hl sym">) {}</span>
 
-<span class="hl kwb">int</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">,</span> std<span class="hl sym">::</span>ostream <span class="hl sym">&amp;</span>o<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&lt;</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwc">inline</span> <span class="hl kwb">int</span> <span class="hl kwd">countflips</span><span class="hl sym">() {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">( !</span>p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] )</span>
+         <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwa">if</span> <span class="hl sym">( !</span>p<span class="hl sym">[</span>p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]] )</span>
+         <span class="hl kwa">return</span> <span class="hl num">1</span><span class="hl sym">;</span>
 
-   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;</span> <span class="hl kwd">permutation</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
-   std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;</span> <span class="hl kwd">count</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
-   <span class="hl kwb">int</span> flipsMax<span class="hl sym">[</span><span class="hl num">4</span><span class="hl sym">] = {</span><span class="hl num">0</span><span class="hl sym">};</span>
-
-   <span class="hl slc">// initial permu</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-      permutation<span class="hl sym">[</span>i<span class="hl sym">] =</span> i<span class="hl sym">;</span>
-
-   <span class="hl kwb">int</span>   numPermutationsPrinted <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-      o <span class="hl sym">&lt;&lt; (</span><span class="hl num">1</span> <span class="hl sym">+</span> permutation<span class="hl sym">[</span>i<span class="hl sym">]);</span>
-   o <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
-
-   <span class="hl kwb">int</span>   r <span class="hl sym">=</span> n<span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">( ;</span> r <span class="hl sym">!=</span> <span class="hl num">1</span><span class="hl sym">; --</span>r<span class="hl sym">)</span>
-      count<span class="hl sym">[</span>r<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] =</span> r<span class="hl sym">;</span>
-
-   <span class="hl slc">// loop termination var</span>
-   <span class="hl kwb">bool</span> repeat <span class="hl sym">=</span> <span class="hl kwa">true</span><span class="hl sym">;</span>
-   <span class="hl dir">#pragma omp parallel default(shared)</span>
-   <span class="hl sym">{</span>
-      <span class="hl slc">// perm vector private of each thread</span>
-      std<span class="hl sym">::</span>vector<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;</span> <span class="hl kwd">permForFlipping</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
-      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-         permForFlipping<span class="hl sym">[</span>i<span class="hl sym">] =</span> permutation<span class="hl sym">[</span>i<span class="hl sym">];</span>
-      <span class="hl slc">// flipmax of each thread</span>
-      <span class="hl kwb">int</span> myflipmax <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-
-      <span class="hl kwa">while</span> <span class="hl sym">(</span>repeat<span class="hl sym">)</span>
-      <span class="hl sym">{</span>
-         <span class="hl kwa">if</span> <span class="hl sym">((</span>permForFlipping<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span><span class="hl num">0</span><span class="hl sym">) &amp;&amp; (</span>permForFlipping<span class="hl sym">[</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] != (</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)))</span>
-         <span class="hl sym">{</span>
-            <span class="hl slc">// cache perm[0]</span>
-            <span class="hl kwb">int</span> k <span class="hl sym">=</span> permForFlipping<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
-            <span class="hl kwb">int</span> flips <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> tmp<span class="hl sym">;</span>
-            <span class="hl kwa">do</span>
-            <span class="hl sym">{</span>
-               <span class="hl slc">// flip N number, and count until perm[0] == 1</span>
-               <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">,</span> j<span class="hl sym">=</span>k<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>j<span class="hl sym">; ++</span>i<span class="hl sym">, --</span>j<span class="hl sym">)</span>
-               <span class="hl sym">{</span>
-                  tmp <span class="hl sym">=</span> permForFlipping<span class="hl sym">[</span>i<span class="hl sym">];</span>
-                  permForFlipping<span class="hl sym">[</span>i<span class="hl sym">] =</span> permForFlipping<span class="hl sym">[</span>j<span class="hl sym">];</span>
-                  permForFlipping<span class="hl sym">[</span>j<span class="hl sym">] =</span> tmp<span class="hl sym">;</span>
-               <span class="hl sym">}</span>
-
-               tmp <span class="hl sym">=</span> permForFlipping<span class="hl sym">[</span>k<span class="hl sym">];</span>
-               permForFlipping<span class="hl sym">[</span>k<span class="hl sym">] =</span> k<span class="hl sym">;</span>
-               k <span class="hl sym">=</span> tmp<span class="hl sym">;</span>
-
-               <span class="hl sym">++</span>flips<span class="hl sym">;</span>
-            <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>k <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">);</span>
-
-            <span class="hl slc">// update each thread max flipcount</span>
-            <span class="hl kwa">if</span> <span class="hl sym">(</span>myflipmax <span class="hl sym">&lt;</span> flips<span class="hl sym">)</span>
-               myflipmax <span class="hl sym">=</span> flips<span class="hl sym">;</span>
-         <span class="hl sym">}</span>
-
-         <span class="hl dir">#pragma omp critical</span>
-         <span class="hl sym">{</span>
-            <span class="hl kwa">while</span> <span class="hl sym">(</span>repeat<span class="hl sym">)</span>
-            <span class="hl sym">{</span>
-               <span class="hl slc">// reach N! permut, terminate</span>
-               <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>r <span class="hl sym">==</span> n<span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">) )</span>
-               <span class="hl sym">{</span>
-                  repeat <span class="hl sym">=</span> <span class="hl kwa">false</span><span class="hl sym">;</span>
-                  <span class="hl kwa">break</span><span class="hl sym">;</span>
-               <span class="hl sym">}</span>
-
-               <span class="hl slc">// rotate down perm[0..r] by one</span>
-               <span class="hl kwb">int</span> perm0 <span class="hl sym">=</span> permutation<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
-               <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>r<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-                  permutation<span class="hl sym">[</span>i<span class="hl sym">] =</span> permutation<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
-               permutation<span class="hl sym">[</span>r<span class="hl sym">] =</span> perm0<span class="hl sym">;</span>
-
-               <span class="hl kwa">if</span> <span class="hl sym">(--</span>count<span class="hl sym">[</span>r<span class="hl sym">] &gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
-               <span class="hl sym">{</span>
-                  <span class="hl slc">// copy this permut to thread private var</span>
-                  <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++)</span>
-                     permForFlipping<span class="hl sym">[</span>i<span class="hl sym">] =</span> permutation<span class="hl sym">[</span>i<span class="hl sym">];</span>
-
-                  <span class="hl slc">// print first 30 permut</span>
-                  <span class="hl kwa">if</span> <span class="hl sym">(</span><span class="hl kwd">__builtin_expect</span><span class="hl sym">(</span>numPermutationsPrinted<span class="hl sym">++ &lt;</span> <span class="hl num">30</span><span class="hl sym">,</span> <span class="hl kwa">false</span><span class="hl sym">) )</span>
-                  <span class="hl sym">{</span>
-                     <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">; ++</span>i<span class="hl sym">)</span>
-                        o <span class="hl sym">&lt;&lt; (</span><span class="hl num">1</span> <span class="hl sym">+</span> permutation<span class="hl sym">[</span>i<span class="hl sym">]);</span>
-                     o <span class="hl sym">&lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
-                  <span class="hl sym">}</span>
-
-                  <span class="hl kwa">for</span> <span class="hl sym">( ;</span> r <span class="hl sym">!=</span> <span class="hl num">1</span><span class="hl sym">; --</span>r<span class="hl sym">)</span>
-                     count<span class="hl sym">[</span>r<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] =</span> r<span class="hl sym">;</span>
-
-                  <span class="hl kwa">break</span><span class="hl sym">;</span>
-               <span class="hl sym">}</span>
-
-               <span class="hl sym">++</span>r<span class="hl sym">;</span>
-            <span class="hl sym">}</span> <span class="hl slc">// end while (repeat) inner</span>
-         <span class="hl sym">}</span> <span class="hl slc">// end omp critical section</span>
-      <span class="hl sym">}</span> <span class="hl slc">// end while (repeat) outer</span>
-
-      flipsMax<span class="hl sym">[</span><span class="hl kwd">omp_get_thread_num</span><span class="hl sym">()] =</span> myflipmax<span class="hl sym">;</span>
-   <span class="hl sym">}</span> <span class="hl slc">// end parallel region</span>
-
-   <span class="hl kwb">int</span> fmx <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
-   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">size_t</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span>flipsMax<span class="hl sym">)/</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span>flipsMax<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span> i<span class="hl sym">++)</span>
-   <span class="hl sym">{</span>
-      <span class="hl kwa">if</span> <span class="hl sym">(</span>fmx <span class="hl sym">&lt;</span> flipsMax<span class="hl sym">[</span>i<span class="hl sym">])</span>
-         fmx <span class="hl sym">=</span> flipsMax<span class="hl sym">[</span>i<span class="hl sym">];</span>
+      <span class="hl kwb">int</span> tmp<span class="hl sym">[</span><span class="hl num">16</span><span class="hl sym">],</span> flips <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> last <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+      <span class="hl kwd">memcpy</span><span class="hl sym">(</span> tmp<span class="hl sym">,</span> p<span class="hl sym">,</span> digits <span class="hl sym">*</span> <span class="hl kwa">sizeof</span><span class="hl sym">(</span> <span class="hl kwb">int</span> <span class="hl sym">) );</span>
+      <span class="hl kwa">do</span> <span class="hl sym">{</span>
+         <span class="hl kwa">if</span> <span class="hl sym">( !</span>tmp<span class="hl sym">[</span>last<span class="hl sym">] )</span>
+            <span class="hl kwa">return</span> flips <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> lo <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> hi <span class="hl sym">=</span> last <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> lo <span class="hl sym">&lt;</span> hi<span class="hl sym">;</span> lo<span class="hl sym">++,</span> hi<span class="hl sym">-- )</span>
+            std<span class="hl sym">::</span><span class="hl kwd">swap</span><span class="hl sym">(</span> tmp<span class="hl sym">[</span>lo<span class="hl sym">],</span> tmp<span class="hl sym">[</span>hi<span class="hl sym">] );</span>
+         std<span class="hl sym">::</span><span class="hl kwd">swap</span><span class="hl sym">(</span> tmp<span class="hl sym">[</span>last<span class="hl sym">],</span> last <span class="hl sym">);</span>
+         flips<span class="hl sym">++;</span>
+      <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span> last <span class="hl sym">);</span>
+      <span class="hl kwa">return</span> flips<span class="hl sym">;</span>
    <span class="hl sym">}</span>
-   <span class="hl kwa">return</span> fmx<span class="hl sym">;</span>
+
+   <span class="hl kwc">inline</span> <span class="hl kwb">void</span> <span class="hl kwd">permute</span><span class="hl sym">() {</span>
+      <span class="hl kwb">int</span> tmp <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> pos_left<span class="hl sym">;</span> i<span class="hl sym">++ )</span>
+         p<span class="hl sym">[</span>i<span class="hl sym">] =</span> p<span class="hl sym">[</span>i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">];</span>
+      p<span class="hl sym">[</span>pos_left<span class="hl sym">] =</span> tmp<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">bool</span> <span class="hl kwd">print</span><span class="hl sym">(</span> <span class="hl kwb">int</span> <span class="hl sym">&amp;</span>left <span class="hl sym">) {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> left<span class="hl sym">-- &gt;</span> <span class="hl num">0</span> <span class="hl sym">) {</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> digits<span class="hl sym">;</span> i<span class="hl sym">++ )</span>
+            <span class="hl kwd">printf</span><span class="hl sym">(</span> <span class="hl str">&quot;%d&quot;</span><span class="hl sym">,</span> p<span class="hl sym">[</span>i<span class="hl sym">] +</span> <span class="hl num">1</span> <span class="hl sym">);</span>
+         <span class="hl kwd">printf</span><span class="hl sym">(</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span> <span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">return</span> <span class="hl sym">(</span> left <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">int</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span> <span class="hl kwb">int</span> toprint <span class="hl sym">= -</span><span class="hl num">1</span> <span class="hl sym">) {</span>
+      <span class="hl kwb">bool</span> printing <span class="hl sym">= (</span> toprint <span class="hl sym">&gt;=</span> <span class="hl num">0</span> <span class="hl sym">);</span>
+      <span class="hl kwb">int</span> left_limit <span class="hl sym">=</span> printing ? digits <span class="hl sym">:</span> digits <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      pos_left <span class="hl sym">=</span> printing ? <span class="hl num">1</span> <span class="hl sym">:</span> digits <span class="hl sym">-</span> <span class="hl num">2</span><span class="hl sym">;</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> digits<span class="hl sym">;</span> i<span class="hl sym">++ ) {</span>
+         p<span class="hl sym">[</span>i<span class="hl sym">] =</span> i<span class="hl sym">;</span>
+         count<span class="hl sym">[</span>i<span class="hl sym">] =</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span> printing <span class="hl sym">)</span>
+         <span class="hl kwd">print</span><span class="hl sym">(</span> toprint <span class="hl sym">);</span>
+      p<span class="hl sym">[</span>pos_right<span class="hl sym">] =</span> digits <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      p<span class="hl sym">[</span>digits <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] =</span> pos_right<span class="hl sym">;</span>
+
+      <span class="hl kwb">int</span> maxflips <span class="hl sym">= (</span> digits <span class="hl sym">&gt;</span> <span class="hl num">1</span> <span class="hl sym">)</span> ? <span class="hl num">1</span> <span class="hl sym">:</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span> pos_left <span class="hl sym">&lt;</span> left_limit <span class="hl sym">) {</span>
+         <span class="hl kwd">permute</span><span class="hl sym">();</span>
+         <span class="hl kwa">if</span> <span class="hl sym">( --</span>count<span class="hl sym">[</span>pos_left<span class="hl sym">] &gt;</span> <span class="hl num">0</span> <span class="hl sym">) {</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span> printing <span class="hl sym">&amp;&amp; !</span><span class="hl kwd">print</span><span class="hl sym">(</span> toprint <span class="hl sym">) )</span>
+               <span class="hl kwa">return</span> maxflips<span class="hl sym">;</span>
+
+            <span class="hl kwa">for</span> <span class="hl sym">( ;</span> pos_left <span class="hl sym">!=</span> <span class="hl num">1</span><span class="hl sym">;</span> pos_left<span class="hl sym">-- )</span>
+               count<span class="hl sym">[</span>pos_left <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">] =</span> pos_left<span class="hl sym">;</span>
+            maxflips <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">max</span><span class="hl sym">(</span> maxflips<span class="hl sym">,</span> <span class="hl kwd">countflips</span><span class="hl sym">() );</span>
+         <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+            pos_left<span class="hl sym">++;</span>
+         <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">return</span> maxflips<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwb">void</span> <span class="hl kwd">launch</span><span class="hl sym">() {</span> <span class="hl kwd">pthread_create</span><span class="hl sym">( &amp;</span>id<span class="hl sym">,</span> NULL<span class="hl sym">,</span> threadrun<span class="hl sym">,</span> <span class="hl kwa">this</span> <span class="hl sym">); }</span>
+   <span class="hl kwb">int</span> <span class="hl kwd">finish</span><span class="hl sym">() {</span> <span class="hl kwb">int</span> t<span class="hl sym">;</span> <span class="hl kwd">pthread_join</span><span class="hl sym">(</span> id<span class="hl sym">, (</span><span class="hl kwb">void</span> <span class="hl sym">**)&amp;</span>t <span class="hl sym">);</span> <span class="hl kwa">return</span> t<span class="hl sym">; }</span>
+   <span class="hl kwb">static void</span> <span class="hl sym">*</span><span class="hl kwd">threadrun</span><span class="hl sym">(</span> <span class="hl kwb">void</span> <span class="hl sym">*</span>args <span class="hl sym">) {</span> <span class="hl kwa">return</span> <span class="hl sym">(</span><span class="hl kwb">void</span> <span class="hl sym">*)((</span>worker <span class="hl sym">*)</span>args<span class="hl sym">)-&gt;</span><span class="hl kwd">fannkuch</span><span class="hl sym">(); }</span>
+
+<span class="hl kwc">protected</span><span class="hl sym">:</span>
+   <span class="hl kwb">int</span> p<span class="hl sym">[</span><span class="hl num">16</span><span class="hl sym">],</span> count<span class="hl sym">[</span><span class="hl num">16</span><span class="hl sym">];</span>
+   <span class="hl kwb">int</span> digits<span class="hl sym">,</span> pos_right<span class="hl sym">,</span> pos_left<span class="hl sym">;</span>
+   pthread_t id<span class="hl sym">;</span>
+
+<span class="hl kwc">public</span><span class="hl sym">:</span>
+   worker <span class="hl sym">*</span>next<span class="hl sym">;</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl kwb">int</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span> <span class="hl kwb">int</span> n <span class="hl sym">) {</span>
+   <span class="hl slc">// create the workers</span>
+   <span class="hl kwb">int</span> count <span class="hl sym">=</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   worker <span class="hl sym">*</span>head <span class="hl sym">=</span> NULL<span class="hl sym">;</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span> n <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> count<span class="hl sym">;</span> i<span class="hl sym">++ ) {</span>
+         head <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">worker</span><span class="hl sym">(</span> n<span class="hl sym">,</span> i<span class="hl sym">,</span> head <span class="hl sym">);</span>
+         head<span class="hl sym">-&gt;</span><span class="hl kwd">launch</span><span class="hl sym">();</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl slc">// print the first 30</span>
+      <span class="hl kwd">worker</span><span class="hl sym">(</span>n<span class="hl sym">,</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">).</span><span class="hl kwd">fannkuch</span><span class="hl sym">(</span> <span class="hl num">30</span> <span class="hl sym">);</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl slc">// gather the results</span>
+   <span class="hl kwb">int</span> maxflips <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">while</span> <span class="hl sym">(</span> head <span class="hl sym">) {</span>
+      maxflips <span class="hl sym">=</span> std<span class="hl sym">::</span><span class="hl kwd">max</span><span class="hl sym">(</span> head<span class="hl sym">-&gt;</span><span class="hl kwd">finish</span><span class="hl sym">(),</span> maxflips <span class="hl sym">);</span>
+      worker <span class="hl sym">*</span>tmp <span class="hl sym">=</span> head<span class="hl sym">-&gt;</span>next<span class="hl sym">;</span>
+      <span class="hl kwa">delete</span> head<span class="hl sym">;</span>
+      head <span class="hl sym">=</span> tmp<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">return</span> maxflips<span class="hl sym">;</span>
 <span class="hl sym">}</span>
 
-
-<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">const char</span> <span class="hl sym">**</span>argv<span class="hl sym">)</span>
-<span class="hl sym">{</span>
-   <span class="hl kwb">int</span>   n <span class="hl sym">= (</span>argc <span class="hl sym">==</span> <span class="hl num">2</span><span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]) :</span> <span class="hl num">7</span><span class="hl sym">;</span>
-
-   std<span class="hl sym">::</span>cout <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;Pfannkuchen(&quot;</span> <span class="hl sym">&lt;&lt;</span> n <span class="hl sym">&lt;&lt;</span> <span class="hl str">&quot;) = &quot;</span>
-      <span class="hl sym">&lt;&lt;</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span>n<span class="hl sym">,</span> std<span class="hl sym">::</span>cout<span class="hl sym">) &lt;&lt;</span> std<span class="hl sym">::</span>endl<span class="hl sym">;</span>
-
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span> <span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">const char</span> <span class="hl sym">*</span>argv<span class="hl sym">[] ) {</span>
+   <span class="hl kwb">int</span> n <span class="hl sym">= (</span> argc <span class="hl sym">&gt;</span> <span class="hl num">1</span> <span class="hl sym">)</span> ? <span class="hl kwd">atoi</span><span class="hl sym">(</span> argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] ) :</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwd">printf</span><span class="hl sym">(</span> <span class="hl str">&quot;Pfannkuchen(%d) = %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl kwd">fannkuch</span><span class="hl sym">(</span> n <span class="hl sym">) );</span>
    <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
 <span class="hl sym">}</span>
