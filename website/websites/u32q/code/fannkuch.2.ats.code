@@ -5,20 +5,17 @@
 <span class="hl com">** contributed by Hongwei Xi</span>
 <span class="hl com">**</span>
 <span class="hl com">** compilation command:</span>
-<span class="hl com">**   atscc -D_ATS_MULTITHREAD -fomit-frame-pointer -O3 fannkuch_smp.dats -o fannkuch_smp -lpthread</span>
+<span class="hl com">**   atscc -D_ATS_MULTITHREAD -O3 -fomit-frame-pointer fannkuch3.dats -o fannkuch3 -lpthread -lats_mt</span>
 <span class="hl com">*)</span>
 
-<span class="hl sym">%{</span>^
+<span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl dir">#include</span> <span class="hl dstr">&quot;libc/CATS/pthread_locks.cats&quot;</span><span class="hl dir"></span>
+staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
+staload <span class="hl str">&quot;libc/SATS/pthread_uplock.sats&quot;</span>
 
-<span class="hl dir">#ifndef _ATS_MULTITHREAD</span>
-<span class="hl dir">#error</span> <span class="hl dstr">&quot;_ATS_MULTITHREAD is undefined!&quot;</span><span class="hl dir"></span>
-<span class="hl dir">#endif</span>
+<span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl sym">%}</span>
-
-absviewt&#64;ype intarr <span class="hl sym">=</span> $extype <span class="hl str">&quot;intarr&quot;</span> <span class="hl sym">//</span> integer arrays
+absviewt&#64;ype intarr <span class="hl sym">=</span> $extype <span class="hl str">&quot;intarr&quot;</span> <span class="hl slc">// integer arrays</span>
 
 <span class="hl sym">%{</span>^
 
@@ -32,43 +29,33 @@ ats_void_type int_free <span class="hl sym">(</span>ats_ptr_type p<span class="h
 
 static inline
 ats_ptr_type
-intarr_make <span class="hl sym">(</span>ats_int_type n<span class="hl sym">) {</span>
-  return malloc<span class="hl sym">((</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) *</span> sizeof<span class="hl sym">(</span>ats_int_type<span class="hl sym">)) ;</span>
-<span class="hl sym">}</span>
+intarr_make <span class="hl sym">(</span>ats_int_type n<span class="hl sym">) {</span> return malloc<span class="hl sym">((</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) *</span> sizeof<span class="hl sym">(</span>ats_int_type<span class="hl sym">)) ; }</span>
 
 static inline
-ats_void_type intarr_free <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">) {</span>
-  free <span class="hl sym">(</span>A<span class="hl sym">) ;</span> return <span class="hl sym">;</span>
-<span class="hl sym">}</span>
+ats_void_type intarr_free <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">) {</span> free <span class="hl sym">(</span>A<span class="hl sym">) ;</span> return <span class="hl sym">; }</span>
 
 static inline
-ats_int_type <span class="hl sym">//</span> unsafe
-intarr_get <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">,</span> ats_int_type i<span class="hl sym">) {</span>
-  return <span class="hl sym">((</span>ats_int_type*)A<span class="hl sym">)[</span>i<span class="hl sym">] ;</span>
-<span class="hl sym">}</span>
+ats_int_type <span class="hl slc">// unsafe</span>
+intarr_get <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">,</span> ats_int_type i<span class="hl sym">) {</span> return <span class="hl sym">((</span>ats_int_type*)A<span class="hl sym">)[</span>i<span class="hl sym">] ; }</span>
 
 static inline
-ats_void_type <span class="hl sym">//</span> unsafe
-intarr_set <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">,</span> ats_int_type i<span class="hl sym">,</span> ats_int_type x<span class="hl sym">) {</span>
+ats_void_type <span class="hl slc">// unsafe</span>
+intarr_set <span class="hl sym">(</span>
+  ats_ptr_type A
+<span class="hl sym">,</span> ats_int_type i<span class="hl sym">,</span> ats_int_type x
+<span class="hl sym">) {</span>
   <span class="hl sym">((</span>ats_int_type*)A<span class="hl sym">)[</span>i<span class="hl sym">] =</span> x <span class="hl sym">;</span> return <span class="hl sym">;</span>
-<span class="hl sym">}</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [intarr_set]</span>
 
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{^]</span>
 
-<span class="hl kwa">extern fun</span> int_make <span class="hl sym">(): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>int &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">)</span>
-  <span class="hl sym">=</span> <span class="hl str">&quot;int_make&quot;</span>
-<span class="hl kwa">extern fun</span> int_free <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>pf<span class="hl sym">:</span> int &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void
-  <span class="hl sym">=</span> <span class="hl str">&quot;int_free&quot;</span>
-
-<span class="hl kwa">extern fun</span> intarr_make <span class="hl sym">(</span>sz<span class="hl sym">:</span> int<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>intarr &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">)</span>
-  <span class="hl sym">=</span> <span class="hl str">&quot;intarr_make&quot;</span>
-<span class="hl kwa">extern fun</span> intarr_free <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>pf<span class="hl sym">:</span> intarr &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void
-  <span class="hl sym">=</span> <span class="hl str">&quot;intarr_free&quot;</span>
-
-<span class="hl sym">//</span> unsafe version
+<span class="hl kwa">extern fun</span> int_make <span class="hl sym">(): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>int &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">) =</span> <span class="hl str">&quot;int_make&quot;</span>
+<span class="hl kwa">extern fun</span> int_free <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>pf<span class="hl sym">:</span> int &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;int_free&quot;</span>
+<span class="hl kwa">extern fun</span> intarr_make <span class="hl sym">(</span>sz<span class="hl sym">:</span> int<span class="hl sym">): [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>intarr &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">) =</span> <span class="hl str">&quot;intarr_make&quot;</span>
+<span class="hl kwa">extern fun</span> intarr_free <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>pf<span class="hl sym">:</span> intarr &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;intarr_free&quot;</span>
+<span class="hl slc">// unsafe version</span>
 <span class="hl kwa">extern fun</span> intarr_get <span class="hl sym">(</span>A<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl str">&quot;intarr_get&quot;</span>
 <span class="hl kwa">extern fun</span> intarr_set <span class="hl sym">(</span>A<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">,</span> x<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;intarr_set&quot;</span>
-
 <span class="hl kwa">overload</span> <span class="hl sym">[]</span> <span class="hl kwa">with</span> intarr_get
 <span class="hl kwa">overload</span> <span class="hl sym">[]</span> <span class="hl kwa">with</span> intarr_set
 
@@ -79,35 +66,31 @@ intarr_set <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">,</sp
 static inline
 ats_void_type intarr_copy
   <span class="hl sym">(</span>ats_ptr_type src<span class="hl sym">,</span> ats_ptr_type dst<span class="hl sym">,</span> ats_int_type sz<span class="hl sym">) {</span>
-  memcpy <span class="hl sym">((</span>int*)dst<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">, (</span>int*)src<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span>  sz <span class="hl sym">*</span> sizeof<span class="hl sym">(</span>ats_int_type<span class="hl sym">)) ;</span>
-  return <span class="hl sym">;</span>
-<span class="hl sym">}</span> <span class="hl com">/* end of intarr_copy */</span>
+  memcpy <span class="hl sym">((</span>int*)dst<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">, (</span>int*)src<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span>  sz <span class="hl sym">*</span> sizeof<span class="hl sym">(</span>ats_int_type<span class="hl sym">)) ;</span> return <span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [intarr_copy]</span>
 
-<span class="hl sym">%}</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{^]</span>
 
-<span class="hl kwa">extern fun</span> intarr_copy
-  <span class="hl sym">(</span>src<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> dst<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;intarr_copy&quot;</span>
+<span class="hl kwa">extern fun</span> intarr_copy <span class="hl sym">(</span>src<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> dst<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;intarr_copy&quot;</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl sym">//</span> printing an integer array
+<span class="hl slc">// printing an integer array</span>
 <span class="hl kwa">fun</span> print_intarr <span class="hl sym">(</span>A<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
-  <span class="hl kwa">var</span> i<span class="hl sym">:</span> int <span class="hl sym">=</span> <span class="hl num">1</span>
-<span class="hl kwa">in</span>
-  <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;=</span> sz<span class="hl sym">) (</span>print_int A<span class="hl sym">[</span>i<span class="hl sym">];</span> i <span class="hl sym">:=</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span> print_newline <span class="hl sym">()</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>print_intarr<span class="hl sym">]</span>
+  <span class="hl kwa">var</span> i<span class="hl sym">:</span> int <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl kwa">in while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;=</span> sz<span class="hl sym">) (</span>print_int A<span class="hl sym">[</span>i<span class="hl sym">];</span> i <span class="hl sym">:=</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span> print_newline <span class="hl sym">()</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [print_intarr]</span>
 
 <span class="hl kwa">fun</span> perm_rotate <span class="hl sym">(</span>P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
   <span class="hl kwa">var</span> k<span class="hl sym">:</span> int <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> <span class="hl kwa">val</span> P1 <span class="hl sym">=</span> P<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>k <span class="hl sym">&lt;</span> i<span class="hl sym">)</span> <span class="hl kwa">begin</span>
     <span class="hl kwa">let val</span> k1 <span class="hl sym">=</span> k<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl kwa">in</span> P<span class="hl sym">[</span>k<span class="hl sym">] :=</span> P<span class="hl sym">[</span>k1<span class="hl sym">];</span> k <span class="hl sym">:=</span> k1 <span class="hl kwa">end</span>
-  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">while</span><span class="hl sym">]</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [while]</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> P<span class="hl sym">[</span>i<span class="hl sym">] :=</span> P1
 <span class="hl kwa">in</span>
-  <span class="hl sym">//</span> empty
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>perm_rotate<span class="hl sym">]</span>
+  <span class="hl slc">// empty</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [perm_rotate]</span>
 
-<span class="hl sym">//</span> counting permutations
+<span class="hl slc">// counting permutations</span>
 <span class="hl kwa">fun</span> perm_next
   <span class="hl sym">(</span>C<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
   <span class="hl kwa">val</span> x <span class="hl sym">=</span> C<span class="hl sym">[</span>i<span class="hl sym">];</span> <span class="hl kwa">val</span> x1 <span class="hl sym">=</span> x <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> <span class="hl kwa">val</span> <span class="hl sym">() =</span> perm_rotate <span class="hl sym">(</span>P<span class="hl sym">,</span> i<span class="hl sym">)</span>
@@ -116,42 +99,12 @@ ats_void_type intarr_copy
   <span class="hl sym">|</span> _ <span class="hl kwa">when</span> x1 <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">=&gt; (</span>C<span class="hl sym">[</span>i<span class="hl sym">] :=</span> x1<span class="hl sym">;</span> i<span class="hl sym">) |</span> _ <span class="hl com">(* x1 = 0 *)</span> <span class="hl sym">=&gt;</span> <span class="hl kwa">begin</span>
       C<span class="hl sym">[</span>i<span class="hl sym">] :=</span> i<span class="hl sym">;</span> perm_next <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
     <span class="hl kwa">end</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>perm_next<span class="hl sym">]</span>
-
-<span class="hl com">(* ****** ****** *)</span>
-
-<span class="hl sym">%{</span>^
-
-<span class="hl dir">#undef PERM_TEST_IS_ALLOWED</span>
-
-static inline
-ats_bool_type perm_test
-  <span class="hl sym">(</span>ats_ptr_type P0<span class="hl sym">,</span> ats_int_type sz<span class="hl sym">) {</span>
-  int i<span class="hl sym">, *</span>P <span class="hl sym">;</span>
-<span class="hl dir">#ifdef PERM_TEST_IS_ALLOWED</span>
-  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> sz<span class="hl sym">,</span> P <span class="hl sym">= &amp;((</span>int*)P0<span class="hl sym">)[</span>sz<span class="hl sym">];</span> i <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">,</span> P <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">) {</span>
-    <span class="hl kwa">if</span> <span class="hl sym">( *</span>P <span class="hl sym">==</span> i <span class="hl sym">)</span> return ats_false_bool <span class="hl sym">;</span>
-  <span class="hl sym">}</span>
-<span class="hl dir">#else // perm test is not allowed</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(((</span>int*)P0<span class="hl sym">)[</span><span class="hl num">1</span><span class="hl sym">] ==</span> <span class="hl num">1</span><span class="hl sym">)</span> return ats_false_bool <span class="hl sym">;</span>
-  <span class="hl kwa">if</span> <span class="hl sym">(((</span>int*)P0<span class="hl sym">)[</span>sz<span class="hl sym">] ==</span> sz<span class="hl sym">)</span> return ats_true_bool <span class="hl sym">;</span>
-<span class="hl dir">#endif</span>
-  return ats_true_bool <span class="hl sym">;</span>
-<span class="hl sym">}</span> <span class="hl com">/* end of [perm_test] */</span>
-
-<span class="hl sym">%}</span>
-
-<span class="hl kwa">extern fun</span> perm_test <span class="hl sym">(</span>P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">):</span> bool <span class="hl sym">=</span> <span class="hl str">&quot;perm_test&quot;</span>
-
-<span class="hl com">(* ****** ****** *)</span>
-
-<span class="hl dir">#define NCORE 4</span>
-<span class="hl dir">#define NPRINT 30</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [perm_next]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">fn</span> fannkuch_one
-  <span class="hl sym">(</span>P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> S<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> ncore<span class="hl sym">:</span> int<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl sym">(</span>P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> S<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
   <span class="hl kwa">fun</span> rev <span class="hl sym">(</span>S<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> l<span class="hl sym">:</span> int<span class="hl sym">,</span> u<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span>
     <span class="hl kwa">if</span> <span class="hl sym">(</span>l <span class="hl sym">&lt;</span> u<span class="hl sym">)</span> <span class="hl kwa">then let</span>
       <span class="hl kwa">val</span> tmp <span class="hl sym">=</span> S<span class="hl sym">[</span>l<span class="hl sym">]</span> <span class="hl kwa">in</span> S<span class="hl sym">[</span>l<span class="hl sym">] :=</span> S<span class="hl sym">[</span>u<span class="hl sym">];</span> S<span class="hl sym">[</span>u<span class="hl sym">] :=</span> tmp<span class="hl sym">;</span> rev <span class="hl sym">(</span>S<span class="hl sym">,</span> l<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> u<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
@@ -162,56 +115,50 @@ ats_bool_type perm_test
     <span class="hl kwa">if</span> x <span class="hl sym">&gt;</span> <span class="hl num">1</span> <span class="hl kwa">then</span> <span class="hl sym">(</span>rev <span class="hl sym">(</span>S<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> x<span class="hl sym">);</span> loop <span class="hl sym">(</span>S<span class="hl sym">,</span> cnt <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">))</span> <span class="hl kwa">else</span> cnt
   <span class="hl kwa">end</span>
 <span class="hl kwa">in</span>
-  <span class="hl kwa">case</span><span class="hl sym">+</span> <span class="hl num">0</span> <span class="hl kwa">of</span>
-  <span class="hl sym">|</span> _ <span class="hl kwa">when</span> ncore <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">=&gt;</span> ~<span class="hl num">1</span> <span class="hl sym">//</span> this one is skipped
-  <span class="hl sym">|</span> _ <span class="hl kwa">when</span> perm_test <span class="hl sym">(</span>P<span class="hl sym">,</span> sz<span class="hl sym">) =&gt; (</span>intarr_copy <span class="hl sym">(</span>P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">);</span> loop <span class="hl sym">(</span>S<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">))</span>
-  <span class="hl sym">|</span> _ <span class="hl sym">=&gt;</span> ~<span class="hl num">1</span> <span class="hl sym">//</span> this one is skipped
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fannkuch_one<span class="hl sym">]</span>
+  intarr_copy <span class="hl sym">(</span>P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">);</span> loop <span class="hl sym">(</span>S<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fannkuch_one]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">fn</span> fannkuch_all <span class="hl sym">(</span>
     ans<span class="hl sym">: &amp;</span>int? <span class="hl sym">&gt;&gt;</span> int
   <span class="hl sym">,</span> C<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> S<span class="hl sym">: &amp;</span>intarr
-  <span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> ncore<span class="hl sym">:</span> int
+  <span class="hl sym">,</span> sz<span class="hl sym">:</span> int
   <span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
   <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>
       C<span class="hl sym">: &amp;</span>intarr
     <span class="hl sym">,</span> P<span class="hl sym">: &amp;</span>intarr
     <span class="hl sym">,</span> S<span class="hl sym">: &amp;</span>intarr
-    <span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> ncore<span class="hl sym">:</span> int<span class="hl sym">,</span> max<span class="hl sym">:</span> int
+    <span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> max<span class="hl sym">:</span> int
     <span class="hl sym">) :</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
-    <span class="hl kwa">val</span> times <span class="hl sym">=</span> fannkuch_one <span class="hl sym">(</span>P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">,</span> ncore<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> times <span class="hl sym">=</span> fannkuch_one <span class="hl sym">(</span>P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">)</span>
     <span class="hl kwa">val</span> max <span class="hl sym">=</span> <span class="hl kwa">if</span> <span class="hl sym">(</span>times <span class="hl sym">&gt;</span> max<span class="hl sym">)</span> <span class="hl kwa">then</span> times <span class="hl kwa">else</span> max
     <span class="hl kwa">val</span> i <span class="hl sym">=</span> perm_next <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">)</span>
-    <span class="hl kwa">val</span> ncore <span class="hl sym">=</span> <span class="hl kwa">if</span> ncore <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span> ncore <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">else</span> NCORE <span class="hl sym">-</span> <span class="hl num">1</span>
   <span class="hl kwa">in</span>
-    <span class="hl kwa">if</span> i <span class="hl sym">&gt;</span> sz <span class="hl kwa">then</span> max <span class="hl kwa">else</span> loop <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">,</span> ncore<span class="hl sym">,</span> max<span class="hl sym">)</span>
-  <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>loop<span class="hl sym">]</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">&gt;=</span> sz <span class="hl kwa">then</span> max <span class="hl kwa">else</span> loop <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">,</span> max<span class="hl sym">)</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [loop]</span>
 <span class="hl kwa">in</span>
-  ans <span class="hl sym">:=</span> loop <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">,</span> ncore<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fannkuch_all<span class="hl sym">]</span>
+  ans <span class="hl sym">:=</span> loop <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> S<span class="hl sym">,</span> sz<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fannkuch_all]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl kwa">viewdef</span> fannkuch_v
+<span class="hl kwa">viewdef</span>
+fannkuch_v
   <span class="hl sym">(</span>l_a<span class="hl sym">:</span> addr<span class="hl sym">,</span> l_C<span class="hl sym">:</span> addr<span class="hl sym">,</span> l_P<span class="hl sym">:</span> addr<span class="hl sym">,</span> l_S<span class="hl sym">:</span> addr<span class="hl sym">) = (</span>
   int &#64; l_a<span class="hl sym">,</span> intarr &#64; l_C<span class="hl sym">,</span> intarr &#64; l_P<span class="hl sym">,</span> intarr &#64; l_S
-<span class="hl sym">) //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fannkuch_v<span class="hl sym">]</span>
+<span class="hl sym">)</span> <span class="hl slc">// end of [fannkuch_v]</span>
 
-staload <span class="hl str">&quot;libc/SATS/pthread.sats&quot;</span>
-staload <span class="hl str">&quot;libc/SATS/pthread_locks.sats&quot;</span>
-
-<span class="hl kwa">viewtypedef</span> lock
-  <span class="hl sym">(</span>l_a<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_C<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_P<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_S<span class="hl sym">:</span>addr<span class="hl sym">) =</span>
+<span class="hl kwa">viewtypedef</span>
+lock <span class="hl sym">(</span>l_a<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_C<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_P<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_S<span class="hl sym">:</span>addr<span class="hl sym">) =</span>
   uplock <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> fannkuch_v <span class="hl sym">(</span>l_a<span class="hl sym">,</span> l_C<span class="hl sym">,</span> l_P<span class="hl sym">,</span> l_S<span class="hl sym">))</span>
 
-<span class="hl kwa">viewtypedef</span> ticket
-  <span class="hl sym">(</span>l_a<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_C<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_P<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_S<span class="hl sym">:</span>addr<span class="hl sym">) =</span>
+<span class="hl kwa">viewtypedef</span>
+ticket <span class="hl sym">(</span>l_a<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_C<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_P<span class="hl sym">:</span>addr<span class="hl sym">,</span> l_S<span class="hl sym">:</span>addr<span class="hl sym">) =</span>
   upticket <span class="hl sym">(</span>fannkuch_v <span class="hl sym">(</span>l_a<span class="hl sym">,</span> l_C<span class="hl sym">,</span> l_P<span class="hl sym">,</span> l_S<span class="hl sym">))</span>
 
 <span class="hl kwa">fun</span> intarr_init <span class="hl sym">(</span>A<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> i<span class="hl sym">:</span> int<span class="hl sym">,</span> n<span class="hl sym">:</span> int<span class="hl sym">):</span> void <span class="hl sym">=</span>
-    <span class="hl kwa">if</span> i <span class="hl sym">&lt;=</span> n <span class="hl kwa">then</span> <span class="hl sym">(</span>A<span class="hl sym">[</span>i<span class="hl sym">] :=</span> i<span class="hl sym">;</span> intarr_init <span class="hl sym">(</span>A<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> n<span class="hl sym">))</span> <span class="hl kwa">else</span> <span class="hl sym">()</span>
+  <span class="hl kwa">if</span> i <span class="hl sym">&lt;=</span> n <span class="hl kwa">then</span> <span class="hl sym">(</span>A<span class="hl sym">[</span>i<span class="hl sym">] :=</span> i<span class="hl sym">;</span> intarr_init <span class="hl sym">(</span>A<span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> n<span class="hl sym">))</span> <span class="hl kwa">else</span> <span class="hl sym">()</span>
 
 <span class="hl kwa">fn</span> fannkuch_worker <span class="hl sym">{</span>l_a<span class="hl sym">,</span> l_C<span class="hl sym">,</span> l_P<span class="hl sym">,</span> l_S<span class="hl sym">:</span> addr<span class="hl sym">} (</span>
     pf_a<span class="hl sym">:</span> int? &#64; l_a
@@ -220,27 +167,29 @@ staload <span class="hl str">&quot;libc/SATS/pthread_locks.sats&quot;</span>
   <span class="hl sym">,</span> pf_S<span class="hl sym">:</span> intarr &#64; l_S
   <span class="hl sym">|</span> tick<span class="hl sym">:</span> ticket <span class="hl sym">(</span>l_a<span class="hl sym">,</span> l_C<span class="hl sym">,</span> l_P<span class="hl sym">,</span> l_S<span class="hl sym">)</span>
   <span class="hl sym">,</span> p_a<span class="hl sym">:</span> ptr l_a<span class="hl sym">,</span> p_C<span class="hl sym">:</span> ptr l_C<span class="hl sym">,</span> p_P<span class="hl sym">:</span> ptr l_P<span class="hl sym">,</span> p_S<span class="hl sym">:</span> ptr l_S
-  <span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> ncore<span class="hl sym">:</span> int
+  <span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> i<span class="hl sym">:</span> int
   <span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> intarr_init <span class="hl sym">(!</span>p_C<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">,</span> sz<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> intarr_init <span class="hl sym">(!</span>p_P<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> sz<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
-  <span class="hl kwa">val</span> <span class="hl sym">() =</span> fannkuch_all <span class="hl sym">(!</span>p_a<span class="hl sym">, !</span>p_C<span class="hl sym">, !</span>p_P<span class="hl sym">, !</span>p_S<span class="hl sym">,</span> sz<span class="hl sym">,</span> ncore<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() = (</span>intarr_set <span class="hl sym">(!</span>p_P<span class="hl sym">,</span> i<span class="hl sym">,</span> sz<span class="hl sym">);</span> intarr_set <span class="hl sym">(!</span>p_P<span class="hl sym">,</span> sz<span class="hl sym">,</span> i<span class="hl sym">))</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> fannkuch_all <span class="hl sym">(!</span>p_a<span class="hl sym">, !</span>p_C<span class="hl sym">, !</span>p_P<span class="hl sym">, !</span>p_S<span class="hl sym">,</span> sz<span class="hl sym">)</span>
   <span class="hl kwa">prval</span> pf <span class="hl sym">=</span> &#64;<span class="hl sym">(</span>pf_a<span class="hl sym">,</span> pf_C<span class="hl sym">,</span> pf_P<span class="hl sym">,</span> pf_S<span class="hl sym">)</span>
 <span class="hl kwa">in</span>
   pthread_upticket_upload_and_destroy <span class="hl sym">(</span>pf <span class="hl sym">|</span> tick<span class="hl sym">)</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fannkuch_worker<span class="hl sym">]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fannkuch_worker]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">dataviewtype</span> locklst <span class="hl sym">=</span>
   <span class="hl sym">|</span> locklst_nil <span class="hl kwa">of</span> <span class="hl sym">() | {</span>l_a<span class="hl sym">,</span>l_C<span class="hl sym">,</span>l_P<span class="hl sym">,</span>l_S<span class="hl sym">:</span>addr<span class="hl sym">}</span> locklst_cons <span class="hl kwa">of</span>
       <span class="hl sym">(</span>ptr l_a<span class="hl sym">,</span> ptr l_C<span class="hl sym">,</span> ptr l_P<span class="hl sym">,</span> ptr l_S<span class="hl sym">,</span> lock <span class="hl sym">(</span>l_a<span class="hl sym">,</span> l_C<span class="hl sym">,</span> l_P<span class="hl sym">,</span> l_S<span class="hl sym">),</span> locklst<span class="hl sym">)</span>
+<span class="hl slc">// end of [locklst]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
 <span class="hl kwa">fun</span> fannkuch_locklst_gen <span class="hl sym">(</span>sz<span class="hl sym">:</span> int<span class="hl sym">):</span> locklst <span class="hl sym">=</span> <span class="hl kwa">let</span>
-  <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>sz<span class="hl sym">:</span> int<span class="hl sym">,</span> ncore<span class="hl sym">:</span> int<span class="hl sym">,</span> res<span class="hl sym">: &amp;</span>locklst? <span class="hl sym">&gt;&gt;</span> locklst<span class="hl sym">):</span> void <span class="hl sym">=</span>
-    <span class="hl kwa">if</span> ncore <span class="hl sym">&lt;</span> NCORE <span class="hl kwa">then let</span>
+  <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>i<span class="hl sym">:</span> int<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> res<span class="hl sym">: &amp;</span>locklst? <span class="hl sym">&gt;&gt;</span> locklst<span class="hl sym">):</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> sz <span class="hl kwa">then let</span>
       <span class="hl kwa">val</span> <span class="hl sym">[</span>l_a<span class="hl sym">:</span>addr<span class="hl sym">] (</span>pf_a <span class="hl sym">|</span> p_a<span class="hl sym">) =</span> int_make <span class="hl sym">()</span>
       <span class="hl kwa">val</span> <span class="hl sym">[</span>l_C<span class="hl sym">:</span>addr<span class="hl sym">] (</span>pf_C <span class="hl sym">|</span> p_C<span class="hl sym">) =</span> intarr_make <span class="hl sym">(</span>sz<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
       <span class="hl kwa">val</span> <span class="hl sym">[</span>l_P<span class="hl sym">:</span>addr<span class="hl sym">] (</span>pf_P <span class="hl sym">|</span> p_P<span class="hl sym">) =</span> intarr_make <span class="hl sym">(</span>sz<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
@@ -250,23 +199,24 @@ staload <span class="hl str">&quot;libc/SATS/pthread_locks.sats&quot;</span>
       <span class="hl kwa">val</span> tick <span class="hl sym">=</span> pthread_upticket_create <span class="hl sym">{</span>V<span class="hl sym">} (</span>lock<span class="hl sym">)</span>
       <span class="hl kwa">val</span> <span class="hl sym">() =</span> pthread_create_detached_cloptr <span class="hl sym">(</span>
          <span class="hl kwa">lam</span> <span class="hl sym">() =&lt;</span>lin<span class="hl sym">,</span>cloptr1<span class="hl sym">&gt;</span> fannkuch_worker
-           <span class="hl sym">(</span>pf_a<span class="hl sym">,</span> pf_C<span class="hl sym">,</span> pf_P<span class="hl sym">,</span> pf_S <span class="hl sym">|</span> tick<span class="hl sym">,</span> p_a<span class="hl sym">,</span> p_C<span class="hl sym">,</span> p_P<span class="hl sym">,</span> p_S<span class="hl sym">,</span> sz<span class="hl sym">,</span> ncore<span class="hl sym">)</span>
-      <span class="hl sym">) //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>pthread_create_detached_cloptr<span class="hl sym">]</span>
+           <span class="hl sym">(</span>pf_a<span class="hl sym">,</span> pf_C<span class="hl sym">,</span> pf_P<span class="hl sym">,</span> pf_S <span class="hl sym">|</span> tick<span class="hl sym">,</span> p_a<span class="hl sym">,</span> p_C<span class="hl sym">,</span> p_P<span class="hl sym">,</span> p_S<span class="hl sym">,</span> sz<span class="hl sym">,</span> i<span class="hl sym">)</span>
+      <span class="hl sym">)</span> <span class="hl slc">// end of [pthread_create_detached_cloptr]</span>
       <span class="hl kwa">val</span> <span class="hl sym">() =</span> res <span class="hl sym">:=</span> locklst_cons <span class="hl sym">(</span>p_a<span class="hl sym">,</span> p_C<span class="hl sym">,</span> p_P<span class="hl sym">,</span> p_S<span class="hl sym">,</span> lock<span class="hl sym">,</span> ?<span class="hl sym">)</span>
       <span class="hl kwa">val</span><span class="hl sym">+</span> locklst_cons <span class="hl sym">(</span>_<span class="hl sym">,</span> _<span class="hl sym">,</span> _<span class="hl sym">,</span> _<span class="hl sym">,</span> _<span class="hl sym">, !</span>res1<span class="hl sym">) =</span> res
     <span class="hl kwa">in</span>
-      loop <span class="hl sym">(</span>sz<span class="hl sym">,</span> ncore<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">, !</span>res1<span class="hl sym">);</span> fold&#64; res
+      loop <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> sz<span class="hl sym">, !</span>res1<span class="hl sym">);</span> fold&#64; res
     <span class="hl kwa">end else begin</span>
       res <span class="hl sym">:=</span> locklst_nil <span class="hl sym">()</span>
-    <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
-  <span class="hl kwa">var</span> res <span class="hl sym">:</span> locklst <span class="hl sym">//</span> uninitialized
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl kwa">var</span> res <span class="hl sym">:</span> locklst <span class="hl slc">// uninitialized</span>
 <span class="hl kwa">in</span>
-  loop <span class="hl sym">(</span>sz<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> res<span class="hl sym">);</span> res
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fannkuch_locklst_gen<span class="hl sym">]</span>
+  loop <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> sz<span class="hl sym">,</span> res<span class="hl sym">);</span> res
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fannkuch_locklst_gen]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl kwa">fun</span> fannkuch_locklst_free <span class="hl sym">(</span>locks<span class="hl sym">:</span> locklst<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+<span class="hl kwa">fun</span> fannkuch_locklst_free
+  <span class="hl sym">(</span>locks<span class="hl sym">:</span> locklst<span class="hl sym">):</span> int <span class="hl sym">=</span> loop <span class="hl sym">(</span>locks<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
   <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>locks<span class="hl sym">:</span> locklst<span class="hl sym">,</span> max<span class="hl sym">:</span> int<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">case</span><span class="hl sym">+</span> locks <span class="hl kwa">of</span>
     <span class="hl sym">|</span> ~locklst_cons <span class="hl sym">(</span>p_a<span class="hl sym">,</span> p_C<span class="hl sym">,</span> p_P<span class="hl sym">,</span> p_S<span class="hl sym">,</span> lock<span class="hl sym">,</span> locks<span class="hl sym">) =&gt;</span> <span class="hl kwa">let</span>
         <span class="hl kwa">val</span> <span class="hl sym">(</span>pf <span class="hl sym">| ()) =</span> pthread_uplock_download <span class="hl sym">(</span>lock<span class="hl sym">)</span>
@@ -278,15 +228,16 @@ staload <span class="hl str">&quot;libc/SATS/pthread_locks.sats&quot;</span>
         <span class="hl kwa">val</span> <span class="hl sym">() =</span> intarr_free <span class="hl sym">(</span>pf<span class="hl num">.3</span> <span class="hl sym">|</span> p_S<span class="hl sym">)</span>
       <span class="hl kwa">in</span>
         <span class="hl kwa">if</span> ans <span class="hl sym">&lt;=</span> max <span class="hl kwa">then</span> loop <span class="hl sym">(</span>locks<span class="hl sym">,</span> max<span class="hl sym">)</span> <span class="hl kwa">else</span> loop <span class="hl sym">(</span>locks<span class="hl sym">,</span> ans<span class="hl sym">)</span>
-      <span class="hl kwa">end</span>
+      <span class="hl kwa">end</span> <span class="hl slc">// end of [locklst_cons]</span>
     <span class="hl sym">|</span> ~locklst_nil <span class="hl sym">() =&gt;</span> max
-<span class="hl kwa">in</span>
-  loop <span class="hl sym">(</span>locks<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>fannkuch_locklst_free<span class="hl sym">]</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [fannkuch_locklst_free]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl kwa">fn</span> usage <span class="hl sym">(</span>cmd<span class="hl sym">:</span> string<span class="hl sym">):</span> void <span class="hl sym">=</span> printf <span class="hl sym">(</span><span class="hl str">&quot;usage: %s [integer]</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>cmd<span class="hl sym">))</span>
+<span class="hl dir">#define NPRINT 30</span>
+
+<span class="hl kwa">fn</span> usage <span class="hl sym">(</span>cmd<span class="hl sym">:</span> string<span class="hl sym">):</span> void <span class="hl sym">=</span>
+  printf <span class="hl sym">(</span><span class="hl str">&quot;usage: %s [integer]</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>cmd<span class="hl sym">))</span>
 
 <span class="hl kwa">implement</span> main <span class="hl sym">(</span>argc<span class="hl sym">,</span> argv<span class="hl sym">) =</span> <span class="hl kwa">let</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">if</span> argc <span class="hl sym">&lt;</span> <span class="hl num">2</span> <span class="hl kwa">then</span> <span class="hl sym">(</span>usage argv<span class="hl sym">.[</span><span class="hl num">0</span><span class="hl sym">];</span> exit <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">))</span>
@@ -300,17 +251,17 @@ staload <span class="hl str">&quot;libc/SATS/pthread_locks.sats&quot;</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">if</span> <span class="hl num">0</span> <span class="hl sym">&lt;</span> NPRINT <span class="hl kwa">then</span> print_intarr <span class="hl sym">(!</span>p_P<span class="hl sym">,</span> sz<span class="hl sym">)</span> <span class="hl kwa">else</span> <span class="hl sym">()</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop <span class="hl sym">(!</span>p_C<span class="hl sym">, !</span>p_P<span class="hl sym">,</span> sz<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
     <span class="hl kwa">fun</span> loop <span class="hl sym">(</span>C<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> P<span class="hl sym">: &amp;</span>intarr<span class="hl sym">,</span> sz<span class="hl sym">:</span> int<span class="hl sym">,</span> n<span class="hl sym">:</span> int<span class="hl sym">) :</span> void <span class="hl sym">=</span>
-      <span class="hl kwa">if</span> n <span class="hl sym">&lt;</span> NPRINT <span class="hl kwa">then begin</span>
-        perm_next <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">);</span> print_intarr <span class="hl sym">(</span>P<span class="hl sym">,</span> sz<span class="hl sym">);</span> loop <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> sz<span class="hl sym">,</span> n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
-      <span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">if</span><span class="hl sym">]</span>
-  <span class="hl sym">}  //</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span><span class="hl kwa">where</span><span class="hl sym">]</span>
+      <span class="hl kwa">if</span> n <span class="hl sym">&lt;</span> NPRINT <span class="hl kwa">then let</span>
+        <span class="hl kwa">val</span> _ <span class="hl sym">=</span> perm_next <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">)</span> <span class="hl kwa">in</span> print_intarr <span class="hl sym">(</span>P<span class="hl sym">,</span> sz<span class="hl sym">);</span> loop <span class="hl sym">(</span>C<span class="hl sym">,</span> P<span class="hl sym">,</span> sz<span class="hl sym">,</span> n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+      <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl sym">}</span>  <span class="hl slc">// end of [where]</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> intarr_free <span class="hl sym">(</span>pf_C <span class="hl sym">|</span> p_C<span class="hl sym">)</span>
   <span class="hl kwa">val</span> <span class="hl sym">() =</span> intarr_free <span class="hl sym">(</span>pf_P <span class="hl sym">|</span> p_P<span class="hl sym">)</span>
   <span class="hl kwa">val</span> ans <span class="hl sym">=</span> fannkuch_locklst_free <span class="hl sym">(</span>locks<span class="hl sym">)</span>
 <span class="hl kwa">in</span>
   printf <span class="hl sym">(</span><span class="hl str">&quot;Pfannkuchen(%i) = %i</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>sz<span class="hl sym">,</span> ans<span class="hl sym">))</span>
-<span class="hl kwa">end</span> <span class="hl sym">//</span> <span class="hl kwa">end of</span> <span class="hl sym">[</span>main<span class="hl sym">]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [main]</span>
 
 <span class="hl com">(* ****** ****** *)</span>
 
-<span class="hl com">(* end of [fannkuch.dats] *)</span>
+<span class="hl com">(* end of [fannkuch3.dats] *)</span>

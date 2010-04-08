@@ -1,0 +1,286 @@
+<span class="hl com">(*</span>
+<span class="hl com">** The Computer Language Benchmarks Game</span>
+<span class="hl com">** http://shootout.alioth.debian.org/</span>
+<span class="hl com">**</span>
+<span class="hl com">** contributed by Hongwei Xi</span>
+<span class="hl com">** contributed by Zhiqiang Ren</span>
+<span class="hl com">**</span>
+<span class="hl com">** compilation command:</span>
+<span class="hl com">**   atscc -D_GNU_SOURCE -D_ATS_MULTITHREAD -O3 -msse2 spectral-norm2_smp.dats -o spectral-norm2_smp -lm -lpthread</span>
+<span class="hl com">**</span>
+<span class="hl com">*)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload M <span class="hl sym">=</span> <span class="hl str">&quot;libc/SATS/math.sats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload <span class="hl str">&quot;libc/SATS/SIMD_v2df.sats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl sym">%{</span>^
+<span class="hl dir">#include &lt;malloc.h&gt;</span>
+static inline ats_ptr_type
+darr_make <span class="hl sym">(</span>ats_int_type n<span class="hl sym">,</span> ats_double_type f<span class="hl sym">) {</span>
+  int i<span class="hl sym">;</span> double <span class="hl sym">*</span>p0<span class="hl sym">, *</span>p <span class="hl sym">;</span>
+  <span class="hl slc">// proper alignment is needed of v2df-processing</span>
+  p0 <span class="hl sym">= (</span>double*)memalign<span class="hl sym">(</span><span class="hl num">64</span><span class="hl sym">,</span> n <span class="hl sym">*</span> sizeof<span class="hl sym">(</span>double<span class="hl sym">)) ;</span>
+  p <span class="hl sym">=</span> p0<span class="hl sym">;</span> <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">; ++</span>i<span class="hl sym">) *</span>p<span class="hl sym">++ =</span> f <span class="hl sym">;</span>
+  return p0 <span class="hl sym">;</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [darr_make]</span>
+static inline ats_void_type
+darr_free <span class="hl sym">(</span>ats_ptr_type A<span class="hl sym">) {</span> free <span class="hl sym">(</span>A<span class="hl sym">) ;</span> return <span class="hl sym">; }</span>
+<span class="hl sym">%}</span> <span class="hl slc">// end of [%{^]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">typedef</span> dbl <span class="hl sym">=</span> double
+<span class="hl kwa">typedef</span> darr <span class="hl sym">(</span>n<span class="hl sym">:</span>int<span class="hl sym">) =</span> &#64;<span class="hl sym">[</span>dbl<span class="hl sym">][</span>n<span class="hl sym">]</span> <span class="hl kwa">and</span> v2dfarr <span class="hl sym">(</span>n<span class="hl sym">:</span>int<span class="hl sym">) =</span> &#64;<span class="hl sym">[</span>v2df<span class="hl sym">][</span>n<span class="hl sym">]</span>
+
+<span class="hl kwa">extern</span>
+<span class="hl kwa">fun</span> darr_make <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">} (</span>n<span class="hl sym">:</span> int n<span class="hl sym">,</span> ini<span class="hl sym">:</span> double<span class="hl sym">)</span>
+  <span class="hl sym">: [</span>l<span class="hl sym">:</span>addr<span class="hl sym">] (</span>darr n &#64; l <span class="hl sym">|</span> ptr l<span class="hl sym">) =</span> <span class="hl str">&quot;darr_make&quot;</span>
+
+<span class="hl kwa">extern fun</span> darr_free <span class="hl sym">{</span>n<span class="hl sym">:</span>nat<span class="hl sym">}</span>
+  <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>pf<span class="hl sym">:</span> darr n &#64; l <span class="hl sym">|</span> p<span class="hl sym">:</span> ptr l<span class="hl sym">):</span> void <span class="hl sym">=</span> <span class="hl str">&quot;darr_free&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">macdef</span> denom <span class="hl sym">(</span>i<span class="hl sym">,</span> j<span class="hl sym">) =</span>
+  <span class="hl sym">(,(</span>i<span class="hl sym">) + ,(</span>j<span class="hl sym">)) * (,(</span>i<span class="hl sym">) + ,(</span>j<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span> <span class="hl sym">+ ,(</span>i<span class="hl sym">) +</span> <span class="hl num">1</span>
+<span class="hl kwa">macdef</span> eval_A <span class="hl sym">(</span>i<span class="hl sym">,</span>j<span class="hl sym">) =</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> denom <span class="hl sym">(,(</span>i<span class="hl sym">), ,(</span>j<span class="hl sym">))</span>
+
+<span class="hl kwa">fn</span> eval_A_0 <span class="hl sym">(</span>i<span class="hl sym">:</span> int<span class="hl sym">,</span> j<span class="hl sym">:</span> int<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl kwa">let</span> <span class="hl slc">// two divisions at a time</span>
+  <span class="hl kwa">val</span> k1 <span class="hl sym">=</span> denom<span class="hl sym">(</span>i<span class="hl sym">,</span>j<span class="hl sym">);</span> <span class="hl kwa">val</span> k2 <span class="hl sym">=</span> denom <span class="hl sym">(</span>i<span class="hl sym">,</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">in</span> v2df_1_1 <span class="hl sym">/</span> v2df_make_int_int <span class="hl sym">(</span>k1<span class="hl sym">,</span> k2<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [eval_A_0]</span>
+
+<span class="hl kwa">fn</span> eval_A_1 <span class="hl sym">(</span>i<span class="hl sym">:</span> int<span class="hl sym">,</span> j<span class="hl sym">:</span> int<span class="hl sym">):</span> v2df <span class="hl sym">=</span> <span class="hl kwa">let</span> <span class="hl slc">// two divisions at a time</span>
+  <span class="hl kwa">val</span> k1 <span class="hl sym">=</span> denom<span class="hl sym">(</span>i<span class="hl sym">,</span>j<span class="hl sym">);</span> <span class="hl kwa">val</span> k2 <span class="hl sym">=</span> denom <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span>j<span class="hl sym">)</span> <span class="hl kwa">in</span> v2df_1_1 <span class="hl sym">/</span> v2df_make_int_int <span class="hl sym">(</span>k1<span class="hl sym">,</span> k2<span class="hl sym">)</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [eval_A_1]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload <span class="hl str">&quot;libats/SATS/parworkshop.sats&quot;</span>
+staload _ <span class="hl sym">=</span> <span class="hl str">&quot;libats/DATS/parworkshop.dats&quot;</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">viewtypedef</span> work <span class="hl sym">= () -&lt;</span>lincloptr1<span class="hl sym">&gt;</span> void
+<span class="hl kwa">viewtypedef</span> WSptr <span class="hl sym">(</span>l<span class="hl sym">:</span>addr<span class="hl sym">) =</span> WORKSHOPptr <span class="hl sym">(</span>work<span class="hl sym">,</span> l<span class="hl sym">)</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">fun</span> fwork <span class="hl sym">{</span>l<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+  <span class="hl sym">(</span>ws<span class="hl sym">: !</span>WSptr l<span class="hl sym">,</span> wk<span class="hl sym">: &amp;</span>work <span class="hl sym">&gt;&gt;</span> work?<span class="hl sym">):</span> int <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> wk <span class="hl sym">=</span> wk
+  <span class="hl kwa">val</span> pfun <span class="hl sym">=</span> __cast <span class="hl sym">(</span>wk<span class="hl sym">)</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+    <span class="hl kwa">extern</span> castfn __cast
+      <span class="hl sym">(</span>wk<span class="hl sym">: !</span>work <span class="hl sym">&gt;&gt;</span> opt <span class="hl sym">(</span>work<span class="hl sym">,</span> i <span class="hl sym">&gt;=</span> <span class="hl num">1</span><span class="hl sym">)):</span> <span class="hl dir">#[i:nat] uintptr i</span>
+  <span class="hl sym">}</span> <span class="hl slc">// end of [val]</span>
+<span class="hl kwa">in</span>
+  <span class="hl kwa">if</span> pfun <span class="hl sym">&gt;= (</span>uintptr1_of_uint1<span class="hl sym">)</span><span class="hl num">1U</span> <span class="hl kwa">then let</span>
+    <span class="hl kwa">prval</span> <span class="hl sym">() =</span> opt_unsome <span class="hl sym">{</span>work<span class="hl sym">} (</span>wk<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> wk <span class="hl sym">()</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> cloptr_free <span class="hl sym">(</span>wk<span class="hl sym">)</span>
+  <span class="hl kwa">in</span>
+    <span class="hl num">1</span> <span class="hl slc">// the worker is to continue</span>
+  <span class="hl kwa">end else let</span>
+    <span class="hl kwa">val</span> u <span class="hl sym">=</span> uint1_of_uintptr1 <span class="hl sym">(</span>pfun<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> i <span class="hl sym">=</span> int_of_uint <span class="hl sym">(</span>u<span class="hl sym">)</span>
+    <span class="hl kwa">prval</span> <span class="hl sym">() =</span> opt_unnone <span class="hl sym">{</span>work<span class="hl sym">} (</span>wk<span class="hl sym">)</span>
+    <span class="hl kwa">prval</span> <span class="hl sym">() =</span> cleanup_top <span class="hl sym">{</span>work<span class="hl sym">} (</span>wk<span class="hl sym">)</span>
+  <span class="hl kwa">in</span>
+    ~i <span class="hl slc">// the worker is to pause or quit</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [fwork]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">infix</span> <span class="hl num">0</span> <span class="hl sym">+=;</span> <span class="hl kwa">macdef</span> <span class="hl sym">+= (</span>x<span class="hl sym">,</span> d<span class="hl sym">) = (,(</span>x<span class="hl sym">) := ,(</span>x<span class="hl sym">) + ,(</span>d<span class="hl sym">))</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">fn</span> eval_A_times_u <span class="hl sym">{</span>lws<span class="hl sym">:</span>addr<span class="hl sym">} {</span>N<span class="hl sym">:</span>nat<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} (</span>
+    ws<span class="hl sym">: !</span>WSptr lws<span class="hl sym">,</span> flag<span class="hl sym">:</span> int<span class="hl sym">,</span> N<span class="hl sym">:</span> int N<span class="hl sym">,</span> u<span class="hl sym">: &amp;</span>darr N<span class="hl sym">,</span> tmp<span class="hl sym">: &amp;</span>darr N
+  <span class="hl sym">) :</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> N2 <span class="hl sym">=</span> N <span class="hl sym">/</span> <span class="hl num">2</span><span class="hl sym">;</span> <span class="hl kwa">stadef</span> N2 <span class="hl sym">=</span> N <span class="hl sym">/</span> <span class="hl num">2</span>
+  <span class="hl kwa">fun</span> loop2_0
+    <span class="hl sym">{</span>i<span class="hl sym">,</span>j<span class="hl sym">:</span>nat <span class="hl sym">|</span> j <span class="hl sym">&lt;=</span> N2<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} .&lt;</span>N2<span class="hl sym">-</span>j<span class="hl sym">&gt;. (</span>
+      pf<span class="hl sym">: !</span>v2dfarr <span class="hl sym">(</span>N2<span class="hl sym">-</span>j<span class="hl sym">)</span> &#64; l
+    <span class="hl sym">|</span> p_dd<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> sum<span class="hl sym">: &amp;</span>v2df<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">,</span> j<span class="hl sym">:</span> int j
+    <span class="hl sym">) :&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> j <span class="hl sym">&lt;</span> N2 <span class="hl kwa">then let</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">(</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">) =</span> array_v_uncons <span class="hl sym">{</span>v2df<span class="hl sym">} (</span>pf<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> sum <span class="hl sym">+= !</span>p_dd <span class="hl sym">*</span> eval_A_0 <span class="hl sym">(</span>i<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">*</span>j<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop2_0 <span class="hl sym">(</span>pf2 <span class="hl sym">|</span> p_dd <span class="hl sym">+</span> sizeof<span class="hl sym">&lt;</span>v2df<span class="hl sym">&gt;,</span> sum<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      pf <span class="hl sym">:=</span> array_v_cons <span class="hl sym">{</span>v2df<span class="hl sym">} (</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">)</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl slc">// end of [loop2_0]</span>
+  <span class="hl kwa">fun</span> loop2_1
+    <span class="hl sym">{</span>i<span class="hl sym">,</span>j<span class="hl sym">:</span>nat <span class="hl sym">|</span> j <span class="hl sym">&lt;=</span> N2<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} .&lt;</span>N2<span class="hl sym">-</span>j<span class="hl sym">&gt;. (</span>
+      pf<span class="hl sym">: !</span>v2dfarr <span class="hl sym">(</span>N2<span class="hl sym">-</span>j<span class="hl sym">)</span> &#64; l
+    <span class="hl sym">|</span> p_dd<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> sum<span class="hl sym">: &amp;</span>v2df<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">,</span> j<span class="hl sym">:</span> int j
+    <span class="hl sym">) :&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> j <span class="hl sym">&lt;</span> N2 <span class="hl kwa">then let</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">(</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">) =</span> array_v_uncons <span class="hl sym">{</span>v2df<span class="hl sym">} (</span>pf<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> sum <span class="hl sym">+= !</span>p_dd <span class="hl sym">*</span> eval_A_1 <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">*</span>j<span class="hl sym">,</span> i<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop2_1 <span class="hl sym">(</span>pf2 <span class="hl sym">|</span> p_dd <span class="hl sym">+</span> sizeof<span class="hl sym">&lt;</span>v2df<span class="hl sym">&gt;,</span> sum<span class="hl sym">,</span> i<span class="hl sym">,</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      pf <span class="hl sym">:=</span> array_v_cons <span class="hl sym">{</span>v2df<span class="hl sym">} (</span>pf1<span class="hl sym">,</span> pf2<span class="hl sym">)</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl slc">// end of [loop2_1]</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">fun</span> loop1
+    <span class="hl sym">{</span>i<span class="hl sym">,</span>i1<span class="hl sym">:</span>nat<span class="hl sym">|</span> i <span class="hl sym">&lt;=</span> i1<span class="hl sym">;</span> i1 <span class="hl sym">&lt;=</span> N<span class="hl sym">} {</span>l<span class="hl sym">:</span>addr<span class="hl sym">} .&lt;</span>i1<span class="hl sym">-</span>i<span class="hl sym">&gt;. (</span>
+      pf<span class="hl sym">: !</span>darr N &#64; l <span class="hl sym">|</span> i<span class="hl sym">:</span>int i<span class="hl sym">,</span> i1<span class="hl sym">:</span> int i1<span class="hl sym">,</span> p_u<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> tmp<span class="hl sym">: &amp;</span>darr N
+    <span class="hl sym">) :&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">viewdef</span> V1 <span class="hl sym">=</span> darr N &#64; l<span class="hl sym">;</span> <span class="hl kwa">viewdef</span> V2 <span class="hl sym">=</span> v2dfarr <span class="hl sym">(</span>N2<span class="hl sym">)</span> &#64; l
+  <span class="hl kwa">in</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> i1 <span class="hl kwa">then let</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">(</span>pf1<span class="hl sym">,</span> fpf2<span class="hl sym">) =</span> __cast <span class="hl sym">(</span>pf<span class="hl sym">)</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+        <span class="hl kwa">extern prfun</span> __cast <span class="hl sym">(</span>pf<span class="hl sym">:</span> darr N &#64; l<span class="hl sym">): (</span>V2<span class="hl sym">,</span> V2 <span class="hl sym">-&lt;</span>lin<span class="hl sym">,</span>prf<span class="hl sym">&gt;</span> V1<span class="hl sym">)</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">var</span> sum<span class="hl sym">:</span> v2df <span class="hl sym">=</span> v2df_0_0
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">if</span> flag <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+        loop2_0 <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> p_u<span class="hl sym">,</span> sum<span class="hl sym">,</span> i<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">else</span> loop2_1 <span class="hl sym">(</span>pf1 <span class="hl sym">|</span> p_u<span class="hl sym">,</span> sum<span class="hl sym">,</span> i<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl slc">// end of [if]</span>
+      <span class="hl kwa">prval</span> <span class="hl sym">() =</span> pf <span class="hl sym">:=</span> fpf2 <span class="hl sym">(</span>pf1<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> tmp<span class="hl sym">.[</span>i<span class="hl sym">] :=</span> v2df_get_fst<span class="hl sym">(</span>sum<span class="hl sym">) +</span> v2df_get_snd<span class="hl sym">(</span>sum<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">if</span> N <span class="hl sym">&gt;</span> N2<span class="hl sym">+</span>N2 <span class="hl kwa">then</span> tmp<span class="hl sym">.[</span>i<span class="hl sym">] +=</span> eval_A<span class="hl sym">(</span>i<span class="hl sym">,</span>N<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) *</span> p_u<span class="hl sym">-&gt;[</span>N<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span>
+    <span class="hl kwa">in</span>
+      loop1 <span class="hl sym">(</span>pf <span class="hl sym">|</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> i1<span class="hl sym">,</span> p_u<span class="hl sym">,</span> tmp<span class="hl sym">)</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [loop1]</span>
+  <span class="hl kwa">fun</span> loop1_ <span class="hl sym">{</span>i<span class="hl sym">,</span>i1<span class="hl sym">:</span>nat<span class="hl sym">|</span> i <span class="hl sym">&lt;=</span> i1<span class="hl sym">;</span> i1 <span class="hl sym">&lt;=</span> N<span class="hl sym">} {</span>l<span class="hl sym">,</span>l_tmp<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+    <span class="hl sym">(</span>i<span class="hl sym">:</span> int i<span class="hl sym">,</span> i1<span class="hl sym">:</span> int i1<span class="hl sym">,</span> p_u<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> p_tmp<span class="hl sym">:</span> ptr l_tmp<span class="hl sym">):&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">extern prfun</span> __vintr <span class="hl sym">{</span>v<span class="hl sym">:</span>view<span class="hl sym">} ():</span> v
+    <span class="hl kwa">extern prfun</span> __velim <span class="hl sym">{</span>v<span class="hl sym">:</span>view<span class="hl sym">} (</span>pf<span class="hl sym">:</span> v<span class="hl sym">):</span> void
+    <span class="hl kwa">prval</span> pf <span class="hl sym">=</span> __vintr <span class="hl sym">{</span>darr N &#64; l<span class="hl sym">} ()</span>
+    <span class="hl kwa">prval</span> pf_tmp <span class="hl sym">=</span> __vintr <span class="hl sym">{</span>darr N &#64; l_tmp<span class="hl sym">} ()</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> loop1 <span class="hl sym">(</span>pf <span class="hl sym">|</span> i<span class="hl sym">,</span> i1<span class="hl sym">,</span> p_u<span class="hl sym">, !</span>p_tmp<span class="hl sym">)</span>
+    <span class="hl kwa">prval</span> <span class="hl sym">() =</span> __velim <span class="hl sym">(</span>pf<span class="hl sym">)</span> <span class="hl kwa">and</span> <span class="hl sym">() =</span> __velim <span class="hl sym">(</span>pf_tmp<span class="hl sym">)</span>
+  <span class="hl kwa">in</span>
+    <span class="hl slc">// nothing</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [loop1_]</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">val</span> nworker <span class="hl sym">=</span>
+    workshop_nworker_get <span class="hl sym">(</span>ws<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg <span class="hl sym">(</span>nworker <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl dir">#LOCATION)</span>
+  <span class="hl kwa">val</span> INC <span class="hl sym">= (</span>N<span class="hl sym">+</span>nworker<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)/</span>nworker<span class="hl sym">/</span><span class="hl num">64</span>
+  <span class="hl kwa">val</span> INC <span class="hl sym">=</span> max <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">, (</span>int1_of_int<span class="hl sym">)</span>INC<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg <span class="hl sym">(</span>INC <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl dir">#LOCATION)</span>
+  <span class="hl kwa">fun</span> split <span class="hl sym">{</span>lws<span class="hl sym">:</span>addr<span class="hl sym">} {</span>i<span class="hl sym">:</span>nat <span class="hl sym">|</span> i <span class="hl sym">&lt;=</span> N<span class="hl sym">} {</span>l<span class="hl sym">,</span>l_tmp<span class="hl sym">:</span>addr<span class="hl sym">}</span>
+    <span class="hl sym">(</span>ws<span class="hl sym">: !</span>WSptr lws<span class="hl sym">,</span> i<span class="hl sym">:</span> int i<span class="hl sym">,</span> p_u<span class="hl sym">:</span> ptr l<span class="hl sym">,</span> p_tmp<span class="hl sym">:</span> ptr l_tmp<span class="hl sym">):&lt;</span>cloref1<span class="hl sym">&gt;</span> void <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">&lt;</span> N <span class="hl kwa">then let</span>
+      <span class="hl kwa">val</span> i1 <span class="hl sym">=</span> min <span class="hl sym">(</span>i <span class="hl sym">+</span> INC<span class="hl sym">,</span> N<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> f <span class="hl sym">=</span> <span class="hl kwa">lam</span> <span class="hl sym">():</span> void <span class="hl sym">=&lt;</span>lincloptr1<span class="hl sym">&gt;</span> loop1_ <span class="hl sym">(</span>i<span class="hl sym">,</span> i1<span class="hl sym">,</span> p_u<span class="hl sym">,</span> p_tmp<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> <span class="hl sym">() =</span> workshop_insert_work <span class="hl sym">(</span>ws<span class="hl sym">,</span> f<span class="hl sym">)</span>
+    <span class="hl kwa">in</span>
+      split <span class="hl sym">(</span>ws<span class="hl sym">,</span> i1<span class="hl sym">,</span> p_u<span class="hl sym">,</span> p_tmp<span class="hl sym">)</span>
+    <span class="hl kwa">end</span> <span class="hl slc">// end of [if]</span>
+  <span class="hl slc">// end of [split]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> split <span class="hl sym">(</span>ws<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">, &amp;</span>u<span class="hl sym">, &amp;</span>tmp<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> workshop_wait_blocked_all <span class="hl sym">(</span>ws<span class="hl sym">)</span>
+<span class="hl kwa">in</span>
+  <span class="hl slc">// nothing</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [eval_A_times_u]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">fn</span> eval_AtA_times_u <span class="hl sym">{</span>lws<span class="hl sym">:</span>addr<span class="hl sym">} {</span>N<span class="hl sym">:</span>nat<span class="hl sym">} (</span>
+  ws<span class="hl sym">: !</span>WSptr lws<span class="hl sym">,</span> N<span class="hl sym">:</span> int N<span class="hl sym">,</span> u<span class="hl sym">: &amp;</span>darr N<span class="hl sym">,</span> v<span class="hl sym">: &amp;</span>darr N<span class="hl sym">,</span> tmp<span class="hl sym">: &amp;</span>darr N
+<span class="hl sym">) :</span> void <span class="hl sym">= ()</span> <span class="hl kwa">where</span> <span class="hl sym">{</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> eval_A_times_u <span class="hl sym">(</span>ws<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> N<span class="hl sym">,</span> u<span class="hl sym">,</span> tmp<span class="hl sym">);</span> <span class="hl kwa">val</span> <span class="hl sym">() =</span> eval_A_times_u <span class="hl sym">(</span>ws<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">,</span> N<span class="hl sym">,</span> tmp<span class="hl sym">,</span> v<span class="hl sym">)</span>
+<span class="hl sym">}</span> <span class="hl slc">// end of [eval_AtA_times_u]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+staload <span class="hl str">&quot;libc/SATS/sched.sats&quot;</span>
+staload TYPES <span class="hl sym">=</span> <span class="hl str">&quot;libc/sys/SATS/types.sats&quot;</span>
+<span class="hl kwa">macdef</span> pid_t <span class="hl sym">=</span> $TYPES<span class="hl sym">.</span>pid_of_int
+
+<span class="hl kwa">extern fun</span> ncore_get <span class="hl sym">():</span> int
+<span class="hl kwa">implement</span> ncore_get <span class="hl sym">() =</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">var</span> cs<span class="hl sym">:</span> cpu_set0_t <span class="hl slc">// uninitialized</span>
+  <span class="hl kwa">prval</span> <span class="hl sym">() =</span> cpusetinit <span class="hl sym">(</span>cs<span class="hl sym">)</span> <span class="hl slc">// not a real initialization</span>
+  <span class="hl kwa">stavar</span> nset<span class="hl sym">:</span> int
+  <span class="hl kwa">val</span> nset <span class="hl sym">=</span> cpusetsize_get <span class="hl sym">(</span>cs<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg <span class="hl sym">(</span>nset <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl dir">#LOCATION)</span>
+  <span class="hl kwa">val</span> err <span class="hl sym">=</span> sched_getaffinity <span class="hl sym">((</span>pid_t<span class="hl sym">)</span><span class="hl num">0</span><span class="hl sym">,</span> nset<span class="hl sym">,</span> cs<span class="hl sym">)</span>
+  <span class="hl kwa">var</span> count<span class="hl sym">:</span> Nat <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl kwa">var</span> i<span class="hl sym">:</span> natLte <span class="hl num">16</span> <span class="hl slc">// uninitialized</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">for</span><span class="hl sym">* (</span>cs<span class="hl sym">:</span> cpu_set_t nset<span class="hl sym">) =&gt;</span>
+    <span class="hl sym">(</span>i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> <span class="hl num">16</span><span class="hl sym">;</span> i <span class="hl sym">:=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>CPU_ISSET <span class="hl sym">(</span>i<span class="hl sym">,</span> cs<span class="hl sym">) &gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span> count <span class="hl sym">:=</span> count <span class="hl sym">+</span> <span class="hl num">1</span>
+  <span class="hl slc">// end of [val]</span>
+<span class="hl kwa">in</span>
+  count
+<span class="hl kwa">end</span> <span class="hl slc">// end of [ncore_get]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl dir">#define QSZ 1024</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl kwa">implement</span> main <span class="hl sym">(</span>argc<span class="hl sym">,</span> argv<span class="hl sym">) =</span> <span class="hl kwa">let</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg
+    <span class="hl sym">(</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl str">&quot;Exit: wrong command format!</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">[</span>N<span class="hl sym">:</span>int<span class="hl sym">]</span> N <span class="hl sym">=</span> int1_of_string argv<span class="hl sym">.[</span><span class="hl num">1</span><span class="hl sym">]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg <span class="hl sym">(</span>
+    N <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl str">&quot;The input integer needs to be a natural number.</span><span class="hl esc">\n</span><span class="hl str">&quot;</span>
+  <span class="hl sym">)</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">val</span> NCORE <span class="hl sym">=</span> ncore_get <span class="hl sym">()</span>
+  <span class="hl slc">// val () = (print &quot;NCORE = &quot;; print NCORE; print_newline ())</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">val</span> nworker <span class="hl sym">=</span>
+    <span class="hl sym">(</span><span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">3</span><span class="hl sym">)</span> <span class="hl kwa">then</span> int_of argv<span class="hl sym">.[</span><span class="hl num">2</span><span class="hl sym">]</span> <span class="hl kwa">else</span> NCORE<span class="hl sym">):</span> int
+  <span class="hl kwa">val</span> nworker <span class="hl sym">=</span> int1_of_int <span class="hl sym">(</span>nworker<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg <span class="hl sym">(</span>nworker <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl dir">#LOCATION)</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">val</span> ws <span class="hl sym">=</span> workshop_make<span class="hl sym">&lt;</span>work<span class="hl sym">&gt; (</span>QSZ<span class="hl sym">,</span> fwork<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> _err <span class="hl sym">=</span> workshop_add_nworker <span class="hl sym">(</span>ws<span class="hl sym">,</span> nworker<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> assert_errmsg <span class="hl sym">(</span>_err <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl dir">#LOCATION)</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>pf_u <span class="hl sym">|</span> p_u<span class="hl sym">) =</span> darr_make <span class="hl sym">(</span>N<span class="hl sym">,</span> <span class="hl num">1.0</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>pf_v <span class="hl sym">|</span> p_v<span class="hl sym">) =</span> darr_make <span class="hl sym">(</span>N<span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">(</span>pf_tmp <span class="hl sym">|</span> p_tmp<span class="hl sym">) =</span> darr_make <span class="hl sym">(</span>N<span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">)</span>
+<span class="hl slc">//</span>
+  <span class="hl dir">#define TIMES 10</span>
+  <span class="hl kwa">var</span> i<span class="hl sym">:</span> Nat <span class="hl slc">// uninitialized</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">for</span>
+    <span class="hl sym">(</span>i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> TIMES<span class="hl sym">;</span> i <span class="hl sym">:=</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> eval_AtA_times_u <span class="hl sym">(</span>ws<span class="hl sym">,</span> N<span class="hl sym">, !</span>p_u<span class="hl sym">, !</span>p_v<span class="hl sym">, !</span>p_tmp<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> eval_AtA_times_u <span class="hl sym">(</span>ws<span class="hl sym">,</span> N<span class="hl sym">, !</span>p_v<span class="hl sym">, !</span>p_u<span class="hl sym">, !</span>p_tmp<span class="hl sym">)</span>
+  <span class="hl kwa">in</span> <span class="hl com">(*nothing*)</span> <span class="hl kwa">end</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">var</span> vBv<span class="hl sym">:</span> double <span class="hl sym">=</span> <span class="hl num">0.0</span> <span class="hl kwa">and</span> vv<span class="hl sym">:</span> double <span class="hl sym">=</span> <span class="hl num">0.0</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> N<span class="hl sym">;</span> i <span class="hl sym">:=</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> ui <span class="hl sym">=</span> p_u<span class="hl sym">-&gt;[</span>i<span class="hl sym">]</span> <span class="hl kwa">and</span> vi <span class="hl sym">=</span> p_v<span class="hl sym">-&gt;[</span>i<span class="hl sym">]</span> <span class="hl kwa">in</span> vBv <span class="hl sym">+=</span> ui<span class="hl sym">*</span>vi<span class="hl sym">;</span> vv <span class="hl sym">+=</span> vi<span class="hl sym">*</span>vi
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [val]</span>
+<span class="hl slc">//</span>
+  <span class="hl slc">// val () = printf (&quot;vBv = %f and vv = %f\n&quot;, &#64;(vBv, vv))</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> darr_free <span class="hl sym">(</span>pf_u <span class="hl sym">|</span> p_u<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> darr_free <span class="hl sym">(</span>pf_v <span class="hl sym">|</span> p_v<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> darr_free <span class="hl sym">(</span>pf_tmp <span class="hl sym">|</span> p_tmp<span class="hl sym">)</span>
+<span class="hl slc">//</span>
+  <span class="hl kwa">var</span> i<span class="hl sym">:</span> Nat <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl kwa">val</span> nworker <span class="hl sym">=</span> workshop_nworker_get <span class="hl sym">(</span>ws<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> nworker<span class="hl sym">)</span> <span class="hl kwa">let</span>
+    <span class="hl kwa">val</span> _quit <span class="hl sym">=</span> $extval <span class="hl sym">(</span>work<span class="hl sym">,</span> <span class="hl str">&quot;(void*)0&quot;</span><span class="hl sym">)</span>
+    <span class="hl kwa">val</span> <span class="hl sym">() =</span> workshop_insert_work <span class="hl sym">(</span>ws<span class="hl sym">,</span> _quit<span class="hl sym">)</span> <span class="hl kwa">in</span> i <span class="hl sym">:=</span> i <span class="hl sym">+</span> <span class="hl num">1</span>
+  <span class="hl kwa">end</span> <span class="hl slc">// end of [val]</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> workshop_wait_quit_all <span class="hl sym">(</span>ws<span class="hl sym">)</span>
+  <span class="hl kwa">val</span> <span class="hl sym">() =</span> workshop_free_vt_exn <span class="hl sym">(</span>ws<span class="hl sym">)</span>
+<span class="hl slc">//</span>
+<span class="hl kwa">in</span>
+  printf<span class="hl sym">(</span><span class="hl str">&quot;%0.9f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> &#64;<span class="hl sym">(</span>$M<span class="hl sym">.</span>sqrt <span class="hl sym">(</span>vBv<span class="hl sym">/</span>vv<span class="hl sym">)))</span>
+<span class="hl kwa">end</span> <span class="hl slc">// end of [main]</span>
+
+<span class="hl com">(* ****** ****** *)</span>
+
+<span class="hl com">(* end of [spectral-norm3.dats] *)</span>
