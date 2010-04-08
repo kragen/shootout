@@ -3,68 +3,34 @@ means that most programs are small and spend most of their time in I/O and nativ
 </p>
 
 <dl>
-<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed Benchmarks</strong></a></dt>
+<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed Benchmarks or Broken Thinking?</strong></a></dt>
 <dd>
 <dl>
-<dt><a href="#your" name="your">Are <strong>your programs</strong> even like these benchmarks?</a> <i>Ecological Validity</i></dt>
-<dd><ul>  
-  <li><p>Do your programs startup and finish within a few seconds, like these benchmarks?</p></li>
-  <li><p>Are your programs tiny, like these benchmarks?</p></li>
-  <li><p>Do your programs avoid library use, like these benchmarks?</p></li>
-</ul>
-<p>"We measure three specific areas of JavaScript runtime behavior: 1) functions and code; 2) heap-allocated objects and data; 3) events and handlers. We find that the benchmarks are not representative of many real websites and that conclusions reached from measuring the benchmarks may be misleading."</p>
-<ul>  
-  <li><p><a href="http://research.microsoft.com/en-us/projects/jsmeter/">JSMeter: Characterizing Real-World Behavior of JavaScript Programs</a></p></li>
-</ul>
-<p>"The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."</p>
-<ul>  
-  <li><p><a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html">Benchmarks are a crock</a></p></li>
+
+<dt><a href="#broken" name="broken">What are Flawed Benchmarks?</a></dt>
+<dd>
+<ul>
+<li><p>When the measurement techniques don't record the data as claimed, that's broken not flawed - fix it.</p></li>
+<li><p>When measured programs are supposed to implement the same algorithm and don't because Wile E. Programmer pushed the boundaries, that's broken not flawed - fix it.</p></li>
+<li><p>When measured programs don't strictly implement the same algorithm because they are written in different programming languages which use very different implementation techniques - that's flawed.</p></li>
 </ul>
 </dd>
 
-<dt><a href="#bogus" name="bogus"><strong>"benchmarking without analysis is bogus"</strong></a></dt>
+
+<dt><a href="#thinking" name="thinking">What's Broken Thinking?</a></dt>
 <dd>
-<p>"Generally, we can get accurate measurements for durations that are either very short (less than around 10 millisecond) or very long (greater than around 1 second), even on heavily loaded machines. Times between around 10 milliseconds and 1 second require special care to measure accurately."</p>
-<ul>  
-  <li><p><a href="http://csapp.cs.cmu.edu/public/ch9-preview.pdf">Computer Systems: A Programmer's Perspective, Chapter 9</a> (pdf)</p></li>
-
-  <li><p><a href="http://www.lst.inf.ethz.ch/teaching/lectures/ws06/51/slides/class19.pdf">Measuring Program Performance</a> (pdf slides)</p></li>
-</ul>
-
-
-<p>"Most likely, if the performance differences between the alternatives are large, a statistically rigorous method will not alter the overall picture nor affect the general conclusions obtained using prevalent methods. However, for relatively small performance differences (that are within the margin of experimental error) not using statistical rigor may lead to incorrect conclusions." </p>
-<ul>  
-  <li><p><a href="http://itkovian.net/base/files/papers/oopsla2007-georges-presentation.pdf">Statistically Rigorous Java Performance Evaluation</a> (pdf slides)</p></li>
-  <li><p><a href="http://buytaert.net/files/oopsla07-georges.pdf">Statistically Rigorous Java Performance Evaluation</a> (pdf paper)</p></li>
-</ul>
-
-<p>We can learn <em>something</em> about a particular language implementation from benchmarking - if we already know a great deal about the implementation and carefully analyze the results:</p>
-<ul>  
-  <li><p><a href="http://openmap.bbn.com/~kanderso/performance/postscript/fannkuch.ps">Performing Lisp Analysis of the FANNKUCH Benchmark</a> (55KB postscript)</p></li>
-  <li><p><a href="http://www-128.ibm.com/developerworks/java/library/j-jtp02225.html?ca=drs-j0805#4.0">Java theory and practice: Anatomy of a flawed microbenchmark. Is there any other kind?</a></p></li>
-</ul>
-<p>Many benchmark suites are designed to help language implementors optimize compiler designs:</p>
-<ul>  
-  <li><p><a href="http://www.cse.unsw.edu.au/~dons/nobench.html">nobench performance comparisons between different Haskell systems</a></p></li>
-  <li><p><a href="http://nenya.ms.mff.cuni.cz/projects/mono/index.phtml#fft_scimark">Performance regressions in daily development versions of Mono</a></p></li>
-  <li><p><a href="http://sbcl-test.boinkor.net/bench/">Version-to-version Steel Bank Common Lisp performance</a></p></li>
-</ul>
-<p>We should always question how useful a benchmark is for our specific purpose:</p>
-<ul>  
-  <li><p><a href="http://www-faculty.cs.uiuc.edu/~zilles/papers/health.pdf">Benchmark <tt>Health</tt> Considered Harmful</a> (pdf)</p></li>
-</ul>
-<p>There's more to programming language comparison than CPU time, memory use, and program length - but other aspects are less easy to measure, and so are less often measured.</p>
 <ul>
-  <li><p><a href="http://www.cis.udel.edu/~silber/470STUFF/article.pdf">An Empirical Comparison of Seven Programming Languages</a> (pdf)</p>
-<p>Note: After reading the "Comparison Validity" section at the foot of pages 24-25, you might decide that it doesn't seem reasonable to compare <i>independently measured programming time</i> for one group of languages against <i>programming time reported by program authors</i> for another group of languages, <i>etc etc</i></p>
+<li><p>Generalizing from these particular measurements without understanding what limits performance in other situations.</p></li>
+<li><p>Generalizing from these particular measurements without showing the measured programs are somehow representative of other situations.</p>
+<p>"The performance of a benchmark, even if it is derived from a real program, <a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html">may not help</a> to predict the performance of similar programs that have different hot spots."</p>
 </li>
 </ul>
 </dd>
 
-<dt><a href="#app" name="app"><b>"your application is the <strong>ultimate benchmark</strong>"</b></a></dt>
+<dt><a href="#app" name="app">Your application is <strong>the ultimate benchmark</strong></a></dt>
 <dd>
 <blockquote><p>"In order to find the optimal cost/benefit ratio, Wirth used a highly intuitive metric,
-the origin of which is unknown to me but that may very well be Wirth's own invention. He used <b>the 
+the origin of which is unknown to me but that may very well be Wirth's own invention. He used <b>the
 compiler's self-compilation speed</b> as a measure of the compiler's quality. Considering that Wirth's 
 compilers were written in the languages they compiled, and that compilers are substantial and non-trivial
 pieces of software in their own right, this introduced a highly practical benchmark that directly
@@ -72,7 +38,8 @@ contested a compiler's complexity against its performance. Under the self compil
 only those optimizations were allowed to be incorporated into a compiler that accelerated it by so much
 that the intrinsic cost of the new code addition was fully compensated." <br/><a href="http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf">Oberon: The Overlooked Jewel</a> (pdf) Michael Franz, in L. Boszormenyi, J. Gutknecht, G. Pomberger "The School of Niklaus Wirth" 2000.
 </p></blockquote>
-<blockquote><p>"<strong>Overall Performance</strong><b>: PHP is rarely the bottleneck</b>" <br/><a href="http://talks.php.net/show/drupal08/7">Simple is Hard, DrupalCon 2008</a> (HTML slides) Rasmus Lerdorf</p></blockquote>
+<blockquote><p>"Overall Performance<b>: PHP is rarely the bottleneck</b>" <br/><a href="http://talks.php.net/show/drupal08/7">Simple is Hard, DrupalCon 2008</a> (HTML slides) Rasmus Lerdorf</p></blockquote>
+<blockquote><p>"We measure three specific areas of JavaScript runtime behavior: 1) functions and code; 2) heap-allocated objects and data; 3) events and handlers. We find that the benchmarks are <b>not representative</b> of many real websites and that conclusions reached from measuring the benchmarks may be misleading." <br/><a href="http://research.microsoft.com/en-us/projects/jsmeter/">JSMeter: Characterizing Real-World Behavior of JavaScript Programs</a></p></blockquote>
 </dd>
 
 </dl>
@@ -87,7 +54,7 @@ that the intrinsic cost of the new code addition was fully compensated." <br/><a
  the designers intended them to be used for the exact same purpose - that just isn't so.
 </p></dd>
 
-<dt><a href="#scope" name="scope"><b>Different design intentions - scope</b></a></dt>
+<dt><a href="#scope" name="scope">Different design intentions - <b>scope</b></a></dt>
 <dd><blockquote><p>"Lua is a tiny and simple language, partly because it does not try to do what C is already 
 good for, such as sheer performance, low-level operations, or interface with third-party 
 software. Lua relies on C for those tasks."<br />
@@ -99,7 +66,7 @@ software. Lua relies on C for those tasks."<br />
 </p></blockquote>
 </dd>
 
-<dt><a href="#scale" name="scale"><b>Different design intentions - scale</b></a></dt>
+<dt><a href="#scale" name="scale">Different design intentions - <b>scale</b></a></dt>
 <dd><blockquote><p>"Lua is not intended for building huge programs, where many programmers are involved
 for long periods. Quite the opposite, Lua aims at small to medium programs, usually part
  of a larger system, typically developed by one or a few programmers, or even by non 
@@ -116,7 +83,7 @@ components continues to be a central idea in the design."<br />
 
 </dd>
 
-<dt><a href="#domain" name="domain"><b>Different design intentions - domain</b></a></dt>
+<dt><a href="#domain" name="domain">Different design intentions - <b>domain</b></a></dt>
 <dd>
 <blockquote><p>'Our system [Erlang] was originally designed for building telecoms switching systems.
 Telecoms switching systems have demanding requirements in terms
