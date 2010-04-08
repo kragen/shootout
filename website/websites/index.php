@@ -18,7 +18,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 <meta name="robots" content="all" /><meta name="revisit" content="1 days" />
 
-<meta name="description" content="Compare the performance of ~30 programming languages using ~12 flawed benchmarks and ~1100 programs. Contribute faster more elegant programs." />
+<meta name="description" content="Compare the performance of ~30 programming languages using ~12 (flawed?) benchmarks and ~1100 programs. Contribute faster more elegant programs." />
 
 <title>Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_08mar2010.php" />
@@ -128,7 +128,7 @@ unset($pagechoices);
 
 
 <div id="home">
-<h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> and &asymp;1100 programs</h5>
+<h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>(flawed?) benchmarks</strong></a> and &asymp;1100 programs</h5>
 <p><br/>Read the source code. Contribute faster more elegant programs.</p>
 <p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a></p>
 
