@@ -1,0 +1,247 @@
+(*
+** The Computer Language Benchmarks Game
+** http://shootout.alioth.debian.org/
+**
+** contributed by Hongwei Xi
+**
+** compilation command:
+**   atscc -D_GNU_SOURCE -D_ATS_MULTITHREAD -O3 binary-trees3.dats -o binary-trees3 -D_ATS_GCATS -lpthread
+*)
+
+(* ****** ****** *)
+
+staload "libats/SATS/parworkshop.sats"
+staload _ = "libats/DATS/parworkshop.dats"
+
+(* ****** ****** *)
+
+staload _(*anon*) = "prelude/DATS/reference.dats"
+
+(* ****** ****** *)
+
+dataviewtype tree (int) =
+  Nil(0) | {n1,n2:two} Node(1) of (tree n1, int, tree n2)
+
+viewtypedef Tree = [n:two] tree n
+
+fun tree_make (d: int, i: int): Tree =
+  if d > 0 then
+    let val d1 = d-1 and i2 = i << 1 in      
+      Node (tree_make (d1, i2 - 1), i, tree_make (d1, i2))
+    end
+  else Node (Nil (), i, Nil ())
+// end of [tree_make]
+
+fun check_and_free (t: Tree):<!ntm> int =  case+ t of
+  | ~Node (tl, i, tr) => i + check_and_free tl - check_and_free tr
+  | ~Nil () => 0
+// end of [check_and_free]
+
+fun check (t: !Tree):<!ntm> int =  case+ t of
+  | Node (!tl, i, !tr) =>
+    let val ans = i + check (!tl) - check (!tr) in (fold@ t; ans) end
+  | Nil () => (fold@ t; 0)
+// end of [check]
+
+fun check_ref (r: ref Tree): int = let
+  val (vbox pf | p) = ref_get_view_ptr r in check !p     
+end // end of [check_ref]
+
+//
+
+#define MIN_DEPTH 4
+
+//
+
+fn stretch (max_depth: Nat): void = let
+   val stretch_depth = max_depth + 1
+   val t = tree_make (stretch_depth, 0)
+   val c = check_and_free (t)
+in
+   printf ("stretch tree of depth %i\t check: %i\n", @(stretch_depth, c));
+end // end of [stretch]
+
+fn long_lived_tree_make
+  (max_depth: Nat): ref Tree = let
+  val t = tree_make (max_depth, 0); val t_r = ref<Tree> (t)
+in
+  t_r
+end // end of [long_lived_tree_make]
+
+(* ****** ****** *)
+
+fun doWork
+  {l_n,l_d,l_c:addr} {d,md:nat | d <= md} (
+    pf_n: !int @ l_n
+  , pf_d: !int @ l_d
+  , pf_c: !int @ l_c
+  | p_n: ptr l_n, p_d: ptr l_d, p_c: ptr l_c
+  , d: int d, max_depth: int md
+  ) : void = let
+  val n = 1 << (max_depth - d + MIN_DEPTH)
+  fun loop (i: Nat, c: int):<cloref1> int =
+    if i < n then let
+      val t = tree_make(d,  i); val c1 = check_and_free t
+      val t = tree_make(d, ~i); val c2 = check_and_free t
+    in
+      loop (i+1, c + c1 + c2)
+    end else begin
+      c // return value
+    end // end of [if]
+  val () = !p_n := n
+  val () = !p_d := d;
+  val () = !p_c := loop (0, 0)
+in
+  // nothing
+end // end of [doWork]
+
+(* ****** ****** *)
+
+dataviewtype CONT =
+  | CONTnil of ()
+  | CONTcons of (int(*n*), int(*d*), int(*c*), CONT)
+// end of [CONT]
+
+fun finishup (cont: CONT): void = case+ cont of
+  | ~CONTcons (n, d, c, cont) => let
+      val () = printf (
+        "%i\t trees of depth %i\t check: %i\n", @(2 * n, d, c)
+      ) // end of printf
+    in
+      finishup (cont)
+    end (* end of [locklst_cons] *)
+  | ~CONTnil () => ()
+// end of [finishup]
+
+(* ****** ****** *)
+
+viewtypedef work = () -<lincloptr1> void
+viewtypedef WSptr (l:addr) = WORKSHOPptr (work, l)
+
+(* ****** ****** *)
+
+fun fwork {l:addr}
+  (ws: !WSptr l, wk: &work >> work?): int = let
+  val wk = wk
+  val pfun = __cast (wk) where {
+    extern castfn __cast
+      (wk: !work >> opt (work, i >= 1)): #[i:nat] uintptr i
+  } // end of [val]
+in
+  if pfun >= (uintptr1_of_uint1)1U then let
+    prval () = opt_unsome {work} (wk)
+    val () = wk ()
+    val () = cloptr_free (wk)
+  in
+    1 // the worker is to continue
+  end else let
+    val u = uint1_of_uintptr1 (pfun)
+    val i = int_of_uint (u)
+    prval () = opt_unnone {work} (wk)
+    prval () = cleanup_top {work} (wk)
+  in
+    ~i // the worker is to pause or quit
+  end // end of [if]
+end // end of [fwork]
+
+(* ****** ****** *)
+
+fun loop_depths {l:addr}
+  (ws: !WSptr l, d: Nat, max_depth: Nat, res: &CONT? >> CONT): void = let
+  extern prfun __ref {v:view} (pf: !v): v
+  extern prfun __unref {v:view} (pf: v): void
+in
+  if d <= max_depth then let
+    val () = res := CONTcons (0, 0, 0, ?)
+    val+ CONTcons (!p_n, !p_d, !p_c, !p_res1) = res
+    stavar l_n:addr and l_d:addr and l_c:addr
+    prval pf_n = __ref {int@l_n} (view@ !p_n)
+    prval pf_d = __ref {int@l_d} (view@ !p_d)
+    prval pf_c = __ref {int@l_c} (view@ !p_c)
+    val () = workshop_insert_work (ws, f) where {
+      val f = lam (): void =<lincloptr1> let
+        val () = doWork (pf_n, pf_d, pf_c | p_n, p_d, p_c, d, max_depth)
+        prval () = __unref (pf_n)
+        prval () = __unref (pf_d)
+        prval () = __unref (pf_c)
+      in
+        // nothing
+      end
+    } // end of [workshop_add_work]
+    val () = loop_depths (ws, d + 2, max_depth, !p_res1)
+  in
+    fold@ (res)
+  end else begin
+    res := CONTnil ()
+  end // end of [if]
+end (* end of [loop_depths] *)
+
+(* ****** ****** *)
+
+staload "libc/SATS/sched.sats"
+staload TYPES = "libc/sys/SATS/types.sats"
+macdef pid_t = $TYPES.pid_of_int
+
+extern fun ncore_get (): int
+implement ncore_get () = let
+  var cs: cpu_set0_t // uninitialized
+  prval () = cpusetinit (cs) // not a real initialization
+  stavar nset: int
+  val nset = cpusetsize_get (cs)
+  val () = assert_errmsg (nset >= 2, #LOCATION)
+  val err = sched_getaffinity ((pid_t)0, nset, cs)
+  var count: Nat = 0
+  var i: natLte 16 // uninitialized
+  val () = for* (cs: cpu_set_t nset) =>
+    (i := 0; i < 16; i := i + 1)
+    if (CPU_ISSET (i, cs) > 0) then count := count + 1
+  // end of [val]
+in
+  count
+end // end of [ncore_get]
+
+(* ****** ****** *)
+
+#define QSZ 1024
+
+implement main (argc, argv) = let
+  val () = assert_errmsg
+    (argc >= 2, "Exit: wrong command format!\n")
+  val n = int1_of argv.[1]
+  val () = assert_errmsg
+    (n >= 0, "The input integer needs to be a natural number.\n")
+  val () = gc_chunk_count_limit_set (1 << 15)
+  val () = gc_chunk_count_limit_max_set (~1) // no max
+//
+  val NWORKER = ncore_get ()
+  val nworker =
+    (if (argc >= 3) then int_of argv.[2] else NWORKER): int
+  val nworker = int1_of_int(nworker)
+  val () = assert_errmsg (nworker >= 1, #LOCATION)
+  val ws = workshop_make<work> (QSZ, fwork)
+  val _err = workshop_add_nworker (ws, nworker)
+  val () = assert_errmsg (_err = 0, #LOCATION)
+//
+  val max_depth = max (MIN_DEPTH + 2, n)
+  var res: CONT // uninitialized
+  val () = loop_depths (ws, MIN_DEPTH, max_depth, res)
+  val () = stretch (max_depth)
+  val long_lived_tree = long_lived_tree_make (max_depth)
+//
+  val () = workshop_wait_blocked_all (ws)
+  val () = finishup (res)
+//
+  var i: Nat = 0
+  val () = while (i < nworker) let
+    val _quit = $extval (work, "(void*)0")
+    val () = workshop_insert_work (ws, _quit) in i := i + 1
+  end // end of [val]
+  val () = workshop_wait_quit_all (ws)
+  val () = workshop_free_vt_exn (ws)
+in
+  printf ("long lived tree of depth %i\t check: %i\n", @(max_depth, check_ref long_lived_tree))
+end // end of [main]
+
+(* ****** ****** *)
+
+(* end of [binary-tree3.dats] *)
