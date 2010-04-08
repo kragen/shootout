@@ -2,6 +2,6 @@
 // Copyright (c) Isaac Gouy 2009
 ob_start('ob_gzhandler');
 require_once('config.php'); 
-$F = 'benchmarking'; $T = 'Flawed Benchmarks or Flawed Thinking?';
+$F = 'benchmarking'; $T = 'Flawed Benchmarks or Broken Thinking?';
 require_once(LIB_PATH.'miscfile.php');
 ?>
