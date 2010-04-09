@@ -21,7 +21,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 <dd>
 <ul>
 <li><p>Generalizing from particular measurements without understanding what limits performance in other situations.</p>
-<p>Page load times for this site are limited by - what the other 880 hosted projects are doing with the server, page load time could still average 1.3s even if page generation was instantaneous.</p>
+<p>Page load times for this site are limited by - what the other 880 hosted projects are doing with the server - even if page generation was instantaneous, we'd still average 1.3s just waiting.</p>
 </li>
 <li><p>Generalizing from particular measurements without showing the measured programs are somehow representative of other situations.</p>
 <p>"The performance of a benchmark, even if it is derived from a real program, <a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html" title="Benchmarks are a crock"><b>may not help</b></a> to predict the performance of similar programs that have different hot spots."</p>
