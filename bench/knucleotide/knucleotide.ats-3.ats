@@ -1,0 +1,486 @@
+(*
+** The Computer Language Benchmarks Game
+** http://shootout.alioth.debian.org/
+**
+** contributed by Hongwei Xi
+**
+** compilation command:
+**   atscc -D_GNU_SOURCE -D_ATS_MULTITHREAD -D_ATS_GCATS -O3 -o k-nucleotide3_smp -lpthread k-nucleotide3_smp.dats
+*)
+
+(* ****** ****** *)
+
+staload "libc/SATS/stdio.sats"
+staload "libc/SATS/stdlib.sats"
+staload "libc/SATS/string.sats"
+staload _(*anonymous*) = "prelude/DATS/array.dats"
+staload _(*anonymous*) = "prelude/DATS/list_vt.dats"
+
+(* ****** ****** *)
+
+staload H = "libats/SATS/hashtable_chain.sats"
+staload _(*anon*) = "libats/DATS/hashtable_chain.dats"
+
+(* ****** ****** *)
+
+%{^
+typedef char *symbol_t ;
+%} // end of [%{^]
+
+(* ****** ****** *)
+
+abstype dna_t // boxed type
+abst@ype symbol_t = $extype "symbol_t"
+
+(* ****** ****** *)
+
+%{^
+
+ats_void_type print_symbol
+  (symbol_t sym, ats_size_type len) {
+  while (len > 0) { fputc (*sym, stdout) ; --len ; ++sym ; }
+  return ;
+} // end of [print_symbol]
+
+%} // end of [%{^]
+
+extern fun print_symbol
+  (sym: symbol_t, len: size_t): void = "print_symbol"
+// end of [print_symbol]
+
+(* ****** ****** *)
+
+%{^
+
+size_t the_symlen = 0 ;
+ats_size_type symlen_get () { return the_symlen ; }
+ats_void_type symlen_set
+  (ats_size_type len) { the_symlen = len ; return ; }
+// end of [symlen_set]
+
+%} // end of [%{^]
+extern fun symlen_get ():<> size_t = "symlen_get"
+extern fun symlen_set (len: size_t):<> void = "symlen_set"
+
+(* ****** ****** *)
+
+%{^
+
+// a commonly used simple hash function
+
+static // inline
+ats_ulint_type hash_symbol_len (
+  symbol_t sym, ats_size_type len
+) {
+  unsigned long int hash_val = 31415927UL ;
+  while (len >= 4) {
+    hash_val += hash_val * 33 ;
+    hash_val += sym[0] << 24 ;
+    hash_val += sym[1] << 16 ;
+    hash_val += sym[2] <<  8 ;
+    hash_val += sym[3] ;
+    sym += 4 ; len -= 4 ;
+  } // end of [while]
+  if (len >= 2) {
+    hash_val = hash_val * 33 + (sym[0] << 8) + sym[1] ;
+    sym += 2 ; len -= 2 ;
+  } // end of [if]
+  if (len >= 1) {
+    hash_val = hash_val * 33 + sym[0] ;
+  } // end of [while]
+  return hash_val ;
+} // end of [hash_symbol_len]
+
+%} // end of [%{^]
+
+extern fun hash_symbol_len
+  (sym: symbol_t, len: size_t):<> ulint = "hash_symbol_len"
+// end of [hash_symbol]
+
+(* ****** ****** *)
+
+implement $H.hash_key<symbol_t>
+  (x, _) = hash_symbol_len (x, symlen_get ())
+// end of [implement]
+
+implement
+$H.equal_key_key<symbol_t> (x1, x2, _) = let
+  extern castfn __cast (x: symbol_t):<> string
+  val x1 = __cast x1 and x2 = __cast x2
+  val k = symlen_get ()
+  val k = size1_of_size (k)
+in
+  strncmp (x1, x2, k) = 0
+end // end of [implement]
+
+(* ****** ****** *)
+
+viewtypedef symtbl (l:addr) = $H.HASHTBLptr (symbol_t, int, l)
+viewtypedef symtbl0 = [l:addr] symtbl l
+viewtypedef symtbl1 = [l:anz] symtbl l
+
+(* ****** ****** *)
+
+extern fun succ_symbol
+  (x: symbol_t): symbol_t = "#atspre_psucc"
+extern fun add_symbol_size
+  (x: symbol_t, n: size_t): symbol_t = "#atspre_padd_size"
+
+fn dna_count_one {l:anz} {n1,n2:nat}
+  (tbl: !symtbl l, dna: dna_t, n1: size_t n1, n2: size_t n2): void = let
+  var n1: size_t = n1
+  val sym0: symbol_t =
+    __cast (dna) where { extern castfn __cast (x: dna_t): symbol_t }
+  // end of [var]
+  var sym: symbol_t = add_symbol_size (sym0, n1)
+in
+  while (n1 < n2) let
+    val [l_itm:addr] p_itm = $H.hashtbl_search_ref<symbol_t,int> (tbl, sym)
+    val () = if p_itm <> null then let
+      prval (fpf, pf) = __assert () where {
+        extern prfun __assert (): (int@l_itm -<prf> void, int@l_itm)
+      } // end of [prval]
+      val () = !p_itm := !p_itm + 1
+      prval () = fpf (pf)
+    in
+      // nothing
+    end else $H.hashtbl_insert (tbl, sym, 1)
+  in
+    n1 := n1 + 1; sym := succ_symbol sym
+  end // end of [while]
+end // end of [dna_count_one]
+
+(* ****** ****** *)
+
+staload "libats/SATS/parworkshop.sats"
+staload _ = "libats/DATS/parworkshop.dats"
+
+(* ****** ****** *)
+
+viewtypedef work = () -<lincloptr1> void
+viewtypedef WSptr (l:addr) = WORKSHOPptr (work, l)
+
+(* ****** ****** *)
+
+fun fwork {l:addr}
+  (ws: !WSptr l, wk: &work >> work?): int = let
+  val wk = wk
+  val pfun = __cast (wk) where {
+    extern castfn __cast
+      (wk: !work >> opt (work, i >= 1)): #[i:nat] uintptr i
+  } // end of [val]
+in
+  if pfun >= (uintptr1_of_uint1)1U then let
+    prval () = opt_unsome {work} (wk)
+    val () = wk ()
+    val () = cloptr_free (wk)
+  in
+    1 // the worker is to continue
+  end else let
+    val u = uint1_of_uintptr1 (pfun)
+    val i = int_of_uint (u)
+    prval () = opt_unnone {work} (wk)
+    prval () = cleanup_top {work} (wk)
+  in
+    ~i // the worker is to pause or quit
+  end // end of [if]
+end // end of [fwork]
+
+(* ****** ****** *)
+
+val eqfn = $extval ($H.eq symbol_t, "0")
+val fhash = $extval ($H.hash symbol_t, "0")
+macdef hastbl_make () = $H.hashtbl_make_hint (fhash, eqfn, 24593)
+
+fn dna_count {lws:addr} {n:pos;k:pos} {N:pos} (
+    ws: !WSptr lws
+  , dna: dna_t
+  , n: size_t n
+  , k: size_t k
+  , N: int N // nthread
+  ) : List_vt (symtbl1) = let
+  val () = symlen_set (k)
+  val INC = ((n + N - 1) / N): size_t
+  val [inc:int] INC = size1_of_size (INC)
+  prval () = __assert () where {
+    extern prfun __assert (): [inc > 0] void
+  }
+  fun split {n1,n2:nat} (
+      ws: !WSptr lws, n1: size_t n1, n2: size_t n2
+    ) :<cloref1> List_vt (symtbl1) =
+    if n1 < n2 then let
+      val n11 = min (n1 + INC, n2)
+      val [l:addr] tbl = hastbl_make ()
+      extern castfn __ref (x: !symtbl l):<> symtbl l 
+      val tbl1 = __ref (tbl)
+      val f = lam (): void =<lincloptr1> () where {
+        val () = dna_count_one (tbl1, dna, n1, n11)
+        prval () = __unref tbl1 where { extern prfun __unref (x: symtbl l): void }
+      } // end of [val]
+      val () = workshop_insert_work (ws, f)
+    in
+      list_vt_cons (tbl, split (ws, n11, n2))
+    end else list_vt_nil ()
+  // end of [split]
+  val res = split (ws, 0, n)
+  val () = workshop_wait_blocked_all (ws)
+in
+  res
+end // end of [dna_count]
+
+extern fun symtbls_merge (xs: List_vt symtbl1): symtbl0
+implement symtbls_merge (xs) = let
+  fun loop {l:addr} {l:anz}
+    (x: !symtbl l, xs: List_vt symtbl1): void =
+    case+ xs of
+    | ~list_vt_cons (x1, xs) => let
+        val xp = $H.ptr_of_HASHTBLptr (x)
+        var !p_clo = @lam
+          (pf: !unit_v | k: symbol_t, i: &int): void =<clo> let
+          val x = __ref (xp) where {
+            extern castfn __ref (x: ptr l):<> symtbl l
+          }
+          val [l_itm:addr] p_itm = $H.hashtbl_search_ref<symbol_t,int> (x, k)
+          val () = if p_itm <> null then let
+            prval (fpf, pf) = __assert () where {
+              extern prfun __assert (): (int@l_itm -<prf> void, int@l_itm)
+            } // end of [prval]
+            val () = !p_itm := !p_itm + i
+            prval () = fpf (pf)
+          in
+            // nothing
+          end else $H.hashtbl_insert (x, k, i)
+          prval () = __unref (x) where {
+            extern prfun __unref (x: symtbl l): void
+          }
+        in
+          // nothing
+        end // end of [var]
+        prval pf = unit_v ()
+        val () = $H.hashtbl_foreach_clo {unit_v} (pf | x1, !p_clo)
+        prval unit_v () = pf
+        val () = $H.hashtbl_free (x1)
+      in
+        loop (x, xs)
+      end // end of [list_vt_cons]
+    | ~list_vt_nil () => ()
+  // end of [loop]
+in
+  case+ xs of
+  | ~list_vt_cons (x, xs) =>
+      let val () = loop (x, xs) in x end
+    // end of [list_vt_cons]
+  | ~list_vt_nil () => $H.hashtbl_make_null ()
+end // end of [symtbls_merge]
+
+(* ****** ****** *)
+
+typedef symflt = @(symbol_t, float)
+
+fn compare_symflt_symflt // [>=]
+  (x1: &symflt, x2: &symflt):<> Sgn = compare_float_float (x2.1, x1.1)
+// end of [compare_symflt_symflt]
+
+viewtypedef frqlst = List_vt symflt
+
+(* ****** ****** *)
+
+// print and free
+fun print_free_frqlst
+  (kfs: frqlst, len: size_t): void = begin case+ kfs of
+  | ~list_vt_cons (kf, kfs) => begin print_symbol (kf.0, len);
+       printf (" %.3f\n", @(double_of kf.1)); print_free_frqlst (kfs, len)
+    end // end of [FRQLSTcons]
+  | ~list_vt_nil () => ()
+end // end of [print_free_frqlst]
+
+fn write_frequencies
+  {lws:addr} {n,k:pos | k <= n} {N:pos} (
+    ws: !WSptr lws, dna: dna_t, n: size_t n, k: size_t k, N: int N
+  ) : void = let
+//
+  val tbls = dna_count (ws, dna, n-k+1, k, N)
+  val tbl = symtbls_merge (tbls)
+  val ptbl = $H.ptr_of_HASHTBLptr tbl
+  val () = assert_errmsg (ptbl <> null, #LOCATION)
+//
+  var total: int = 0
+  var !p_clo = @lam (pf: !int@total | k: symbol_t, i: &int): void =<clo>
+    (total := total + i)
+  val () = $H.hashtbl_foreach_clo {int@total} (view@ total | tbl, !p_clo)
+  val ftotal = float_of total
+  var frqs: frqlst = list_vt_nil ()
+  var !p_clo = @lam
+    (pf: !frqlst @ frqs | k: symbol_t, cnt: &int): void =<clo> let 
+    val f = (float_of 100) * float_of cnt / ftotal; val kf = @(k, f) in
+    frqs := list_vt_cons (kf, frqs)
+  end // end of [f]
+  val () = $H.hashtbl_foreach_clo {frqlst@frqs} (view@ frqs | tbl, !p_clo)
+  val () = $H.hashtbl_free (tbl)
+  val () = list_vt_quicksort (frqs, compare_symflt_symflt)
+in
+  print_free_frqlst (frqs, symlen_get ())
+end // end of [write_frequencies]
+
+(* ****** ****** *)
+
+fn write_count {lws:addr} {n,k:pos} {N:pos} (
+    ws: !WSptr lws, dna: dna_t, n: size_t n, seq: string k, N: int N
+  ): void = let
+  val k = string1_length seq
+  val () = assert_errmsg (k <= n, #LOCATION)
+//
+  val tbls = dna_count (ws, dna, n-k+1, k, N)
+  val seq1 = __cast seq where {
+    extern castfn __cast (x: string): symbol_t
+  } // end of [var]
+  val cnt = loop (tbls, seq1, 0) where {
+    fun loop (xs: List_vt symtbl1, seq: symbol_t, cnt: int): int =
+      case+ xs of
+      | ~list_vt_cons (x, xs) => let
+          var res : int
+          val ans = $H.hashtbl_search (x, seq, res)
+          val () = $H.hashtbl_free (x)
+          val () = if ans then let
+            prval () = opt_unsome {int} (res) in (*none*)
+          end else let
+            prval () = opt_unnone {int} (res) in res := 0
+          end : void // end of [val]
+        in
+          loop (xs, seq, cnt + res)
+        end // end of [list_vt_cons]
+      | ~list_vt_nil () => cnt
+    // end of [loop]
+  } // end of [cnt]
+//
+in
+  printf ("%d\t%s\n", @(cnt, seq))
+end // end of [write_count]
+
+(* ****** ****** *)
+
+extern fun getline (): string = "__getline"
+extern fun getrest (sz: &size_t? >> size_t n): #[n:nat] string n = "__getrest"
+
+%{$
+
+#define LINEBUFSZ 1024
+char theLineBuffer[LINEBUFSZ] ;
+ats_ptr_type __getline () {
+  fgets (theLineBuffer, LINEBUFSZ, stdin) ; return theLineBuffer ;
+} /* end of [getline] */
+
+#define RESTBUFSZ (128 * 1024 * 1024)
+char theRestBuffer[RESTBUFSZ] ;
+
+ats_ptr_type __getrest (ats_ref_type p_n) {
+  int c ; size_t i ; char *s ;
+  s = theRestBuffer ; i = 0 ;
+  while ((c = fgetc(stdin)) != EOF) {
+    if (c != '\n') { *s++ = toupper(c) ; i++ ; }
+  }
+  *s = '\000' ; *((size_t*)p_n) = i ;
+  if (i >= RESTBUFSZ) {
+    fprintf (stderr, "exit(ATS): too much data for processing\n") ; exit(1) ;
+  }
+  return theRestBuffer ;
+} /* end of [__getrest] */
+
+%} // end of [%{^]
+
+(* ****** ****** *)
+
+fun is_three (s: string): bool =
+  if strncmp (s, ">THREE", 6) = 0 then true else false
+// end of [is_three]
+
+(* ****** ****** *)
+
+staload "libc/SATS/sched.sats"
+staload TYPES = "libc/sys/SATS/types.sats"
+macdef pid_t = $TYPES.pid_of_int
+
+extern fun ncore_get (): int
+implement ncore_get () = let
+  var cs: cpu_set0_t // uninitialized
+  prval () = cpusetinit (cs) // not a real initialization
+  stavar nset: int
+  val nset = cpusetsize_get (cs)
+  val () = assert_errmsg (nset >= 2, #LOCATION)
+  val err = sched_getaffinity ((pid_t)0, nset, cs)
+  var count: Nat = 0
+  var i: natLte 16 // uninitialized
+  val () = for* (cs: cpu_set_t nset) =>
+    (i := 0; i < 16; i := i + 1)
+    if (CPU_ISSET (i, cs) > 0) then count := count + 1
+  // end of [val]
+in
+  count
+end // end of [ncore_get]
+
+(* ****** ****** *)
+
+extern fun dna_of_string (s: string): dna_t = "dna_of_string"
+
+(* ****** ****** *)
+
+#define QSZ 1024
+
+implement main (argc, argv) = let
+//
+  val () = gc_chunk_count_limit_set (1 << 15)
+  val () = gc_chunk_count_limit_max_set (~1) // no max
+//
+  val ncore = ncore_get ()
+  val nworker =
+    (if (argc >= 2) then int_of argv.[1] else ncore): int
+  val nworker = int1_of_int (nworker)
+  val () = assert_errmsg (nworker > 0, #LOCATION)
+//
+  fun dna_three_get
+    (n: &size_t? >> size_t n): #[n:nat] string n = let
+    val s = getline (); val is3 = is_three (s)
+  in
+    if is3 then getrest (n) else dna_three_get (n)
+  end // end of [dna_three_get]
+  var n: size_t // uninitialized
+  val dna_three = dna_three_get (n)
+  val () = assert (n >= 2)
+(*
+  val () = (prerr "main: n = "; prerr n; prerr_newline ())
+*)
+  val dna3 =
+    dna_of_string dna_three where {
+    extern castfn dna_of_string (str: string): dna_t
+  } // end of [val]
+//
+  // val () = (print "nworker = "; print nworker; print_newline ())
+//
+  val ws = workshop_make<work> (QSZ, fwork)
+  val _err = workshop_add_nworker (ws, nworker)
+  val () = assert_errmsg (_err = 0, #LOCATION)
+//  
+  val () = write_frequencies (ws, dna3, n, 1, nworker)
+  val () = print_newline ()
+  val () = write_frequencies (ws, dna3, n, 2, nworker)
+  val () = print_newline ()
+  val () = write_count (ws, dna3, n, "GGT", nworker)
+  val () = write_count (ws, dna3, n, "GGTA", nworker)
+  val () = write_count (ws, dna3, n, "GGTATT", nworker)
+  val () = write_count (ws, dna3, n, "GGTATTTTAATT", nworker)
+  val () = write_count (ws, dna3, n, "GGTATTTTAATTTATAGT", nworker)
+//
+  var i: Nat = 0
+  val () = while (i < nworker) let
+    val _quit = $extval (work, "(void*)0")
+    val () = workshop_insert_work (ws, _quit) in i := i + 1
+  end // end of [val]
+  val () = workshop_wait_quit_all (ws)
+  val () = workshop_free_vt_exn (ws)
+in
+  // nothing
+end (* end of [main] *)
+
+(* ****** ****** *)
+
+(* end of [k-nucleotide3.dats] *)
