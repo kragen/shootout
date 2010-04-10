@@ -1,0 +1,79 @@
+<span class="hl slc">! The Computer Language Benchmarks Game</span>
+<span class="hl slc">! http://shootout.alioth.debian.org/</span>
+<span class="hl slc">!</span>
+<span class="hl slc">! Contributed by Jason Blevins</span>
+<span class="hl slc">! Adapted from Fortran versions by George R. Gonzalez and Simon Geard</span>
+<span class="hl slc">!</span>
+<span class="hl slc">! ifort -fast -openmp -o mandelbrot mandelbrot.f90</span>
+<span class="hl kwa">program</span> mandelbrot
+  <span class="hl kwa">implicit none</span>
+
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> dp <span class="hl sym">=</span> <span class="hl kwd">selected_real_kind</span><span class="hl sym">(</span><span class="hl num">15</span><span class="hl sym">,</span> <span class="hl num">307</span><span class="hl sym">)</span>
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> int8 <span class="hl sym">=</span> <span class="hl kwd">selected_int_kind</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">)</span>
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> iter <span class="hl sym">=</span> <span class="hl num">50</span>
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> limit2 <span class="hl sym">=</span> <span class="hl num">4.0</span>_dp
+  <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span><span class="hl num">8</span><span class="hl sym">) ::</span> argv
+  <span class="hl kwb">integer</span> <span class="hl sym">::</span> w<span class="hl sym">,</span> h<span class="hl sym">,</span> x<span class="hl sym">,</span> y<span class="hl sym">,</span> i<span class="hl sym">,</span> pos<span class="hl sym">,</span> bit_num
+  <span class="hl kwb">integer</span><span class="hl sym">(</span>int8<span class="hl sym">) ::</span> <span class="hl kwa">byte</span>
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> inv_w<span class="hl sym">,</span> inv_h<span class="hl sym">,</span> Zi<span class="hl sym">,</span> Zr<span class="hl sym">,</span> Ti<span class="hl sym">,</span> Tr<span class="hl sym">,</span> Cr<span class="hl sym">,</span> Ci
+  <span class="hl kwb">logical</span> <span class="hl sym">::</span> inside
+  <span class="hl kwb">integer</span><span class="hl sym">(</span>int8<span class="hl sym">),</span> <span class="hl kwa">dimension</span><span class="hl sym">(:,:),</span> allocatable <span class="hl sym">::</span> buf
+
+  <span class="hl slc">! read dimension from command line</span>
+  <span class="hl kwa">call</span> <span class="hl kwd">get_command_argument</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> argv<span class="hl sym">)</span>
+  <span class="hl kwa">read</span><span class="hl sym">(</span>argv<span class="hl sym">, *)</span> w
+  h <span class="hl sym">=</span> w
+
+  <span class="hl slc">! allocate output buffer</span>
+  <span class="hl kwd">allocate</span><span class="hl sym">(</span><span class="hl kwd">buf</span><span class="hl sym">(</span><span class="hl kwd">ceiling</span><span class="hl sym">(</span>w<span class="hl sym">/</span><span class="hl num">8.0</span>_dp<span class="hl sym">),</span>h<span class="hl sym">))</span>
+
+  <span class="hl slc">! precalculate constants</span>
+  inv_w <span class="hl sym">=</span> <span class="hl num">2.0</span>_dp <span class="hl sym">/</span> w
+  inv_h <span class="hl sym">=</span> <span class="hl num">2.0</span>_dp <span class="hl sym">/</span> h
+
+  <span class="hl slc">! pbm header</span>
+  <span class="hl kwa">write</span><span class="hl sym">(*,</span><span class="hl str">'(&quot;P4&quot;,/,i0,&quot; &quot;,i0)'</span><span class="hl sym">)</span> w<span class="hl sym">,</span> h
+
+  <span class="hl slc">!$OMP PARALLEL DO PRIVATE(y, x, bit_num, pos, byte, Zr, Cr, Ci, inside, i)</span>
+  <span class="hl kwa">do</span> y <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> h <span class="hl sym">-</span> <span class="hl num">1</span>
+     bit_num <span class="hl sym">=</span> <span class="hl num">8</span> <span class="hl slc">! when moving left to right, bits are numbered 7 to 0</span>
+     <span class="hl kwa">byte</span> <span class="hl sym">=</span> <span class="hl num">0</span>_int8
+     pos <span class="hl sym">=</span> <span class="hl num">0</span>
+     <span class="hl kwa">do</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> w <span class="hl sym">-</span> <span class="hl num">1</span>
+        bit_num <span class="hl sym">=</span> bit_num <span class="hl sym">-</span> <span class="hl num">1</span>
+
+        Zr <span class="hl sym">=</span> <span class="hl num">0.0</span>_dp<span class="hl sym">;</span> Zi <span class="hl sym">=</span> <span class="hl num">0.0</span>_dp<span class="hl sym">;</span> Tr <span class="hl sym">=</span> <span class="hl num">0.0</span>_dp<span class="hl sym">;</span> Ti <span class="hl sym">=</span> <span class="hl num">0.0</span>_dp<span class="hl sym">;</span>
+        Cr <span class="hl sym">=</span> inv_w <span class="hl sym">*</span> x <span class="hl sym">-</span> <span class="hl num">1.5</span>_dp
+        Ci <span class="hl sym">=</span> inv_h <span class="hl sym">*</span> y <span class="hl sym">-</span> <span class="hl num">1.0</span>_dp
+        inside <span class="hl sym">= .</span>true<span class="hl sym">.</span>
+        <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> iter
+           Zi <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">*</span> Zr <span class="hl sym">*</span> Zi <span class="hl sym">+</span> Ci
+           Zr <span class="hl sym">=</span> Tr <span class="hl sym">-</span> Ti <span class="hl sym">+</span> Cr
+           Ti <span class="hl sym">=</span> Zi <span class="hl sym">*</span> Zi
+           Tr <span class="hl sym">=</span> Zr <span class="hl sym">*</span> Zr
+           <span class="hl kwa">if</span> <span class="hl sym">(</span>Tr <span class="hl sym">+</span> Ti <span class="hl sym">&gt;</span> limit2<span class="hl sym">)</span> <span class="hl kwa">then</span>
+              inside <span class="hl sym">= .</span>false<span class="hl sym">.</span>
+              exit
+           <span class="hl kwa">end if</span>
+        <span class="hl kwa">end do</span>
+
+        <span class="hl slc">! We're in the set, set this bit to 0</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>inside<span class="hl sym">)</span> <span class="hl kwa">byte</span> <span class="hl sym">=</span> <span class="hl kwd">ibset</span><span class="hl sym">(</span><span class="hl kwa">byte</span><span class="hl sym">,</span> bit_num<span class="hl sym">)</span>
+
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>bit_num <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl sym">.</span>or<span class="hl sym">.</span> x <span class="hl sym">==</span> w <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+           <span class="hl slc">! All bits set or end of row, so store full byte</span>
+           pos <span class="hl sym">=</span> pos <span class="hl sym">+</span> <span class="hl num">1</span>
+           <span class="hl kwd">buf</span><span class="hl sym">(</span>pos<span class="hl sym">,</span>y<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) =</span> <span class="hl kwa">byte</span>
+           <span class="hl kwa">byte</span> <span class="hl sym">=</span> <span class="hl num">0</span>_int8
+           bit_num <span class="hl sym">=</span> <span class="hl num">8</span>
+        <span class="hl kwa">end if</span>
+     <span class="hl kwa">end do</span>
+  <span class="hl kwa">end do</span>
+  <span class="hl slc">!$OMP END PARALLEL DO</span>
+
+  <span class="hl slc">! print output</span>
+  <span class="hl kwa">do</span> y <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> h
+     <span class="hl kwa">write</span><span class="hl sym">(*,</span> <span class="hl str">'(10000000a1)'</span><span class="hl sym">,</span> advance<span class="hl sym">=</span><span class="hl str">'no'</span><span class="hl sym">)</span> <span class="hl kwd">buf</span><span class="hl sym">(:,</span>y<span class="hl sym">)</span>
+  <span class="hl kwa">end do</span>
+  <span class="hl kwd">deallocate</span><span class="hl sym">(</span>buf<span class="hl sym">)</span>
+<span class="hl kwa">end program</span> mandelbrot
