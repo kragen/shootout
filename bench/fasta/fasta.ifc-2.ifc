@@ -1,0 +1,178 @@
+! The Computer Language Benchmarks Game
+! http://shootout.alioth.debian.org/
+!
+! Contributed by Jason Blevins
+! Adapted from the C version by Petr Prokhorenkov
+
+program fasta
+  implicit none
+
+  integer, parameter :: IM = 139968
+  integer, parameter :: IA = 3877
+  integer, parameter :: IC = 29573
+
+  integer, parameter :: LINE_LEN = 60
+  integer, parameter :: LOOKUP_SIZE = 4096
+  real, parameter :: LOOKUP_SCALE = real(LOOKUP_SIZE - 1)
+
+  type :: random_t
+     integer :: state = 42
+  end type random_t
+
+  type :: amino_acid_t
+     character(len=1) :: sym
+     real :: prob
+     real :: cprob_lookup = 0.d0
+  end type amino_acid_t
+
+  type(amino_acid_t), dimension(15) :: amino_acid = (/ &
+       amino_acid_t('a', 0.27), &
+       amino_acid_t('c', 0.12), &
+       amino_acid_t('g', 0.12), &
+       amino_acid_t('t', 0.27), &
+       amino_acid_t('B', 0.02), &
+       amino_acid_t('D', 0.02), &
+       amino_acid_t('H', 0.02), &
+       amino_acid_t('K', 0.02), &
+       amino_acid_t('M', 0.02), &
+       amino_acid_t('N', 0.02), &
+       amino_acid_t('R', 0.02), &
+       amino_acid_t('S', 0.02), &
+       amino_acid_t('V', 0.02), &
+       amino_acid_t('W', 0.02), &
+       amino_acid_t('Y', 0.02)  &
+       /)
+
+  type(amino_acid_t), dimension(4) :: homo_sapiens = (/ &
+       amino_acid_t('a', 0.3029549426680), &
+       amino_acid_t('c', 0.1979883004921), &
+       amino_acid_t('g', 0.1975473066391), &
+       amino_acid_t('t', 0.3015094502008)  &
+       /)
+
+  character(len=:), parameter :: alu = &
+       "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTG" // &
+       "GGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGA" // &
+       "GACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAA" // &
+       "AATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAAT" // &
+       "CCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAAC" // &
+       "CCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTG" // &
+       "CACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+
+  character(len=60) :: arg
+  integer :: n
+  type(random_t) :: rand
+
+  if (command_argument_count() > 0) then
+     call get_command_argument(1, arg)
+     read(arg, *) n
+  else
+     n = 512
+  end if
+
+  call repeat(">ONE Homo sapiens alu", n*2)
+  call randomize(amino_acid, ">TWO IUB ambiguity codes", n*3, rand)
+  call randomize(homo_sapiens, ">THREE Homo sapiens frequency", n*5, rand)
+
+contains
+
+  ! Special version with result rescaled to LOOKUP_SCALE.
+  function random_next_lookup(random)
+    type(random_t), intent(inout) :: random
+    real :: random_next_lookup
+    random%state = mod(random%state*IA + IC, IM)
+    random_next_lookup = random%state * (LOOKUP_SCALE / IM)
+  end function random_next_lookup
+
+  subroutine repeat(title, n)
+    character(len=*), intent(in) :: title
+    integer, intent(in) :: n
+    integer, parameter :: length = len(alu)
+    character(len=length+LINE_LEN) :: buffer
+    integer :: nn, pos, bytes
+
+    nn = n
+    pos = 1
+
+    buffer(1:length) = alu
+    buffer(length+1:) = alu
+
+    print '(a)', title
+    do while (nn > 1)
+       if (nn > LINE_LEN) then
+          bytes = LINE_LEN
+       else
+          bytes = nn
+       end if
+
+       print '(a)', buffer(pos:pos+bytes-1)
+       pos = pos + bytes
+       if (pos > length) then
+          pos = pos - length
+       end if
+       nn = nn - bytes
+    end do
+  end subroutine repeat
+
+  subroutine fill_lookup(lookup, amino_acid)
+    integer, dimension(:), intent(out) :: lookup
+    type(amino_acid_t), dimension(:), intent(inout) :: amino_acid
+    real :: p
+    integer :: i, j
+
+    p = 0.d0
+
+    do i = 1, size(amino_acid)
+       p = p + amino_acid(i)%prob
+       amino_acid(i)%cprob_lookup = p*LOOKUP_SCALE
+    end do
+
+    ! Prevent rounding error.
+    amino_acid(size(amino_acid)).cprob_lookup = LOOKUP_SIZE - 1.d0
+
+    j = 1
+    do i = 1, LOOKUP_SIZE
+       do while (amino_acid(j)%cprob_lookup < i)
+          j = j + 1
+       end do
+       lookup(i) = j
+    end do
+  end subroutine fill_lookup
+
+  subroutine randomize(amino_acid, title, n, rand)
+    type(amino_acid_t), dimension(:), intent(inout) :: amino_acid
+    character(len=*), intent(in) :: title
+    integer, intent(in) :: n
+    type(random_t), intent(inout) :: rand
+    integer, dimension(LOOKUP_SIZE) :: lookup
+    character(len=LINE_LEN) :: line_buffer
+    integer :: i, j, u
+    real :: r
+
+    call fill_lookup(lookup, amino_acid)
+
+    print '(a)', title
+
+    j = 1
+    do i = 1, n
+       r = random_next_lookup(rand)
+       u = lookup(int(r))
+       do while (amino_acid(u)%cprob_lookup < r)
+          u = u + 1
+       end do
+
+       line_buffer(j:j) = amino_acid(u)%sym
+
+       if (j == LINE_LEN) then
+          print '(a)', line_buffer
+          j = 1
+       else
+          j = j + 1
+       end if
+    end do
+    if (j > 1) then
+       print '(a)', line_buffer(1:j-1)
+    end if
+  end subroutine randomize
+
+end program fasta
