@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.44 2010-03-31 02:00:59 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.45 2010-04-17 23:26:10 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -297,7 +297,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-@mv $< $@
 
 %.ifc_run: %.f90
-	-$(IFORT) -O3 -static $(IFCOPTS) $< -o $@
+	-$(IFORT) -O3 -fast $(IFCOPTS) $< -o $@
 
 
 ########################################
