@@ -1,2 +1,1 @@
-<p>Microsoft (R) Visual C# 2008 Compiler version 3.5.30729.1<br/>
-for Microsoft (R) .NET Framework version 3.5</p>
+<p>Microsoft (R) Visual C# 2010 Compiler version 4.0.30319.1</p>
