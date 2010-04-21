@@ -50,7 +50,7 @@ program fasta
        amino_acid_t('t', 0.3015094502008)  &
        /)
 
-  character(len=:), parameter :: alu = &
+  character(len=*), parameter :: alu = &
        "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTG" // &
        "GGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGA" // &
        "GACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAA" // &
@@ -128,11 +128,11 @@ contains
     end do
 
     ! Prevent rounding error.
-    amino_acid(size(amino_acid)).cprob_lookup = LOOKUP_SIZE - 1.d0
+    amino_acid(size(amino_acid))%cprob_lookup = LOOKUP_SIZE - 1.d0
 
     j = 1
     do i = 1, LOOKUP_SIZE
-       do while (amino_acid(j)%cprob_lookup < i)
+       do while (amino_acid(j)%cprob_lookup < i - 1)
           j = j + 1
        end do
        lookup(i) = j
@@ -156,7 +156,7 @@ contains
     j = 1
     do i = 1, n
        r = random_next_lookup(rand)
-       u = lookup(int(r))
+       u = lookup(int(r)+1)
        do while (amino_acid(u)%cprob_lookup < r)
           u = u + 1
        end do
