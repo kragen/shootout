@@ -101,7 +101,7 @@ function PF($d){
          if ($rounded>15){ return '<td class="num5"><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
          elseif ($rounded>1){ return '<td><sup>1</sup>/<sub>'.number_format($rounded).'</sub></td>'; }
          else { return '<td class="num2">&#177;</td>'; }
-      } else { 
+      } else {
          return '<td>&nbsp;</td>';
       }
    }
@@ -111,7 +111,7 @@ function PF($d){
 
 // PAGE ////////////////////////////////////////////////
 
-list($sorted,$ratios) = $Data;
+list($sorted,$ratios,$stats) = $Data;
 unset($Data);
 
 $Row = $Langs[$SelectedLang];
@@ -184,6 +184,31 @@ foreach($sorted as $k => $v){
 }
 ?>
 </table>
+
+<table>
+<tr><th colspan="8"><?=$ExplanatoryHeader;?></th></tr>
+
+<tr>
+<th><a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a></th>
+<th>&nbsp;|-</th>
+<th>&nbsp;|---</th>
+<th>&nbsp;25%</th>
+<th class="sort">median</th>
+<th>&nbsp;75%</th>
+<th>&nbsp;---|</th>
+<th>&nbsp;-|</th>
+</tr>
+<tr>
+<?
+printf('<th>(%s)</th>%s%s%s%s%s%s%s',
+      $TimeUsed,
+      PF($stats[STAT_MIN]), PF($stats[STAT_XLOWER]), PF($stats[STAT_LOWER]), PF($stats[STAT_MEDIAN]),
+      PF($stats[STAT_UPPER]), PF($stats[STAT_XUPPER]), PF($stats[STAT_MAX]));
+?>
+</tr>
+</table>
+
+
 <p><span class="num2">&#177;</span> read the measurements and then read the program source code.<br/></p>
 
 <h2><a href="#faster-programs-measurements" name="faster-programs-measurements">&nbsp;Step&nbsp;3&nbsp;:&nbsp;Are the <strong><?=$LangName;?> programs faster</strong>?</a> <em>Measurements.</em></h2>

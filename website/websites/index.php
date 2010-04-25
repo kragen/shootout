@@ -48,8 +48,84 @@ $nchoices = sizeof($choices);
 $chosen = $choices[$rotate%$nchoices];
 
 
+$siteTip = array(
+   'u32' => ' on one core x86 Ubuntu'
+   ,'u32q' =>' on quad-core x86 Ubuntu'
+   ,'u64' =>' on one core x64 Ubuntu'
+   ,'u64q' =>' on quad-core x64 Ubuntu'
+   );
+$chosenSiteTip = $siteTip[$chosen[1]];
+
+
+$testchoices = array(
+   'fannkuch'
+   ,'knucleotide'
+   ,'mandelbrot'
+   ,'nbody'
+   ,'fasta'
+   ,'spectralnorm'
+   ,'threadring'
+   ,'chameneosredux'
+   ,'regexdna'
+   ,'pidigits'
+   ,'binarytrees'
+   ,'revcomp'
+   );
+
+
+$testtips = array(  // SHOULD MATCH $testchoices
+   'repeatedly access a tiny integer-sequence'
+   ,'repeatedly update hashtables and k-nucleotide strings'
+   ,'generate a Mandelbrot set and write a portable bitmap'
+   ,'perform an N-body simulation of the Jovian planets'
+   ,'generate and write random DNA sequences'
+   ,'calculate an eigenvalue using the power method'
+   ,'repeatedly switch from thread to thread passing one token'
+   ,'repeatedly perform symmetrical thread rendezvous requests'
+   ,'match DNA 8-mers and substitute nucleotides for IUB code'
+   ,'calculate the digits of Pi with streaming arbitrary-precision arithmetic'
+   ,'allocate and deallocate many many binary trees'
+   ,'read DNA sequences and write their reverse-complement'
+   );
+
+$nchoices = sizeof($testchoices);
+$chosentest = $testchoices[$rotate%$nchoices];
+$chosenTip = 'Fastest in each programming language to '.$testtips[$rotate%$nchoices];
+
+
+
+$pagechoices = array(
+   array(
+      '/which-programming-languages-are-fastest.php'
+      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
+   ,array(
+      '/performance.php?test='.$chosentest
+      ,$chosenTip.$chosenSiteTip)
+   ,array(
+      '/code-used-time-used-shapes.php'
+      ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
+   ,array(
+      '/which-programming-languages-are-fastest.php'
+      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
+   ,array(
+      '/performance.php?test='.$chosentest
+      ,$chosenTip.$chosenSiteTip)
+   );
+
+$nchoices = sizeof($pagechoices);
+$chosenpage = $pagechoices[$rotate%$nchoices];
+
+$ChosenSite = $chosen[1];
+$ChosenUrl = $chosenpage[0];
+$ChosenTip = $chosenpage[1];
+
 unset($choices);
+unset($siteTip);
+unset($testchoices);
+unset($testtips);
+unset($pagechoices);
 ?>
+
 
 
 <div id="home">
@@ -134,6 +210,11 @@ foreach($langs as $i => $lang){
 unset($langs);
 ?>
 
+<h5><br/>Look closer, do more</h5>
+
+<p><br/>Read the source code. Contribute faster more elegant programs.</p>
+
+<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a></p>
 
 
 <p class="imgfooter">
