@@ -210,11 +210,17 @@ foreach($langs as $i => $lang){
 unset($langs);
 ?>
 
-<h5><br/>Look closer, do more</h5>
-
-<p><br/>Read the source code. Contribute faster more elegant programs.</p>
+<h5><br/><strong>Benchmarking programming languages</strong>?</h5>
+<p>How can we benchmark a programming language?<br/>
+We can't - we benchmark programming language implementations.</p>
+<p>How can we benchmark language implementations?<br/>
+We can't - <strong>we measure particular programs</strong>.</p><br/>
 
 <p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a></p>
+
+<p><br/>Read the source code. Contribute faster more elegant programs. Read the Help page.</p>
+
+
 
 
 <p class="imgfooter">
