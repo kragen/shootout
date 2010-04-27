@@ -105,6 +105,9 @@ $pagechoices = array(
       '/code-used-time-used-shapes.php'
       ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
    ,array(
+      '/performance.php?test='.$chosentest
+      ,$chosenTip.$chosenSiteTip)
+   ,array(
       '/which-programming-languages-are-fastest.php'
       ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
@@ -214,7 +217,7 @@ unset($langs);
 <p><br/>How can we benchmark a programming language?<br/>
 We can't - we benchmark programming language implementations.</p>
 <p>How can we benchmark language implementations?<br/>
-We can't - <strong>we measure particular programs</strong>.</p><br/>
+We can't - <strong>we measure particular programs</strong>.</p>
 
 <p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a></p>
 
