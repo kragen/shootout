@@ -1,9 +1,11 @@
 /* The Computer Language Benchmarks Game
  * http://shootout.alioth.debian.org/
  *
- * contributed by The Go Authors.
  * based on pidigits.c (by Paolo Bonzini & Sean Bartlett,
  *                      modified by Michael Mellor)
+ *
+ * contributed by The Go Authors.
+ * flag.Arg hack by Isaac Gouy
  */
 
 package main
@@ -71,7 +73,7 @@ func eliminate_digit(d int64) {
 }
 
 func printf(s string, arg ...interface{}) {
-   if !*silent {
+   if !silent {
       fmt.Printf(s, arg)
    }
 }
@@ -96,13 +98,13 @@ func main() {
       if m == 0 {
          printf("\t:%d\n", i)
       }
-      if i >= *n {
+      if i >= n {
          break
       }
       eliminate_digit(d)
    }
 
    if m > 0 {
-      printf("%s\t:%d\n", "          "[m:10], *n)
+      printf("%s\t:%d\n", "          "[m:10], n)
    }
 }
