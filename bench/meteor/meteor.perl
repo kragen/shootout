@@ -10,7 +10,6 @@ use warnings;
 use strict;
 use integer;
 use List::Util qw(min);
-use List::MoreUtils qw(uniq);
 
 my ($w, $h) = (5, 10);
 my $dir_no = 6;
@@ -76,7 +75,8 @@ sub convert {
         push @out, $out[-1] + $o;
     }
     
-    return [uniq(@out)];
+    my %unique;
+    return [grep { !$unique{$_}++ } @out];
 }
 
 sub get_footprints {
