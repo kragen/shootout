@@ -1,1 +1,1 @@
-<p>Python 3.1.1 (r311:74480, Feb 12 2010, 16:08:49)<br/>[GCC 4.4.1] on linux2</p>
+<p>Python 3.1.2 (r312:79147, May  9 2010, 22:20:58)<br/>[GCC 4.4.3] on linux2</p>
