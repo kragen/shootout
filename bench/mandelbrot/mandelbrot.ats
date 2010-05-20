@@ -34,7 +34,7 @@ viewtypedef WSptr (l:addr) = WORKSHOPptr (work, l)
 
 (* ****** ****** *)
 
-fun fwork {l:addr}
+fun fwork {l:agz}
   (ws: !WSptr l, wk: &work >> work?): int = let
   val wk = wk
   val pfun = __cast (wk) where {
@@ -76,7 +76,7 @@ fun output_byte (A: ptr, i: int, b: byte): void = "output_byte"
 
 (* ****** ****** *)
 
-fn mandelbrot {l:addr}
+fn mandelbrot {l:agz}
   (ws: !WSptr l, A: ptr, h: int, w: int): void = let
 
   val h_rcp = 1.0 / (i2d h) and w_rcp = 1.0 / (i2d w)
@@ -166,7 +166,7 @@ fn mandelbrot {l:addr}
   
   macdef byte = byte_of_int
   val () = output_all (ws, 0) where {
-    fun output_all {l:addr}
+    fun output_all {l:agz}
       (ws: !WSptr l, y: int):<cloref1> void =
       if y < h then let
         val () = workshop_insert_work (ws, f) where {

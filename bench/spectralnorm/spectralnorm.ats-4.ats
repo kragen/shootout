@@ -72,8 +72,8 @@ viewtypedef WSptr (l:addr) = WORKSHOPptr (work, l)
 
 (* ****** ****** *)
 
-fun fwork {l:addr}
-  (ws: !WSptr l, wk: &work >> work?): int = let
+fun fwork {lws:agz}
+  (ws: !WSptr lws, wk: &work >> work?): int = let
   val wk = wk
   val pfun = __cast (wk) where {
     extern castfn __cast
@@ -102,7 +102,7 @@ infix 0 +=; macdef += (x, d) = (,(x) := ,(x) + ,(d))
 
 (* ****** ****** *)
 
-fn eval_A_times_u {lws:addr} {N:nat} {l:addr} (
+fn eval_A_times_u {lws:agz} {N:nat} {l:addr} (
     ws: !WSptr lws, flag: int, N: int N, u: &darr N, tmp: &darr N
   ) : void = let
   val N2 = N / 2; stadef N2 = N / 2
@@ -172,7 +172,7 @@ fn eval_A_times_u {lws:addr} {N:nat} {l:addr} (
   val INC = (N+nworker-1)/nworker/64
   val INC = max (1, (int1_of_int)INC)
   val () = assert_errmsg (INC > 0, #LOCATION)
-  fun split {lws:addr} {i:nat | i <= N} {l,l_tmp:addr}
+  fun split {lws:agz} {i:nat | i <= N} {l,l_tmp:addr}
     (ws: !WSptr lws, i: int i, p_u: ptr l, p_tmp: ptr l_tmp):<cloref1> void =
     if i < N then let
       val i1 = min (i + INC, N)
@@ -190,7 +190,7 @@ end // end of [eval_A_times_u]
 
 (* ****** ****** *)
 
-fn eval_AtA_times_u {lws:addr} {N:nat} (
+fn eval_AtA_times_u {lws:agz} {N:nat} (
   ws: !WSptr lws, N: int N, u: &darr N, v: &darr N, tmp: &darr N
 ) : void = () where {
   val () = eval_A_times_u (ws, 0, N, u, tmp); val () = eval_A_times_u (ws, 1, N, tmp, v)
