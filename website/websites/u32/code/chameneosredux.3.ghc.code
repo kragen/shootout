@@ -1,0 +1,79 @@
+<span class="hl com">{- The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com">   Written by Tom Pledger, 13 Nov 2006. modified by Don Stewart</span>
+<span class="hl com">   Updated for chameneos-redux by Spencer Janssen, 27 Nov 2007</span>
+<span class="hl com">   Modified by Péter Diviánszky, 19 May 2010 -}</span>
+
+import Control.Concurrent
+import Control.Monad
+import Data.Char
+import Data.IORef
+import System.Environment
+import System.IO
+
+default<span class="hl sym">(</span>Int<span class="hl sym">)</span>
+
+data Colour <span class="hl sym">=</span> Blue <span class="hl sym">|</span> Red <span class="hl sym">|</span> Yellow deriving <span class="hl sym">(</span>Show<span class="hl sym">,</span> Eq<span class="hl sym">,</span> Enum<span class="hl sym">)</span>
+
+complement a b <span class="hl sym">|</span> a <span class="hl sym">==</span> b <span class="hl sym">=</span> a
+complement a b <span class="hl sym">=</span> case a of
+    Blue   <span class="hl sym">-&gt;</span> case b of Red  <span class="hl sym">-&gt;</span> Yellow<span class="hl sym">;</span> _ <span class="hl sym">-&gt;</span> Red
+    Red    <span class="hl sym">-&gt;</span> case b of Blue <span class="hl sym">-&gt;</span> Yellow<span class="hl sym">;</span> _ <span class="hl sym">-&gt;</span> Blue
+    Yellow <span class="hl sym">-&gt;</span> case b of Blue <span class="hl sym">-&gt;</span> Red<span class="hl sym">;</span>    _ <span class="hl sym">-&gt;</span> Blue
+
+type Chameneous <span class="hl sym">=</span> IORef Colour
+data MP <span class="hl sym">=</span> Nobody <span class="hl sym">!</span>Int <span class="hl sym">|</span> Somebody <span class="hl sym">!</span>Int <span class="hl sym">!</span>Chameneous <span class="hl sym">!(</span>MVar Chameneous<span class="hl sym">)</span>
+
+arrive mpv finish c0 <span class="hl sym">=</span> do
+    ch <span class="hl sym">&lt;-</span> newIORef c0
+    waker <span class="hl sym">&lt;-</span> newEmptyMVar
+    let inc x <span class="hl sym">= (</span>fromEnum <span class="hl sym">(</span>ch <span class="hl sym">==</span> x<span class="hl sym">) +)</span>
+        go <span class="hl sym">!</span>t <span class="hl sym">!</span>b <span class="hl sym">=</span> do
+            w <span class="hl sym">&lt;-</span> takeMVar mpv
+            case w of
+                Nobody <span class="hl num">0</span> <span class="hl sym">-&gt;</span> do
+                    putMVar mpv w
+                    putMVar finish <span class="hl sym">(</span>t<span class="hl sym">,</span> b<span class="hl sym">)</span>
+
+                Nobody q <span class="hl sym">-&gt;</span> do
+                    putMVar mpv $ Somebody q ch waker
+                    ch' <span class="hl sym">&lt;-</span> takeMVar waker
+                    go <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc ch' b
+
+                Somebody q ch' waker' <span class="hl sym">-&gt;</span> do
+                    c  <span class="hl sym">&lt;-</span> readIORef ch
+                    c' <span class="hl sym">&lt;-</span> readIORef ch'
+                    let <span class="hl sym">!</span>c'' <span class="hl sym">=</span> complement c c'
+                    writeIORef ch  c''
+                    writeIORef ch' c''
+                    putMVar waker' ch
+                    let <span class="hl sym">!</span>q' <span class="hl sym">=</span> q<span class="hl sym">-</span><span class="hl num">1</span>
+                    putMVar mpv $ Nobody q'
+                    go <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc ch' b
+    go <span class="hl num">0 0</span>
+
+showN <span class="hl sym">=</span> unwords . map <span class="hl sym">((</span>digits <span class="hl sym">!!)</span> . digitToInt<span class="hl sym">)</span> . show
+
+digits <span class="hl sym">=</span> words <span class="hl str">&quot;zero one two three four five six seven eight nine&quot;</span>
+
+run n cs <span class="hl sym">=</span> do
+    fs    <span class="hl sym">&lt;-</span> replicateM <span class="hl sym">(</span>length cs<span class="hl sym">)</span> newEmptyMVar
+    mpv   <span class="hl sym">&lt;-</span> newMVar $ Nobody n
+    zipWithM <span class="hl sym">((</span>forkIO .<span class="hl sym">)</span> . arrive mpv<span class="hl sym">)</span> fs cs
+    ns    <span class="hl sym">&lt;-</span> mapM takeMVar fs
+
+    putStrLn . map toLower . unwords . <span class="hl sym">([]:)</span> . map show $ cs
+    putStr . map toLower . unlines $ <span class="hl sym">[</span>unwords <span class="hl sym">[</span>show n<span class="hl sym">,</span> showN b<span class="hl sym">] | (</span>n<span class="hl sym">,</span> b<span class="hl sym">) &lt;-</span> ns<span class="hl sym">]</span>
+    putStrLn . <span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">++)</span> . showN . sum . map fst $ ns
+    putStrLn <span class="hl str">&quot;&quot;</span>
+
+main <span class="hl sym">=</span> do
+    putStrLn . map toLower . unlines $
+        <span class="hl sym">[</span>unwords <span class="hl sym">[</span>show a<span class="hl sym">,</span> <span class="hl str">&quot;+&quot;</span><span class="hl sym">,</span> show b<span class="hl sym">,</span> <span class="hl str">&quot;-&gt;&quot;</span><span class="hl sym">,</span> show $ complement a b<span class="hl sym">]</span>
+            <span class="hl sym">|</span> a <span class="hl sym">&lt;- [</span>Blue ..<span class="hl sym">],</span> b <span class="hl sym">&lt;- [</span>Blue ..<span class="hl sym">]]</span>
+
+    n <span class="hl sym">&lt;-</span> readIO . head <span class="hl sym">=&lt;&lt;</span> getArgs
+    run n <span class="hl sym">[</span>Blue ..<span class="hl sym">]</span>
+    run n <span class="hl sym">[</span>Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Red<span class="hl sym">,</span> Blue<span class="hl sym">]</span>
+
+
