@@ -77,7 +77,7 @@ foreach($score as $k => $v){
 <input type="submit" name="calc" value="reset" />
 </td></tr>
 
-<tr><th colspan="2">weight</th></tr>
+<tr><th>measure</th><th>weight</th></tr>
 <tr>
 <td><a href="<?=CORE_SITE;?>help.php#time">Time&nbsp;secs</a></td>
 <td><input type="text" size="2" name="xfullcpu" value="<?=$W['xfullcpu'];?>" /></td>
