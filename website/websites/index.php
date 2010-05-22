@@ -102,8 +102,8 @@ $pagechoices = array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
    ,array(
-      '/code-used-time-used-shapes.php'
-      ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
+      '/which-language-is-best.php'
+      ,'Compare programming languages using your choice of benchmarks and Time-used Memory-used Code-used'.$chosenSiteTip.'?')
    ,array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
