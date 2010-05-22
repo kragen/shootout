@@ -103,7 +103,7 @@ $pagechoices = array(
       ,$chosenTip.$chosenSiteTip)
    ,array(
       '/which-language-is-best.php'
-      ,'Compare programming languages using your choice of benchmarks and Time-used Memory-used Code-used'.$chosenSiteTip.'?')
+      ,'Which programming language is best using your choice of benchmarks and Time Memory Code-used'.$chosenSiteTip.'?')
    ,array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
@@ -115,7 +115,7 @@ $pagechoices = array(
       ,$chosenTip.$chosenSiteTip)
    ,array(
       '/which-language-is-best.php'
-      ,'Compare programming languages using your choice of benchmarks and Time-used Memory-used Code-used'.$chosenSiteTip.'?')
+      ,'Which programming language is best using your choice of benchmarks and Time Memory Code-used'.$chosenSiteTip.'?')
    );
 
 $nchoices = sizeof($pagechoices);
