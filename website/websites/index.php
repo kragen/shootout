@@ -102,8 +102,8 @@ $pagechoices = array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
    ,array(
-      '/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=0&xloc=1'
-      ,'Which programming languages have benchmark programs that use less source code'.$chosenSiteTip.'?')
+      '/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=1&xloc=0'
+      ,'Which programming languages have benchmark programs that use less memory'.$chosenSiteTip.'?')
    ,array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
@@ -114,8 +114,8 @@ $pagechoices = array(
       '/performance.php?test='.$chosentest
       ,$chosenTip.$chosenSiteTip)
    ,array(
-      '/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=1&xloc=0'
-      ,'Which programming languages have benchmark programs that use less memory'.$chosenSiteTip.'?')
+      '/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=0&xloc=1'
+      ,'Which programming languages have benchmark programs that use less source code'.$chosenSiteTip.'?')
    );
 
 $nchoices = sizeof($pagechoices);
