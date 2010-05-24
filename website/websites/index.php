@@ -95,6 +95,9 @@ $chosenTip = 'Fastest in each programming language to '.$testtips[$rotate%$nchoi
 
 
 $pagechoices = array(
+   ,array(
+      '/code-used-time-used-shapes.php'
+      ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
    array(
       '/which-programming-languages-are-fastest.php'
       ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
@@ -239,6 +242,6 @@ We can't - <strong>we measure particular programs</strong>.</p>
 </div>
 
 
-<? include_once("analyticstracking.php") ?>
+
 </body>
 </html>
