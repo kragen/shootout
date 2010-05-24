@@ -95,10 +95,10 @@ $chosenTip = 'Fastest in each programming language to '.$testtips[$rotate%$nchoi
 
 
 $pagechoices = array(
-   ,array(
+   array(
       '/code-used-time-used-shapes.php'
       ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
-   array(
+   ,array(
       '/which-programming-languages-are-fastest.php'
       ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
    ,array(
