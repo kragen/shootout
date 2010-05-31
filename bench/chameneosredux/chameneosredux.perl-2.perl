@@ -79,7 +79,6 @@ sub print_color_names
 
 
 my @colors : shared;
-my $ready : shared = 0;
 my $meetings : shared;
 my $first : shared = undef;
 my $second : shared = undef;
@@ -92,15 +91,14 @@ sub chameneos
    my $other = undef;
    
    while (1) {
-      lock $ready;
+      lock $meetings;
       last if ($meetings <= 0);
    
       if (not defined $first) {
          $first = $id;
-         do { cond_wait $ready } until ($ready);
+         cond_wait $meetings;
       } else {
-         $ready = 1;
-         cond_signal $ready;
+         cond_signal $meetings;
          
          $colors[$first] = $colors[$id] = complement($colors[$first], $colors[$id]);
          $met_self[$first]++ if ($first == $id);      
