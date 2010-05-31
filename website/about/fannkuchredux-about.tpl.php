@@ -12,6 +12,6 @@
 <p>The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."</p>
 <br />
 
-<p>In addition, record a checksum. Thanks to Oleg Mazurov for insisting on a checksum.</p>
+<p>Thanks to Oleg Mazurov for insisting on a checksum.</p>
 
 <p>The fannkuch benchmark is defined in <a href="http://www.apl.jhu.edu/~hall/text/Papers/Lisp-Benchmarking-and-Fannkuch.ps">Performing Lisp Analysis of the FANNKUCH Benchmark</a>, Kenneth R. Anderson and Duane Rettig (26KB postscript)</p>
