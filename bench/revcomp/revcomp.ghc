@@ -1,0 +1,87 @@
+{-# OPTIONS -O2 -fglasgow-exts #-}
+{-# LANGUAGE BangPatterns #-}
+--
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Sterling Clover
+-- Heavily inspired by contribution from Don Stewart
+-- Inlining improvements by Don Stewart.
+-- Heavily revised by Louis Wasserman.
+
+import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Internal
+import GHC.Base
+import GHC.Ptr
+import Foreign
+import GHC.IO
+
+main = S.getContents >>= 
+	clines (\ h b -> S.putStrLn h >> revcomp b >> writeFasta b)
+
+writeFasta t
+    | S.null t  = return ()
+    | otherwise = S.putStrLn l >> writeFasta r
+    where !(l,r) = S.splitAt 60 t
+
+clines :: (ByteString -> ByteString -> IO ()) -> ByteString -> IO ()
+clines run = clines' where
+      clines' !ps = case S.elemIndex '\n' ps of
+	  Just n1 -> let !ps' = S.drop (n1+1) ps in case S.elemIndex '>' ps' of
+		  Just n2 -> do
+		  	run (S.take n1 ps) (elimNewlines (S.take n2 ps'))
+			clines' (S.drop n2 ps')
+		  Nothing -> run (S.take n1 ps) (elimNewlines ps')
+
+elimNewlines :: ByteString -> ByteString
+elimNewlines (PS fp i n) = unsafeDupablePerformIO $ do
+	fDest <- mallocByteString n
+	withForeignPtr fDest $ \ dest -> withForeignPtr fp $ \ p ->
+	  let go !p !n !d = do
+		  q <- memchr p (c2w '\n') n
+		  if q == nullPtr then do
+		  	memcpy d p n
+		  	return (PS fDest 0 
+		  		(d `minusPtr` dest + fromIntegral n))
+		    else do
+			let l = fromIntegral (q `minusPtr` p)
+			memcpy d p l
+			go (q `plusPtr` 1) (n - 1 - l) 
+				(d `plusPtr` fromIntegral l)
+	  in go (p `plusPtr` i) (fromIntegral n) dest
+
+{-# INLINE comps #-}
+comps = Prelude.zipWith (\ a b -> (ord a, c2w b)) "AaCcGgTtUuMmRrYyKkVvHhDdBb" 
+	"TTGGCCAAAAKKYYRRMMBBDDHHVV"
+
+ca :: Ptr Word8
+ca = inlinePerformIO $ do
+       !a <- mallocArray 200
+       mapM_ (\ i -> pokeByteOff a (fromIntegral i) i ) [0..199::Word8]
+       mapM_ (uncurry (pokeByteOff a)) comps
+       return a
+
+comp :: Word# -> Word#
+comp c = rw8 ca (word2Int# c)
+
+revcomp (PS fp s (I# l)) = ca `seq` (withForeignPtr fp $ \p -> 
+	rc (p `plusPtr` s) 0# (l -# 1#))
+  where
+    rc :: Ptr Word8 -> Int# -> Int# -> IO ()
+    rc !p i j  = rc' i j
+        where
+          rc' i j
+              | i <# j = do
+                          let !x = rw8 p i
+                          ww8 p i (comp (rw8 p j))
+                          ww8 p j (comp x)
+                          rc' (i +# 1#) (j -# 1#)
+              | i ==# j = ww8 p i (comp (rw8 p i))
+              | otherwise =  return ()
+
+rw8 :: Ptr Word8 -> Int# -> Word#
+rw8 (Ptr a) i = case readWord8OffAddr# a i realWorld#  of (# _, x #) ->  x
+{-# INLINE rw8 #-}
+
+ww8 :: Ptr Word8 -> Int# -> Word# -> IO ()
+ww8 (Ptr a) i x  = IO $ \s -> case writeWord8OffAddr# a i x s of s2 -> (# s2, () #)
