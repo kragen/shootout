@@ -1,0 +1,125 @@
+{-# LANGUAGE BangPatterns, MagicHash #-}
+--
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Modified by Ryan Trinkle: 1) change from divInt# to uncheckedIShiftRA#
+--                           2) changed -optc-O to -optc-O3
+--                           3) added -optc-ffast-math
+-- Translation from Clean by Don Stewart
+-- Parallelized by Louis Wasserman
+--
+-- Should be compiled with:
+-- 	-O2 -fvia-c -optc-O3
+
+import System
+import Foreign.Marshal.Array
+import Foreign
+import Text.Printf
+import Control.Concurrent
+import Control.Monad
+import Data.ByteString.Internal
+import GHC.Base
+import GHC.Float
+import GHC.Int
+import GHC.Conc
+
+type Reals = Ptr Double
+
+main = do
+    n <- getArgs >>= readIO . head
+
+    u <- mallocArray n :: IO Reals
+    forM_ [0..n-1] $ \i -> pokeElemOff u i 1
+    v <- mallocArray n :: IO Reals
+    forM_ [0..n-1] $ \i -> pokeElemOff v i 0
+
+    powerMethod 10 n u v
+    printf "%.9f\n" (eigenvalue n u v 0 0 0)
+
+------------------------------------------------------------------------
+
+eigenvalue :: Int -> Reals -> Reals -> Int -> Double -> Double -> Double
+eigenvalue !n !u !v !i !vBv !vv
+    | i < n     = eigenvalue n u v (i+1) (vBv + ui * vi) (vv + vi * vi)
+    | otherwise = sqrt $! vBv / vv
+    where
+       ui = inlinePerformIO (peekElemOff u i)
+       vi = inlinePerformIO (peekElemOff v i)
+
+------------------------------------------------------------------------
+
+-- Essentially borrowed from the Java implementation.
+data CyclicBarrier = Cyclic {-# UNPACK #-} !Int {-# UNPACK #-} !(MVar (Int, [MVar ()]))
+
+await :: CyclicBarrier -> IO ()
+await (Cyclic k waitsVar) = do
+	(x, waits) <- takeMVar waitsVar
+	if x <= 1 then do
+		mapM_ (`putMVar` ()) waits
+		putMVar waitsVar (k, [])
+	  else do
+	  	var <- newEmptyMVar
+	  	putMVar waitsVar (x-1,var:waits)
+	  	takeMVar var
+
+newCyclicBarrier :: Int -> IO CyclicBarrier
+newCyclicBarrier k = liftM (Cyclic k) (newMVar (k, []))
+
+powerMethod :: Int -> Int -> Reals -> Reals -> IO ()
+powerMethod !z !n !u !v = allocaArray n $ \t -> do
+	let !nT = numCapabilities
+	let !chunk = n `quot` nT
+	barrier <- newCyclicBarrier nT
+	done <- newEmptyMVar
+	forM_ [0..nT-1] $ \ !i -> let
+		!l = chunk * i
+		!r = if i == nT - 1 then n else l + chunk
+		in forkIO $ do	
+			replicateM_ z $ do
+				timesAtAv t n u v l r
+				await barrier
+				timesAtAv t n v u l r
+				await barrier
+			putMVar done ()
+	replicateM_ nT (takeMVar done)
+
+-- multiply vector v by matrix A and then by matrix A transposed
+timesAtAv :: Reals -> Int -> Reals -> Reals -> Int -> Int -> IO ()
+timesAtAv !t !n !u !atau !l !r = do
+    timesAv  n u t l r
+    timesAtv n t atau l r
+
+timesAv :: Int -> Reals -> Reals -> Int -> Int -> IO ()
+timesAv !n !u !au !l !r = go l
+  where
+    go :: Int -> IO ()
+    go !i = when (i < r) $ do
+	let avsum !j !acc
+		| j < n = do
+				!uj <- peekElemOff u j
+				avsum (j+1) (acc + ((aij i j) * uj))
+		| otherwise = pokeElemOff au i acc >> go (i+1)
+	avsum 0 0
+
+timesAtv :: Int -> Reals -> Reals -> Int -> Int -> IO ()
+timesAtv !n !u !a !l !r = go l
+  where
+    go :: Int -> IO ()
+    go !i = when (i < r) $ do
+	let atvsum !j !acc 
+		| j < n	= do	!uj <- peekElemOff u j
+				atvsum (j+1) (acc + ((aij j i) * uj))
+		| otherwise = pokeElemOff a i acc >> go (i+1)
+	atvsum 0 0
+
+--
+-- manually unbox the inner loop:
+-- aij i j = 1 / fromIntegral ((i+j) * (i+j+1) `div` 2 + i + 1)
+--
+aij (I# i) (I# j) = D# (
+    case i +# j of
+        n -> case n *# (n+#1#) of
+                t -> case t `uncheckedIShiftRA#` 1# of
+                        u -> case u +# (i +# 1#) of
+                                r -> 1.0## /## (int2Double# r))
