@@ -1,0 +1,154 @@
+<span class="hl com">(*</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Contributed by Christophe TROESTLER</span>
+<span class="hl com"> * Enhanced by Christian Szegedy, Yaron Minsky.</span>
+<span class="hl com"> * Optimized &amp; parallelized by Mauricio Fernandez.</span>
+<span class="hl com"> * Optimized by Fabrice Le Fessant:</span>
+<span class="hl com"> *  - removed redundant allocations (z)</span>
+<span class="hl com"> *  - monomorphisation of invoke</span>
+<span class="hl com"> *</span>
+<span class="hl com"> *)</span>
+
+<span class="hl kwa">let</span> nworkers <span class="hl sym">=</span> <span class="hl num">16</span>
+<span class="hl kwa">let</span> niter <span class="hl sym">=</span> <span class="hl num">50</span>
+<span class="hl kwa">let</span> limit <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">.</span>
+
+<span class="hl kwa">type</span> z <span class="hl sym">= {</span>
+  <span class="hl kwa">mutable</span> tr <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+  <span class="hl kwa">mutable</span> ti <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+  <span class="hl kwa">mutable</span> zr <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+  <span class="hl kwa">mutable</span> zi <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+  <span class="hl kwa">mutable</span> cr <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+  <span class="hl kwa">mutable</span> ci <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+  limit2 <span class="hl sym">:</span> <span class="hl kwb">float</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+
+	  <span class="hl kwa">let</span> nargs <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>length <span class="hl kwc">Sys</span><span class="hl sym">.</span>argv
+  <span class="hl kwa">let</span> default_w <span class="hl sym">=</span> <span class="hl num">16_000</span>
+  <span class="hl kwa">let</span> w <span class="hl sym">=</span> <span class="hl kwa">if</span> nargs <span class="hl sym">&lt;&gt;</span> <span class="hl num">2</span> <span class="hl kwa">then</span> default_w <span class="hl kwa">else try</span> int_of_string<span class="hl sym">(</span><span class="hl kwc">Array</span><span class="hl sym">.</span>get <span class="hl kwc">Sys</span><span class="hl sym">.</span>argv <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">with</span> _ <span class="hl sym">-&gt;</span> default_w
+  <span class="hl kwa">let</span> h <span class="hl sym">=</span> w
+  <span class="hl kwa">let</span> fw <span class="hl sym">=</span> <span class="hl kwb">float</span> w
+  <span class="hl kwa">let</span> fh <span class="hl sym">=</span> <span class="hl kwb">float</span> h
+  <span class="hl kwa">let</span> limit2 <span class="hl sym">=</span> limit <span class="hl sym">*.</span> limit
+  <span class="hl kwa">let</span> byte <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl num">0</span>
+  <span class="hl kwa">let</span> b <span class="hl sym">=</span> <span class="hl kwc">String</span><span class="hl sym">.</span>create <span class="hl sym">(</span>w <span class="hl sym">*</span> h<span class="hl sym">)</span>
+  <span class="hl kwa">let</span> fi <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">. /.</span> fh
+  <span class="hl kwa">let</span> fr <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">. /.</span> fw
+  <span class="hl kwa">let</span> pos <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl num">0</span>
+  <span class="hl kwa">let</span> z <span class="hl sym">= {</span> zr <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.;</span> zi <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.;</span> tr <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.;</span> ti <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.;</span> cr <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.;</span> ci <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.;</span> limit2 <span class="hl sym">=</span> limit2<span class="hl sym">; }</span>
+
+<span class="hl com">(*</span>
+<span class="hl com">  let rec iter_i i z =</span>
+<span class="hl com">    if i = 0 then 1 else</span>
+<span class="hl com">      let ci = z.ci in</span>
+<span class="hl com">      let cr = z.cr in</span>
+<span class="hl com">      let zi2 = 2. *. z.zr *. z.zi +. ci in</span>
+<span class="hl com">      let zr2 = z.tr -. z.ti +. cr in</span>
+<span class="hl com">      let tr2 = zr2 *. zr2 in</span>
+<span class="hl com">      let ti2 = zi2 *. zi2 in</span>
+<span class="hl com">      let limit2 = z.limit2 in</span>
+<span class="hl com">        if tr2 +. ti2 &gt; limit2 then 0 else</span>
+<span class="hl com">	  if i = 1 then 1 else</span>
+<span class="hl com">	    let zi3 = 2. *. zr2 *. zi2 +. ci in</span>
+<span class="hl com">	    let zr3 = tr2 -. ti2 +. cr in</span>
+<span class="hl com">	    let tr3 = zr3 *. zr3 in</span>
+<span class="hl com">	    let ti3 = zi3 *. zi3 in</span>
+<span class="hl com">	      if tr3 +. ti3 &gt; limit2 then 0 else</span>
+<span class="hl com">		if i = 2 then 1 else</span>
+<span class="hl com">			begin</span>
+<span class="hl com">			  z.zr &lt;- zr3;</span>
+<span class="hl com">			  z.zi &lt;- zi3;</span>
+<span class="hl com">			  z.tr &lt;- tr3;</span>
+<span class="hl com">			  z.ti &lt;- ti3;</span>
+<span class="hl com">			  iter_i (i-2) z</span>
+<span class="hl com">			end</span>
+<span class="hl com">*)</span>
+
+  <span class="hl kwa">let rec</span> iter_i i z <span class="hl sym">=</span>
+    <span class="hl kwa">if</span> i <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl num">1</span> <span class="hl kwa">else</span>
+      <span class="hl kwa">let</span> ci <span class="hl sym">=</span> z<span class="hl sym">.</span>ci <span class="hl kwa">in</span>
+      <span class="hl kwa">let</span> cr <span class="hl sym">=</span> z<span class="hl sym">.</span>cr <span class="hl kwa">in</span>
+      <span class="hl kwa">let</span> zi2 <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">. *.</span> z<span class="hl sym">.</span>zr <span class="hl sym">*.</span> z<span class="hl sym">.</span>zi <span class="hl sym">+.</span> ci <span class="hl kwa">in</span>
+      <span class="hl kwa">let</span> zr2 <span class="hl sym">=</span> z<span class="hl sym">.</span>tr <span class="hl sym">-.</span> z<span class="hl sym">.</span>ti <span class="hl sym">+.</span> cr <span class="hl kwa">in</span>
+      <span class="hl kwa">let</span> tr2 <span class="hl sym">=</span> zr2 <span class="hl sym">*.</span> zr2 <span class="hl kwa">in</span>
+      <span class="hl kwa">let</span> ti2 <span class="hl sym">=</span> zi2 <span class="hl sym">*.</span> zi2 <span class="hl kwa">in</span>
+      <span class="hl kwa">let</span> limit2 <span class="hl sym">=</span> z<span class="hl sym">.</span>limit2 <span class="hl kwa">in</span>
+        <span class="hl kwa">if</span> tr2 <span class="hl sym">+.</span> ti2 <span class="hl sym">&gt;</span> limit2 <span class="hl kwa">then</span> <span class="hl num">0</span> <span class="hl kwa">else</span>
+	  <span class="hl kwa">if</span> i <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl kwa">then</span> <span class="hl num">1</span> <span class="hl kwa">else</span>
+	    <span class="hl kwa">begin</span>
+	      z<span class="hl sym">.</span>zr <span class="hl sym">&lt;-</span> zr2<span class="hl sym">;</span>
+	      z<span class="hl sym">.</span>zi <span class="hl sym">&lt;-</span> zi2<span class="hl sym">;</span>
+	      z<span class="hl sym">.</span>tr <span class="hl sym">&lt;-</span> tr2<span class="hl sym">;</span>
+	      z<span class="hl sym">.</span>ti <span class="hl sym">&lt;-</span> ti2<span class="hl sym">;</span>
+	      iter_i <span class="hl sym">(</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> z
+	    <span class="hl kwa">end</span>
+
+
+  <span class="hl kwa">let</span> crs <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>init w <span class="hl sym">(</span><span class="hl kwa">fun</span> x <span class="hl sym">-&gt;</span> fr <span class="hl sym">*.</span> <span class="hl kwb">float</span> x <span class="hl sym">-.</span> <span class="hl num">1.5</span><span class="hl sym">)</span>
+  <span class="hl kwa">let</span> need_more <span class="hl sym">=</span> w <span class="hl kwa">land</span> <span class="hl num">7</span> <span class="hl sym">!=</span> <span class="hl num">0</span>
+  <span class="hl kwa">let</span> offset <span class="hl sym">=</span> <span class="hl num">8</span><span class="hl sym">-</span>w <span class="hl kwa">land</span> <span class="hl num">7</span>
+
+  <span class="hl kwa">let</span> mandelbrot ymin ymax <span class="hl sym">=</span>
+    <span class="hl kwa">for</span> y <span class="hl sym">=</span> ymin <span class="hl kwa">to</span> ymax <span class="hl kwa">do</span>
+      z<span class="hl sym">.</span>ci <span class="hl sym">&lt;- (</span>fi <span class="hl sym">*.</span> <span class="hl kwb">float</span> y <span class="hl sym">-.</span> <span class="hl num">1</span><span class="hl sym">.);</span>
+      <span class="hl kwa">for</span> x <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> w <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+	z<span class="hl sym">.</span>cr <span class="hl sym">&lt;-</span> crs<span class="hl sym">.(</span>x<span class="hl sym">);</span>
+	z<span class="hl sym">.</span>zr <span class="hl sym">&lt;-</span> <span class="hl num">0</span><span class="hl sym">.;</span>
+	z<span class="hl sym">.</span>zi <span class="hl sym">&lt;-</span> <span class="hl num">0</span><span class="hl sym">.;</span>
+	z<span class="hl sym">.</span>tr <span class="hl sym">&lt;-</span> <span class="hl num">0</span><span class="hl sym">.;</span>
+	z<span class="hl sym">.</span>ti <span class="hl sym">&lt;-</span> <span class="hl num">0</span><span class="hl sym">.;</span>
+	<span class="hl kwa">let</span> bit <span class="hl sym">=</span> iter_i niter z <span class="hl kwa">in</span>
+
+          byte <span class="hl sym">:= (!</span>byte <span class="hl kwa">lsl</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">lor</span> bit<span class="hl sym">;</span>
+          <span class="hl kwa">if</span> x <span class="hl kwa">land</span> <span class="hl num">7</span> <span class="hl sym">=</span> <span class="hl num">7</span> <span class="hl kwa">then begin</span>
+	    b<span class="hl sym">.[!</span>pos<span class="hl sym">] &lt;-  (</span><span class="hl kwc">Char</span><span class="hl sym">.</span>unsafe_chr <span class="hl sym">!</span>byte<span class="hl sym">);</span>
+	    incr pos
+	  <span class="hl kwa">end</span>
+      <span class="hl kwa">done</span><span class="hl sym">;</span>
+      <span class="hl kwa">if</span> need_more <span class="hl kwa">then</span> <span class="hl com">(* the row doesnt divide evenly by 8*)</span>
+	<span class="hl kwa">begin</span>
+	  b<span class="hl sym">.[!</span>pos<span class="hl sym">] &lt;-  (</span><span class="hl kwc">Char</span><span class="hl sym">.</span>unsafe_chr <span class="hl sym">(!</span>byte <span class="hl kwa">lsl</span> offset<span class="hl sym">));</span>
+	  incr pos<span class="hl sym">;</span>
+	<span class="hl kwa">end</span><span class="hl sym">;</span>
+      byte <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl kwa">done</span>
+
+<span class="hl kwa">let</span> dy <span class="hl sym">=</span> h <span class="hl sym">/</span> nworkers
+
+<span class="hl com">(* semi-standard function for parallelism *)</span>
+<span class="hl kwa">let</span> invoke <span class="hl sym">(</span>ymin<span class="hl sym">,</span> ymax<span class="hl sym">) :</span> <span class="hl kwb">unit</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">'b</span> <span class="hl sym">=</span>
+  <span class="hl kwa">let</span> expected_size  <span class="hl sym">= ( (</span>w<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">8</span> <span class="hl sym">+</span> <span class="hl kwa">if</span> w <span class="hl kwa">land</span> <span class="hl num">7</span> <span class="hl sym">&lt;&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span> <span class="hl num">1</span> <span class="hl kwa">else</span> <span class="hl num">0</span><span class="hl sym">) * (</span>ymax <span class="hl sym">-</span> ymin <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)</span> <span class="hl kwa">in</span>
+  <span class="hl kwa">let</span> input<span class="hl sym">,</span> out <span class="hl sym">=</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>pipe<span class="hl sym">()</span> <span class="hl kwa">in</span>
+  <span class="hl kwa">match</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>fork<span class="hl sym">()</span> <span class="hl kwa">with</span>
+  <span class="hl sym">| -</span><span class="hl num">1</span> <span class="hl sym">-&gt;</span> <span class="hl kwa">assert false</span>
+  <span class="hl sym">|</span> <span class="hl num">0</span> <span class="hl sym">-&gt;</span>
+      <span class="hl kwc">Unix</span><span class="hl sym">.</span>close input<span class="hl sym">;</span>
+      mandelbrot ymin ymax<span class="hl sym">;</span>
+      <span class="hl kwa">let</span> out <span class="hl sym">=</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>out_channel_of_descr out <span class="hl kwa">in</span>
+	output out b <span class="hl num">0</span> expected_size<span class="hl sym">;</span>
+        close_out out<span class="hl sym">;</span>
+        exit <span class="hl num">0</span>
+  <span class="hl sym">|</span> pid <span class="hl sym">-&gt;</span>
+      <span class="hl kwc">Unix</span><span class="hl sym">.</span>close out<span class="hl sym">;</span>
+      <span class="hl kwa">let</span> input <span class="hl sym">=</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>in_channel_of_descr input <span class="hl kwa">in</span>
+	<span class="hl kwa">fun</span> <span class="hl sym">() -&gt;</span>
+	  really_input input b <span class="hl num">0</span> expected_size<span class="hl sym">;</span>
+	  expected_size
+
+  <span class="hl kwa">let</span> _ <span class="hl sym">=</span>
+
+    <span class="hl kwa">let</span> y <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl num">0</span> <span class="hl kwa">in</span>
+    <span class="hl kwa">let</span> rs <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>init <span class="hl sym">(</span>nworkers <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+      <span class="hl sym">(</span><span class="hl kwa">fun</span> _ <span class="hl sym">-&gt;</span>
+	 <span class="hl kwa">let</span> y'<span class="hl sym">= !</span>y <span class="hl sym">+</span> dy <span class="hl kwa">in</span>
+	 <span class="hl kwa">let</span> r <span class="hl sym">= (!</span>y<span class="hl sym">,</span> y'<span class="hl sym">)</span> <span class="hl kwa">in</span>
+	   y <span class="hl sym">:=</span> y'<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+	   r<span class="hl sym">)</span> <span class="hl kwa">in</span>
+    <span class="hl kwa">let</span> workers <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>map invoke <span class="hl sym">(</span><span class="hl kwc">Array</span><span class="hl sym">.</span>append rs <span class="hl sym">[|!</span>y<span class="hl sym">,</span> h<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">|])</span> <span class="hl kwa">in</span>
+      <span class="hl kwc">Printf</span><span class="hl sym">.</span>printf <span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%i %i</span><span class="hl esc">\n</span><span class="hl str">&quot;</span> w h<span class="hl sym">;</span>
+      <span class="hl kwc">Array</span><span class="hl sym">.</span>iter <span class="hl sym">(</span><span class="hl kwa">fun</span> w <span class="hl sym">-&gt;</span>
+		    <span class="hl kwa">let</span> expected_size <span class="hl sym">=</span> w <span class="hl sym">()</span> <span class="hl kwa">in</span>
+		    output stdout b <span class="hl num">0</span> expected_size<span class="hl sym">)</span> workers

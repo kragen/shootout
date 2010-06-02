@@ -28,7 +28,7 @@ let uppercase line =
     let dna =
       let is_not_three s = String.length s < 6 || String.sub s 0 6 <> ">THREE" in
 	while is_not_three(input_line stdin) do () done;
-	let buf = Buffer.create 130000000 in
+	let buf = Buffer.create 130_000_000 in
 	  (* Skip possible comment *)
 	  (try
 	     while true do
@@ -49,13 +49,13 @@ let uppercase line =
 	  Buffer.contents buf
 
 
-    module K31 = struct
+    module K15 = struct
       type t = int
       let equal k1 k2 = k1 = k2
       let hash n = n
     end
 
-    module K32 = struct
+    module K16 = struct
       type t = int * int
       let equal (a1,a2) (b1,b2) = a1 = b1 && a2 = b2
       let hash (a1, _) = a1
@@ -65,11 +65,18 @@ let uppercase line =
       mutable count : int;
     }
 
-    let c = 0x40000 - 1
-    module H31 = Hashtbl.Make(K31)
-    module H32 = Hashtbl.Make(K32)
-    let h31 = H31.create c
-    let h32 = H32.create c
+    let threshold15 =
+      match Sys.word_size with
+	  32 -> 15
+	| 64 -> 31
+	| _ -> assert false
+    let threshold16 = threshold15 + 1
+
+    let c = 0x40000-1
+    module H15 = Hashtbl.Make(K15)
+    module H16 = Hashtbl.Make(K16)
+    let h15 = H15.create c
+    let h16 = H16.create c
 
     let rec pack_word n k h =
       let b = Char.code dna.[n] in
@@ -78,12 +85,12 @@ let uppercase line =
 	  pack_word (n+1) (k-1) h
 	else h
 
-    let pack31 k n =
+    let pack15 k n =
       pack_word n k 0
 
-    let pack32 k n =
-      let h1 = pack_word n 31 0 in
-      let h2 = pack_word (n+31) (k-31) 0 in
+    let pack16 k n =
+      let h1 = pack_word n threshold15 0 in
+      let h2 = pack_word (n+ threshold15) (k- threshold15) 0 in
 	(h1, h2)
 
     let rec pack_word_in dna n k h =
@@ -94,14 +101,14 @@ let uppercase line =
 	  pack_word_in dna (n+1) (k-1) h
 	else h
 
-    let pack_key31 seq =
+    let pack_key15 seq =
       let k = String.length seq in
 	pack_word_in seq 0 k 0
 
-    let pack_key32 seq =
+    let pack_key16 seq =
       let k = String.length seq in
-      let h1 = pack_word_in seq 0 31 0 in
-      let h2 = pack_word_in seq 31 (k-31) 0 in
+      let h1 = pack_word_in seq 0 threshold15 0 in
+      let h2 = pack_word_in seq threshold15 (k- threshold15) 0 in
 	(h1, h2)
 
     let char = [| 'A'; 'T'; 'C'; 'G' |]
@@ -112,79 +119,79 @@ let uppercase line =
 	if k > 1 then
 	  unpack (h lsr 2) s pos (k-1)
 
-    let unpack31 k h1 =
+    let unpack15 k h1 =
       let s = String.create k in
 	unpack h1 s k k;
 	s
 
-    let unpack32 k (h1, h2) =
+    let unpack16 k (h1, h2) =
       let s = String.create k in
-	unpack h1 s 31 31;
-	unpack h2 s k (k-31);
+	unpack h1 s threshold15 threshold15;
+	unpack h2 s k (k- threshold15);
 	s
 
-    let count31 k =
+    let count15 k =
       for i = 0 to String.length dna - k - 1 do
-	let packed = pack31 k i in
+	let packed = pack15 k i in
 	  try
-	    let key = H31.find h31 packed in
+	    let key = H15.find h15 packed in
 	      key.count <- key.count + 1
 	  with Not_found ->
-	    H31.add h31 packed { count = 1 }
+	    H15.add h15 packed { count = 1 }
       done
 
-    let count32 k =
+    let count16 k =
       for i = 0 to String.length dna - k - 1 do
-	let packed = pack32 k i in
+	let packed = pack16 k i in
 	  try
-	    let key = H32.find h32 packed in
+	    let key = H16.find h16 packed in
 	      key.count <- key.count + 1
 	  with Not_found ->
-	    H32.add h32 packed { count = 1 }
+	    H16.add h16 packed { count = 1 }
       done
 
     let count k =
-      if k < 32 then count31 k else count32 k
+      if k < threshold16 then count15 k else count16 k
 
     let compare_freq ((k1:string),(f1:float)) (k2, f2) =
       if f1 > f2 then -1 else if f1 < f2 then 1 else String.compare k1 k2
 
-    let write_frequencies31 k =
-      count31 k;
-      let tot = float(H31.fold (fun _ n t -> n.count + t) h31 0) in
+    let write_frequencies15 k =
+      count15 k;
+      let tot = float(H15.fold (fun _ n t -> n.count + t) h15 0) in
       let frq =
-	H31.fold (fun h n l ->
-		  (unpack31 k h, 100. *. float n.count /. tot) :: l) h31 [] in
+	H15.fold (fun h n l ->
+		  (unpack15 k h, 100. *. float n.count /. tot) :: l) h15 [] in
       let frq = List.sort compare_freq frq in
 	String.concat ""
 	  (List.map (fun (k,f) -> Printf.sprintf "%s %.3f\n" k f) frq)
 
-    let write_frequencies32 k =
-      count32 k;
-      let tot = float(H32.fold (fun _ n t -> n.count + t) h32 0) in
+    let write_frequencies16 k =
+      count16 k;
+      let tot = float(H16.fold (fun _ n t -> n.count + t) h16 0) in
       let frq =
-	H32.fold (fun h n l ->
-		  (unpack32 k h, 100. *. float n.count /. tot) :: l) h32 [] in
+	H16.fold (fun h n l ->
+		  (unpack16 k h, 100. *. float n.count /. tot) :: l) h16 [] in
       let frq = List.sort compare_freq frq in
 	String.concat ""
 	  (List.map (fun (k,f) -> Printf.sprintf "%s %.3f\n" k f) frq)
 
-    let write_count31 k seq =
-	count31 k;
-	Printf.sprintf "%d\t%s" (try (H31.find h31 (pack_key31 seq)).count with Not_found -> 0) seq
+    let write_count15 k seq =
+	count15 k;
+	Printf.sprintf "%d\t%s" (try (H15.find h15 (pack_key15 seq)).count with Not_found -> 0) seq
 
-    let write_count32 k seq =
-	count32 k;
-	Printf.sprintf "%d\t%s" (try (H32.find h32 (pack_key32 seq)).count with Not_found -> 0) seq
+    let write_count16 k seq =
+	count16 k;
+	Printf.sprintf "%d\t%s" (try (H16.find h16 (pack_key16 seq)).count with Not_found -> 0) seq
 
     let write_frequencies k =
-	if k < 32 then write_frequencies31 k
-	else write_frequencies32 k
+	if k < threshold16 then write_frequencies15 k
+	else write_frequencies16 k
 
     let write_count seq =
       let k = String.length seq in
-	if k < 32 then write_count31 k seq
-	else write_count32 k seq
+	if k < threshold16 then write_count15 k seq
+	else write_count16 k seq
 
     type t = Size of int | Dna of string
 
