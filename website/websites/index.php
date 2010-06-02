@@ -58,7 +58,7 @@ $chosenSiteTip = $siteTip[$chosen[1]];
 
 
 $testchoices = array(
-   'fannkuch'
+   'fannkuchredux'
    ,'knucleotide'
    ,'mandelbrot'
    ,'nbody'
