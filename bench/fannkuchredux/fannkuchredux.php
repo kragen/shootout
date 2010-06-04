@@ -13,7 +13,7 @@ function Fannkuch($n){
       $q0 = $p[0];                                          // Cache 0th element.
       if ($q0 != 0){
          for($i=1; $i<$n; $i++) $q[$i] = $p[$i];            // Work on a copy.
-         var $flips = 1;
+         $flips = 1;
          do { 
             $qq = $q[$q0]; 
             if ($qq == 0){                                  // ... until 0th element is 0.
@@ -37,7 +37,7 @@ function Fannkuch($n){
          for($i=2; $i<$n; $i++){ 
 	    $sx = $s[$i];
 	    if ($sx != 0){ $s[$i] = $sx-1; break; }
-	    if ($i == $m) return array(sum,maxflips);       // Out of permutations.
+	    if ($i == $m) return array($sum,$maxflips);     // Out of permutations.
 	    $s[$i] = $i;
 	    // Rotate 0<-...<-i+1.
 	    $t = $p[0]; for($j=0; $j<=$i; $j++){ $p[$j] = $p[$j+1]; } $p[$i+1] = $t;
@@ -48,6 +48,6 @@ function Fannkuch($n){
 
 $n = $argv[1];
 list($checksum,$pf) = Fannkuch($n);
-printf("(%d)\nPfannkuchen(%d) = %d", $checksum, $n, $pf);
+printf("%d\nPfannkuchen(%d) = %d", $checksum, $n, $pf);
 ?>
 
