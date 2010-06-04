@@ -1,0 +1,139 @@
+{ The Computer Language Benchmarks Game
+  http://shootout.alioth.debian.org
+
+  contributed by Ales Katona
+  modified by Vincent Snijders
+  optimized and multithreaded by Jean de La Taille
+}
+
+program mandelbrot;
+
+uses
+  {$ifdef unix}cthreads,{$endif}
+  sysUtils, dateUtils, math;
+
+const
+  Limit = 4;
+
+var
+  n, dimx, dimy : longint;
+  TextBuf: array of byte;
+  Cy, StepX, StepY: double;
+
+type
+  mem = record
+    Cy : double;
+    from_y, to_y : longint;
+  end;
+  pmem = ^mem;
+
+function subThread(p: pointer) : longint;
+var
+  x, y, from_y, to_y, buf_index, i: Longint;
+  Zr, Zi, Ti, Tr: Double;
+  Cy, Cx: double;
+  bits: Longint;
+  bit: Longint;
+begin
+  Cy := pmem(p)^.Cy;
+  from_y := pmem(p)^.from_y;
+  to_y := pmem(p)^.to_y;
+
+  buf_index := from_y * dimx;
+
+  for y := from_y to to_y do
+  begin
+    Cx := -1.5;
+    bit := 128; // 1000 0000
+    bits := 0;
+    for x := 0 to n do
+    begin
+
+      Zr := 0;
+      Zi := 0;
+      Tr := 0;
+      Ti := 0;
+      for i := 0 to 50 do
+      begin
+        Zi := 2 * Zr * Zi + Cy;
+        Zr := Tr - Ti + Cx;
+        Ti := Zi * Zi;
+        Tr := Zr * Zr;
+        if (Tr + Ti >= limit) then
+        begin
+          bits := bits or bit;
+          break;
+        end;
+      end;
+
+      bit := bit >> 1;
+      if (bit = 0) then
+      begin
+        TextBuf[buf_index] := not bits;
+        buf_index := buf_index + 1;
+        bits := 0;
+        bit := 128;
+      end;
+      Cx := Cx + StepX;
+    end;
+    if (bit <> 128) then
+      TextBuf[buf_index] := not bits;
+
+    Cy := Cy + StepY;
+  end;
+
+  subThread := 0;
+end;
+
+procedure run;
+var
+  i, l, x, y, buf_index: Longint;
+  tt : array[0..3] of TThreadID;
+  m : array[0..3] of mem;
+  stepL : longint;
+begin
+  StepX := 2 / n;
+  StepY := 2 / n;
+  Cy := -1;
+  n := n - 1;
+
+  l := 0;
+  stepL := floor(n / 4);
+
+  for i := 0 to 2 do
+  begin
+    m[i].Cy := Cy + (l * StepY);
+    m[i].from_y := l;
+    m[i].to_y := l + stepL - 1;
+    tt[i] := BeginThread(@subThread, @m[i]);
+    l := l + stepL;
+  end;
+  m[3].Cy := Cy + (l * StepY);
+  m[3].from_y := l;
+  m[3].to_y := n;
+  tt[3] := BeginThread(@subThread, @m[3]);
+
+  for i := 0 to 3 do
+    WaitForThreadTerminate(tt[i], 0);
+
+  buf_index := 0;
+  for y := 0 to n do
+    for x := 0 to dimx - 1 do
+    begin
+      write(chr(TextBuf[buf_index]));;
+      buf_index := succ(buf_index);
+    end;
+end;
+
+begin
+  Val(ParamStr(1), n);
+  write('P4', chr(10), n, ' ', n, chr(10));
+
+  dimx := Ceil(n / 8);
+  dimy := n;
+  SetLength(TextBuf, dimx * dimy);
+
+  run;
+end.
+
+
