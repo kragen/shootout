@@ -10,7 +10,10 @@
 -- Parallelized by Louis Wasserman
 --
 -- Should be compiled with:
--- 	-O2 -fvia-c -optc-O3
+-- 	-threaded -funbox-strict-fields -O2 -fvia-c -optc-O3 
+-- 	-fexcess-precision -optc-ffast-math 
+-- Should be run with:
+-- 	+RTS -N<number of cores>
 
 import System
 import Foreign.Marshal.Array
@@ -18,39 +21,32 @@ import Foreign
 import Text.Printf
 import Control.Concurrent
 import Control.Monad
-import Data.ByteString.Internal
 import GHC.Base
-import GHC.Float
-import GHC.Int
 import GHC.Conc
 
 type Reals = Ptr Double
 
 main = do
     n <- getArgs >>= readIO . head
+    allocaArray n $ \ u -> allocaArray n $ \ v -> do
+      forM_ [0..n-1] $ \i -> pokeElemOff u i 1 >> pokeElemOff v i 0
 
-    u <- mallocArray n :: IO Reals
-    forM_ [0..n-1] $ \i -> pokeElemOff u i 1
-    v <- mallocArray n :: IO Reals
-    forM_ [0..n-1] $ \i -> pokeElemOff v i 0
-
-    powerMethod 10 n u v
-    printf "%.9f\n" (eigenvalue n u v 0 0 0)
+      powerMethod 10 n u v
+      printf "%.9f\n" =<< eigenvalue n u v 0 0 0
 
 ------------------------------------------------------------------------
 
-eigenvalue :: Int -> Reals -> Reals -> Int -> Double -> Double -> Double
+eigenvalue :: Int -> Reals -> Reals -> Int -> Double -> Double -> IO Double
 eigenvalue !n !u !v !i !vBv !vv
-    | i < n     = eigenvalue n u v (i+1) (vBv + ui * vi) (vv + vi * vi)
-    | otherwise = sqrt $! vBv / vv
-    where
-       ui = inlinePerformIO (peekElemOff u i)
-       vi = inlinePerformIO (peekElemOff v i)
+    | i < n     = do	ui <- peekElemOff u i
+			vi <- peekElemOff v i
+			eigenvalue n u v (i+1) (vBv + ui * vi) (vv + vi * vi)
+    | otherwise = return $! sqrt $! vBv / vv
 
 ------------------------------------------------------------------------
 
 -- Essentially borrowed from the Java implementation.
-data CyclicBarrier = Cyclic {-# UNPACK #-} !Int {-# UNPACK #-} !(MVar (Int, [MVar ()]))
+data CyclicBarrier = Cyclic !Int !(MVar (Int, [MVar ()]))
 
 await :: CyclicBarrier -> IO ()
 await (Cyclic k waitsVar) = do
@@ -67,38 +63,30 @@ newCyclicBarrier :: Int -> IO CyclicBarrier
 newCyclicBarrier k = liftM (Cyclic k) (newMVar (k, []))
 
 powerMethod :: Int -> Int -> Reals -> Reals -> IO ()
-powerMethod !z !n !u !v = allocaArray n $ \t -> do
-	let !nT = numCapabilities
-	let !chunk = n `quot` nT
-	barrier <- newCyclicBarrier nT
-	done <- newEmptyMVar
-	forM_ [0..nT-1] $ \ !i -> let
-		!l = chunk * i
-		!r = if i == nT - 1 then n else l + chunk
-		in forkIO $ do	
-			replicateM_ z $ do
-				timesAtAv t n u v l r
-				await barrier
-				timesAtAv t n v u l r
-				await barrier
-			putMVar done ()
-	replicateM_ nT (takeMVar done)
-
--- multiply vector v by matrix A and then by matrix A transposed
-timesAtAv :: Reals -> Int -> Reals -> Reals -> Int -> Int -> IO ()
-timesAtAv !t !n !u !atau !l !r = do
-    timesAv  n u t l r
-    timesAtv n t atau l r
+powerMethod z n u v = allocaArray n $ \ !t -> do
+	let chunk = (n + numCapabilities - 1) `quotInt` numCapabilities
+	!barrier <- newCyclicBarrier $! (n + chunk - 1) `quotInt` chunk
+	let timesAtAv !s !d l r = do
+		timesAv n s t l r
+		await barrier
+		timesAtv n t d l r
+		await barrier
+	let thread !l !r = foldr (>>) (return ()) $ replicate z $ do
+		timesAtAv u v l r
+		timesAtAv v u l r
+	let go l = case l + chunk of
+		r | r < n	-> forkIO (thread l r) >> go r
+		  | otherwise	-> thread l n
+	go 0
 
 timesAv :: Int -> Reals -> Reals -> Int -> Int -> IO ()
-timesAv !n !u !au !l !r = go l
-  where
+timesAv !n !u !au !l !r = go l where
     go :: Int -> IO ()
     go !i = when (i < r) $ do
 	let avsum !j !acc
 		| j < n = do
-				!uj <- peekElemOff u j
-				avsum (j+1) (acc + ((aij i j) * uj))
+			!uj <- peekElemOff u j
+			avsum (j+1) (acc + ((aij i j) * uj))
 		| otherwise = pokeElemOff au i acc >> go (i+1)
 	avsum 0 0
 
@@ -119,7 +107,5 @@ timesAtv !n !u !a !l !r = go l
 --
 aij (I# i) (I# j) = D# (
     case i +# j of
-        n -> case n *# (n+#1#) of
-                t -> case t `uncheckedIShiftRA#` 1# of
-                        u -> case u +# (i +# 1#) of
-                                r -> 1.0## /## (int2Double# r))
+        n -> 1.0## /## int2Double# 
+        	(((n *# (n+#1#)) `uncheckedIShiftRA#` 1#) +# (i +# 1#)))
