@@ -148,7 +148,7 @@ end = struct
   let buffer_len = 1_000_000
 
   let buffers = Array.init nbuffers (fun _ -> String.create buffer_len)
-  let buffer_pos = Array.create 256 buffer_len
+  let buffer_pos = Array.create nbuffers buffer_len
   let last_buffer = ref 0
 
   let clear () =
@@ -240,7 +240,7 @@ let main () =
 	 if s.[pos] = '>' then begin
 	   reverse ();
 	   output stdout s pos len;
-	   print_newline ();
+	   output_char stdout '\n';
 	 end else
 	   BigRevBuffer.add s pos len
       )
@@ -262,17 +262,26 @@ end = struct
   let buffer = if arch64 then String.create buffer_len else ""
   let buffer_pos = ref buffer_len
 
-let reverse () =
-  let len = buffer_len - !buffer_pos in
-  if len > 0 then begin
-    Fasta.clear ();
-    Fasta.print buffer !buffer_pos len;
-    Fasta.flush ();
-    buffer_pos := buffer_len;
-  end
+  let wait_for = ref None
 
-let maxlen = 10_000_000
-let inbuf = String.create maxlen
+  let reverse () =
+    begin
+      match !wait_for with
+	  None -> ()
+	| Some ix ->
+	    let s = String.create 1 in
+	    ignore (Unix.read ix s 0 1)
+    end;
+    let len = buffer_len - !buffer_pos in
+      if len > 0 then begin
+	Fasta.clear ();
+	Fasta.print buffer !buffer_pos len;
+	Fasta.flush ();
+	buffer_pos := buffer_len;
+      end
+
+    let maxlen = 10_000_000
+    let inbuf = String.create maxlen
 
 let rec iter1 begin_pos () pos =
   let to_read = maxlen - pos in
@@ -320,9 +329,25 @@ and iter4 begin_pos pos end_pos =
     match inbuf.[pos] with
 	'\n' | '\r' ->
 	  if pos > begin_pos then begin
-	    reverse ();
-	    output stdout inbuf begin_pos (pos - begin_pos);
-	    print_newline ()
+	    if !buffer_pos < buffer_len then begin
+	      let (ix, ox) = Unix.pipe () in
+		match Unix.fork () with
+		  | -1 -> assert false
+		  | 0 ->
+		      reverse ();
+		      output stdout inbuf begin_pos (pos - begin_pos);
+		      output_char stdout '\n';
+		      ignore (Unix.write ox "X" 0 1);
+		      Unix.close ox;
+		      exit 0;
+		  | _ ->
+		      wait_for := Some ix;
+		      buffer_pos := buffer_len;
+	    end else begin
+	      output stdout inbuf begin_pos (pos - begin_pos);
+	      output_char stdout '\n';
+	      flush stdout;
+	    end
 	  end;
 	  iter2 (pos+1) (pos+1) end_pos
       | _ ->
