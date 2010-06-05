@@ -1,0 +1,124 @@
+<span class="hl com">/*</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Scala version contributed by Rex Kerr</span>
+<span class="hl com"> * translated from Java version by Oleg Mazurov, June 2010</span>
+<span class="hl com"> *</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">object</span> fannkuchredux <span class="hl sym">{</span>
+  <span class="hl kwa">def</span> fac<span class="hl sym">(</span>x<span class="hl sym">:</span> Int<span class="hl sym">):</span> <span class="hl kwc">Long</span> <span class="hl sym">=</span> <span class="hl kwa">if</span> <span class="hl sym">(</span>x <span class="hl sym">&lt;</span> <span class="hl num">2</span><span class="hl sym">)</span> <span class="hl num">1L</span> <span class="hl kwa">else</span> x<span class="hl sym">*</span>fac<span class="hl sym">(</span>x<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl kwa">val</span> F <span class="hl sym">= (</span><span class="hl num">0</span> to <span class="hl num">20</span><span class="hl sym">).</span>map<span class="hl sym">(</span>fac<span class="hl sym">).</span>toArray
+  <span class="hl kwa">var</span> chunk <span class="hl sym">=</span> <span class="hl num">0L</span>
+  <span class="hl kwa">var</span> ntasks <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl kwa">val</span> taskId <span class="hl sym">=</span> <span class="hl kwa">new</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>atomic<span class="hl sym">.</span><span class="hl kwc">AtomicInteger</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+
+  <span class="hl kwa">class</span> Fannkuch<span class="hl sym">(</span>n<span class="hl sym">:</span> Int<span class="hl sym">)</span> <span class="hl kwa">extends</span> <span class="hl kwc">Thread</span> <span class="hl sym">{</span>
+    <span class="hl kwa">val</span> p<span class="hl sym">,</span> pp<span class="hl sym">,</span> count <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">](</span>n<span class="hl sym">)</span>
+    <span class="hl kwa">var</span> flips<span class="hl sym">,</span> cksum <span class="hl sym">=</span> <span class="hl num">0</span>
+
+    <span class="hl kwa">def</span> direct<span class="hl sym">(</span>idx<span class="hl sym">:</span> <span class="hl kwc">Long</span><span class="hl sym">,</span> i<span class="hl sym">:</span> Int<span class="hl sym">) {</span>
+       <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        <span class="hl kwa">val</span> d <span class="hl sym">= (</span>idx <span class="hl sym">/</span> F<span class="hl sym">(</span>i<span class="hl sym">)).</span>toInt
+        count<span class="hl sym">(</span>i<span class="hl sym">) =</span> d
+        <span class="hl kwa">var</span> j <span class="hl sym">=</span> <span class="hl num">0</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>j <span class="hl sym">&lt;</span> d<span class="hl sym">) {</span> pp<span class="hl sym">(</span>j<span class="hl sym">) =</span> p<span class="hl sym">(</span>j<span class="hl sym">);</span> j <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+        j <span class="hl sym">=</span> <span class="hl num">0</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>j<span class="hl sym">+</span>d <span class="hl sym">&lt;=</span> i<span class="hl sym">) {</span> p<span class="hl sym">(</span>j<span class="hl sym">) =</span> p<span class="hl sym">(</span>j<span class="hl sym">+</span>d<span class="hl sym">);</span> j <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>j <span class="hl sym">&lt;=</span> i<span class="hl sym">) {</span> p<span class="hl sym">(</span>j<span class="hl sym">) =</span> pp<span class="hl sym">(</span>j<span class="hl sym">+</span>d<span class="hl sym">-</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">);</span> j <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+        direct<span class="hl sym">(</span>idx<span class="hl sym">%</span>F<span class="hl sym">(</span>i<span class="hl sym">),</span> i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> permute<span class="hl sym">() {</span>
+      <span class="hl kwa">var</span> first <span class="hl sym">=</span> p<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span>
+      p<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) =</span> p<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+      p<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) =</span> first
+      <span class="hl kwa">var</span> i <span class="hl sym">=</span> <span class="hl num">1</span>
+      count<span class="hl sym">(</span>i<span class="hl sym">) +=</span> <span class="hl num">1</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>count<span class="hl sym">(</span>i<span class="hl sym">) &gt;</span> i <span class="hl sym">) {</span>
+        count<span class="hl sym">(</span>i<span class="hl sym">) =</span> <span class="hl num">0</span>
+        i <span class="hl sym">+=</span> <span class="hl num">1</span>
+        p<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) =</span> p<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl kwa">val</span> next <span class="hl sym">=</span> p<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)</span>
+        <span class="hl kwa">var</span> j <span class="hl sym">=</span> <span class="hl num">1</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>j <span class="hl sym">&lt;</span> i<span class="hl sym">) {</span> p<span class="hl sym">(</span>j<span class="hl sym">) =</span> p<span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span> j <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+        p<span class="hl sym">(</span>i<span class="hl sym">) =</span> first
+        first <span class="hl sym">=</span> next
+        count<span class="hl sym">(</span>i<span class="hl sym">) +=</span> <span class="hl num">1</span>
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> fcount<span class="hl sym">() = {</span>
+      <span class="hl kwa">var</span> flips <span class="hl sym">=</span> <span class="hl num">1</span>
+      <span class="hl kwa">var</span> first <span class="hl sym">=</span> p<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>p<span class="hl sym">(</span>first<span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        <span class="hl kwa">var</span> i <span class="hl sym">=</span> <span class="hl num">0</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> n<span class="hl sym">) {</span> pp<span class="hl sym">(</span>i<span class="hl sym">) =</span> p<span class="hl sym">(</span>i<span class="hl sym">);</span> i <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+        <span class="hl kwa">do</span> <span class="hl sym">{</span>
+          flips <span class="hl sym">+=</span> <span class="hl num">1</span>
+          <span class="hl kwa">var</span> lo <span class="hl sym">=</span> <span class="hl num">1</span>
+          <span class="hl kwa">var</span> hi <span class="hl sym">=</span> first <span class="hl sym">-</span><span class="hl num">1</span>
+          <span class="hl kwa">while</span> <span class="hl sym">(</span>lo <span class="hl sym">&lt;</span> hi<span class="hl sym">) {</span>
+            <span class="hl kwa">val</span> t <span class="hl sym">=</span> pp<span class="hl sym">(</span>lo<span class="hl sym">)</span>
+            pp<span class="hl sym">(</span>lo<span class="hl sym">) =</span> pp<span class="hl sym">(</span>hi<span class="hl sym">)</span>
+            pp<span class="hl sym">(</span>hi<span class="hl sym">) =</span> t
+            lo <span class="hl sym">+=</span> <span class="hl num">1</span>
+            hi <span class="hl sym">-=</span> <span class="hl num">1</span>
+          <span class="hl sym">}</span>
+          <span class="hl kwa">val</span> t <span class="hl sym">=</span> pp<span class="hl sym">(</span>first<span class="hl sym">)</span>
+          pp<span class="hl sym">(</span>first<span class="hl sym">) =</span> first
+          first <span class="hl sym">=</span> t
+        <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>pp<span class="hl sym">(</span>first<span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+      flips
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> runTask<span class="hl sym">(</span>task<span class="hl sym">:</span> Int<span class="hl sym">) {</span>
+      <span class="hl kwa">val</span> lo <span class="hl sym">=</span> task<span class="hl sym">*</span>chunk
+      <span class="hl kwa">val</span> hi <span class="hl sym">=</span> F<span class="hl sym">(</span>n<span class="hl sym">)</span> min <span class="hl sym">(</span>lo<span class="hl sym">+</span>chunk<span class="hl sym">)</span>
+      <span class="hl kwa">var</span> j <span class="hl sym">=</span> <span class="hl num">0</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>j <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>length<span class="hl sym">) {</span> p<span class="hl sym">(</span>j<span class="hl sym">) =</span> j<span class="hl sym">;</span> j <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+      direct<span class="hl sym">(</span>lo<span class="hl sym">,</span>p<span class="hl sym">.</span>length<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+      <span class="hl kwa">var</span> i <span class="hl sym">=</span> lo
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>true<span class="hl sym">) {</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>p<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) !=</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+          <span class="hl kwa">val</span> f <span class="hl sym">=</span> fcount
+          flips <span class="hl sym">=</span> <span class="hl kwc">Math</span><span class="hl sym">.</span>max<span class="hl sym">(</span>flips<span class="hl sym">,</span>f<span class="hl sym">)</span>
+          cksum <span class="hl sym">+= (</span><span class="hl kwa">if</span> <span class="hl sym">((</span>i<span class="hl sym">%</span><span class="hl num">2</span><span class="hl sym">)==</span><span class="hl num">0</span><span class="hl sym">)</span> f <span class="hl kwa">else</span> <span class="hl sym">-</span>f<span class="hl sym">)</span>
+        <span class="hl sym">}</span>
+        i <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">==</span> hi<span class="hl sym">)</span> <span class="hl kwa">return</span>
+        permute
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">override def</span> run<span class="hl sym">() {</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>true<span class="hl sym">) {</span>
+      <span class="hl kwa">val</span> task <span class="hl sym">=</span> taskId<span class="hl sym">.</span>getAndIncrement<span class="hl sym">()</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>task <span class="hl sym">&gt;=</span> ntasks<span class="hl sym">)</span> <span class="hl kwa">return</span>
+      runTask<span class="hl sym">(</span>task<span class="hl sym">)</span>
+    <span class="hl sym">}}</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwa">def</span> announce<span class="hl sym">(</span>n<span class="hl sym">:</span> Int<span class="hl sym">,</span> f<span class="hl sym">:</span> Int<span class="hl sym">,</span> ck<span class="hl sym">:</span> Int<span class="hl sym">) {</span>
+    printf<span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\n</span><span class="hl str">Pfannkuchen(%d) = %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>ck<span class="hl sym">,</span>n<span class="hl sym">,</span>f<span class="hl sym">)</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl kwa">def</span> main<span class="hl sym">(</span>args<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">String</span><span class="hl sym">]) {</span>
+    <span class="hl kwa">val</span> n <span class="hl sym">= (</span><span class="hl kwa">if</span> <span class="hl sym">(</span>args<span class="hl sym">.</span>length <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> args<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">).</span>toInt <span class="hl kwa">else</span> <span class="hl num">7</span><span class="hl sym">)</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&lt;</span> <span class="hl num">0</span> <span class="hl sym">||</span> n <span class="hl sym">&gt;</span> <span class="hl num">20</span><span class="hl sym">)</span> announce<span class="hl sym">(</span>n<span class="hl sym">,-</span><span class="hl num">1</span><span class="hl sym">,-</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">else if</span> <span class="hl sym">(</span>n <span class="hl sym">&lt;=</span> <span class="hl num">1</span><span class="hl sym">)</span> announce<span class="hl sym">(</span>n<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">)</span>
+    <span class="hl kwa">else</span> <span class="hl sym">{</span>
+      <span class="hl kwa">val</span> nthreads <span class="hl sym">=</span> <span class="hl kwc">Runtime</span><span class="hl sym">.</span>getRuntime<span class="hl sym">.</span>availableProcessors
+      <span class="hl kwa">def</span> split<span class="hl sym">(</span>i<span class="hl sym">:</span> <span class="hl kwc">Long</span><span class="hl sym">) = (</span>F<span class="hl sym">(</span>n<span class="hl sym">)+</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)/</span>i
+      chunk <span class="hl sym">=</span> split<span class="hl sym">(</span>nthreads<span class="hl sym">*</span><span class="hl num">50</span><span class="hl sym">)</span>
+      ntasks <span class="hl sym">=</span> split<span class="hl sym">(</span>chunk<span class="hl sym">).</span>toInt
+      <span class="hl kwa">val</span> threads <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>range<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>nthreads<span class="hl sym">).</span>map<span class="hl sym">(</span>_ <span class="hl sym">=&gt;</span> <span class="hl kwa">new</span> Fannkuch<span class="hl sym">(</span>n<span class="hl sym">))</span>
+      threads<span class="hl sym">.</span>foreach<span class="hl sym">(</span>_<span class="hl sym">.</span>start<span class="hl sym">)</span>
+      threads<span class="hl sym">.</span>foreach<span class="hl sym">(</span>_<span class="hl sym">.</span>join<span class="hl sym">)</span>
+      announce<span class="hl sym">(</span>n<span class="hl sym">, (</span><span class="hl num">0</span><span class="hl sym">/:</span>threads<span class="hl sym">)(</span>_ max _<span class="hl sym">.</span>flips<span class="hl sym">), (</span><span class="hl num">0</span><span class="hl sym">/:</span>threads<span class="hl sym">)(</span>_ <span class="hl sym">+</span> _<span class="hl sym">.</span>cksum<span class="hl sym">))</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+

@@ -10,7 +10,10 @@
 <span class="hl slc">-- Parallelized by Louis Wasserman</span>
 <span class="hl slc">--</span>
 <span class="hl slc">-- Should be compiled with:</span>
-<span class="hl slc">-- 	-O2 -fvia-c -optc-O3</span>
+<span class="hl slc">-- 	-threaded -funbox-strict-fields -O2 -fvia-c -optc-O3</span>
+<span class="hl slc">-- 	-fexcess-precision -optc-ffast-math</span>
+<span class="hl slc">-- Should be run with:</span>
+<span class="hl slc">-- 	+RTS -N&lt;number of cores&gt;</span>
 
 import System
 import Foreign.Marshal.Array
@@ -18,39 +21,32 @@ import Foreign
 import Text.Printf
 import Control.Concurrent
 import Control.Monad
-import Data.ByteString.Internal
 import GHC.Base
-import GHC.Float
-import GHC.Int
 import GHC.Conc
 
 type Reals <span class="hl sym">=</span> Ptr Double
 
 main <span class="hl sym">=</span> do
     n <span class="hl sym">&lt;-</span> getArgs <span class="hl sym">&gt;&gt;=</span> readIO . head
+    allocaArray n $ \ u <span class="hl sym">-&gt;</span> allocaArray n $ \ v <span class="hl sym">-&gt;</span> do
+      forM_ <span class="hl sym">[</span><span class="hl num">0</span>..n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \i <span class="hl sym">-&gt;</span> pokeElemOff u i <span class="hl num">1</span> <span class="hl sym">&gt;&gt;</span> pokeElemOff v i <span class="hl num">0</span>
 
-    u <span class="hl sym">&lt;-</span> mallocArray n <span class="hl sym">::</span> IO Reals
-    forM_ <span class="hl sym">[</span><span class="hl num">0</span>..n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \i <span class="hl sym">-&gt;</span> pokeElemOff u i <span class="hl num">1</span>
-    v <span class="hl sym">&lt;-</span> mallocArray n <span class="hl sym">::</span> IO Reals
-    forM_ <span class="hl sym">[</span><span class="hl num">0</span>..n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \i <span class="hl sym">-&gt;</span> pokeElemOff v i <span class="hl num">0</span>
-
-    powerMethod <span class="hl num">10</span> n u v
-    printf <span class="hl str">&quot;%.9f\n&quot;</span> <span class="hl sym">(</span>eigenvalue n u v <span class="hl num">0 0 0</span><span class="hl sym">)</span>
+      powerMethod <span class="hl num">10</span> n u v
+      printf <span class="hl str">&quot;%.9f\n&quot;</span> <span class="hl sym">=&lt;&lt;</span> eigenvalue n u v <span class="hl num">0 0 0</span>
 
 <span class="hl slc">------------------------------------------------------------------------</span>
 
-eigenvalue <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Double <span class="hl sym">-&gt;</span> Double <span class="hl sym">-&gt;</span> Double
+eigenvalue <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Double <span class="hl sym">-&gt;</span> Double <span class="hl sym">-&gt;</span> IO Double
 eigenvalue <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>v <span class="hl sym">!</span>i <span class="hl sym">!</span>vBv <span class="hl sym">!</span>vv
-    <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> n     <span class="hl sym">=</span> eigenvalue n u v <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>vBv <span class="hl sym">+</span> ui <span class="hl sym">*</span> vi<span class="hl sym">) (</span>vv <span class="hl sym">+</span> vi <span class="hl sym">*</span> vi<span class="hl sym">)</span>
-    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> sqrt $<span class="hl sym">!</span> vBv <span class="hl sym">/</span> vv
-    where
-       ui <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>peekElemOff u i<span class="hl sym">)</span>
-       vi <span class="hl sym">=</span> inlinePerformIO <span class="hl sym">(</span>peekElemOff v i<span class="hl sym">)</span>
+    <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> n     <span class="hl sym">=</span> do	ui <span class="hl sym">&lt;-</span> peekElemOff u i
+			vi <span class="hl sym">&lt;-</span> peekElemOff v i
+			eigenvalue n u v <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>vBv <span class="hl sym">+</span> ui <span class="hl sym">*</span> vi<span class="hl sym">) (</span>vv <span class="hl sym">+</span> vi <span class="hl sym">*</span> vi<span class="hl sym">)</span>
+    <span class="hl sym">|</span> otherwise <span class="hl sym">=</span> return $<span class="hl sym">!</span> sqrt $<span class="hl sym">!</span> vBv <span class="hl sym">/</span> vv
 
 <span class="hl slc">------------------------------------------------------------------------</span>
 
 <span class="hl slc">-- Essentially borrowed from the Java implementation.</span>
-data CyclicBarrier <span class="hl sym">=</span> Cyclic <span class="hl com">{-# UNPACK #-}</span> <span class="hl sym">!</span>Int <span class="hl com">{-# UNPACK #-}</span> <span class="hl sym">!(</span>MVar <span class="hl sym">(</span>Int<span class="hl sym">, [</span>MVar <span class="hl sym">()]))</span>
+data CyclicBarrier <span class="hl sym">=</span> Cyclic <span class="hl sym">!</span>Int <span class="hl sym">!(</span>MVar <span class="hl sym">(</span>Int<span class="hl sym">, [</span>MVar <span class="hl sym">()]))</span>
 
 await <span class="hl sym">::</span> CyclicBarrier <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
 await <span class="hl sym">(</span>Cyclic k waitsVar<span class="hl sym">) =</span> do
@@ -67,38 +63,30 @@ newCyclicBarrier <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</
 newCyclicBarrier k <span class="hl sym">=</span> liftM <span class="hl sym">(</span>Cyclic k<span class="hl sym">) (</span>newMVar <span class="hl sym">(</span>k<span class="hl sym">, []))</span>
 
 powerMethod <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
-powerMethod <span class="hl sym">!</span>z <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>v <span class="hl sym">=</span> allocaArray n $ \t <span class="hl sym">-&gt;</span> do
-	let <span class="hl sym">!</span>nT <span class="hl sym">=</span> numCapabilities
-	let <span class="hl sym">!</span>chunk <span class="hl sym">=</span> n `quot` nT
-	barrier <span class="hl sym">&lt;-</span> newCyclicBarrier nT
-	done <span class="hl sym">&lt;-</span> newEmptyMVar
-	forM_ <span class="hl sym">[</span><span class="hl num">0</span>..nT<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \ <span class="hl sym">!</span>i <span class="hl sym">-&gt;</span> let
-		<span class="hl sym">!</span>l <span class="hl sym">=</span> chunk <span class="hl sym">*</span> i
-		<span class="hl sym">!</span>r <span class="hl sym">=</span> if i <span class="hl sym">==</span> nT <span class="hl sym">-</span> <span class="hl num">1</span> then n else l <span class="hl sym">+</span> chunk
-		in forkIO $ do
-			replicateM_ z $ do
-				timesAtAv t n u v l r
-				await barrier
-				timesAtAv t n v u l r
-				await barrier
-			putMVar done <span class="hl sym">()</span>
-	replicateM_ nT <span class="hl sym">(</span>takeMVar done<span class="hl sym">)</span>
-
-<span class="hl slc">-- multiply vector v by matrix A and then by matrix A transposed</span>
-timesAtAv <span class="hl sym">::</span> Reals <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
-timesAtAv <span class="hl sym">!</span>t <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>atau <span class="hl sym">!</span>l <span class="hl sym">!</span>r <span class="hl sym">=</span> do
-    timesAv  n u t l r
-    timesAtv n t atau l r
+powerMethod z n u v <span class="hl sym">=</span> allocaArray n $ \ <span class="hl sym">!</span>t <span class="hl sym">-&gt;</span> do
+	let chunk <span class="hl sym">= (</span>n <span class="hl sym">+</span> numCapabilities <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> `quotInt` numCapabilities
+	<span class="hl sym">!</span>barrier <span class="hl sym">&lt;-</span> newCyclicBarrier $<span class="hl sym">! (</span>n <span class="hl sym">+</span> chunk <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span> `quotInt` chunk
+	let timesAtAv <span class="hl sym">!</span>s <span class="hl sym">!</span>d l r <span class="hl sym">=</span> do
+		timesAv n s t l r
+		await barrier
+		timesAtv n t d l r
+		await barrier
+	let thread <span class="hl sym">!</span>l <span class="hl sym">!</span>r <span class="hl sym">=</span> foldr <span class="hl sym">(&gt;&gt;) (</span>return <span class="hl sym">())</span> $ replicate z $ do
+		timesAtAv u v l r
+		timesAtAv v u l r
+	let go l <span class="hl sym">=</span> case l <span class="hl sym">+</span> chunk of
+		r <span class="hl sym">|</span> r <span class="hl sym">&lt;</span> n	<span class="hl sym">-&gt;</span> forkIO <span class="hl sym">(</span>thread l r<span class="hl sym">) &gt;&gt;</span> go r
+		  <span class="hl sym">|</span> otherwise	<span class="hl sym">-&gt;</span> thread l n
+	go <span class="hl num">0</span>
 
 timesAv <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Reals <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
-timesAv <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>au <span class="hl sym">!</span>l <span class="hl sym">!</span>r <span class="hl sym">=</span> go l
-  where
+timesAv <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span class="hl sym">!</span>au <span class="hl sym">!</span>l <span class="hl sym">!</span>r <span class="hl sym">=</span> go l where
     go <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
     go <span class="hl sym">!</span>i <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> r<span class="hl sym">)</span> $ do
 	let avsum <span class="hl sym">!</span>j <span class="hl sym">!</span>acc
 		<span class="hl sym">|</span> j <span class="hl sym">&lt;</span> n <span class="hl sym">=</span> do
-				<span class="hl sym">!</span>uj <span class="hl sym">&lt;-</span> peekElemOff u j
-				avsum <span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>acc <span class="hl sym">+ ((</span>aij i j<span class="hl sym">) *</span> uj<span class="hl sym">))</span>
+			<span class="hl sym">!</span>uj <span class="hl sym">&lt;-</span> peekElemOff u j
+			avsum <span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>acc <span class="hl sym">+ ((</span>aij i j<span class="hl sym">) *</span> uj<span class="hl sym">))</span>
 		<span class="hl sym">|</span> otherwise <span class="hl sym">=</span> pokeElemOff au i acc <span class="hl sym">&gt;&gt;</span> go <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
 	avsum <span class="hl num">0 0</span>
 
@@ -119,7 +107,5 @@ timesAtv <span class="hl sym">!</span>n <span class="hl sym">!</span>u <span cla
 <span class="hl slc">--</span>
 aij <span class="hl sym">(</span>I# i<span class="hl sym">) (</span>I# j<span class="hl sym">) =</span> D# <span class="hl sym">(</span>
     case i <span class="hl sym">+</span># j of
-        n <span class="hl sym">-&gt;</span> case n <span class="hl sym">*</span># <span class="hl sym">(</span>n<span class="hl sym">+</span>#<span class="hl num">1</span>#<span class="hl sym">)</span> of
-                t <span class="hl sym">-&gt;</span> case t `uncheckedIShiftRA#` <span class="hl num">1</span># of
-                        u <span class="hl sym">-&gt;</span> case u <span class="hl sym">+</span># <span class="hl sym">(</span>i <span class="hl sym">+</span># <span class="hl num">1</span>#<span class="hl sym">)</span> of
-                                r <span class="hl sym">-&gt;</span> <span class="hl num">1.0</span>## <span class="hl sym">/</span>## <span class="hl sym">(</span>int2Double# r<span class="hl sym">))</span>
+        n <span class="hl sym">-&gt;</span> <span class="hl num">1.0</span>## <span class="hl sym">/</span>## int2Double#
+        	<span class="hl sym">(((</span>n <span class="hl sym">*</span># <span class="hl sym">(</span>n<span class="hl sym">+</span>#<span class="hl num">1</span>#<span class="hl sym">))</span> `uncheckedIShiftRA#` <span class="hl num">1</span>#<span class="hl sym">) +</span># <span class="hl sym">(</span>i <span class="hl sym">+</span># <span class="hl num">1</span>#<span class="hl sym">)))</span>
