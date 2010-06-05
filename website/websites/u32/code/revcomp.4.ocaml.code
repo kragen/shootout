@@ -148,7 +148,7 @@
   <span class="hl kwa">let</span> buffer_len <span class="hl sym">=</span> <span class="hl num">1_000_000</span>
 
   <span class="hl kwa">let</span> buffers <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>init nbuffers <span class="hl sym">(</span><span class="hl kwa">fun</span> _ <span class="hl sym">-&gt;</span> <span class="hl kwc">String</span><span class="hl sym">.</span>create buffer_len<span class="hl sym">)</span>
-  <span class="hl kwa">let</span> buffer_pos <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>create <span class="hl num">256</span> buffer_len
+  <span class="hl kwa">let</span> buffer_pos <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>create nbuffers buffer_len
   <span class="hl kwa">let</span> last_buffer <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl num">0</span>
 
   <span class="hl kwa">let</span> clear <span class="hl sym">() =</span>
@@ -240,7 +240,7 @@
 	 <span class="hl kwa">if</span> s<span class="hl sym">.[</span>pos<span class="hl sym">] =</span> '<span class="hl sym">&gt;</span>' <span class="hl kwa">then begin</span>
 	   reverse <span class="hl sym">();</span>
 	   output stdout s pos len<span class="hl sym">;</span>
-	   print_newline <span class="hl sym">();</span>
+	   output_char stdout '\n'<span class="hl sym">;</span>
 	 <span class="hl kwa">end else</span>
 	   <span class="hl kwc">BigRevBuffer</span><span class="hl sym">.</span>add s pos len
       <span class="hl sym">)</span>
@@ -262,17 +262,26 @@
   <span class="hl kwa">let</span> buffer <span class="hl sym">=</span> <span class="hl kwa">if</span> arch64 <span class="hl kwa">then</span> <span class="hl kwc">String</span><span class="hl sym">.</span>create buffer_len <span class="hl kwa">else</span> <span class="hl str">&quot;&quot;</span>
   <span class="hl kwa">let</span> buffer_pos <span class="hl sym">=</span> <span class="hl kwb">ref</span> buffer_len
 
-<span class="hl kwa">let</span> reverse <span class="hl sym">() =</span>
-  <span class="hl kwa">let</span> len <span class="hl sym">=</span> buffer_len <span class="hl sym">- !</span>buffer_pos <span class="hl kwa">in</span>
-  <span class="hl kwa">if</span> len <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then begin</span>
-    <span class="hl kwc">Fasta</span><span class="hl sym">.</span>clear <span class="hl sym">();</span>
-    <span class="hl kwc">Fasta</span><span class="hl sym">.</span>print buffer <span class="hl sym">!</span>buffer_pos len<span class="hl sym">;</span>
-    <span class="hl kwc">Fasta</span><span class="hl sym">.</span>flush <span class="hl sym">();</span>
-    buffer_pos <span class="hl sym">:=</span> buffer_len<span class="hl sym">;</span>
-  <span class="hl kwa">end</span>
+  <span class="hl kwa">let</span> wait_for <span class="hl sym">=</span> <span class="hl kwb">ref</span> <span class="hl kwd">None</span>
 
-<span class="hl kwa">let</span> maxlen <span class="hl sym">=</span> <span class="hl num">10_000_000</span>
-<span class="hl kwa">let</span> inbuf <span class="hl sym">=</span> <span class="hl kwc">String</span><span class="hl sym">.</span>create maxlen
+  <span class="hl kwa">let</span> reverse <span class="hl sym">() =</span>
+    <span class="hl kwa">begin</span>
+      <span class="hl kwa">match</span> <span class="hl sym">!</span>wait_for <span class="hl kwa">with</span>
+	  <span class="hl kwd">None</span> <span class="hl sym">-&gt; ()</span>
+	<span class="hl sym">|</span> <span class="hl kwd">Some</span> ix <span class="hl sym">-&gt;</span>
+	    <span class="hl kwa">let</span> s <span class="hl sym">=</span> <span class="hl kwc">String</span><span class="hl sym">.</span>create <span class="hl num">1</span> <span class="hl kwa">in</span>
+	    ignore <span class="hl sym">(</span><span class="hl kwc">Unix</span><span class="hl sym">.</span>read ix s <span class="hl num">0 1</span><span class="hl sym">)</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span>
+    <span class="hl kwa">let</span> len <span class="hl sym">=</span> buffer_len <span class="hl sym">- !</span>buffer_pos <span class="hl kwa">in</span>
+      <span class="hl kwa">if</span> len <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then begin</span>
+	<span class="hl kwc">Fasta</span><span class="hl sym">.</span>clear <span class="hl sym">();</span>
+	<span class="hl kwc">Fasta</span><span class="hl sym">.</span>print buffer <span class="hl sym">!</span>buffer_pos len<span class="hl sym">;</span>
+	<span class="hl kwc">Fasta</span><span class="hl sym">.</span>flush <span class="hl sym">();</span>
+	buffer_pos <span class="hl sym">:=</span> buffer_len<span class="hl sym">;</span>
+      <span class="hl kwa">end</span>
+
+    <span class="hl kwa">let</span> maxlen <span class="hl sym">=</span> <span class="hl num">10_000_000</span>
+    <span class="hl kwa">let</span> inbuf <span class="hl sym">=</span> <span class="hl kwc">String</span><span class="hl sym">.</span>create maxlen
 
 <span class="hl kwa">let rec</span> iter1 begin_pos <span class="hl sym">()</span> pos <span class="hl sym">=</span>
   <span class="hl kwa">let</span> to_read <span class="hl sym">=</span> maxlen <span class="hl sym">-</span> pos <span class="hl kwa">in</span>
@@ -320,9 +329,25 @@
     <span class="hl kwa">match</span> inbuf<span class="hl sym">.[</span>pos<span class="hl sym">]</span> <span class="hl kwa">with</span>
 	'\n' <span class="hl sym">|</span> '\r' <span class="hl sym">-&gt;</span>
 	  <span class="hl kwa">if</span> pos <span class="hl sym">&gt;</span> begin_pos <span class="hl kwa">then begin</span>
-	    reverse <span class="hl sym">();</span>
-	    output stdout inbuf begin_pos <span class="hl sym">(</span>pos <span class="hl sym">-</span> begin_pos<span class="hl sym">);</span>
-	    print_newline <span class="hl sym">()</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">!</span>buffer_pos <span class="hl sym">&lt;</span> buffer_len <span class="hl kwa">then begin</span>
+	      <span class="hl kwa">let</span> <span class="hl sym">(</span>ix<span class="hl sym">,</span> ox<span class="hl sym">) =</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>pipe <span class="hl sym">()</span> <span class="hl kwa">in</span>
+		<span class="hl kwa">match</span> <span class="hl kwc">Unix</span><span class="hl sym">.</span>fork <span class="hl sym">()</span> <span class="hl kwa">with</span>
+		  <span class="hl sym">| -</span><span class="hl num">1</span> <span class="hl sym">-&gt;</span> <span class="hl kwa">assert false</span>
+		  <span class="hl sym">|</span> <span class="hl num">0</span> <span class="hl sym">-&gt;</span>
+		      reverse <span class="hl sym">();</span>
+		      output stdout inbuf begin_pos <span class="hl sym">(</span>pos <span class="hl sym">-</span> begin_pos<span class="hl sym">);</span>
+		      output_char stdout '\n'<span class="hl sym">;</span>
+		      ignore <span class="hl sym">(</span><span class="hl kwc">Unix</span><span class="hl sym">.</span>write ox <span class="hl str">&quot;X&quot;</span> <span class="hl num">0 1</span><span class="hl sym">);</span>
+		      <span class="hl kwc">Unix</span><span class="hl sym">.</span>close ox<span class="hl sym">;</span>
+		      exit <span class="hl num">0</span><span class="hl sym">;</span>
+		  <span class="hl sym">|</span> _ <span class="hl sym">-&gt;</span>
+		      wait_for <span class="hl sym">:=</span> <span class="hl kwd">Some</span> ix<span class="hl sym">;</span>
+		      buffer_pos <span class="hl sym">:=</span> buffer_len<span class="hl sym">;</span>
+	    <span class="hl kwa">end else begin</span>
+	      output stdout inbuf begin_pos <span class="hl sym">(</span>pos <span class="hl sym">-</span> begin_pos<span class="hl sym">);</span>
+	      output_char stdout '\n'<span class="hl sym">;</span>
+	      flush stdout<span class="hl sym">;</span>
+	    <span class="hl kwa">end</span>
 	  <span class="hl kwa">end</span><span class="hl sym">;</span>
 	  iter2 <span class="hl sym">(</span>pos<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) (</span>pos<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> end_pos
       <span class="hl sym">|</span> _ <span class="hl sym">-&gt;</span>
