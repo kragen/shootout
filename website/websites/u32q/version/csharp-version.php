@@ -1,1 +1,1 @@
-<p>Mono JIT compiler version 2.6.1 (tarball Wed Jan 27 17:56:50 PST 2010)</p>
+<p>Mono JIT compiler version 2.6.4 (tarball Sun Jun  6 00:57:49 PDT 2010)<br/>--with-profile4=yes --enable-parallel-mark</p>
