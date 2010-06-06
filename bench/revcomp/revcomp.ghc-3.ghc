@@ -1,0 +1,70 @@
+{-# OPTIONS -O2 -fglasgow-exts #-}
+{-# LANGUAGE BangPatterns, MagicHash #-}
+--
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Contributed by Sterling Clover
+-- Heavily inspired by contribution from Don Stewart
+-- Inlining improvements by Don Stewart.
+-- Heavily revised by Louis Wasserman.
+
+import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Internal
+import Control.Monad
+import GHC.Base
+import GHC.Ptr
+import GHC.Word
+import Foreign
+
+main = S.getContents >>= 
+	clines (\ h b -> S.putStrLn h >> revcomp b >> S.putStr b)
+
+clines :: (ByteString -> ByteString -> IO ()) -> ByteString -> IO ()
+clines run = clines' where
+      clines' !ps = case S.elemIndex '\n' ps of
+	  Just n1 -> let !ps' = S.drop (n1+1) ps in case S.elemIndex '>' ps' of
+		  Just n2 -> do
+		  	run (S.take n1 ps)  (S.take n2 ps')
+			clines' (S.drop n2 ps')
+		  Nothing -> run (S.take n1 ps) (ps')
+
+{-# INLINE comps #-}
+comps = Prelude.zipWith (\ a b -> (ord a, c2w b)) "AaCcGgTtUuMmRrYyKkVvHhDdBb" 
+	"TTGGCCAAAAKKYYRRMMBBDDHHVV"
+
+ca :: Ptr Word8
+ca = inlinePerformIO $ do
+       !a <- mallocArray 200
+       mapM_ (\ i -> pokeByteOff a (fromIntegral i) i ) [0..199::Word8]
+       mapM_ (uncurry (pokeByteOff a)) comps
+       return a
+
+comp :: Word8 -> Word8
+comp (W8# c#) = W8# (rw8 ca (word2Int# c#))
+
+(+!) = advancePtr
+
+revcomp (PS fp s l) = ca `seq` (withForeignPtr fp $ \p -> let p' = p +! s in
+	rc p' (p' +! (l-1)))
+  where
+    rc :: Ptr Word8 -> Ptr Word8 -> IO ()
+    rc !i !j | i < j = do
+    	x <- peek i
+    	if x == c2w '\n' then let !i' = i +! 1 in rc1 j i' =<< peek i'
+    		else rc1 j i x
+    rc i j = when (i == j) (poke i . comp =<< peek i)
+    
+    rc1 !j !i !xi = do
+    	y <- peek j
+    	if y == c2w '\n' then let !j' = j +! (-1) in rc2 i xi j' =<< peek j'
+    		else rc2 i xi j y
+
+    rc2 !i !xi !j !xj = do
+    	poke j (comp xi)
+    	poke i (comp xj)
+    	rc (i +! 1) (j +! (-1))
+
+rw8 :: Ptr Word8 -> Int# -> Word#
+rw8 (Ptr a) i = case readWord8OffAddr# a i realWorld#  of (# _, x #) ->  x
+{-# INLINE rw8 #-}
