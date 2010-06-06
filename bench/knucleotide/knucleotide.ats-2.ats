@@ -91,7 +91,7 @@ extern fun print_symbol (sym: symbol_t, len: int): void = "print_symbol"
 
 ats_void_type print_symbol
   (symbol_t sym, ats_int_type len) {
-  while (len > 0) { fputc (*sym, stdout) ; --len ; ++sym ; }
+  while (len > 0) { fputc ( *sym, stdout) ; --len ; ++sym ; }
   return ;
 }
 

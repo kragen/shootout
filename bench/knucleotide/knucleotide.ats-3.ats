@@ -38,7 +38,7 @@ abst@ype symbol_t = $extype "symbol_t"
 
 ats_void_type print_symbol
   (symbol_t sym, ats_size_type len) {
-  while (len > 0) { fputc (*sym, stdout) ; --len ; ++sym ; }
+  while (len > 0) { fputc ( *sym, stdout) ; --len ; ++sym ; }
   return ;
 } // end of [print_symbol]
 

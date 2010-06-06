@@ -1,0 +1,70 @@
+<span class="hl com">{-# OPTIONS -O2 -fglasgow-exts #-}</span>
+<span class="hl com">{-# LANGUAGE BangPatterns, MagicHash #-}</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Contributed by Sterling Clover</span>
+<span class="hl slc">-- Heavily inspired by contribution from Don Stewart</span>
+<span class="hl slc">-- Inlining improvements by Don Stewart.</span>
+<span class="hl slc">-- Heavily revised by Louis Wasserman.</span>
+
+import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Internal
+import Control.Monad
+import GHC.Base
+import GHC.Ptr
+import GHC.Word
+import Foreign
+
+main <span class="hl sym">=</span> S.getContents <span class="hl sym">&gt;&gt;=</span>
+	clines <span class="hl sym">(</span>\ h b <span class="hl sym">-&gt;</span> S.putStrLn h <span class="hl sym">&gt;&gt;</span> revcomp b <span class="hl sym">&gt;&gt;</span> S.putStr b<span class="hl sym">)</span>
+
+clines <span class="hl sym">:: (</span>ByteString <span class="hl sym">-&gt;</span> ByteString <span class="hl sym">-&gt;</span> IO <span class="hl sym">()) -&gt;</span> ByteString <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+clines run <span class="hl sym">=</span> clines' where
+      clines' <span class="hl sym">!</span>ps <span class="hl sym">=</span> case S.elemIndex '\n' ps of
+	  Just n1 <span class="hl sym">-&gt;</span> let <span class="hl sym">!</span>ps' <span class="hl sym">=</span> S.drop <span class="hl sym">(</span>n1<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> ps in case S.elemIndex '<span class="hl sym">&gt;</span>' ps' of
+		  Just n2 <span class="hl sym">-&gt;</span> do
+		  	run <span class="hl sym">(</span>S.take n1 ps<span class="hl sym">)  (</span>S.take n2 ps'<span class="hl sym">)</span>
+			clines' <span class="hl sym">(</span>S.drop n2 ps'<span class="hl sym">)</span>
+		  Nothing <span class="hl sym">-&gt;</span> run <span class="hl sym">(</span>S.take n1 ps<span class="hl sym">) (</span>ps'<span class="hl sym">)</span>
+
+<span class="hl com">{-# INLINE comps #-}</span>
+comps <span class="hl sym">=</span> Prelude.zipWith <span class="hl sym">(</span>\ a b <span class="hl sym">-&gt; (</span>ord a<span class="hl sym">,</span> c2w b<span class="hl sym">))</span> <span class="hl str">&quot;AaCcGgTtUuMmRrYyKkVvHhDdBb&quot;</span>
+	<span class="hl str">&quot;TTGGCCAAAAKKYYRRMMBBDDHHVV&quot;</span>
+
+ca <span class="hl sym">::</span> Ptr Word8
+ca <span class="hl sym">=</span> inlinePerformIO $ do
+       <span class="hl sym">!</span>a <span class="hl sym">&lt;-</span> mallocArray <span class="hl num">200</span>
+       mapM_ <span class="hl sym">(</span>\ i <span class="hl sym">-&gt;</span> pokeByteOff a <span class="hl sym">(</span>fromIntegral i<span class="hl sym">)</span> i <span class="hl sym">) [</span><span class="hl num">0</span>.<span class="hl num">.199</span><span class="hl sym">::</span>Word8<span class="hl sym">]</span>
+       mapM_ <span class="hl sym">(</span>uncurry <span class="hl sym">(</span>pokeByteOff a<span class="hl sym">))</span> comps
+       return a
+
+comp <span class="hl sym">::</span> Word8 <span class="hl sym">-&gt;</span> Word8
+comp <span class="hl sym">(</span>W8# c#<span class="hl sym">) =</span> W8# <span class="hl sym">(</span>rw8 ca <span class="hl sym">(</span>word2Int# c#<span class="hl sym">))</span>
+
+<span class="hl sym">(+!) =</span> advancePtr
+
+revcomp <span class="hl sym">(</span>PS fp s l<span class="hl sym">) =</span> ca `seq` <span class="hl sym">(</span>withForeignPtr fp $ \p <span class="hl sym">-&gt;</span> let p' <span class="hl sym">=</span> p <span class="hl sym">+!</span> s in
+	rc p' <span class="hl sym">(</span>p' <span class="hl sym">+! (</span>l<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)))</span>
+  where
+    rc <span class="hl sym">::</span> Ptr Word8 <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+    rc <span class="hl sym">!</span>i <span class="hl sym">!</span>j <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> j <span class="hl sym">=</span> do
+    	x <span class="hl sym">&lt;-</span> peek i
+    	if x <span class="hl sym">==</span> c2w '\n' then let <span class="hl sym">!</span>i' <span class="hl sym">=</span> i <span class="hl sym">+!</span> <span class="hl num">1</span> in rc1 j i' <span class="hl sym">=&lt;&lt;</span> peek i'
+    		else rc1 j i x
+    rc i j <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">==</span> j<span class="hl sym">) (</span>poke i . comp <span class="hl sym">=&lt;&lt;</span> peek i<span class="hl sym">)</span>
+
+    rc1 <span class="hl sym">!</span>j <span class="hl sym">!</span>i <span class="hl sym">!</span>xi <span class="hl sym">=</span> do
+    	y <span class="hl sym">&lt;-</span> peek j
+    	if y <span class="hl sym">==</span> c2w '\n' then let <span class="hl sym">!</span>j' <span class="hl sym">=</span> j <span class="hl sym">+! (-</span><span class="hl num">1</span><span class="hl sym">)</span> in rc2 i xi j' <span class="hl sym">=&lt;&lt;</span> peek j'
+    		else rc2 i xi j y
+
+    rc2 <span class="hl sym">!</span>i <span class="hl sym">!</span>xi <span class="hl sym">!</span>j <span class="hl sym">!</span>xj <span class="hl sym">=</span> do
+    	poke j <span class="hl sym">(</span>comp xi<span class="hl sym">)</span>
+    	poke i <span class="hl sym">(</span>comp xj<span class="hl sym">)</span>
+    	rc <span class="hl sym">(</span>i <span class="hl sym">+!</span> <span class="hl num">1</span><span class="hl sym">) (</span>j <span class="hl sym">+! (-</span><span class="hl num">1</span><span class="hl sym">))</span>
+
+rw8 <span class="hl sym">::</span> Ptr Word8 <span class="hl sym">-&gt;</span> Int# <span class="hl sym">-&gt;</span> Word#
+rw8 <span class="hl sym">(</span>Ptr a<span class="hl sym">)</span> i <span class="hl sym">=</span> case readWord8OffAddr# a i realWorld#  of <span class="hl sym">(</span># _<span class="hl sym">,</span> x #<span class="hl sym">) -&gt;</span>  x
+<span class="hl com">{-# INLINE rw8 #-}</span>
