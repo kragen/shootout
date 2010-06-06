@@ -1,0 +1,104 @@
+<span class="hl com">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hl com">{-  The Computer Language Benchmarks Game</span>
+<span class="hl com">    http://shootout.alioth.debian.org/</span>
+<span class="hl com">    contributed by Louis Wasserman</span>
+<span class="hl com"></span>
+<span class="hl com">    This should be compiled with:</span>
+<span class="hl com">    	-threaded -O2 -fexcess-precision -fasm</span>
+<span class="hl com">    and run with:</span>
+<span class="hl com">    	+RTS -N&lt;number of cores&gt; -RTS &lt;input&gt;</span>
+<span class="hl com">-}</span>
+
+import Control.Concurrent
+import Control.Monad
+import System
+import Foreign hiding <span class="hl sym">(</span>rotate<span class="hl sym">)</span>
+import Data.Monoid
+
+type Perm <span class="hl sym">=</span> Ptr Word8
+
+data F <span class="hl sym">=</span> F <span class="hl com">{-# UNPACK #-}</span> <span class="hl sym">!</span>Int <span class="hl com">{-# UNPACK #-}</span> <span class="hl sym">!</span>Int
+
+instance Monoid F where
+	mempty <span class="hl sym">=</span> F <span class="hl num">0 0</span>
+	F s1 m1 `mappend` F s2 m2 <span class="hl sym">=</span> F <span class="hl sym">(</span>s1 <span class="hl sym">+</span> s2<span class="hl sym">) (</span>max m1 m2<span class="hl sym">)</span>
+
+incPtr <span class="hl sym">= (</span>`advancePtr` <span class="hl num">1</span><span class="hl sym">)</span>
+decPtr <span class="hl sym">= (</span>`advancePtr` <span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">))</span>
+
+flop <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Perm <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+flop k xs <span class="hl sym">=</span> flopp xs <span class="hl sym">(</span>xs `advancePtr` k<span class="hl sym">)</span>
+ where flopp i j <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> j<span class="hl sym">)</span> $ swap i j <span class="hl sym">&gt;&gt;</span> flopp <span class="hl sym">(</span>incPtr i<span class="hl sym">) (</span>decPtr j<span class="hl sym">)</span>
+       swap i j <span class="hl sym">=</span> do
+	a <span class="hl sym">&lt;-</span> peek i
+	b <span class="hl sym">&lt;-</span> peek j
+	poke j a
+	poke i b
+
+flopS <span class="hl sym">::</span> Perm <span class="hl sym">-&gt; (</span>Int <span class="hl sym">-&gt;</span> IO a<span class="hl sym">) -&gt;</span> IO a
+flopS <span class="hl sym">!</span>xs f <span class="hl sym">=</span> do
+	let go <span class="hl sym">!</span>acc <span class="hl sym">=</span> do
+		k <span class="hl sym">&lt;-</span> peekElemOff xs <span class="hl num">0</span>
+		if k <span class="hl sym">==</span> <span class="hl num">0</span> then f acc else flop <span class="hl sym">(</span>fromIntegral k<span class="hl sym">)</span> xs <span class="hl sym">&gt;&gt;</span> go <span class="hl sym">(</span>acc<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+	go <span class="hl num">0</span>
+
+increment <span class="hl sym">::</span> Ptr Word8 <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+increment <span class="hl sym">!</span>p <span class="hl sym">!</span>ct <span class="hl sym">=</span> do
+	first <span class="hl sym">&lt;-</span> peekElemOff p <span class="hl num">1</span>
+	pokeElemOff p <span class="hl num">1</span> <span class="hl sym">=&lt;&lt;</span> peekElemOff p <span class="hl num">0</span>
+	pokeElemOff p <span class="hl num">0</span> first
+
+	let go <span class="hl sym">!</span>i <span class="hl sym">!</span>first <span class="hl sym">=</span> do
+		ci <span class="hl sym">&lt;-</span> peekElemOff ct i
+		if fromIntegral ci <span class="hl sym">&lt;</span> i then pokeElemOff ct i <span class="hl sym">(</span>ci<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> else do
+			pokeElemOff ct i <span class="hl num">0</span>
+			let <span class="hl sym">!</span>i' <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span>
+			moveArray p <span class="hl sym">(</span>incPtr p<span class="hl sym">)</span> i'
+			pokeElemOff p i' first
+			go i' <span class="hl sym">=&lt;&lt;</span> peekElemOff p <span class="hl num">0</span>
+	go <span class="hl num">1</span> first
+
+genPermutations <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO F
+genPermutations <span class="hl sym">!</span>n <span class="hl sym">!</span>l <span class="hl sym">!</span>r <span class="hl sym">!</span>perm <span class="hl sym">!</span>count <span class="hl sym">=</span> allocaArray n $ \ destF <span class="hl sym">-&gt;</span> do
+	let upd j <span class="hl sym">!</span>f run <span class="hl sym">=</span> do
+		p0 <span class="hl sym">&lt;-</span> peekElemOff perm <span class="hl num">0</span>
+		if p0 <span class="hl sym">==</span> <span class="hl num">0</span> then increment perm count <span class="hl sym">&gt;&gt;</span> run f else do
+			copyArray destF perm n
+			increment perm count
+			flopS destF $ \ flops <span class="hl sym">-&gt;</span>
+				run <span class="hl sym">(</span>f `mappend` F <span class="hl sym">(</span>checksum j flops<span class="hl sym">)</span> flops<span class="hl sym">)</span>
+	let go j <span class="hl sym">!</span>f <span class="hl sym">=</span> if j <span class="hl sym">&gt;=</span> r then return f else upd j f <span class="hl sym">(</span>go <span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">))</span>
+	go l mempty
+ where checksum i f <span class="hl sym">=</span> if i .<span class="hl sym">&amp;</span>. <span class="hl num">1</span> <span class="hl sym">==</span> <span class="hl num">0</span> then f else <span class="hl sym">-</span>f
+
+facts <span class="hl sym">:: [</span>Int<span class="hl sym">]</span>
+facts <span class="hl sym">=</span> scanl <span class="hl sym">(*)</span> <span class="hl num">1</span> <span class="hl sym">[</span><span class="hl num">1</span>.<span class="hl num">.12</span><span class="hl sym">]</span>
+
+unrank <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt; (</span>Ptr Word8 <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO a<span class="hl sym">) -&gt;</span> IO a
+unrank <span class="hl sym">!</span>idx <span class="hl sym">!</span>n f <span class="hl sym">=</span> allocaArray n $ \ p <span class="hl sym">-&gt;</span> allocaArray n $ \ count <span class="hl sym">-&gt;</span>
+  allocaArray n $ \ pp <span class="hl sym">-&gt;</span> do
+	mapM_ <span class="hl sym">(</span>\ i <span class="hl sym">-&gt;</span> pokeElemOff p i <span class="hl sym">(</span>fromIntegral i<span class="hl sym">)) [</span><span class="hl num">0</span>..n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span>
+	let go i <span class="hl sym">!</span>idx <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">)</span> $ do
+		let fi <span class="hl sym">=</span> facts <span class="hl sym">!!</span> i
+		let <span class="hl sym">(</span>q<span class="hl sym">,</span> r<span class="hl sym">) =</span> idx `quotRem` fi
+		pokeElemOff count i <span class="hl sym">(</span>fromIntegral q<span class="hl sym">)</span>
+		copyArray pp p <span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+		let go' j <span class="hl sym">=</span> when <span class="hl sym">(</span>j <span class="hl sym">&lt;=</span> i<span class="hl sym">)</span> $ do
+			let jq <span class="hl sym">=</span> j <span class="hl sym">+</span> q
+			pokeElemOff p j <span class="hl sym">=&lt;&lt;</span> peekElemOff pp <span class="hl sym">(</span>if jq <span class="hl sym">&lt;=</span> i then jq else jq <span class="hl sym">-</span> i <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+			go' <span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+		go' <span class="hl num">0</span>
+		go <span class="hl sym">(</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> r
+	go <span class="hl sym">(</span>n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span> idx
+	f p count
+
+main <span class="hl sym">=</span> do
+   n <span class="hl sym">&lt;-</span> fmap <span class="hl sym">(</span>read.head<span class="hl sym">)</span> getArgs
+   let fact <span class="hl sym">=</span> product <span class="hl sym">[</span><span class="hl num">1</span>..n<span class="hl sym">]</span>
+   let bk <span class="hl sym">=</span> fact `quot` <span class="hl num">4</span>
+   vars <span class="hl sym">&lt;-</span> forM <span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">,</span>bk..fact<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span> $ \ ix <span class="hl sym">-&gt;</span> do
+   	var <span class="hl sym">&lt;-</span> newEmptyMVar
+   	forkIO <span class="hl sym">(</span>unrank ix n $ \ p <span class="hl sym">-&gt;</span> genPermutations n ix <span class="hl sym">(</span>min fact <span class="hl sym">(</span>ix <span class="hl sym">+</span> bk<span class="hl sym">))</span> p <span class="hl sym">&gt;=&gt;</span> putMVar var<span class="hl sym">)</span>
+   	return var
+   F chksm mflops <span class="hl sym">&lt;-</span> liftM mconcat <span class="hl sym">(</span>mapM takeMVar vars<span class="hl sym">)</span>
+   putStrLn $ <span class="hl sym">(</span>show chksm<span class="hl sym">) ++</span> <span class="hl str">&quot;\nPfannkuchen(&quot;</span> <span class="hl sym">++ (</span>show n<span class="hl sym">) ++</span> <span class="hl str">&quot;) = &quot;</span> <span class="hl sym">++ (</span>show $ mflops<span class="hl sym">)</span>
