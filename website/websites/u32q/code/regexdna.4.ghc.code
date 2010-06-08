@@ -13,24 +13,24 @@
 <span class="hl slc">--                  ./regex                (single core)</span>
 
 
-<span class="hl kwa">import</span> Control.Concurrent
-<span class="hl kwa">import</span> Control.Parallel
-<span class="hl kwa">import</span> Control.Parallel.Strategies
-<span class="hl kwa">import</span> Control.Monad
-<span class="hl kwa">import</span> Foreign.Storable
-<span class="hl kwa">import</span> Foreign.Marshal.Alloc
-<span class="hl kwa">import</span> Foreign.Marshal.Array
-<span class="hl kwa">import</span> Foreign.Ptr
-<span class="hl kwa">import</span> Foreign.ForeignPtr
-<span class="hl kwa">import</span> Foreign.C.Types
-<span class="hl kwa">import</span> Text.Regex.PCRE          <span class="hl slc">-- requires haskell-regex-pcre-builtin</span>
-<span class="hl kwa">import qualified</span> Data.ByteString <span class="hl kwa">as</span> B
-<span class="hl kwa">import qualified</span> Data.ByteString.Internal <span class="hl kwa">as</span> BI
-<span class="hl kwa">import</span> System.IO.Unsafe
-<span class="hl kwa">import</span> Data.Array
-<span class="hl kwa">import</span> Debug.Trace
-<span class="hl kwa">import</span> Data.List
-<span class="hl kwa">import</span> Data.Word
+import Control.Concurrent
+import Control.Parallel
+import Control.Parallel.Strategies
+import Control.Monad
+import Foreign.Storable
+import Foreign.Marshal.Alloc
+import Foreign.Marshal.Array
+import Foreign.Ptr
+import Foreign.ForeignPtr
+import Foreign.C.Types
+import Text.Regex.PCRE          <span class="hl slc">-- requires haskell-regex-pcre-builtin</span>
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Internal as BI
+import System.IO.Unsafe
+import Data.Array
+import Debug.Trace
+import Data.List
+import Data.Word
 
 variants <span class="hl sym">= [</span>
   <span class="hl str">&quot;agggtaaa|tttaccct&quot;</span><span class="hl sym">,</span>
@@ -56,11 +56,11 @@ subs <span class="hl sym">= [</span>
     <span class="hl sym">(</span><span class="hl str">&quot;W&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">),</span>
     <span class="hl sym">(</span><span class="hl str">&quot;Y&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">)]</span>
 
-main <span class="hl sym">=</span> <span class="hl kwa">do</span>
+main <span class="hl sym">=</span> do
   file <span class="hl sym">&lt;-</span> B.getContents
-  <span class="hl kwa">let</span> <span class="hl sym">[</span>s1<span class="hl sym">,</span>s2<span class="hl sym">,</span>s3<span class="hl sym">] =</span> map <span class="hl sym">(</span>B.concat . tail<span class="hl sym">)</span> $
+  let <span class="hl sym">[</span>s1<span class="hl sym">,</span>s2<span class="hl sym">,</span>s3<span class="hl sym">] =</span> map <span class="hl sym">(</span>B.concat . tail<span class="hl sym">)</span> $
                 groupBy notHeader $ B.split <span class="hl sym">(</span>BI.c2w '\n'<span class="hl sym">)</span> file
-      showVars r <span class="hl sym">=</span> r <span class="hl sym">++</span> ' ' <span class="hl sym">:</span> show <span class="hl sym">((</span>s2 <span class="hl sym">=~</span> r <span class="hl sym">::</span> <span class="hl kwb">Int</span><span class="hl sym">) + (</span>s3 <span class="hl sym">=~</span> r <span class="hl sym">::</span> <span class="hl kwb">Int</span><span class="hl sym">))</span>
+      showVars r <span class="hl sym">=</span> r <span class="hl sym">++</span> ' ' <span class="hl sym">:</span> show <span class="hl sym">((</span>s2 <span class="hl sym">=~</span> r <span class="hl sym">::</span> Int<span class="hl sym">) + (</span>s3 <span class="hl sym">=~</span> r <span class="hl sym">::</span> Int<span class="hl sym">))</span>
       results <span class="hl sym">=</span> map showVars variants <span class="hl sym">++ [</span>
                   <span class="hl str">&quot;&quot;</span><span class="hl sym">,</span>
                   show $ B.length file<span class="hl sym">,</span>
@@ -72,30 +72,30 @@ main <span class="hl sym">=</span> <span class="hl kwa">do</span>
   return $<span class="hl sym">! (</span>s1 `par` s2 `par` s3<span class="hl sym">)</span> `seq` s1 `seq` s2 `seq` s3
   mapM_ putStrLn $ parList rnf results `seq` results
 
-  <span class="hl kwa">let</span> chunks <span class="hl sym">=</span> fragment <span class="hl num">5000</span> s2  <span class="hl slc">-- break into chunks to parallelize, which</span>
+  let chunks <span class="hl sym">=</span> fragment <span class="hl num">5000</span> s2  <span class="hl slc">-- break into chunks to parallelize, which</span>
                                  <span class="hl slc">-- is possible as our regexes are 1 char long</span>
   chunks' <span class="hl sym">&lt;-</span> parallel $ map substituteAll chunks  <span class="hl slc">-- do regex substitutions</span>
   print $ B.length s1 <span class="hl sym">+</span> B.length s3 <span class="hl sym">+</span> B.length <span class="hl sym">(</span>B.concat chunks'<span class="hl sym">)</span>
-  <span class="hl kwa">where</span> notHeader _ s <span class="hl sym">=</span> B.null s <span class="hl sym">||</span> B.head s <span class="hl sym">/= (</span>BI.c2w '<span class="hl sym">&gt;</span>'<span class="hl sym">)</span>
+  where notHeader _ s <span class="hl sym">=</span> B.null s <span class="hl sym">||</span> B.head s <span class="hl sym">/= (</span>BI.c2w '<span class="hl sym">&gt;</span>'<span class="hl sym">)</span>
 
 <span class="hl slc">-- Drop in replacement for sequence</span>
 parallel <span class="hl sym">:: [</span>IO a<span class="hl sym">] -&gt;</span> IO <span class="hl sym">[</span>a<span class="hl sym">]</span>
-parallel actions <span class="hl sym">=</span> <span class="hl kwa">do</span>
-    vars <span class="hl sym">&lt;-</span> forM actions $ \action <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
+parallel actions <span class="hl sym">=</span> do
+    vars <span class="hl sym">&lt;-</span> forM actions $ \action <span class="hl sym">-&gt;</span> do
         var <span class="hl sym">&lt;-</span> newEmptyMVar
-        forkIO $ <span class="hl kwa">do</span>
+        forkIO $ do
             answer <span class="hl sym">&lt;-</span> action
             return $<span class="hl sym">!</span> answer
             putMVar var answer
         return var
     forM vars takeMVar
 
-fragment <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> B.ByteString <span class="hl sym">-&gt; [</span>B.ByteString<span class="hl sym">]</span>
+fragment <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> B.ByteString <span class="hl sym">-&gt; [</span>B.ByteString<span class="hl sym">]</span>
 fragment chunkSize bs <span class="hl sym">=</span>
-    <span class="hl kwa">let</span> <span class="hl sym">(</span>start<span class="hl sym">,</span> rem<span class="hl sym">) =</span> B.splitAt chunkSize bs
-    <span class="hl kwa">in</span>  if B.null rem
-            <span class="hl kwa">then</span> <span class="hl sym">[</span>start<span class="hl sym">]</span>
-            <span class="hl kwa">else</span> start <span class="hl sym">:</span> fragment chunkSize rem
+    let <span class="hl sym">(</span>start<span class="hl sym">,</span> rem<span class="hl sym">) =</span> B.splitAt chunkSize bs
+    in  if B.null rem
+            then <span class="hl sym">[</span>start<span class="hl sym">]</span>
+            else start <span class="hl sym">:</span> fragment chunkSize rem
 
 <span class="hl slc">-- Precompile regexes</span>
 subRegexes <span class="hl sym">:: [(</span>Regex<span class="hl sym">,</span> B.ByteString<span class="hl sym">)]</span>
@@ -103,63 +103,63 @@ subRegexes <span class="hl sym">=</span> flip map subs $ \<span class="hl sym">(
     <span class="hl sym">(</span>makeRegex pattern <span class="hl sym">::</span> Regex<span class="hl sym">,</span> B.pack <span class="hl sym">(</span>map BI.c2w sub<span class="hl sym">))</span>
 
 substituteAll <span class="hl sym">::</span> B.ByteString <span class="hl sym">-&gt;</span> IO B.ByteString
-substituteAll <span class="hl sym">!</span>txt <span class="hl sym">=</span> <span class="hl kwa">do</span>
-    <span class="hl kwa">let</span> BI.PS srcFP srcOff srcLen <span class="hl sym">=</span> txt
-    withForeignPtr srcFP $ \src0 <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
-        <span class="hl kwa">let</span> src <span class="hl sym">=</span> src0 `plusPtr` srcOff
+substituteAll <span class="hl sym">!</span>txt <span class="hl sym">=</span> do
+    let BI.PS srcFP srcOff srcLen <span class="hl sym">=</span> txt
+    withForeignPtr srcFP $ \src0 <span class="hl sym">-&gt;</span> do
+        let src <span class="hl sym">=</span> src0 `plusPtr` srcOff
             <span class="hl slc">-- Capacity of -1 guarantees that a new buffer will be allocated</span>
         <span class="hl sym">(</span>dst<span class="hl sym">,</span> dstLen<span class="hl sym">,</span> _<span class="hl sym">) &lt;-</span> foldM substitute_ <span class="hl sym">(</span>src<span class="hl sym">,</span> srcLen<span class="hl sym">, -</span><span class="hl num">1</span><span class="hl sym">)</span> subRegexes
         dstFP <span class="hl sym">&lt;-</span> newForeignPtr finalizerFree dst
         return $ BI.PS dstFP <span class="hl num">0</span> dstLen
 
-foreign <span class="hl kwa">import</span> ccall unsafe <span class="hl str">&quot;string.h memmove&quot;</span> memmove
+foreign import ccall unsafe <span class="hl str">&quot;string.h memmove&quot;</span> memmove
     <span class="hl sym">::</span> Ptr Word8 <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> CSize <span class="hl sym">-&gt;</span> IO <span class="hl sym">(</span>Ptr Word8<span class="hl sym">)</span>
 
 <span class="hl slc">-- A function that does nothing</span>
-foreign <span class="hl kwa">import</span> ccall unsafe <span class="hl str">&quot;static unistd.h &amp;getpid&quot;</span> c_null_finalizer
+foreign import ccall unsafe <span class="hl str">&quot;static unistd.h &amp;getpid&quot;</span> c_null_finalizer
     <span class="hl sym">::</span> FunPtr <span class="hl sym">(</span>Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl sym">())</span>
 
 <span class="hl slc">-- Do a single regex substitution, returning the modified string</span>
-substitute_ <span class="hl sym">:: (</span>Ptr Word8<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">) -&gt; (</span>Regex<span class="hl sym">,</span> B.ByteString<span class="hl sym">) -&gt;</span> IO <span class="hl sym">(</span>Ptr Word8<span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">,</span> <span class="hl kwb">Int</span><span class="hl sym">)</span>
-substitute_ <span class="hl sym">(</span>src<span class="hl sym">,</span> srcLen<span class="hl sym">,</span> srcCap<span class="hl sym">) (</span>regex<span class="hl sym">,</span> sub<span class="hl sym">) =</span> <span class="hl kwa">do</span>
+substitute_ <span class="hl sym">:: (</span>Ptr Word8<span class="hl sym">,</span> Int<span class="hl sym">,</span> Int<span class="hl sym">) -&gt; (</span>Regex<span class="hl sym">,</span> B.ByteString<span class="hl sym">) -&gt;</span> IO <span class="hl sym">(</span>Ptr Word8<span class="hl sym">,</span> Int<span class="hl sym">,</span> Int<span class="hl sym">)</span>
+substitute_ <span class="hl sym">(</span>src<span class="hl sym">,</span> srcLen<span class="hl sym">,</span> srcCap<span class="hl sym">) (</span>regex<span class="hl sym">,</span> sub<span class="hl sym">) =</span> do
     <span class="hl slc">-- Make a new string given the input string, regex match positions, and</span>
     <span class="hl slc">-- string to substitute</span>
     <span class="hl slc">-- Turn the source buffer into a byte string to pass to 'match'</span>
     srcFP <span class="hl sym">&lt;-</span> newForeignPtr c_null_finalizer src
-    <span class="hl kwa">let</span> srcBS <span class="hl sym">=</span> BI.PS srcFP <span class="hl num">0</span> srcLen
-        am <span class="hl sym">::</span> Array <span class="hl kwb">Int</span> <span class="hl sym">(</span>MatchOffset<span class="hl sym">,</span> MatchLength<span class="hl sym">)</span>
+    let srcBS <span class="hl sym">=</span> BI.PS srcFP <span class="hl num">0</span> srcLen
+        am <span class="hl sym">::</span> Array Int <span class="hl sym">(</span>MatchOffset<span class="hl sym">,</span> MatchLength<span class="hl sym">)</span>
         AllMatches am <span class="hl sym">=</span> match regex srcBS
         <span class="hl sym">(</span>start<span class="hl sym">,</span> end<span class="hl sym">) =</span> bounds am
         matches <span class="hl sym">=</span> end <span class="hl sym">+</span> <span class="hl num">1</span>
         BI.PS subFP subOff subLen <span class="hl sym">=</span> sub
         newLength <span class="hl sym">=</span> srcLen <span class="hl sym">+</span> matches <span class="hl sym">* (</span>subLen <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
-    withForeignPtr subFP $ \sub0 <span class="hl sym">-&gt;</span> <span class="hl kwa">do</span>
-        <span class="hl kwa">let</span> sub <span class="hl sym">=</span> sub0 `plusPtr` subOff
+    withForeignPtr subFP $ \sub0 <span class="hl sym">-&gt;</span> do
+        let sub <span class="hl sym">=</span> sub0 `plusPtr` subOff
         <span class="hl sym">(</span>dst<span class="hl sym">,</span> dstCap<span class="hl sym">) &lt;-</span>
             if newLength <span class="hl sym">&gt;</span> srcCap
-                <span class="hl kwa">then do</span>
-                    <span class="hl kwa">let</span> dstCap <span class="hl sym">=</span> if srcCap <span class="hl sym">&lt;</span> <span class="hl num">0</span>
-                            <span class="hl kwa">then</span> srcLen <span class="hl sym">*</span> <span class="hl num">2</span>
-                            <span class="hl kwa">else</span> srcCap <span class="hl sym">*</span> <span class="hl num">2</span>
+                then do
+                    let dstCap <span class="hl sym">=</span> if srcCap <span class="hl sym">&lt;</span> <span class="hl num">0</span>
+                            then srcLen <span class="hl sym">*</span> <span class="hl num">2</span>
+                            else srcCap <span class="hl sym">*</span> <span class="hl num">2</span>
                     dst <span class="hl sym">&lt;-</span> mallocBytes dstCap
                     return <span class="hl sym">(</span>dst<span class="hl sym">,</span> dstCap<span class="hl sym">)</span>
-                <span class="hl kwa">else</span>
+                else
                     return <span class="hl sym">(</span>src<span class="hl sym">,</span> srcCap<span class="hl sym">)</span>
 
-        <span class="hl kwa">let</span> copy <span class="hl sym">::</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> <span class="hl kwb">Int</span> <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
-            copy idx sOff dOff <span class="hl sym">|</span> idx <span class="hl sym">&lt;</span> <span class="hl num">0</span> <span class="hl sym">=</span> <span class="hl kwa">do</span>
-                <span class="hl kwa">let</span> chunkLen <span class="hl sym">=</span> sOff
+        let copy <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+            copy idx sOff dOff <span class="hl sym">|</span> idx <span class="hl sym">&lt;</span> <span class="hl num">0</span> <span class="hl sym">=</span> do
+                let chunkLen <span class="hl sym">=</span> sOff
                 when <span class="hl sym">(</span>dst <span class="hl sym">/=</span> src<span class="hl sym">)</span> $
                     BI.memcpy dst src <span class="hl sym">(</span>fromIntegral chunkLen<span class="hl sym">)</span>
 
-            copy idx sOff dOff <span class="hl sym">=</span> <span class="hl kwa">do</span>
-                <span class="hl kwa">let</span> <span class="hl sym">(</span>matchOff<span class="hl sym">,</span> _<span class="hl sym">) =</span> am <span class="hl sym">!</span> idx
+            copy idx sOff dOff <span class="hl sym">=</span> do
+                let <span class="hl sym">(</span>matchOff<span class="hl sym">,</span> _<span class="hl sym">) =</span> am <span class="hl sym">!</span> idx
                     sOff' <span class="hl sym">=</span> matchOff <span class="hl sym">+</span> <span class="hl num">1</span>
                     chunkLen <span class="hl sym">=</span>  sOff <span class="hl sym">-</span> sOff'
                     dOff' <span class="hl sym">=</span> dOff <span class="hl sym">-</span> chunkLen
                 memmove <span class="hl sym">(</span>dst `plusPtr` dOff'<span class="hl sym">) (</span>src `plusPtr` sOff'<span class="hl sym">)</span>
                         <span class="hl sym">(</span>fromIntegral chunkLen<span class="hl sym">)</span>
-                <span class="hl kwa">let</span> dOff'' <span class="hl sym">=</span> dOff' <span class="hl sym">-</span> subLen
+                let dOff'' <span class="hl sym">=</span> dOff' <span class="hl sym">-</span> subLen
                     sOff'' <span class="hl sym">=</span> sOff' <span class="hl sym">-</span> <span class="hl num">1</span>
                 BI.memcpy <span class="hl sym">(</span>dst `plusPtr` dOff''<span class="hl sym">)</span> sub
                         <span class="hl sym">(</span>fromIntegral subLen<span class="hl sym">)</span>
