@@ -1,0 +1,132 @@
+<span class="hl com">{ The Computer Language Benchmarks Game</span>
+<span class="hl com">  http://shootout.alioth.debian.org</span>
+<span class="hl com"></span>
+<span class="hl com">  contributed by Ales Katona</span>
+<span class="hl com">  modified by Vincent Snijders</span>
+<span class="hl com">  optimized and multithreaded by Jean de La Taille</span>
+<span class="hl com">}</span>
+
+<span class="hl kwa">program</span> mandelbrot<span class="hl sym">;</span>
+
+<span class="hl kwa">uses</span>
+  <span class="hl com">{$ifdef unix}</span>cthreads<span class="hl sym">,</span><span class="hl com">{$endif}</span>
+  sysUtils<span class="hl sym">,</span> dateUtils<span class="hl sym">,</span> math<span class="hl sym">;</span>
+
+<span class="hl kwa">const</span>
+  Limit <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">;</span>
+
+<span class="hl kwa">var</span>
+  n<span class="hl sym">,</span> n_1<span class="hl sym">,</span> dimx<span class="hl sym">,</span> dimy <span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  TextBuf<span class="hl sym">:</span> <span class="hl kwa">array of</span> <span class="hl kwb">byte</span><span class="hl sym">;</span>
+  start<span class="hl sym">,</span> finish <span class="hl sym">:</span> TDateTime<span class="hl sym">;</span>
+
+<span class="hl kwa">type</span>
+  mem <span class="hl sym">=</span> <span class="hl kwa">record</span>
+    from_y<span class="hl sym">,</span> to_y <span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  pmem <span class="hl sym">= ^</span>mem<span class="hl sym">;</span>
+
+<span class="hl kwa">function</span> <span class="hl kwd">subThread</span><span class="hl sym">(</span>p<span class="hl sym">:</span> <span class="hl kwb">pointer</span><span class="hl sym">) :</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  x<span class="hl sym">,</span> y<span class="hl sym">,</span> from_y<span class="hl sym">,</span> to_y<span class="hl sym">,</span> buf_index<span class="hl sym">,</span> i<span class="hl sym">:</span> <span class="hl kwb">Longint</span><span class="hl sym">;</span>
+  Zr<span class="hl sym">,</span> Zi<span class="hl sym">,</span> Ti<span class="hl sym">,</span> Tr <span class="hl sym">:</span> <span class="hl kwb">Double</span><span class="hl sym">;</span>
+  Cr<span class="hl sym">,</span> Ci <span class="hl sym">:</span> <span class="hl kwb">Double</span><span class="hl sym">;</span>
+  bits<span class="hl sym">:</span> <span class="hl kwb">Longint</span><span class="hl sym">;</span>
+  bit<span class="hl sym">:</span> <span class="hl kwb">Longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  from_y <span class="hl sym">:=</span> <span class="hl kwd">pmem</span><span class="hl sym">(</span>p<span class="hl sym">)^.</span>from_y<span class="hl sym">;</span>
+  to_y <span class="hl sym">:=</span> <span class="hl kwd">pmem</span><span class="hl sym">(</span>p<span class="hl sym">)^.</span>to_y<span class="hl sym">;</span>
+  buf_index <span class="hl sym">:=</span> from_y <span class="hl sym">*</span> dimx<span class="hl sym">;</span>
+  <span class="hl kwa">for</span> y <span class="hl sym">:=</span> from_y <span class="hl kwa">to</span> to_y <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    bit <span class="hl sym">:=</span> <span class="hl num">128</span><span class="hl sym">;</span> <span class="hl slc">// 1000 0000</span>
+    bits <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    Ci <span class="hl sym">:= ((</span>y <span class="hl sym">+</span> y<span class="hl sym">) /</span> n<span class="hl sym">) -</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
+    <span class="hl kwa">for</span> x <span class="hl sym">:=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> n_1 <span class="hl kwa">do</span>
+    <span class="hl kwa">begin</span>
+      <span class="hl slc">//---------------------------</span>
+      Zr <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Zi <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Tr <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Ti <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Cr <span class="hl sym">:= ((</span>x <span class="hl sym">+</span> x<span class="hl sym">) /</span> n<span class="hl sym">) -</span> <span class="hl num">1.5</span><span class="hl sym">;</span>
+      <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl kwa">to</span> <span class="hl num">50</span> <span class="hl kwa">do</span>
+      <span class="hl kwa">begin</span>
+        Zi <span class="hl sym">:=</span> <span class="hl num">2</span> <span class="hl sym">*</span> Zr <span class="hl sym">*</span> Zi <span class="hl sym">+</span> Ci<span class="hl sym">;</span>
+        Zr <span class="hl sym">:=</span> Tr <span class="hl sym">-</span> Ti <span class="hl sym">+</span> Cr<span class="hl sym">;</span>
+        Ti <span class="hl sym">:=</span> Zi <span class="hl sym">*</span> Zi<span class="hl sym">;</span>
+        Tr <span class="hl sym">:=</span> Zr <span class="hl sym">*</span> Zr<span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">((</span>Tr <span class="hl sym">+</span> Ti<span class="hl sym">) &gt;</span> limit<span class="hl sym">)</span> <span class="hl kwa">then</span>
+        <span class="hl kwa">begin</span>
+          bits <span class="hl sym">:=</span> bits <span class="hl kwa">or</span> bit<span class="hl sym">;</span>
+          break<span class="hl sym">;</span>
+        <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span><span class="hl sym">;</span>
+      <span class="hl slc">//---------------------------</span>
+      bit <span class="hl sym">:=</span> bit <span class="hl sym">&gt;&gt;</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>bit <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>
+        TextBuf<span class="hl sym">[</span>buf_index<span class="hl sym">] :=</span> <span class="hl kwa">not</span> bits<span class="hl sym">;</span>
+        <span class="hl kwd">inc</span><span class="hl sym">(</span>buf_index<span class="hl sym">);</span>
+        bits <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        bit <span class="hl sym">:=</span> <span class="hl num">128</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span><span class="hl sym">;</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  subThread <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> run<span class="hl sym">;</span>
+<span class="hl kwa">var</span>
+  i<span class="hl sym">,</span> l<span class="hl sym">,</span> x<span class="hl sym">,</span> y<span class="hl sym">,</span> buf_index<span class="hl sym">:</span> <span class="hl kwb">Longint</span><span class="hl sym">;</span>
+  tt <span class="hl sym">:</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">.</span><span class="hl num">.3</span><span class="hl sym">]</span> <span class="hl kwa">of</span> TThreadID<span class="hl sym">;</span>
+  m <span class="hl sym">:</span> <span class="hl kwa">array</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">.</span><span class="hl num">.3</span><span class="hl sym">]</span> <span class="hl kwa">of</span> mem<span class="hl sym">;</span>
+  stepL <span class="hl sym">:</span> <span class="hl kwb">longint</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+  n_1 <span class="hl sym">:=</span> n <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+  l <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  stepL <span class="hl sym">:=</span> <span class="hl kwd">floor</span><span class="hl sym">(</span>n <span class="hl sym">/</span> <span class="hl num">4</span><span class="hl sym">);</span>
+
+  start <span class="hl sym">:=</span> now<span class="hl sym">;</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> <span class="hl num">2</span> <span class="hl kwa">do</span>
+  <span class="hl kwa">begin</span>
+    m<span class="hl sym">[</span>i<span class="hl sym">].</span>from_y <span class="hl sym">:=</span> l<span class="hl sym">;</span>
+    m<span class="hl sym">[</span>i<span class="hl sym">].</span>to_y <span class="hl sym">:=</span> l <span class="hl sym">+</span> stepL <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+    tt<span class="hl sym">[</span>i<span class="hl sym">] :=</span> <span class="hl kwd">BeginThread</span><span class="hl sym">(&#64;</span>subThread<span class="hl sym">, &#64;</span>m<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+    l <span class="hl sym">:=</span> l <span class="hl sym">+</span> stepL<span class="hl sym">;</span>
+  <span class="hl kwa">end</span><span class="hl sym">;</span>
+  m<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">].</span>from_y <span class="hl sym">:=</span> l<span class="hl sym">;</span>
+  m<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">].</span>to_y <span class="hl sym">:=</span> n_1<span class="hl sym">;</span>
+  tt<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">] :=</span> <span class="hl kwd">BeginThread</span><span class="hl sym">(&#64;</span>subThread<span class="hl sym">, &#64;</span>m<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">]);</span>
+  <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> <span class="hl num">3</span> <span class="hl kwa">do</span>
+    <span class="hl kwd">WaitForThreadTerminate</span><span class="hl sym">(</span>tt<span class="hl sym">[</span>i<span class="hl sym">],</span> <span class="hl num">0</span><span class="hl sym">);</span>
+  finish <span class="hl sym">:=</span> now<span class="hl sym">;</span>
+  <span class="hl slc">//WriteLn('Time : ', MilliSecondsBetween(start, finish) / 1000 : 0 : 4);</span>
+
+  buf_index <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl kwa">for</span> y <span class="hl sym">:=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> n_1 <span class="hl kwa">do</span>
+    <span class="hl kwa">for</span> x <span class="hl sym">:=</span> <span class="hl num">0</span> <span class="hl kwa">to</span> dimx <span class="hl sym">-</span> <span class="hl num">1</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">begin</span>
+      <span class="hl kwd">write</span><span class="hl sym">(</span><span class="hl kwd">chr</span><span class="hl sym">(</span>TextBuf<span class="hl sym">[</span>buf_index<span class="hl sym">]));;</span>
+      <span class="hl kwd">inc</span><span class="hl sym">(</span>buf_index<span class="hl sym">);</span>
+    <span class="hl kwa">end</span><span class="hl sym">;</span>
+<span class="hl kwa">end</span><span class="hl sym">;</span>
+
+
+<span class="hl kwa">begin</span>
+  <span class="hl kwd">Val</span><span class="hl sym">(</span><span class="hl kwd">ParamStr</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">),</span> n<span class="hl sym">);</span>
+  <span class="hl kwd">write</span><span class="hl sym">(</span><span class="hl str">'P4'</span><span class="hl sym">,</span> <span class="hl kwd">chr</span><span class="hl sym">(</span><span class="hl num">10</span><span class="hl sym">),</span> n<span class="hl sym">,</span> <span class="hl str">' '</span><span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl kwd">chr</span><span class="hl sym">(</span><span class="hl num">10</span><span class="hl sym">));</span>
+  <span class="hl slc">//write('P5', chr(10), n, ' ', n, chr(10), 255, chr(10));</span>
+
+  dimx <span class="hl sym">:=</span> <span class="hl kwd">Ceil</span><span class="hl sym">(</span>n <span class="hl sym">/</span> <span class="hl num">8</span><span class="hl sym">);</span>
+  dimy <span class="hl sym">:=</span> n<span class="hl sym">;</span>
+  <span class="hl kwd">SetLength</span><span class="hl sym">(</span>TextBuf<span class="hl sym">, (</span>dimx <span class="hl sym">*</span> dimy<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">);</span>
+
+  start <span class="hl sym">:=</span> now<span class="hl sym">;</span>
+
+  run<span class="hl sym">;</span>
+
+  finish <span class="hl sym">:=</span> now<span class="hl sym">;</span>
+<span class="hl kwa">end</span><span class="hl sym">.</span>
+
+
