@@ -4,7 +4,6 @@
    slightly modified by Krzysztof Jakubowski
 */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,26 +14,26 @@ struct Random {
    Random() : last(42) {}
    float get( float max = 1.0f ) {
       last = ( last * IA + IC ) % IM;
-      return last * (512.0f / IM);
+      return max * last * (512.0f / IM);
    }
-   
+protected:
    unsigned int last;
 } rng;
 
 struct IUB {
    int c;
-   float p;
+   double p;
    unsigned int pi;
 };
 
 struct Cumulative {
-   enum { slots = 512 };
+   enum { slots = 512, };
 
    Cumulative( IUB *start ) {
-      float p = 0;
+      double p = 0;
       for ( IUB *iter = start; iter->c; ++iter ) {
          p += iter->p;
-         iter->p = std::min( p, 1.0f ) * slots;
+         iter->p = std::min( p, 1.0 ) * slots;
          iter->pi = (unsigned int )(iter->p);
       }
 
@@ -56,21 +55,18 @@ protected:
    IUB *table[slots + 1];
 };
 
-enum { lineLength = 60 };
+static const size_t lineLength = 60;
 
 struct LineBuffer {
    LineBuffer() : lastN(0) {}
-   LineBuffer &genrand( Cumulative &table, size_t N) {
+   LineBuffer &genrand( Cumulative &table, size_t N ) {
       for ( size_t i = 0; i < N; i++ )
          buffer[i] = table[rng.get()];
       buffer[N] = '\n';
       lastN = N + 1;
       return *this;
    }
-
-   void writeline() const {
-	   fwrite_unlocked( buffer, 1, lastN, stdout );
-   }
+   void writeline() const { fwrite_unlocked( buffer, 1, lastN, stdout ); }
 protected:
    char buffer[lineLength + 1];
    size_t lastN;
@@ -101,7 +97,7 @@ void makeFasta( const char *id, const char *desc, size_t N, Output &output ) {
    fprintf( stdout, ">%s %s\n", id, desc );
 
    while ( N ) {
-      const size_t bytes = std::min( N, size_t(lineLength));
+      const size_t bytes = std::min( N, lineLength );
       output.writeline( bytes );
       N -= bytes;
    }
@@ -109,31 +105,25 @@ void makeFasta( const char *id, const char *desc, size_t N, Output &output ) {
 
 struct Repeater {
    Repeater( const char *alu ) : rot(alu) {}
-	void writeline( size_t bytes ) { rot.write( bytes ); }
-	void run(const char *id, const char *desc, size_t N) {
-		makeFasta(id, desc, N, *this);
-	}
-
+   void writeline( size_t bytes ) { rot.write( bytes ); }
+   void run( const char *id, const char *desc, size_t N ) {
+      makeFasta( id, desc, N, *this );
+   }
 protected:
    RotatingString rot;
 };
-   
 
 struct Randomized {
-	Randomized( IUB *start ) : table(start) {}
-	void writeline(size_t bytes) {
-		line.genrand(table, bytes).writeline();
-	}
-
-	void run(const char *id, const char *desc, size_t N) {
-		makeFasta(id, desc, N, *this);
-	}
-
+   Randomized( IUB *start ) : table(start) {}
+   void writeline( size_t bytes ) { line.genrand(table, bytes).writeline(); }
+   void run( const char *id, const char *desc, size_t N ) {
+      makeFasta( id, desc, N, *this );
+   }
 protected:
    Cumulative table;
    LineBuffer line;
 };
-   
+
 IUB iub[] = {
    { 'a', 0.27 },
    { 'c', 0.12 },
@@ -175,7 +165,7 @@ int main( int argc, const char *argv[] ) {
    const size_t n = ( argc > 1 ) ? atoi( argv[1] ) : 512;
 
    Repeater(alu)
-     .run( "ONE", "Homo sapiens alu", n*2 );
+      .run( "ONE", "Homo sapiens alu", n*2 );
    Randomized(iub)
       .run( "TWO", "IUB ambiguity codes", n*3 );
    Randomized(homosapiens)
