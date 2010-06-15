@@ -5,10 +5,10 @@
 <span class="hl com">   Written by Tom Pledger, 13 Nov 2006. modified by Don Stewart</span>
 <span class="hl com">   Updated for chameneos-redux by Spencer Janssen, 27 Nov 2007</span>
 <span class="hl com">   Modified by Péter Diviánszky, 19 May 2010</span>
-<span class="hl com">   Modified by Louis Wasserman, 6 June 2010</span>
+<span class="hl com">   Modified by Louis Wasserman, 14 June 2010</span>
 <span class="hl com"></span>
-<span class="hl com">   Should be compiled with -O2 -fasm and run without any RTS options.</span>
-<span class="hl com">   (It actually runs faster if it isn't compiled with -threaded.) -}</span>
+<span class="hl com">   Should be compiled with -O2 -threaded -fvia-c -optc-O3 and run with +RTS -N&lt;number of cores&gt;.</span>
+<span class="hl com">   -}</span>
 
 import Control.Concurrent
 import Control.Monad
@@ -21,7 +21,6 @@ import Foreign hiding <span class="hl sym">(</span>complement<span class="hl sym
 
 default<span class="hl sym">(</span>Int<span class="hl sym">)</span>
 
-<span class="hl slc">-- data Colour = Blue | Red | Yellow deriving (Show, Eq, Enum)</span>
 newtype Color <span class="hl sym">=</span> C {unC <span class="hl sym">::</span> Int} deriving <span class="hl sym">(</span>Storable<span class="hl sym">)</span>
 
 #define Y <span class="hl sym">(</span>C <span class="hl num">0</span><span class="hl sym">)</span>
@@ -43,8 +42,8 @@ complement <span class="hl sym">!</span>a <span class="hl sym">!</span>b <span c
 type Chameneous <span class="hl sym">=</span> Ptr Int
 data MP <span class="hl sym">=</span> Nobody <span class="hl sym">!</span>Int <span class="hl sym">|</span> Somebody <span class="hl sym">!</span>Int <span class="hl sym">!</span>Chameneous <span class="hl sym">!(</span>MVar Chameneous<span class="hl sym">)</span>
 
-arrive <span class="hl sym">::</span> Ptr Int <span class="hl sym">-&gt;</span> MVar MP <span class="hl sym">-&gt;</span> MVar <span class="hl sym">(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">) -&gt;</span> Chameneous <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
-arrive <span class="hl sym">!</span>ct <span class="hl sym">!</span>mpv <span class="hl sym">!</span>finish <span class="hl sym">!</span>ch <span class="hl sym">=</span> do
+arrive <span class="hl sym">::</span> MVar MP <span class="hl sym">-&gt;</span> MVar <span class="hl sym">(</span>Int<span class="hl sym">,</span> Int<span class="hl sym">) -&gt;</span> Chameneous <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+arrive <span class="hl sym">!</span>mpv <span class="hl sym">!</span>finish <span class="hl sym">!</span>ch <span class="hl sym">=</span> do
 <span class="hl slc">--     ch &lt;- newIORef c0</span>
     let getCol <span class="hl sym">=</span> fmap C . peek
     let putCol c <span class="hl sym">(</span>C x<span class="hl sym">) =</span> poke c x
@@ -52,27 +51,24 @@ arrive <span class="hl sym">!</span>ct <span class="hl sym">!</span>mpv <span cl
     let inc x <span class="hl sym">= (</span>fromEnum <span class="hl sym">(</span>ch <span class="hl sym">==</span> x<span class="hl sym">) +)</span>
         go <span class="hl sym">!</span>t <span class="hl sym">!</span>b <span class="hl sym">=</span> do
             w <span class="hl sym">&lt;-</span> takeMVar mpv
-            <span class="hl sym">!</span>q <span class="hl sym">&lt;-</span> peek ct
             case w of
                 Nobody <span class="hl num">0</span>
                  <span class="hl sym">-&gt;</span> do
                     putMVar mpv w
                     putMVar finish <span class="hl sym">(</span>t<span class="hl sym">,</span> b<span class="hl sym">)</span>
-  		Nobody q <span class="hl sym">-&gt;</span> <span class="hl com">{-# SCC &quot;nobody&quot; #-}</span> do
+  		Nobody q <span class="hl sym">-&gt;</span> do
                     putMVar mpv $ Somebody q ch waker
                     ch' <span class="hl sym">&lt;-</span> takeMVar waker
                     go <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc ch' b
 
-                Somebody q ch' waker' <span class="hl sym">-&gt;</span> <span class="hl com">{-# SCC &quot;somebody&quot; #-}</span> do
+                Somebody q ch' waker' <span class="hl sym">-&gt;</span> do
                     c  <span class="hl sym">&lt;-</span> getCol ch
                     c' <span class="hl sym">&lt;-</span> getCol ch'
                     let <span class="hl sym">!</span>c'' <span class="hl sym">=</span> complement c c'
                     putCol ch  c''
                     putCol ch' c''
                     putMVar waker' ch
-<span class="hl slc">--                     !q &lt;- peek ct</span>
                     let <span class="hl sym">!</span>q' <span class="hl sym">=</span> q<span class="hl sym">-</span><span class="hl num">1</span>
-                    poke ct q'
                     putMVar mpv $ Nobody q'
                     go <span class="hl sym">(</span>t<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> $ inc ch' b
     go <span class="hl num">0 0</span>
@@ -81,19 +77,19 @@ showN <span class="hl sym">=</span> unwords . map <span class="hl sym">((</span>
 
 digits <span class="hl sym">=</span> words <span class="hl str">&quot;zero one two three four five six seven eight nine&quot;</span>
 
-run <span class="hl sym">::</span> Int <span class="hl sym">-&gt; [</span>Color<span class="hl sym">] -&gt;</span> IO <span class="hl sym">()</span>
-run n cs <span class="hl sym">=</span> do
+run <span class="hl sym">::</span> Int <span class="hl sym">-&gt;</span> Int <span class="hl sym">-&gt; [</span>Color<span class="hl sym">] -&gt;</span> IO <span class="hl sym">(</span>IO <span class="hl sym">())</span>
+run n cpu cs <span class="hl sym">=</span> do
     putStrLn . map toLower . unwords . <span class="hl sym">([]:)</span> . map show $ cs
     fs    <span class="hl sym">&lt;-</span> replicateM <span class="hl sym">(</span>length cs<span class="hl sym">)</span> newEmptyMVar
     mpv   <span class="hl sym">&lt;-</span> newMVar <span class="hl sym">(</span>Nobody n<span class="hl sym">)</span>
-    withArrayLen <span class="hl sym">(</span>map unC cs<span class="hl sym">)</span> $ \ n cols <span class="hl sym">-&gt;</span> alloca $ \ ctr <span class="hl sym">-&gt;</span> do
-    	poke ctr n
-    	zipWithM_ <span class="hl sym">((</span>forkOnIO <span class="hl num">0</span> .<span class="hl sym">)</span> . arrive ctr mpv<span class="hl sym">)</span> fs <span class="hl sym">(</span>take n <span class="hl sym">(</span>iterate <span class="hl sym">(</span>`advancePtr` <span class="hl num">1</span><span class="hl sym">)</span> cols<span class="hl sym">))</span>
-    	ns    <span class="hl sym">&lt;-</span> mapM takeMVar fs
+    withArrayLen <span class="hl sym">(</span>map unC cs<span class="hl sym">)</span> $ \ n cols <span class="hl sym">-&gt;</span> do
+    	zipWithM_ <span class="hl sym">((</span>forkOnIO cpu .<span class="hl sym">)</span> . arrive mpv<span class="hl sym">)</span> fs <span class="hl sym">(</span>take n <span class="hl sym">(</span>iterate <span class="hl sym">(</span>`advancePtr` <span class="hl num">1</span><span class="hl sym">)</span> cols<span class="hl sym">))</span>
 
-    	putStr . map toLower . unlines $ <span class="hl sym">[</span>unwords <span class="hl sym">[</span>show n<span class="hl sym">,</span> showN b<span class="hl sym">] | (</span>n<span class="hl sym">,</span> b<span class="hl sym">) &lt;-</span> ns<span class="hl sym">]</span>
-    	putStrLn . <span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">++)</span> . showN . sum . map fst $ ns
-	putStrLn <span class="hl str">&quot;&quot;</span>
+    	return $ do
+	  ns    <span class="hl sym">&lt;-</span> mapM takeMVar fs
+	  putStr . map toLower . unlines $ <span class="hl sym">[</span>unwords <span class="hl sym">[</span>show n<span class="hl sym">,</span> showN b<span class="hl sym">] | (</span>n<span class="hl sym">,</span> b<span class="hl sym">) &lt;-</span> ns<span class="hl sym">]</span>
+	  putStrLn . <span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">++)</span> . showN . sum . map fst $ ns
+	  putStrLn <span class="hl str">&quot;&quot;</span>
 
 main <span class="hl sym">=</span> do
     putStrLn . map toLower . unlines $
@@ -101,5 +97,5 @@ main <span class="hl sym">=</span> do
             <span class="hl sym">|</span> a <span class="hl sym">&lt;- [</span>B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">],</span> b <span class="hl sym">&lt;- [</span>B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">]]</span>
 
     n <span class="hl sym">&lt;-</span> readIO . head <span class="hl sym">=&lt;&lt;</span> getArgs
-    run n <span class="hl sym">[</span>B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">]</span>
-    run n <span class="hl sym">[</span>B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">,</span> B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">,</span> R<span class="hl sym">,</span> B<span class="hl sym">]</span>
+    actions <span class="hl sym">&lt;-</span> zipWithM <span class="hl sym">(</span>run n<span class="hl sym">) [</span><span class="hl num">0</span>..<span class="hl sym">] [[</span>B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">], [</span>B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">,</span> B<span class="hl sym">,</span> R<span class="hl sym">,</span> Y<span class="hl sym">,</span> R<span class="hl sym">,</span> B<span class="hl sym">]]</span>
+    sequence_ actions
