@@ -5,10 +5,10 @@
    Written by Tom Pledger, 13 Nov 2006. modified by Don Stewart
    Updated for chameneos-redux by Spencer Janssen, 27 Nov 2007
    Modified by Péter Diviánszky, 19 May 2010
-   Modified by Louis Wasserman, 6 June 2010 
-   
-   Should be compiled with -O2 -fasm and run without any RTS options.
-   (It actually runs faster if it isn't compiled with -threaded.) -}
+   Modified by Louis Wasserman, 14 June 2010
+
+   Should be compiled with -O2 -threaded -fvia-c -optc-O3 and run with +RTS -N<number of cores>.
+   -}
 
 import Control.Concurrent
 import Control.Monad
@@ -21,7 +21,6 @@ import Foreign hiding (complement)
 
 default(Int)
 
--- data Colour = Blue | Red | Yellow deriving (Show, Eq, Enum)
 newtype Color = C {unC :: Int} deriving (Storable)
 
 #define Y (C 0)
@@ -43,8 +42,8 @@ complement !a !b = case a of
 type Chameneous = Ptr Int
 data MP = Nobody !Int | Somebody !Int !Chameneous !(MVar Chameneous)
 
-arrive :: Ptr Int -> MVar MP -> MVar (Int, Int) -> Chameneous -> IO ()
-arrive !ct !mpv !finish !ch = do
+arrive :: MVar MP -> MVar (Int, Int) -> Chameneous -> IO ()
+arrive !mpv !finish !ch = do
 --     ch <- newIORef c0
     let getCol = fmap C . peek
     let putCol c (C x) = poke c x
@@ -52,27 +51,24 @@ arrive !ct !mpv !finish !ch = do
     let inc x = (fromEnum (ch == x) +)
         go !t !b = do
             w <- takeMVar mpv
-            !q <- peek ct
             case w of
                 Nobody 0
                  -> do
                     putMVar mpv w
                     putMVar finish (t, b)
-  		Nobody q -> {-# SCC "nobody" #-} do 
+  		Nobody q -> do
                     putMVar mpv $ Somebody q ch waker
                     ch' <- takeMVar waker
                     go (t+1) $ inc ch' b
 
-                Somebody q ch' waker' -> {-# SCC "somebody" #-} do
+                Somebody q ch' waker' -> do
                     c  <- getCol ch
                     c' <- getCol ch'
                     let !c'' = complement c c'
                     putCol ch  c''
                     putCol ch' c''
                     putMVar waker' ch
---                     !q <- peek ct
                     let !q' = q-1
-                    poke ct q'
                     putMVar mpv $ Nobody q'
                     go (t+1) $ inc ch' b
     go 0 0
@@ -81,19 +77,19 @@ showN = unwords . map ((digits !!) . digitToInt) . show
 
 digits = words "zero one two three four five six seven eight nine"
 
-run :: Int -> [Color] -> IO ()
-run n cs = do
+run :: Int -> Int -> [Color] -> IO (IO ())
+run n cpu cs = do
     putStrLn . map toLower . unwords . ([]:) . map show $ cs
     fs    <- replicateM (length cs) newEmptyMVar
     mpv   <- newMVar (Nobody n)
-    withArrayLen (map unC cs) $ \ n cols -> alloca $ \ ctr -> do
-    	poke ctr n
-    	zipWithM_ ((forkOnIO 0 .) . arrive ctr mpv) fs (take n (iterate (`advancePtr` 1) cols))
-    	ns    <- mapM takeMVar fs
-	
-    	putStr . map toLower . unlines $ [unwords [show n, showN b] | (n, b) <- ns]
-    	putStrLn . (" "++) . showN . sum . map fst $ ns
-	putStrLn ""
+    withArrayLen (map unC cs) $ \ n cols -> do
+    	zipWithM_ ((forkOnIO cpu .) . arrive mpv) fs (take n (iterate (`advancePtr` 1) cols))
+
+    	return $ do
+	  ns    <- mapM takeMVar fs
+	  putStr . map toLower . unlines $ [unwords [show n, showN b] | (n, b) <- ns]
+	  putStrLn . (" "++) . showN . sum . map fst $ ns
+	  putStrLn ""
 
 main = do
     putStrLn . map toLower . unlines $
@@ -101,5 +97,5 @@ main = do
             | a <- [B, R, Y], b <- [B, R, Y]]
 
     n <- readIO . head =<< getArgs
-    run n [B, R, Y]
-    run n [B, R, Y, R, Y, B, R, Y, R, B]
+    actions <- zipWithM (run n) [0..] [[B, R, Y], [B, R, Y, R, Y, B, R, Y, R, B]]
+    sequence_ actions
