@@ -19,19 +19,16 @@ import System.IO
 import GHC.Conc
 import Foreign hiding (complement)
 
-default(Int)
+newtype Color = C Int deriving (Storable,Enum)
 
-newtype Color = C {unC :: Int} deriving (Storable)
-
-#define Y (C 0)
+#define Y (C 2)
 #define R (C 1)
-#define B (C 2)
+#define B (C 0)
 
 instance Show Color where
 	show Y = "yellow"
 	show R = "red"
 	show B = "blue"
-
 
 complement :: Color -> Color -> Color
 complement !a !b = case a of
@@ -39,14 +36,11 @@ complement !a !b = case a of
     R -> case b of B -> Y; R -> R; _ -> B
     Y -> case b of B -> R; Y -> Y; _ -> B
 
-type Chameneous = Ptr Int
+type Chameneous = Ptr Color
 data MP = Nobody !Int | Somebody !Int !Chameneous !(MVar Chameneous)
 
 arrive :: MVar MP -> MVar (Int, Int) -> Chameneous -> IO ()
 arrive !mpv !finish !ch = do
---     ch <- newIORef c0
-    let getCol = fmap C . peek
-    let putCol c (C x) = poke c x
     waker <- newEmptyMVar
     let inc x = (fromEnum (ch == x) +)
         go !t !b = do
@@ -62,11 +56,11 @@ arrive !mpv !finish !ch = do
                     go (t+1) $ inc ch' b
 
                 Somebody q ch' waker' -> do
-                    c  <- getCol ch
-                    c' <- getCol ch'
+                    c  <- peek ch
+                    c' <- peek ch'
                     let !c'' = complement c c'
-                    putCol ch  c''
-                    putCol ch' c''
+                    poke ch  c''
+                    poke ch' c''
                     putMVar waker' ch
                     let !q' = q-1
                     putMVar mpv $ Nobody q'
@@ -79,13 +73,13 @@ digits = words "zero one two three four five six seven eight nine"
 
 run :: Int -> Int -> [Color] -> IO (IO ())
 run n cpu cs = do
-    putStrLn . map toLower . unwords . ([]:) . map show $ cs
     fs    <- replicateM (length cs) newEmptyMVar
     mpv   <- newMVar (Nobody n)
-    withArrayLen (map unC cs) $ \ n cols -> do
+    withArrayLen cs $ \ n cols -> do
     	zipWithM_ ((forkOnIO cpu .) . arrive mpv) fs (take n (iterate (`advancePtr` 1) cols))
 
     	return $ do
+	  putStrLn . map toLower . unwords . ([]:) . map show $ cs
 	  ns    <- mapM takeMVar fs
 	  putStr . map toLower . unlines $ [unwords [show n, showN b] | (n, b) <- ns]
 	  putStrLn . (" "++) . showN . sum . map fst $ ns
@@ -94,8 +88,8 @@ run n cpu cs = do
 main = do
     putStrLn . map toLower . unlines $
         [unwords [show a, "+", show b, "->", show $ complement a b]
-            | a <- [B, R, Y], b <- [B, R, Y]]
+            | a <- [B..Y], b <- [B..Y]]
 
     n <- readIO . head =<< getArgs
-    actions <- zipWithM (run n) [0..] [[B, R, Y], [B, R, Y, R, Y, B, R, Y, R, B]]
+    actions <- zipWithM (run n) [0..] [[B..Y],[B,R,Y,R,Y,B,R,Y,R,B]]
     sequence_ actions
