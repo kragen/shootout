@@ -1,0 +1,57 @@
+#lang racket<span class="hl sym">/</span>base
+
+<span class="hl slc">;;; The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;; http://shootout.alioth.debian.org/</span>
+
+<span class="hl slc">;;; Based on a version by by Anthony Borla</span>
+<span class="hl slc">;;; contributed by Matthew Flatt</span>
+
+
+<span class="hl sym">(</span>require racket<span class="hl sym">/</span>port<span class="hl sym">)</span>
+
+<span class="hl slc">;; -------------------------------</span>
+
+<span class="hl sym">(</span>define VARIANTS
+  <span class="hl sym">'(</span>#<span class="hl str">&quot;agggtaaa|tttaccct&quot;</span> #<span class="hl str">&quot;[cgt]gggtaaa|tttaccc[acg]&quot;</span> #<span class="hl str">&quot;a[act]ggtaaa|tttacc[agt]t&quot;</span>
+    #<span class="hl str">&quot;ag[act]gtaaa|tttac[agt]ct&quot;</span> #<span class="hl str">&quot;agg[act]taaa|ttta[agt]cct&quot;</span> #<span class="hl str">&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;</span>
+    #<span class="hl str">&quot;agggt[cgt]aa|tt[acg]accct&quot;</span> #<span class="hl str">&quot;agggta[cgt]a|t[acg]taccct&quot;</span> #<span class="hl str">&quot;agggtaa[cgt]|[acg]ttaccct&quot;</span><span class="hl sym">))</span>
+
+
+<span class="hl sym">(</span>define IUBS
+  <span class="hl sym">'((</span>#<span class="hl str">&quot;B&quot;</span> #<span class="hl str">&quot;(c|g|t)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;D&quot;</span> #<span class="hl str">&quot;(a|g|t)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;H&quot;</span> #<span class="hl str">&quot;(a|c|t)&quot;</span><span class="hl sym">)</span>
+    <span class="hl sym">(</span>#<span class="hl str">&quot;K&quot;</span> #<span class="hl str">&quot;(g|t)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;M&quot;</span> #<span class="hl str">&quot;(a|c)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;N&quot;</span> #<span class="hl str">&quot;(a|c|g|t)&quot;</span><span class="hl sym">)</span>
+    <span class="hl sym">(</span>#<span class="hl str">&quot;R&quot;</span> #<span class="hl str">&quot;(a|g)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;S&quot;</span> #<span class="hl str">&quot;(c|g)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;V&quot;</span> #<span class="hl str">&quot;(a|c|g)&quot;</span><span class="hl sym">)</span>
+    <span class="hl sym">(</span>#<span class="hl str">&quot;W&quot;</span> #<span class="hl str">&quot;(a|t)&quot;</span><span class="hl sym">) (</span>#<span class="hl str">&quot;Y&quot;</span> #<span class="hl str">&quot;(c|t)&quot;</span><span class="hl sym">)))</span>
+
+<span class="hl slc">;; -------------------------------</span>
+
+<span class="hl sym">(</span>define <span class="hl sym">(</span>ci<span class="hl sym">-</span>byte<span class="hl sym">-</span>regexp s<span class="hl sym">)</span>
+  <span class="hl sym">(</span>byte<span class="hl sym">-</span>regexp <span class="hl sym">(</span>bytes<span class="hl sym">-</span>append #<span class="hl str">&quot;(?i:&quot;</span> s #<span class="hl str">&quot;)&quot;</span><span class="hl sym">)))</span>
+
+<span class="hl slc">;; -------------------------------</span>
+
+<span class="hl sym">(</span>define <span class="hl sym">(</span>match<span class="hl sym">-</span>count str rx offset cnt<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let <span class="hl sym">([</span>m <span class="hl sym">(</span>regexp<span class="hl sym">-</span>match<span class="hl sym">-</span>positions rx str offset<span class="hl sym">)])</span>
+    <span class="hl sym">(</span>if m
+        <span class="hl sym">(</span>match<span class="hl sym">-</span>count str rx <span class="hl sym">(</span>cdar m<span class="hl sym">) (</span>add1 cnt<span class="hl sym">))</span>
+        cnt<span class="hl sym">)))</span>
+
+<span class="hl slc">;; -------------------------------</span>
+
+<span class="hl slc">;; Load sequence and record its length</span>
+<span class="hl sym">(</span>let<span class="hl sym">* ([</span>orig <span class="hl sym">(</span>port<span class="hl sym">-&gt;</span>bytes<span class="hl sym">)]</span>
+       <span class="hl sym">[</span>filtered <span class="hl sym">(</span>regexp<span class="hl sym">-</span>replace<span class="hl sym">*</span> #rx#<span class="hl str">&quot;(?:&gt;.*?</span><span class="hl esc">\</span><span class="hl str">n)|</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> orig #<span class="hl str">&quot;&quot;</span><span class="hl sym">)])</span>
+
+  <span class="hl slc">;; Perform regexp counts</span>
+  <span class="hl sym">(</span>for <span class="hl sym">([</span>i <span class="hl sym">(</span>in<span class="hl sym">-</span>list VARIANTS<span class="hl sym">)])</span>
+    <span class="hl sym">(</span>printf <span class="hl str">&quot;~a ~a</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> i <span class="hl sym">(</span>match<span class="hl sym">-</span>count filtered <span class="hl sym">(</span>ci<span class="hl sym">-</span>byte<span class="hl sym">-</span>regexp i<span class="hl sym">)</span> <span class="hl num">0 0</span><span class="hl sym">)))</span>
+
+  <span class="hl slc">;; Perform regexp replacements, and record sequence length</span>
+  <span class="hl sym">(</span>let <span class="hl sym">([</span>replaced
+         <span class="hl sym">(</span>for<span class="hl sym">/</span>fold <span class="hl sym">([</span>sequence filtered<span class="hl sym">]) ([</span>IUB IUBS<span class="hl sym">])</span>
+           <span class="hl sym">(</span>regexp<span class="hl sym">-</span>replace<span class="hl sym">* (</span>byte<span class="hl sym">-</span>regexp <span class="hl sym">(</span>car IUB<span class="hl sym">))</span> sequence <span class="hl sym">(</span>cadr IUB<span class="hl sym">)))])</span>
+    <span class="hl slc">;; Print statistics</span>
+    <span class="hl sym">(</span>printf <span class="hl str">&quot;</span><span class="hl esc">\</span><span class="hl str">n~a</span><span class="hl esc">\</span><span class="hl str">n~a</span><span class="hl esc">\</span><span class="hl str">n~a</span><span class="hl esc">\</span><span class="hl str">n&quot;</span>
+            <span class="hl sym">(</span>bytes<span class="hl sym">-</span>length orig<span class="hl sym">)</span>
+            <span class="hl sym">(</span>bytes<span class="hl sym">-</span>length filtered<span class="hl sym">)</span>
+            <span class="hl sym">(</span>bytes<span class="hl sym">-</span>length replaced<span class="hl sym">))))</span>
