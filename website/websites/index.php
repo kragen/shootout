@@ -155,11 +155,11 @@ $allsites = array('u32','u32q','u64','u64q');
 
 $langs = array(
    array('vw','Smalltalk VisualWorks','uniform reflective environment - real live objects','smalltalk',$onecoresites),
-   array('mzscheme','Scheme PLT','statically-scoped properly tail-recursive dialect of lisp','scheme',$onecoresites),
    array('scala','Scala','higher-order type-safe programming for jvm','scala',$allsites),
    array('ruby','Ruby MRI','programmer fun - everything is an object scripting','ruby',$basesite),
    array('jruby','JRuby','everything is an object scripting for jvm','jruby',$u32sites),
    array('yarv','Ruby 1.9','the new Ruby','',$onecoresites),
+   array('racket','Racket','statically-scoped properly tail-recursive dialect of lisp','racket',$onecoresites),
    array('python','CPython','uncluttered imperative programming plus objects','python',$u32sites),
    array('python3','Python 3','the new Python','python3',$allsites),
    array('pypy','PyPy','jit compiler compatible with python 2.5','',$basesite),
