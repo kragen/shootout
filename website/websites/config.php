@@ -27,7 +27,7 @@ define('SITE_NAME', 'core');
 define('SITE_TITLE','Computer Language Benchmarks Game');
 define('BANNER_TITLE','The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp;<br/><strong>Benchmarks</strong>&nbsp;Game');
 define('PLATFORM_NAME', 'Ubuntu : Intel Q6600');
-define('FAQ_TITLE','Help');
+define('FAQ_TITLE','[[ Help ]]');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');

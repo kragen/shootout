@@ -30,7 +30,7 @@ define('SITE_NAME', 'u32');
 define('SITE_TITLE','Ubuntu : Intel&#174; Q6600&#174; one core Computer Language Benchmarks Game');
 define('BANNER_TITLE','Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core<br/>Computer&nbsp;<strong>Language</strong>&nbsp;<strong>Benchmarks</strong>&nbsp;Game&nbsp;');
 define('PLATFORM_NAME', 'Ubuntu : Intel Q6600 one core');
-define('FAQ_TITLE','Help');
+define('FAQ_TITLE','[[ Help ]]');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');
