@@ -12,7 +12,7 @@ require_once(LIB);
 $Page = & new Template(LIB_PATH);
 $Page->set('PageTitle', 'Help'.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', 'The&nbsp;Computer&nbsp;Language&nbsp; <br/>Benchmarks&nbsp;Game');
-$Page->set('FaqTitle', 'Help');
+$Page->set('FaqTitle', '[[ Help ]]');
 $Page->set('PageBody', BLANK);
 
 $Body = & new Template(LIB_PATH);
