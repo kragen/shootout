@@ -31,6 +31,18 @@ href="./u64/compare.php?lang=java" title="Compare the speed and size of Java 6 -
 href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">all benchmarks</a> select <a href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Java -6 server</a> select <a href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and size of Java 6 -server programs against Python CPython programs">Python CPython</a> in the drop-down menus.</p>
 </dd>
 
+
+<dt><a href="#comparememoryused" name="comparememoryused"><b>Compare Memory-used</b> for all the benchmarks</a></dt>
+<dd>
+<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=1&xloc=0" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
+</dd>
+
+<dt><a href="#comparecodeused" name="comparecodeused"><b>Compare Code-used</b> for all the benchmarks</a></dt>
+<dd>
+<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=0&xloc=1" title="Which programming languages have benchmark programs that use less source code on one core x86 Ubuntu">Which programming language is best?</a> and set the Code B weight to 1 and the Time secs weight to 0.</p>
+</dd>
+
+
 <dt><a href="#measurements" name="measurements">Compare measurements of <b>all the programs for one language</b></a></dt>
 <dd>
 <p>Example select <a href="./u64/measurements.php?lang=java" title="Compare performance measurements of all the accepted Java 6 -server programs">Java -6 server</a> in the drop-down menu.</p>
