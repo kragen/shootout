@@ -1,0 +1,129 @@
+#lang racket<span class="hl sym">/</span>base
+
+<span class="hl slc">;;; The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;; Very loosely based on the Chicken variant by Anthony Borla, some</span>
+<span class="hl slc">;; optimizations taken from the GCC version by Petr Prokhorenkov, and</span>
+<span class="hl slc">;; additional heavy optimizations by Eli Barzilay (not really related to</span>
+<span class="hl slc">;; the above two now).</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;; If you use some of these optimizations in other solutions, please</span>
+<span class="hl slc">;; include a proper attribution to this Racket code.</span>
+
+<span class="hl sym">(</span>define <span class="hl sym">+</span>alu<span class="hl sym">+</span>
+  <span class="hl sym">(</span>bytes<span class="hl sym">-</span>append #<span class="hl str">&quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG&quot;</span>
+                #<span class="hl str">&quot;GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA&quot;</span>
+                #<span class="hl str">&quot;CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT&quot;</span>
+                #<span class="hl str">&quot;ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA&quot;</span>
+                #<span class="hl str">&quot;GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG&quot;</span>
+                #<span class="hl str">&quot;AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC&quot;</span>
+                #<span class="hl str">&quot;AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;</span><span class="hl sym">))</span>
+
+<span class="hl sym">(</span>define IUB
+  <span class="hl sym">'([</span>#\a <span class="hl num">0.27</span><span class="hl sym">] [</span>#\c <span class="hl num">0.12</span><span class="hl sym">] [</span>#\g <span class="hl num">0.12</span><span class="hl sym">] [</span>#\t <span class="hl num">0.27</span><span class="hl sym">] [</span>#\B <span class="hl num">0.02</span><span class="hl sym">]</span>
+    <span class="hl sym">[</span>#\D <span class="hl num">0.02</span><span class="hl sym">] [</span>#\H <span class="hl num">0.02</span><span class="hl sym">] [</span>#\K <span class="hl num">0.02</span><span class="hl sym">] [</span>#\M <span class="hl num">0.02</span><span class="hl sym">] [</span>#\N <span class="hl num">0.02</span><span class="hl sym">]</span>
+    <span class="hl sym">[</span>#\R <span class="hl num">0.02</span><span class="hl sym">] [</span>#\S <span class="hl num">0.02</span><span class="hl sym">] [</span>#\V <span class="hl num">0.02</span><span class="hl sym">] [</span>#\W <span class="hl num">0.02</span><span class="hl sym">] [</span>#\Y <span class="hl num">0.02</span><span class="hl sym">]))</span>
+
+<span class="hl sym">(</span>define HOMOSAPIEN
+  <span class="hl sym">'([</span>#\a <span class="hl num">0.3029549426680</span><span class="hl sym">] [</span>#\c <span class="hl num">0.1979883004921</span><span class="hl sym">]</span>
+    <span class="hl sym">[</span>#\g <span class="hl num">0.1975473066391</span><span class="hl sym">] [</span>#\t <span class="hl num">0.3015094502008</span><span class="hl sym">]))</span>
+
+<span class="hl sym">(</span>define line<span class="hl sym">-</span>length <span class="hl num">60</span><span class="hl sym">)</span>
+
+<span class="hl slc">;; ----------------------------------------</span>
+
+<span class="hl sym">(</span>require racket<span class="hl sym">/</span>cmdline racket<span class="hl sym">/</span>require <span class="hl sym">(</span>for<span class="hl sym">-</span>syntax racket<span class="hl sym">/</span>base<span class="hl sym">)</span>
+         <span class="hl sym">(</span>filtered<span class="hl sym">-</span>in <span class="hl sym">(</span>lambda <span class="hl sym">(</span>name<span class="hl sym">) (</span>regexp<span class="hl sym">-</span>replace #rx<span class="hl str">&quot;unsafe-&quot;</span> name <span class="hl str">&quot;&quot;</span><span class="hl sym">))</span>
+                       racket<span class="hl sym">/</span>unsafe<span class="hl sym">/</span>ops<span class="hl sym">))</span>
+
+<span class="hl slc">;; ----------------------------------------</span>
+
+<span class="hl sym">(</span>define <span class="hl sym">(</span>repeat<span class="hl sym">-</span>fasta header N sequence<span class="hl sym">)</span>
+  <span class="hl sym">(</span>define out <span class="hl sym">(</span>current<span class="hl sym">-</span>output<span class="hl sym">-</span>port<span class="hl sym">))</span>
+  <span class="hl sym">(</span>define len <span class="hl sym">(</span>bytes<span class="hl sym">-</span>length sequence<span class="hl sym">))</span>
+  <span class="hl sym">(</span>define buf <span class="hl sym">(</span>make<span class="hl sym">-</span>bytes <span class="hl sym">(+</span> len line<span class="hl sym">-</span>length<span class="hl sym">)))</span>
+  <span class="hl sym">(</span>bytes<span class="hl sym">-</span>copy<span class="hl sym">!</span> buf <span class="hl num">0</span> sequence<span class="hl sym">)</span>
+  <span class="hl sym">(</span>bytes<span class="hl sym">-</span>copy<span class="hl sym">!</span> buf len sequence <span class="hl num">0</span> line<span class="hl sym">-</span>length<span class="hl sym">)</span>
+  <span class="hl sym">(</span>display header out<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let loop <span class="hl sym">([</span>n N<span class="hl sym">] [</span>start <span class="hl num">0</span><span class="hl sym">])</span>
+    <span class="hl sym">(</span>when <span class="hl sym">(</span>fx<span class="hl sym">&gt;</span> n <span class="hl num">0</span><span class="hl sym">)</span>
+      <span class="hl sym">(</span>let <span class="hl sym">([</span>end <span class="hl sym">(</span>fx<span class="hl sym">+</span> start <span class="hl sym">(</span>fxmin n line<span class="hl sym">-</span>length<span class="hl sym">))])</span>
+        <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes buf out start end<span class="hl sym">)</span>
+        <span class="hl sym">(</span>newline<span class="hl sym">)</span>
+        <span class="hl sym">(</span>loop <span class="hl sym">(</span>fx<span class="hl sym">-</span> n line<span class="hl sym">-</span>length<span class="hl sym">) (</span>if <span class="hl sym">(</span>fx<span class="hl sym">&gt;</span> end len<span class="hl sym">) (</span>fx<span class="hl sym">-</span> end len<span class="hl sym">)</span> end<span class="hl sym">))))))</span>
+
+<span class="hl slc">;; ----------------------------------------</span>
+
+<span class="hl sym">(</span>define IA <span class="hl num">3877</span><span class="hl sym">)</span>
+<span class="hl sym">(</span>define IC <span class="hl num">29573</span><span class="hl sym">)</span>
+<span class="hl sym">(</span>define IM <span class="hl num">139968</span><span class="hl sym">)</span>
+<span class="hl sym">(</span>define IM<span class="hl num">.0</span> <span class="hl sym">(</span>fx<span class="hl sym">-&gt;</span>fl IM<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>define<span class="hl sym">-</span>syntax<span class="hl sym">-</span>rule <span class="hl sym">(</span>define<span class="hl sym">/</span>IM <span class="hl sym">(</span>name id<span class="hl sym">)</span> E<span class="hl sym">)</span>
+  <span class="hl sym">(</span>begin <span class="hl sym">(</span>define V
+           <span class="hl sym">(</span>let <span class="hl sym">([</span>v <span class="hl sym">(</span>make<span class="hl sym">-</span>vector IM<span class="hl sym">)])</span>
+             <span class="hl sym">(</span>for <span class="hl sym">([</span>id <span class="hl sym">(</span>in<span class="hl sym">-</span>range IM<span class="hl sym">)]) (</span>vector<span class="hl sym">-</span>set<span class="hl sym">!</span> v id E<span class="hl sym">))</span>
+             v<span class="hl sym">))</span>
+         <span class="hl sym">(</span>define<span class="hl sym">-</span>syntax<span class="hl sym">-</span>rule <span class="hl sym">(</span>name id<span class="hl sym">) (</span>vector<span class="hl sym">-</span>ref V id<span class="hl sym">))))</span>
+
+<span class="hl sym">(</span>define<span class="hl sym">/</span>IM <span class="hl sym">(</span>random<span class="hl sym">-</span>next cur<span class="hl sym">) (</span>fxmodulo <span class="hl sym">(</span>fx<span class="hl sym">+</span> IC <span class="hl sym">(</span>fx<span class="hl sym">*</span> cur IA<span class="hl sym">))</span> IM<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>define <span class="hl sym">(</span>make<span class="hl sym">-</span>lookup<span class="hl sym">-</span>table frequency<span class="hl sym">-</span>table<span class="hl sym">)</span>
+  <span class="hl sym">(</span>define v <span class="hl sym">(</span>make<span class="hl sym">-</span>bytes IM<span class="hl sym">))</span>
+  <span class="hl sym">(</span>let loop <span class="hl sym">([</span>t frequency<span class="hl sym">-</span>table<span class="hl sym">] [</span>c <span class="hl num">0</span><span class="hl sym">] [</span>c. <span class="hl num">0.0</span><span class="hl sym">])</span>
+    <span class="hl sym">(</span>unless <span class="hl sym">(</span>null? t<span class="hl sym">)</span>
+      <span class="hl sym">(</span>let<span class="hl sym">* ([</span>c1. <span class="hl sym">(</span>fl<span class="hl sym">+</span> c. <span class="hl sym">(</span>fl<span class="hl sym">*</span> IM<span class="hl num">.0</span> <span class="hl sym">(</span>cadar t<span class="hl sym">)))]</span>
+             <span class="hl sym">[</span>c1 <span class="hl sym">(</span>inexact<span class="hl sym">-&gt;</span>exact <span class="hl sym">(</span>flceiling c1.<span class="hl sym">))]</span>
+             <span class="hl sym">[</span>b <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer <span class="hl sym">(</span>caar t<span class="hl sym">))])</span>
+        <span class="hl sym">(</span>for <span class="hl sym">([</span>i <span class="hl sym">(</span>in<span class="hl sym">-</span>range c c1<span class="hl sym">)]) (</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> v i b<span class="hl sym">))</span>
+        <span class="hl sym">(</span>loop <span class="hl sym">(</span>cdr t<span class="hl sym">)</span> c1 c1.<span class="hl sym">))))</span>
+  v<span class="hl sym">)</span>
+
+<span class="hl sym">(</span>define <span class="hl sym">(</span>random<span class="hl sym">-</span>fasta header N table R<span class="hl sym">)</span>
+  <span class="hl sym">(</span>define out <span class="hl sym">(</span>current<span class="hl sym">-</span>output<span class="hl sym">-</span>port<span class="hl sym">))</span>
+  <span class="hl sym">(</span>define lookup<span class="hl sym">-</span>byte <span class="hl sym">(</span>make<span class="hl sym">-</span>lookup<span class="hl sym">-</span>table table<span class="hl sym">))</span>
+  <span class="hl sym">(</span>define <span class="hl sym">(</span>n<span class="hl sym">-</span>randoms to R<span class="hl sym">)</span>
+    <span class="hl sym">(</span>let loop <span class="hl sym">([</span>n <span class="hl num">0</span><span class="hl sym">] [</span>R R<span class="hl sym">])</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">&lt;</span> n to<span class="hl sym">)</span>
+        <span class="hl sym">(</span>let <span class="hl sym">([</span>R <span class="hl sym">(</span>random<span class="hl sym">-</span>next R<span class="hl sym">)])</span>
+          <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> buf n <span class="hl sym">(</span>bytes<span class="hl sym">-</span>ref lookup<span class="hl sym">-</span>byte R<span class="hl sym">))</span>
+          <span class="hl sym">(</span>loop <span class="hl sym">(</span>fx<span class="hl sym">+</span> n <span class="hl num">1</span><span class="hl sym">)</span> R<span class="hl sym">))</span>
+        <span class="hl sym">(</span>begin <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes buf out <span class="hl num">0</span> <span class="hl sym">(</span>fx<span class="hl sym">+</span> to <span class="hl num">1</span><span class="hl sym">))</span> R<span class="hl sym">))))</span>
+  <span class="hl sym">(</span>define <span class="hl sym">(</span>make<span class="hl sym">-</span>line<span class="hl sym">!</span> buf start R<span class="hl sym">)</span>
+    <span class="hl sym">(</span>let <span class="hl sym">([</span>end <span class="hl sym">(</span>fx<span class="hl sym">+</span> start line<span class="hl sym">-</span>length<span class="hl sym">)])</span>
+      <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> buf end LF<span class="hl sym">)</span>
+      <span class="hl sym">(</span>let loop <span class="hl sym">([</span>n start<span class="hl sym">] [</span>R R<span class="hl sym">])</span>
+        <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">&lt;</span> n end<span class="hl sym">)</span>
+          <span class="hl sym">(</span>let <span class="hl sym">([</span>R <span class="hl sym">(</span>random<span class="hl sym">-</span>next R<span class="hl sym">)])</span>
+            <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> buf n <span class="hl sym">(</span>bytes<span class="hl sym">-</span>ref lookup<span class="hl sym">-</span>byte R<span class="hl sym">))</span>
+            <span class="hl sym">(</span>loop <span class="hl sym">(</span>fx<span class="hl sym">+</span> n <span class="hl num">1</span><span class="hl sym">)</span> R<span class="hl sym">))</span>
+          R<span class="hl sym">))))</span>
+  <span class="hl sym">(</span>define LF <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer #\newline<span class="hl sym">))</span>
+  <span class="hl sym">(</span>define buf <span class="hl sym">(</span>make<span class="hl sym">-</span>bytes <span class="hl sym">(</span>fx<span class="hl sym">+</span> line<span class="hl sym">-</span>length <span class="hl num">1</span><span class="hl sym">)))</span>
+  <span class="hl sym">(</span>define<span class="hl sym">-</span>values <span class="hl sym">(</span>full<span class="hl sym">-</span>lines last<span class="hl sym">) (</span>quotient<span class="hl sym">/</span>remainder N line<span class="hl sym">-</span>length<span class="hl sym">))</span>
+  <span class="hl sym">(</span>define C
+    <span class="hl sym">(</span>let<span class="hl sym">* ([</span>len<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">(</span>fx<span class="hl sym">+</span> line<span class="hl sym">-</span>length <span class="hl num">1</span><span class="hl sym">)]</span>
+           <span class="hl sym">[</span>buflen <span class="hl sym">(</span>fx<span class="hl sym">*</span> len<span class="hl sym">+</span><span class="hl num">1</span> IM<span class="hl sym">)]</span>
+           <span class="hl sym">[</span>buf <span class="hl sym">(</span>make<span class="hl sym">-</span>bytes buflen<span class="hl sym">)])</span>
+      <span class="hl sym">(</span>let loop <span class="hl sym">([</span>R R<span class="hl sym">] [</span>i <span class="hl num">0</span><span class="hl sym">])</span>
+        <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">&lt;</span> i buflen<span class="hl sym">)</span>
+          <span class="hl sym">(</span>loop <span class="hl sym">(</span>make<span class="hl sym">-</span>line<span class="hl sym">!</span> buf i R<span class="hl sym">) (</span>fx<span class="hl sym">+</span> i len<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">))</span>
+          buf<span class="hl sym">))))</span>
+  <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> buf line<span class="hl sym">-</span>length LF<span class="hl sym">)</span>
+  <span class="hl sym">(</span>display header out<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let loop <span class="hl sym">([</span>i full<span class="hl sym">-</span>lines<span class="hl sym">] [</span>R R<span class="hl sym">])</span>
+    <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">&gt;</span> i IM<span class="hl sym">)</span>
+      <span class="hl sym">(</span>begin <span class="hl sym">(</span>display C out<span class="hl sym">) (</span>loop <span class="hl sym">(</span>fx<span class="hl sym">-</span> i IM<span class="hl sym">)</span> R<span class="hl sym">))</span>
+      <span class="hl sym">(</span>let loop <span class="hl sym">([</span>i i<span class="hl sym">] [</span>R R<span class="hl sym">])</span>
+        <span class="hl sym">(</span>cond <span class="hl sym">[(</span>fx<span class="hl sym">&gt;</span> i <span class="hl num">0</span><span class="hl sym">) (</span>loop <span class="hl sym">(</span>fx<span class="hl sym">-</span> i <span class="hl num">1</span><span class="hl sym">) (</span>n<span class="hl sym">-</span>randoms line<span class="hl sym">-</span>length R<span class="hl sym">))]</span>
+              <span class="hl sym">[(</span>fx<span class="hl sym">&gt;</span> last <span class="hl num">0</span><span class="hl sym">) (</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> buf last LF<span class="hl sym">) (</span>n<span class="hl sym">-</span>randoms last R<span class="hl sym">)]</span>
+              <span class="hl sym">[</span>else R<span class="hl sym">])))))</span>
+
+<span class="hl slc">;; ----------------------------------------</span>
+
+<span class="hl sym">(</span>let <span class="hl sym">([</span>n <span class="hl sym">(</span>command<span class="hl sym">-</span>line #<span class="hl sym">:</span>args <span class="hl sym">(</span>n<span class="hl sym">) (</span>string<span class="hl sym">-&gt;</span>number n<span class="hl sym">))])</span>
+  <span class="hl sym">(</span>repeat<span class="hl sym">-</span>fasta <span class="hl str">&quot;&gt;ONE Homo sapiens alu</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> <span class="hl sym">(*</span> n <span class="hl num">2</span><span class="hl sym">) +</span>alu<span class="hl sym">+)</span>
+  <span class="hl sym">(</span>random<span class="hl sym">-</span>fasta <span class="hl str">&quot;&gt;THREE Homo sapiens frequency</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> <span class="hl sym">(*</span> n <span class="hl num">5</span><span class="hl sym">)</span> HOMOSAPIEN
+                <span class="hl sym">(</span>random<span class="hl sym">-</span>fasta <span class="hl str">&quot;&gt;TWO IUB ambiguity codes</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> <span class="hl sym">(*</span> n <span class="hl num">3</span><span class="hl sym">)</span> IUB <span class="hl num">42</span><span class="hl sym">))</span>
+  <span class="hl sym">(</span>void<span class="hl sym">))</span>
