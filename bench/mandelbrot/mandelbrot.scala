@@ -2,20 +2,21 @@
    http://shootout.alioth.debian.org/
    original contributed by Isaac Gouy
    made to use single array and parallelized by Stephen Marsh
+   converted to Scala 2.8 by Rex Kerr
 */
 
 import java.io.BufferedOutputStream
 
 object mandelbrot {
-  var size: int = 0
-  var bytesPerRow: int = 0
-  var bitmap: Array[byte] = _
-  var donerows: Array[boolean] = _
+  var size: Int = 0
+  var bytesPerRow: Int = 0
+  var bitmap: Array[Byte] = _
+  var donerows: Array[Boolean] = _
   var nextRow = 0
   val limitSquared = 4.0
   val max = 50
 
-  def getNextRow: int = synchronized {
+  def getNextRow: Int = synchronized {
     notify() // wakes up main thread
     if (nextRow == size) return -1
     nextRow += 1
@@ -23,7 +24,7 @@ object mandelbrot {
   }
 
   def main(args: Array[String]) {
-    size = Integer.parseInt(args(0))
+    size = args(0).toInt
     bytesPerRow = (size+7)/8 // ceiling of (size / 8)
     bitmap = new Array(bytesPerRow*size)
     donerows = new Array(size)
@@ -55,39 +56,38 @@ object mandelbrot {
 	var aindex = y * bytesPerRow
 
 	while (x < size) {
-	
+
         val cr = 2.0 * x / size - 1.5
         val ci = 2.0 * y / size - 1.0
-	
-        var zr = 0.0; var zi = 0.0
-        var tr = 0.0; var ti = 0.0
-	
+
+        var zr, tr, zi, ti = 0.0
+
         var j = max
             do {
               zi = 2.0 * zr * zi + ci
               zr = tr - ti + cr
               ti = zi*zi
               tr = zr*zr
-	      
+
               j = j - 1
             } while (!(tr + ti > limitSquared) && j > 0)
-	 
+
          bits = bits << 1
          if (!(tr + ti > limitSquared)) bits += 1
          bitnum += 1
-	 
+
          if (x == size - 1) {
            bits = bits << (8 - bitnum)
            bitnum = 8
          }
-	 
+
          if (bitnum == 8) {
            bitmap(aindex) = bits.toByte
 	   aindex += 1
            bits = 0
            bitnum = 0
          }
-	 
+
          x += 1
 	}
 	donerows(y) = true

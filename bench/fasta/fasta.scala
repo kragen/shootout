@@ -1,162 +1,121 @@
 /* The Computer Language Shootout
-   http://shootout.alioth.debian.org/
-   contributed by Isaac Gouy
+  http://shootout.alioth.debian.org/
+  contributed by Isaac Gouy
+  updated for 2.8 and modified by Rex Kerr
 */
 
 import java.io._
 
-object fasta { 
-   def main(args: Array[String]) = {
+object fasta {
+  val ALU =
+    "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +
+    "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +
+    "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +
+    "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" +
+    "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" +
+    "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" +
+    "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
 
-      val ALU =
-         "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +
-         "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +
-         "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +
-         "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" +
-         "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" +
-         "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" +
-         "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+  val IUB = (Array( ('a',0.27), ('c',0.12), ('g',0.12), ('t',0.27) ) ++
+    "BDHKMNRSVWY".map(c => (c,0.02))
+  ).scanLeft( (0:Byte,0.0) )( (l,r) => (r._1.toByte, l._2+r._2) ).tail
 
-      val _IUB = Array(
-         Pair('a', 0.27), 
-         Pair('c', 0.12), 
-         Pair('g', 0.12), 
-         Pair('t', 0.27), 
+  val HomoSapiens = Array(
+    ('a', 0.3029549426680),
+    ('c', 0.1979883004921),
+    ('g', 0.1975473066391),
+    ('t', 0.3015094502008)
+  ).scanLeft( (0:Byte,0.0) )( (l,r) => (r._1.toByte, l._2+r._2) ).tail
 
-         Pair('B', 0.02), 
-         Pair('D', 0.02),
-         Pair('H', 0.02), 
-         Pair('K', 0.02), 
-         Pair('M', 0.02),
-         Pair('N', 0.02), 
-         Pair('R', 0.02), 
-         Pair('S', 0.02),
-         Pair('V', 0.02), 
-         Pair('W', 0.02), 
-         Pair('Y', 0.02)
-      )
+  def main(args: Array[String]) = {
+    val n = args(0).toInt
+    val s = new FastaOutputStream(System.out)
 
-      val IUB = makeCumulative(_IUB)
+    s.writeDescription("ONE Homo sapiens alu")
+    s.writeRepeatingSequence(ALU,n*2)
 
-      val _HomoSapiens = Array(
-         Pair('a', 0.3029549426680), 
-         Pair('c', 0.1979883004921),
-         Pair('g', 0.1975473066391), 
-         Pair('t', 0.3015094502008)
-      )
+    s.writeDescription("TWO IUB ambiguity codes")
+    s.writeRandomSequence(IUB,n*3)
 
-      val HomoSapiens = makeCumulative(_HomoSapiens)
+    s.writeDescription("THREE Homo sapiens frequency")
+    s.writeRandomSequence(HomoSapiens,n*5)
 
-
-      val n = Integer parseInt(args(0))
-      val s = new FastaOutputStream(System.out)
-
-      s.writeDescription("ONE Homo sapiens alu")
-      s.writeRepeatingSequence(ALU,n*2)
-
-      s.writeDescription("TWO IUB ambiguity codes")
-      s.writeRandomSequence(IUB,n*3)
-
-      s.writeDescription("THREE Homo sapiens frequency")
-      s.writeRandomSequence(HomoSapiens,n*5)
-
-      s.close
-   } 
-
-   def makeCumulative(a: Array[Pair[Char,double]]) = {
-      var cp = 0.0
-      a map (frequency =>
-         frequency match { 
-            case Pair(code,percent) => 
-               cp = cp + percent; new Frequency(code.toByte,cp) 
-         } 
-      )
-   }
-
-}
-
-
-// We could use instances of Pair or Tuple2 but specific labels
-// make the code more readable than index numbers
-
-class Frequency(_code: byte, _percent: double){ 
-   var code = _code; var percent = _percent;
+    s.close
+  }
 }
 
 
 // extend the Java BufferedOutputStream class
 
 class FastaOutputStream(out: OutputStream) extends BufferedOutputStream(out) {
+  private val LineLength = 60
+  private val nl = '\n'.toByte
 
-   private val LineLength = 60
-   private val nl = '\n'.toByte
+  def writeDescription(desc: String) = { write( (">" + desc + "\n").getBytes ) }
 
-   def writeDescription(desc: String) = { write( (">" + desc + "\n").getBytes ) }
+  def writeRepeatingSequence(_alu: String, length: Int) = {
+    val alu = _alu.getBytes
+    var n = length; var k = 0; val kn = alu.length;
 
-   def writeRepeatingSequence(_alu: String, length: int) = {
-      val alu = _alu.getBytes
-      var n = length; var k = 0; val kn = alu.length;
-
-      while (n > 0) {
-         val m = if (n < LineLength) n else LineLength
-
-         var i = 0
-         while (i < m){ 
-            if (k == kn) k = 0
-            val b = alu(k)
-            if (count < buf.length){ buf(count) = b; count = count + 1 }
-            else { write(b) } // flush buffer
-            k = k+1
-            i = i+1 
-         }
-
-         write(nl)
-         n = n - LineLength
-      }
-
-   }
-
-   def writeRandomSequence(distribution: Array[Frequency], length: int) = {
-      var n = length
-      while (n > 0) {
-         val m = if (n < LineLength) n else LineLength
-
-         var i = 0
-         while (i < m){ 
-            val b = selectRandom(distribution)
-            if (count < buf.length){ buf(count) = b; count = count + 1 }
-            else { write(b) } // flush buffer
-            i = i+1 
-         }
-
-         if (count < buf.length){ buf(count) = nl; count = count + 1 }
-         else { write(nl) } // flush buffer
-         n = n - LineLength
-      }
-   }
-
-   private def selectRandom(distribution: Array[Frequency]): Byte = {
-      val n = distribution.length
-      val r = RandomNumber scaledTo(1.0)
+    while (n > 0) {
+      val m = if (n < LineLength) n else LineLength
 
       var i = 0
-      while (i < n) {
-         if (r < distribution(i).percent) return distribution(i).code
-         i = i+1
+      while (i < m){
+        if (k == kn) k = 0
+        val b = alu(k)
+        if (count < buf.length){ buf(count) = b; count += 1 }
+        else { write(b) } // flush buffer
+        k += 1
+        i += 1
       }
-      return distribution(n-1).code
-   }
+
+      write(nl)
+      n -= LineLength
+    }
+  }
+
+  def writeRandomSequence(distribution: Array[(Byte,Double)], length: Int) = {
+    var n = length
+    while (n > 0) {
+      val m = if (n < LineLength) n else LineLength
+
+      var i = 0
+      while (i < m){
+        val b = selectRandom(distribution)
+        if (count < buf.length) { buf(count) = b; count += 1 }
+        else { write(b) } // flush buffer
+        i += 1
+      }
+
+      if (count < buf.length){ buf(count) = nl; count += 1 }
+      else { write(nl) } // flush buffer
+      n -= LineLength
+    }
+  }
+
+  private def selectRandom(distribution: Array[(Byte,Double)]): Byte = {
+    val n = distribution.length
+    val r = RandomNumber scaledTo(1.0)
+
+    var i = 0
+    while (i < n) {
+      if (r < distribution(i)._2) return distribution(i)._1
+      i = i+1
+    }
+    return distribution(n-1)._1
+  }
 }
 
 
 object RandomNumber {
-   private val IM = 139968
-   private val IA = 3877
-   private val IC = 29573
-   private var seed = 42
+  val IM = 139968
+  val IA = 3877
+  val IC = 29573
+  private var seed = 42
 
-   def scaledTo(max: double) = {
-      seed = (seed * IA + IC) % IM
-      max * seed / IM
-   }
+  def scaledTo(max: Double) = {
+    seed = (seed * IA + IC) % IM
+    max * seed / IM
+  }
 }

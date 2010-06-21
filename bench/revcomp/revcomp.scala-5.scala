@@ -5,27 +5,22 @@
  */
 
 object revcomp {
-  val table = new Array[Char](128)
-  for (i <- 0 to 127) { table(i) = i.toChar }
-  for ((i,o) <- "ACGTUMRWSYKVHDB".toList zip "TGCAAKYWSRMBDHVN".toList) {
-    table(i) = o
-    table(i.toLowerCase) = o
-  }
-  
-  val buf = new StringBuilder
+  def hl(s: String) = s + s.toLowerCase
+  val table = Map( (hl("ACGTUMRWSYKVHDBN") zip ("TGCAAKYWSRMBDHVN"*2)): _* )
+
+  val buf = new collection.mutable.ArrayBuffer[Char]
   def out {
-    buf reverse;
-    ".{1,60}".r findAllIn(buf) foreach(println _)
+    buf.reverseIterator.grouped(60).foreach( s => println(s.mkString) )
     buf clear
   }
 
   def main(args:Array[String]) = {
-    io.Source.fromInputStream( System.in ).getLines.foreach(s => {
+    io.Source.stdin.getLines().foreach(s => {
       if (s startsWith ">") {
         out
-        print(s)
+        println(s)
       }
-      else s.trim.foreach(buf append table(_))
+      else buf ++= s.map(table(_))
     })
     out
   }

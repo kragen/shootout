@@ -2,97 +2,92 @@
    http://shootout.alioth.debian.org/
    contributed by Isaac Gouy
    modified by Meiko Rachimow
+   updated for 2.8 by Rex Kerr
 */
 
-object nbody {
-   def main(args: Array[String]) = {
-      var n = Integer.parseInt(args(0))
+import math._
 
-      Console.printf("%.9f\n", JovianSystem.energy )
-      while (n > 0) { JovianSystem.advance(0.01); n = n-1 }
-      Console.printf("%.9f\n", JovianSystem.energy )
-   }
+object nbody {
+  def main(args: Array[String]) = {
+    var n = args(0).toInt
+
+    printf("%.9f\n", JovianSystem.energy )
+    while (n > 0) { JovianSystem.advance(0.01); n -= 1 }
+    printf("%.9f\n", JovianSystem.energy )
+  }
 }
 
 
 abstract class NBodySystem {
 
-   def energy() = {
-      var e = 0.0
-      for (val i <- Iterator.range(0,bodies.length)){
-         e = e + 0.5 * bodies(i).mass *
-            ( bodies(i).vx * bodies(i).vx
-            + bodies(i).vy * bodies(i).vy
-            + bodies(i).vz * bodies(i).vz )
-
-         for (val j <- Iterator.range(i+1,bodies.length)){
-            val dx = bodies(i).x - bodies(j).x
-            val dy = bodies(i).y - bodies(j).y
-            val dz = bodies(i).z - bodies(j).z
-
-            val distance = Math.sqrt(dx*dx + dy*dy + dz*dz)
-            e = e - (bodies(i).mass * bodies(j).mass) / distance
-         }
+  def energy() = {
+    var e = 0.0
+    for (i <- 0 until bodies.length) {
+      e += 0.5 * bodies(i).mass * bodies(i).speedSq
+      
+      for (j <- i+1 until bodies.length) {
+        val dx = bodies(i).x - bodies(j).x
+        val dy = bodies(i).y - bodies(j).y
+        val dz = bodies(i).z - bodies(j).z
+        val distance = sqrt(dx*dx + dy*dy + dz*dz)
+        e -= (bodies(i).mass * bodies(j).mass) / distance
       }
-      e
-   }
+    }
+    e
+  }
 
+  def advance(dt: Double) = {
+    var i = 0
+    while (i < bodies.length){
+      var j = i+1
+      while (j < bodies.length){
+        val dx = bodies(i).x - bodies(j).x
+        val dy = bodies(i).y - bodies(j).y
+        val dz = bodies(i).z - bodies(j).z
 
-   def advance(dt: double) = {
-      var i = 0
-      while (i < bodies.length){
+        val distance = sqrt(dx*dx + dy*dy + dz*dz)
+        val mag = dt / (distance * distance * distance)
 
-         var j = i+1
-         while (j < bodies.length){
-            val dx = bodies(i).x - bodies(j).x
-            val dy = bodies(i).y - bodies(j).y
-            val dz = bodies(i).z - bodies(j).z
+        bodies(i).advance(dx,dy,dz,-bodies(j).mass*mag)
+        bodies(j).advance(dx,dy,dz,bodies(i).mass*mag)
 
-            val distance = Math.sqrt(dx*dx + dy*dy + dz*dz)
-            val mag = dt / (distance * distance * distance)
-
-            bodies(i).vx = bodies(i).vx - dx * bodies(j).mass * mag
-            bodies(i).vy = bodies(i).vy - dy * bodies(j).mass * mag
-            bodies(i).vz = bodies(i).vz - dz * bodies(j).mass * mag
-
-            bodies(j).vx = bodies(j).vx + dx * bodies(i).mass * mag
-            bodies(j).vy = bodies(j).vy + dy * bodies(i).mass * mag
-            bodies(j).vz = bodies(j).vz + dz * bodies(i).mass * mag
-
-            j = j+1
-         }
-         i = i+1
+        j += 1
       }
+      i += 1
+    }
 
-      i = 0
-      while (i < bodies.length){
-         bodies(i).x = bodies(i).x + dt * bodies(i).vx
-         bodies(i).y = bodies(i).y + dt * bodies(i).vy
-         bodies(i).z = bodies(i).z + dt * bodies(i).vz
+    i = 0
+    while (i < bodies.length){
+      bodies(i).move(dt)
+      i += 1
+    }
+  }
 
-         i = i+1
-      }
-   }
+  protected val bodies: Array[Body]
 
-
-   protected val bodies: Array[Body]
-
-   class Body(){
-      var x = 0.0; var y = 0.0; var z = 0.0;
-      var vx = 0.0; var vy = 0.0; var vz = 0.0
-      var mass = 0.0
-   }
+  class Body(){
+    var x,y,z = 0.0
+    var vx,vy,vz = 0.0
+    var mass = 0.0
+    def speedSq = vx*vx + vy*vy + vz*vz
+    def move(dt: Double) {
+      x += dt*vx
+      y += dt*vy
+      z += dt*vz
+    }
+    def advance(dx: Double, dy: Double, dz: Double, delta: Double) {
+      vx += dx*delta
+      vy += dy*delta
+      vz += dz*delta
+    }
+  }
 }
 
-
-
 object JovianSystem extends NBodySystem {
-
    protected val bodies = initialValues
 
    private def initialValues() = {
-      val PI = 3.141592653589793
-      val SOLAR_MASS = 4 * PI * PI
+      val SOLAR_MASS = 4 * Pi * Pi
       val DAYS_PER_YEAR = 365.24
 
       val sun = new Body
@@ -138,10 +133,10 @@ object JovianSystem extends NBodySystem {
       val initialValues = Array ( sun, jupiter, saturn, uranus, neptune )
 
       var px = 0.0; var py = 0.0; var pz = 0.0;
-      for (val b <- initialValues){
-         px = px + (b.vx * b.mass)
-         py = py + (b.vy * b.mass)
-         pz = pz + (b.vz * b.mass)
+      for (b <- initialValues){
+         px += (b.vx * b.mass)
+         py += (b.vy * b.mass)
+         pz += (b.vz * b.mass)
       }
       sun.vx = -px / SOLAR_MASS
       sun.vy = -py / SOLAR_MASS
