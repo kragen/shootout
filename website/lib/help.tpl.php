@@ -32,12 +32,12 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 </dd>
 
 
-<dt><a href="#comparememoryused" name="comparememoryused"><b>Compare Memory-used</b> for all the benchmarks</a></dt>
+<dt><a href="#comparememoryused" name="comparememoryused">Compare <b>Memory-used</b> for all the benchmarks</a></dt>
 <dd>
 <p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=1&xloc=0" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
 </dd>
 
-<dt><a href="#comparecodeused" name="comparecodeused"><b>Compare Code-used</b> for all the benchmarks</a></dt>
+<dt><a href="#comparecodeused" name="comparecodeused">Compare <b>Code-used</b> for all the benchmarks</a></dt>
 <dd>
 <p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=0&xloc=1" title="Which programming languages have benchmark programs that use less source code on one core x86 Ubuntu">Which programming language is best?</a> and set the Code B weight to 1 and the Time secs weight to 0.</p>
 </dd>
