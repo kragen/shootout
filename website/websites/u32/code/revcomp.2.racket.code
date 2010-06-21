@@ -1,0 +1,83 @@
+#lang racket<span class="hl sym">/</span>base
+
+<span class="hl slc">;;; The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;; http://shootout.alioth.debian.org/</span>
+<span class="hl slc">;;; contributed by Eli Barzilay</span>
+
+<span class="hl sym">(</span>define translation <span class="hl sym">(</span>make<span class="hl sym">-</span>vector <span class="hl num">128</span><span class="hl sym">))</span>
+
+<span class="hl sym">(</span>for <span class="hl sym">([</span>from <span class="hl sym">(</span>in<span class="hl sym">-</span>string <span class="hl str">&quot;ACGTUMRWSYKVHDBN&quot;</span><span class="hl sym">)]</span>
+      <span class="hl sym">[</span>to   <span class="hl sym">(</span>in<span class="hl sym">-</span>string <span class="hl str">&quot;TGCAAKYWSRMBDHVN&quot;</span><span class="hl sym">)])</span>
+  <span class="hl sym">(</span>let <span class="hl sym">([</span>to <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer to<span class="hl sym">)])</span>
+    <span class="hl sym">(</span>vector<span class="hl sym">-</span>set<span class="hl sym">!</span> translation <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer from<span class="hl sym">)</span> to<span class="hl sym">)</span>
+    <span class="hl sym">(</span>vector<span class="hl sym">-</span>set<span class="hl sym">!</span> translation <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer <span class="hl sym">(</span>char<span class="hl sym">-</span>downcase from<span class="hl sym">))</span> to<span class="hl sym">)))</span>
+
+<span class="hl sym">(</span>define I <span class="hl sym">(</span>current<span class="hl sym">-</span>input<span class="hl sym">-</span>port<span class="hl sym">))</span>
+<span class="hl sym">(</span>define O <span class="hl sym">(</span>current<span class="hl sym">-</span>output<span class="hl sym">-</span>port<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>define marker <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer #\<span class="hl sym">&gt;))</span>
+
+<span class="hl sym">(</span>require racket<span class="hl sym">/</span>require <span class="hl sym">(</span>for<span class="hl sym">-</span>syntax racket<span class="hl sym">/</span>base<span class="hl sym">)</span>
+         <span class="hl sym">(</span>filtered<span class="hl sym">-</span>in <span class="hl sym">(</span>lambda <span class="hl sym">(</span>name<span class="hl sym">) (</span>regexp<span class="hl sym">-</span>replace #rx<span class="hl str">&quot;unsafe-&quot;</span> name <span class="hl str">&quot;&quot;</span><span class="hl sym">))</span>
+                      racket<span class="hl sym">/</span>unsafe<span class="hl sym">/</span>ops<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>define line<span class="hl sym">-</span>length <span class="hl num">60</span><span class="hl sym">)</span>
+<span class="hl sym">(</span>define buf<span class="hl sym">-</span>size <span class="hl sym">(*</span> <span class="hl num">64 1024</span><span class="hl sym">))</span>
+<span class="hl sym">(</span>define out<span class="hl sym">-</span>buf <span class="hl slc">; so there's always enough room for newlines</span>
+  <span class="hl sym">(</span>make<span class="hl sym">-</span>bytes <span class="hl sym">(+</span> buf<span class="hl sym">-</span>size <span class="hl num">1</span> <span class="hl sym">(</span>quotient buf<span class="hl sym">-</span>size line<span class="hl sym">-</span>length<span class="hl sym">))))</span>
+<span class="hl sym">(</span>define LF <span class="hl sym">(</span>char<span class="hl sym">-&gt;</span>integer #\newline<span class="hl sym">))</span>
+
+#|
+The basic idea is to read the input in chunks<span class="hl sym">,</span> and keep pointers to
+them<span class="hl sym">,</span> then on output process each chunk to translate and reverse it
+before dumping it out.
+|#
+
+<span class="hl sym">(</span>define <span class="hl sym">(</span>output chunks<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let loop <span class="hl sym">([</span>chunks chunks<span class="hl sym">] [</span>col line<span class="hl sym">-</span>length<span class="hl sym">])</span>
+    <span class="hl sym">(</span>when <span class="hl sym">(</span>pair? chunks<span class="hl sym">)</span>
+      <span class="hl sym">(</span>let <span class="hl sym">([</span>chunk <span class="hl sym">(</span>car chunks<span class="hl sym">)])</span>
+        <span class="hl sym">(</span>let <span class="hl sym">([</span>start  <span class="hl sym">(</span>vector<span class="hl sym">-</span>ref chunk <span class="hl num">0</span><span class="hl sym">)]</span>
+              <span class="hl sym">[</span>end    <span class="hl sym">(</span>vector<span class="hl sym">-</span>ref chunk <span class="hl num">1</span><span class="hl sym">)]</span>
+              <span class="hl sym">[</span>in<span class="hl sym">-</span>buf <span class="hl sym">(</span>vector<span class="hl sym">-</span>ref chunk <span class="hl num">2</span><span class="hl sym">)])</span>
+          <span class="hl sym">(</span>let chunk<span class="hl sym">-</span>loop <span class="hl sym">([</span>i end<span class="hl sym">] [</span>j <span class="hl num">0</span><span class="hl sym">] [</span>col col<span class="hl sym">])</span>
+            <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">&gt;</span> i start<span class="hl sym">)</span>
+              <span class="hl sym">(</span>let<span class="hl sym">* ([</span>i <span class="hl sym">(</span>fx<span class="hl sym">-</span> i <span class="hl num">1</span><span class="hl sym">)] [</span>b <span class="hl sym">(</span>bytes<span class="hl sym">-</span>ref in<span class="hl sym">-</span>buf i<span class="hl sym">)])</span>
+                <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">=</span> b LF<span class="hl sym">)</span>
+                  <span class="hl sym">(</span>chunk<span class="hl sym">-</span>loop i j col<span class="hl sym">)</span>
+                  <span class="hl sym">(</span>let <span class="hl sym">([</span>b <span class="hl sym">(</span>vector<span class="hl sym">-</span>ref translation b<span class="hl sym">)])</span>
+                    <span class="hl sym">(</span>if <span class="hl sym">(</span>fx<span class="hl sym">=</span> <span class="hl num">0</span> col<span class="hl sym">)</span>
+                      <span class="hl sym">(</span>begin <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> out<span class="hl sym">-</span>buf j LF<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> out<span class="hl sym">-</span>buf <span class="hl sym">(</span>fx<span class="hl sym">+</span> j <span class="hl num">1</span><span class="hl sym">)</span> b<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>chunk<span class="hl sym">-</span>loop i <span class="hl sym">(</span>fx<span class="hl sym">+</span> j <span class="hl num">2</span><span class="hl sym">) (</span>fx<span class="hl sym">-</span> line<span class="hl sym">-</span>length <span class="hl num">1</span><span class="hl sym">)))</span>
+                      <span class="hl sym">(</span>begin <span class="hl sym">(</span>bytes<span class="hl sym">-</span>set<span class="hl sym">!</span> out<span class="hl sym">-</span>buf j b<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>chunk<span class="hl sym">-</span>loop i <span class="hl sym">(</span>fx<span class="hl sym">+</span> j <span class="hl num">1</span><span class="hl sym">) (</span>fx<span class="hl sym">-</span> col <span class="hl num">1</span><span class="hl sym">)))))))</span>
+              <span class="hl sym">(</span>begin <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes out<span class="hl sym">-</span>buf O <span class="hl num">0</span> j<span class="hl sym">)</span>
+                     <span class="hl sym">(</span>loop <span class="hl sym">(</span>cdr chunks<span class="hl sym">)</span> col<span class="hl sym">))))))))</span>
+  <span class="hl sym">(</span>newline O<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>define<span class="hl sym">-</span>syntax case<span class="hl sym">-</span>regexp<span class="hl sym">-</span>posns
+  <span class="hl sym">(</span>syntax<span class="hl sym">-</span>rules <span class="hl sym">(=&gt;</span> else<span class="hl sym">)</span>
+    <span class="hl sym">[(</span>_ rx buf start <span class="hl sym">[</span>id B1 ...<span class="hl sym">] [</span>else B2 ...<span class="hl sym">])</span>
+     <span class="hl sym">(</span>let <span class="hl sym">([</span>m <span class="hl sym">(</span>regexp<span class="hl sym">-</span>match<span class="hl sym">-</span>positions rx buf start<span class="hl sym">)])</span>
+       <span class="hl sym">(</span>if m <span class="hl sym">(</span>let <span class="hl sym">([</span>id <span class="hl sym">(</span>car m<span class="hl sym">)])</span> B1 ...<span class="hl sym">) (</span>begin B2 ...<span class="hl sym">)))]))</span>
+
+<span class="hl sym">(</span>let <span class="hl sym">([</span>m <span class="hl sym">(</span>regexp<span class="hl sym">-</span>match #rx<span class="hl str">&quot;^([^</span><span class="hl esc">\</span><span class="hl str">n]+)</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> I<span class="hl sym">)]) (</span>display <span class="hl sym">(</span>car m<span class="hl sym">)))</span>
+
+<span class="hl sym">(</span>let loop <span class="hl sym">([</span>buf <span class="hl sym">(</span>read<span class="hl sym">-</span>bytes buf<span class="hl sym">-</span>size I<span class="hl sym">)] [</span>start <span class="hl num">0</span><span class="hl sym">] [</span>chunks <span class="hl sym">'()])</span>
+  <span class="hl sym">(</span>if <span class="hl sym">(</span>eof<span class="hl sym">-</span>object? buf<span class="hl sym">)</span>
+    <span class="hl sym">(</span>begin <span class="hl sym">(</span>output chunks<span class="hl sym">) (</span>void<span class="hl sym">))</span>
+    <span class="hl sym">(</span>case<span class="hl sym">-</span>regexp<span class="hl sym">-</span>posns #rx<span class="hl str">&quot;&gt;&quot;</span> buf start
+      <span class="hl sym">[</span>p1 <span class="hl sym">(</span>output <span class="hl sym">(</span>cons <span class="hl sym">(</span>vector start <span class="hl sym">(</span>car p1<span class="hl sym">)</span> buf<span class="hl sym">)</span> chunks<span class="hl sym">))</span>
+          <span class="hl sym">(</span>case<span class="hl sym">-</span>regexp<span class="hl sym">-</span>posns #rx<span class="hl str">&quot;</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> buf <span class="hl sym">(</span>cdr p1<span class="hl sym">)</span>
+            <span class="hl sym">[</span>p2 <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes buf O <span class="hl sym">(</span>car p1<span class="hl sym">) (</span>cdr p2<span class="hl sym">))</span>
+                <span class="hl sym">(</span>loop buf <span class="hl sym">(</span>cdr p2<span class="hl sym">) '())]</span>
+            <span class="hl sym">[</span>else <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes buf O <span class="hl sym">(</span>car p1<span class="hl sym">))</span>
+                  <span class="hl sym">(</span>let header<span class="hl sym">-</span>loop <span class="hl sym">()</span>
+                    <span class="hl sym">(</span>let <span class="hl sym">([</span>buf <span class="hl sym">(</span>read<span class="hl sym">-</span>bytes buf<span class="hl sym">-</span>size I<span class="hl sym">)])</span>
+                      <span class="hl sym">(</span>case<span class="hl sym">-</span>regexp<span class="hl sym">-</span>posns #rx<span class="hl str">&quot;</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> buf <span class="hl num">0</span>
+                        <span class="hl sym">[</span>p2 <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes buf O <span class="hl num">0</span> <span class="hl sym">(</span>cdr p2<span class="hl sym">))</span>
+                            <span class="hl sym">(</span>loop buf <span class="hl sym">(</span>cdr p2<span class="hl sym">) '())]</span>
+                        <span class="hl sym">[</span>else <span class="hl sym">(</span>write<span class="hl sym">-</span>bytes buf O<span class="hl sym">) (</span>header<span class="hl sym">-</span>loop<span class="hl sym">)])))])]</span>
+      <span class="hl sym">[</span>else <span class="hl sym">(</span>loop <span class="hl sym">(</span>read<span class="hl sym">-</span>bytes buf<span class="hl sym">-</span>size I<span class="hl sym">)</span> <span class="hl num">0</span>
+                  <span class="hl sym">(</span>cons <span class="hl sym">(</span>vector start <span class="hl sym">(</span>bytes<span class="hl sym">-</span>length buf<span class="hl sym">)</span> buf<span class="hl sym">)</span> chunks<span class="hl sym">))])))</span>
