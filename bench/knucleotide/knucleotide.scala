@@ -6,12 +6,13 @@
    Based on Scala contribution of Rex Kerr
    Based on bit encoding idea of C++ contribution of Andrew Moon
    Contributed by The Anh Tran
+   Updated for 2.8 by Rex Kerr
 */
 
 import scala.actors.Futures.future
 import scala.actors.Future
 import scala.collection.mutable.HashMap
-import java.io.{InputStreamReader, BufferedReader}
+import java.io._
 
 final
 object knucleotide
@@ -41,15 +42,12 @@ object knucleotide
       val ht = mergeTables(lht)
 
       // sort by decending frequencies
-      val sorted_list = ht
-         .elements
-         .toList
-         .sort((a, b) => !(a._2 < b._2) )
-         
+      val sorted_list = ht.toArray.sortWith((a, b) => !(a._2 < b._2) )
+
       val total = data_length.toFloat
 
-      sorted_list foreach ( a =>   printf("%s %.3f\n", 
-                              a._1.decode, 
+      sorted_list foreach ( a =>   printf("%s %.3f\n",
+                              a._1.decode,
                               (a._2.toFloat * 100.0f / total))   )
 
       println
@@ -99,45 +97,34 @@ object knucleotide
    }
 
    private
-   def mergeTables(list_hashtable: List[Future[KnuHashMap]]) : KnuHashMap =
-   {
+   def mergeTables(list_hashtable: List[Future[KnuHashMap]]) =
       list_hashtable
          .map( _() )
-         .reduceLeft   ( (t1, t2) =>
-                  {
-                     t2.elements.foreach(e => t1.addCounter(e._1, e._2))
-                     t1
-                  })
-   }
+         .reduceLeft( (t1, t2) => {
+            t2.foreach(e => t1.addCounter(e._1, e._2))
+            t1
+         })
 }
 
 private final
 class KnuKey(var key : Long, val hash_length : Int)
 {
    def this(hlen: Int) = this(0, hlen)
-   
-   @inline
-   override
-   def clone() = new KnuKey(key, hash_length)
 
    @inline
-   override
-   def hashCode() : Int = key.toInt
+   override def clone() = new KnuKey(key, hash_length)
 
    @inline
-   override
-   def equals(other : Any) : Boolean =
-   {
-      other match
-      {
-         case that : KnuKey   => this.key == that.key
-         case _            => false
-      }
+   override def hashCode() : Int = key.toInt
+
+   @inline
+   override def equals(other : Any) = other match {
+      case that: KnuKey => this.key == that.key
+      case _            => false
    }
 
    @inline
-   def encode(data : Array[Char], offset : Int) =
-   {
+   def encode(data : Array[Char], offset : Int) = {
       var mkey = 0L
       var index = 0
       var shift = 0
@@ -154,8 +141,7 @@ class KnuKey(var key : Long, val hash_length : Int)
       this
    }
 
-   def decode() =
-   {
+   def decode() = {
       val sb = new StringBuilder(hash_length)
 
       var index = 0
@@ -176,28 +162,23 @@ class KnuKey(var key : Long, val hash_length : Int)
 
 
 private final
-object Helper
-{
+object Helper {
    val bit_mask      = 3L
    val bit_per_code   = 2
 
    @inline
-   def apply(c : Char) : Long =
-   {
-      c match
-      {
-         case 'a'   => 0
-         case 't'   => 1
-         case 'c'   => 2
-         case 'g'   => 3
+   def apply(c : Char) : Long = (c: @annotation.switch) match {
+      case 'a'   => 0
+      case 't'   => 1
+      case 'c'   => 2
+      case 'g'   => 3
 
-         case 'A'   => 0
-         case 'T'   => 1
-         case 'C'   => 2
-         case 'G'   => 3
+      case 'A'   => 0
+      case 'T'   => 1
+      case 'C'   => 2
+      case 'G'   => 3
 
-         case _      => assert(false); -1
-      }
+      case _      => assert(false); -1
    }
 
    private
@@ -207,8 +188,7 @@ object Helper
    def apply(c : Int) : Char = Int2Iub(c)
 
 
-   def readAll() =
-   {
+   def readAll() = {
       val reader = new BufferedReader(new InputStreamReader (System.in, "US-ASCII"), 4*1024*1024)
 
       var line = reader readLine()
@@ -238,8 +218,7 @@ class KnuHashMap extends HashMap[KnuKey, Int]
    def incCounter(key : KnuKey) : Unit = addCounter(key, 1)
 
    @inline
-   def addCounter(key : KnuKey, valToAdd: Int) : Unit =
-   {
+   def addCounter(key : KnuKey, valToAdd: Int) {
       // directly look up entry inside hashtable
       var e  = table(index(key.hashCode)).asInstanceOf[Entry]
       while (e != null)
