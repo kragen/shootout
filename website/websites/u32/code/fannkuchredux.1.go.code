@@ -1,0 +1,170 @@
+<span class="hl com">/*</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by Oleg Mazurov, June 2010</span>
+<span class="hl com"> *</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">package</span> main
+
+<span class="hl kwa">import</span> <span class="hl sym">(</span>
+    <span class="hl str">&quot;fmt&quot;</span>
+    <span class="hl str">&quot;os&quot;</span>
+    <span class="hl str">&quot;runtime&quot;</span>
+    <span class="hl str">&quot;strconv&quot;</span>
+<span class="hl sym">)</span>
+
+<span class="hl kwa">type</span> Result <span class="hl kwa">struct</span> <span class="hl sym">{</span>
+    maxFlips int
+    checkSum int
+<span class="hl sym">}</span>
+
+<span class="hl kwa">var</span> <span class="hl sym">(</span>
+    NCHUNKS <span class="hl sym">=</span> <span class="hl num">720</span>
+    CHUNKSZ <span class="hl sym">=</span> <span class="hl num">0</span>
+    NTASKS  <span class="hl sym">=</span> <span class="hl num">0</span>
+<span class="hl sym">)</span>
+<span class="hl kwa">var</span> n <span class="hl sym">=</span> <span class="hl num">12</span>
+<span class="hl kwa">var</span> Fact <span class="hl sym">[]</span>int
+
+<span class="hl kwa">func</span> fannkuch<span class="hl sym">(</span> idxMin int<span class="hl sym">,</span> ch <span class="hl kwa">chan</span> Result <span class="hl sym">) {</span>
+
+    idxMax <span class="hl sym">:=</span> idxMin <span class="hl sym">+</span> CHUNKSZ
+    <span class="hl kwa">if</span> idxMax <span class="hl sym">&lt;</span> Fact<span class="hl sym">[</span>n<span class="hl sym">] {</span>
+        <span class="hl kwa">go</span> fannkuch<span class="hl sym">(</span> idxMax<span class="hl sym">,</span> ch <span class="hl sym">)</span>
+    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+        idxMax <span class="hl sym">=</span> Fact<span class="hl sym">[</span>n<span class="hl sym">]</span>
+    <span class="hl sym">}</span>
+
+    p     <span class="hl sym">:=</span> make<span class="hl sym">([]</span>int<span class="hl sym">,</span> n<span class="hl sym">)</span>
+    pp    <span class="hl sym">:=</span> make<span class="hl sym">([]</span>int<span class="hl sym">,</span> n<span class="hl sym">)</span>
+    count <span class="hl sym">:=</span> make<span class="hl sym">([]</span>int<span class="hl sym">,</span> n<span class="hl sym">)</span>
+
+    <span class="hl slc">// first permutation</span>
+    <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>n<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+        p<span class="hl sym">[</span>i<span class="hl sym">] =</span> i
+    <span class="hl sym">}</span>
+    <span class="hl kwa">for</span> i<span class="hl sym">,</span> idx <span class="hl sym">:=</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span> idxMin<span class="hl sym">;</span> i<span class="hl sym">&gt;</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">-- {</span>
+        d <span class="hl sym">:=</span> idx <span class="hl sym">/</span> Fact<span class="hl sym">[</span>i<span class="hl sym">]</span>
+        count<span class="hl sym">[</span>i<span class="hl sym">] =</span> d
+        idx <span class="hl sym">=</span> idx <span class="hl sym">%</span> Fact<span class="hl sym">[</span>i<span class="hl sym">]</span>
+
+        copy<span class="hl sym">(</span> pp<span class="hl sym">,</span> p <span class="hl sym">)</span>
+        <span class="hl kwa">for</span> j <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> j <span class="hl sym">&lt;=</span> i<span class="hl sym">;</span> j<span class="hl sym">++ {</span>
+	    <span class="hl kwa">if</span> j<span class="hl sym">+</span>d <span class="hl sym">&lt;=</span> i <span class="hl sym">{</span>
+                p<span class="hl sym">[</span>j<span class="hl sym">] =</span> pp<span class="hl sym">[</span>j<span class="hl sym">+</span>d<span class="hl sym">]</span>
+	    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                p<span class="hl sym">[</span>j<span class="hl sym">] =</span> pp<span class="hl sym">[</span>j<span class="hl sym">+</span>d<span class="hl sym">-</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">]</span>
+	    <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    maxFlips <span class="hl sym">:=</span> <span class="hl num">1</span>
+    checkSum <span class="hl sym">:=</span> <span class="hl num">0</span>
+
+    <span class="hl kwa">for</span> idx<span class="hl sym">,</span> sign <span class="hl sym">:=</span> idxMin<span class="hl sym">,</span> true<span class="hl sym">; ;</span> sign <span class="hl sym">= !</span>sign <span class="hl sym">{</span>
+
+        <span class="hl slc">// count flips</span>
+        first <span class="hl sym">:=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>
+	<span class="hl kwa">if</span> first <span class="hl sym">!=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+	    flips <span class="hl sym">:=</span> <span class="hl num">1</span>
+	    <span class="hl kwa">if</span> p<span class="hl sym">[</span>first<span class="hl sym">] !=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+		copy<span class="hl sym">(</span> pp<span class="hl sym">,</span> p <span class="hl sym">)</span>
+		p0 <span class="hl sym">:=</span> first
+	        <span class="hl kwa">for</span> <span class="hl sym">{</span>
+		    flips<span class="hl sym">++</span>
+		    <span class="hl kwa">for</span> i<span class="hl sym">,</span> j <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">,</span> p0<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> j<span class="hl sym">;</span> i<span class="hl sym">,</span> j <span class="hl sym">=</span> i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> j<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">{</span>
+		        pp<span class="hl sym">[</span>i<span class="hl sym">],</span> pp<span class="hl sym">[</span>j<span class="hl sym">] =</span> pp<span class="hl sym">[</span>j<span class="hl sym">],</span> pp<span class="hl sym">[</span>i<span class="hl sym">]</span>
+		    <span class="hl sym">}</span>
+		    t <span class="hl sym">:=</span> pp<span class="hl sym">[</span>p0<span class="hl sym">]</span>
+		    pp<span class="hl sym">[</span>p0<span class="hl sym">] =</span> p0
+		    p0 <span class="hl sym">=</span> t
+		    <span class="hl kwa">if</span> pp<span class="hl sym">[</span>p0<span class="hl sym">] ==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+		        <span class="hl kwa">break</span>
+		    <span class="hl sym">}</span>
+	        <span class="hl sym">}</span>
+	    <span class="hl sym">}</span>
+	    <span class="hl kwa">if</span> maxFlips <span class="hl sym">&lt;</span> flips <span class="hl sym">{</span>
+		maxFlips <span class="hl sym">=</span> flips
+	    <span class="hl sym">}</span>
+	    <span class="hl kwa">if</span> sign <span class="hl sym">{</span>
+		checkSum <span class="hl sym">+=</span> flips
+	    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+		checkSum <span class="hl sym">-=</span> flips
+	    <span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">if</span> idx<span class="hl sym">++;</span> idx <span class="hl sym">==</span> idxMax <span class="hl sym">{</span>
+	    <span class="hl kwa">break</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl slc">// next permutation</span>
+	<span class="hl kwa">if</span> sign <span class="hl sym">{</span>
+	    p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">],</span> p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] =</span> p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> first
+	<span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+	    p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">],</span> p<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] =</span> p<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span> p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]</span>
+	    <span class="hl kwa">for</span> k <span class="hl sym">:=</span> <span class="hl num">2</span><span class="hl sym">;;</span> k<span class="hl sym">++ {</span>
+	        <span class="hl kwa">if</span> count<span class="hl sym">[</span>k<span class="hl sym">]++;</span> count<span class="hl sym">[</span>k<span class="hl sym">] &lt;=</span> k <span class="hl sym">{</span>
+		    <span class="hl kwa">break</span>
+		<span class="hl sym">}</span>
+	        count<span class="hl sym">[</span>k<span class="hl sym">] =</span> <span class="hl num">0</span>
+		<span class="hl kwa">for</span> j<span class="hl sym">:=</span><span class="hl num">0</span><span class="hl sym">;</span> j<span class="hl sym">&lt;=</span>k<span class="hl sym">;</span> j<span class="hl sym">++ {</span>
+		    p<span class="hl sym">[</span>j<span class="hl sym">] =</span> p<span class="hl sym">[</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]</span>
+		<span class="hl sym">}</span>
+		p<span class="hl sym">[</span>k<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">] =</span> first
+		first <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]</span>
+	    <span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    ch <span class="hl sym">&lt;-</span> Result<span class="hl sym">{</span> maxFlips<span class="hl sym">,</span> checkSum <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> printResult<span class="hl sym">(</span> n int<span class="hl sym">,</span> res int<span class="hl sym">,</span> chk int <span class="hl sym">) {</span>
+    fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\n</span><span class="hl str">Pfannkuchen(%d) = %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> chk<span class="hl sym">,</span> n<span class="hl sym">,</span> res<span class="hl sym">)</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> main<span class="hl sym">() {</span>
+
+    <span class="hl kwa">if</span> len<span class="hl sym">(</span>os<span class="hl sym">.</span>Args<span class="hl sym">) &gt;</span> <span class="hl num">1</span> <span class="hl sym">{</span>
+	v<span class="hl sym">,</span> err <span class="hl sym">:=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span>os<span class="hl sym">.</span>Args<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span>
+	<span class="hl kwa">if</span> err <span class="hl sym">!=</span> nil <span class="hl sym">{</span>
+	    fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span> <span class="hl str">&quot;error: %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> err<span class="hl sym">.</span>String<span class="hl sym">() )</span>
+	    <span class="hl kwa">return</span>
+	<span class="hl sym">}</span>
+	n <span class="hl sym">=</span> v
+    <span class="hl sym">}</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">&lt;=</span> <span class="hl num">0</span> <span class="hl sym">||</span> n <span class="hl sym">&gt;</span> <span class="hl num">12</span> <span class="hl sym">{</span>
+	printResult<span class="hl sym">(</span> n<span class="hl sym">, -</span><span class="hl num">1</span><span class="hl sym">, -</span><span class="hl num">1</span> <span class="hl sym">)</span>
+	<span class="hl kwa">return</span>
+    <span class="hl sym">}</span>
+
+    runtime<span class="hl sym">.</span>GOMAXPROCS<span class="hl sym">(</span><span class="hl num">4</span><span class="hl sym">)</span>
+
+    Fact <span class="hl sym">=</span> make<span class="hl sym">([]</span>int<span class="hl sym">,</span> n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+    Fact<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">1</span>
+    <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>len<span class="hl sym">(</span>Fact<span class="hl sym">);</span> i<span class="hl sym">++ {</span>
+        Fact<span class="hl sym">[</span>i<span class="hl sym">] =</span> Fact<span class="hl sym">[</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] *</span> i
+    <span class="hl sym">}</span>
+
+    CHUNKSZ <span class="hl sym">= (</span>Fact<span class="hl sym">[</span>n<span class="hl sym">] +</span> NCHUNKS <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) /</span> NCHUNKS
+    CHUNKSZ <span class="hl sym">+=</span> CHUNKSZ<span class="hl sym">%</span><span class="hl num">2</span>
+    NTASKS <span class="hl sym">= (</span>Fact<span class="hl sym">[</span>n<span class="hl sym">] +</span> CHUNKSZ <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) /</span> CHUNKSZ
+
+    ch <span class="hl sym">:=</span> make<span class="hl sym">(</span><span class="hl kwa">chan</span> Result<span class="hl sym">,</span> NTASKS<span class="hl sym">)</span>
+
+    <span class="hl kwa">go</span> fannkuch<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> ch<span class="hl sym">)</span>
+
+    res <span class="hl sym">:=</span> <span class="hl num">0</span>
+    chk <span class="hl sym">:=</span> <span class="hl num">0</span>
+    <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>NTASKS<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
+	r <span class="hl sym">:= &lt;-</span>ch
+	<span class="hl kwa">if</span> res <span class="hl sym">&lt;</span> r<span class="hl sym">.</span>maxFlips <span class="hl sym">{</span>
+            res <span class="hl sym">=</span> r<span class="hl sym">.</span>maxFlips
+	<span class="hl sym">}</span>
+	chk <span class="hl sym">+=</span> r<span class="hl sym">.</span>checkSum
+    <span class="hl sym">}</span>
+
+    printResult<span class="hl sym">(</span> n<span class="hl sym">,</span> res<span class="hl sym">,</span> chk <span class="hl sym">)</span>
+<span class="hl sym">}</span>
