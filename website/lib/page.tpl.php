@@ -40,6 +40,6 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 </div>
 
 
-
+<? include_once(IMAGE_PATH.'analyticstracking.php'); ?>
 </body>
 </html>

@@ -242,6 +242,6 @@ We can't - <strong>we measure particular programs</strong>.</p>
 </div>
 
 
-
+<? include_once("analyticstracking.php") ?>
 </body>
 </html>
