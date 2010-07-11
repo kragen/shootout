@@ -1,1 +1,0 @@
-OBSOLETE - see README and /shootout/nanobench
