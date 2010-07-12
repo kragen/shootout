@@ -1,91 +1,80 @@
-The Computer Language Benchmarks Game PHP pages Release 2.11
-===========================================================
 
-The PHP files in the different websites directories just include
-the "real" PHP files from the lib directory.
+	The Computer Language Benchmarks Game - Website
 
-The "real" PHP files instantiate a page template with a body template
-from the lib directory. 
-The templates pull together content from the data directory.
-
-The csv files in the data directory can be edited in a spreadsheet.
-Edit the csv files to hide any benchmark, language, or program.
+ July 2010 Isaac Gouy
 
 
-websites directory
-==================
-config.php      Set file paths, set constants for this particular site
-
-index.php, faq.php, benchmark.php, chart.php, io.php, benchmark.css 
-
-                Links to the real page definitions in the lib directory
-
-Optional customized lang.csv & test.csv 
-    
-
-dev directory
-================
-Same as "fp site" but include languages marked as dev "X"
+ AUDIENCE
+ 
+ - ?
 
 
+ OVERVIEW
+
+ - this is a low volume website - about 1,000 unique visitors per day
+    and 5-6 page views per visit; with very rare peaks from 8,000 to
+    30,000 unique visitors per day.
+
+ - this is by-design a very simple website, which avoids all changes to
+    the default webserver configuration (no URL rewriting).
+
+ - this is by-design a very simple website, which only requires HTML and
+    CSS support in the browser.
+
+ - this is a dynamic website pulling together a dozen different scripts and 
+    data files and configuration files to generate a web page.
+   
+
+ BACKGROUND
+
+ - over 5 years this website has changed in small and large ways, and
+    the configuration files and script files provide some functionality 
+    that is no longer required. Occasionally obsolete functionality is
+    removed but usually while other changes are being made. 
+
+   Be aware, there are cobwebs.
+
+ 
+ - the contents of shootout/website/websites is swept to the webserver 
+    on the hour every hour.
+
+   There is neither a need to update so frequently nor a need to stop 
+   updating so frequently.
+
+
+ OBSOLETE directories
+
+   website/websites/css 
+   website/websites/image 
+   website/websites/feeds
+
+
+ OBSOLETE directories that redirect to the homepage
+
+   website/websites/contests 
+   website/websites/deb 
+   website/websites/gp4sandbox 
+   website/websites/great 
+   website/websites/old 
+   website/websites/sandbox
+
+
+ DORMANT directories
+
+   website/websites/gp4
+   website/websites/debian
+   website/websites/demo
+
+
+ ACTIVE directories
+
+   website/websites/u32
+   website/websites/u32q
+   website/websites/u64
+   website/websites/u64q
 
 
 
-lib directory
-=============
-
-blib.php, lib.php  Library functions        
-      
-benchmark.php      benchmarks, rankings, programs and scorecard
-
-chart.php          PNG charts for each benchmark
-
-faq.php            FAQ page
-
-home.php           home page
-
-io.php             input files & output files
 
 
-
-
-lib directory templates
-=======================
-
-page.tpl.php       Default page template
-
-faq.tpl.php        FAQ content
-
-benchmark.tpl.php  Benchmarks content template
-
-ranking.tpl.php    Rankings content template
-
-program.tpl.php    Programs content template
-
-scorecard.tpl.php  Scorecard content template
-
-pre.tpl.php        Pre-formated text template
-
-
-homepage.tpl.php   Homepage page template
-
-home.tpl.php       Homepage content template
-
-
-
-
-data 
-====
-
-lang.csv        Every language that can be shown
-
-test.csv        Every benchmark test that can be shown
-
-data.csv        Every program that can be shown
-
-*.about         HTML text about a language, benchmark, or program 
-
-*.code          Program source code
-
-*.log           Program build log and run log
 
