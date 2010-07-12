@@ -25,12 +25,13 @@
     data files and configuration files to generate a web page.
    
 
- BACKGROUND
+
+ #1 BACKGROUND
 
  - over 5 years this website has changed in small and large ways, and
     the configuration files and script files provide some functionality 
     that is no longer required. Occasionally obsolete functionality is
-    removed but usually while other changes are being made. 
+    removed but usually not until other changes are being made. 
 
    Be aware, there are cobwebs.
 
@@ -75,6 +76,37 @@
 
 
 
+ #2 EXAMPLE PAGE - http://shootout.alioth.debian.org/u64/csharp.php
+
+ - csharp.php
+
+   <?php
+   ob_start('ob_gzhandler');
+   require_once('config.php'); 
+   $T = 'all'; $L = 'csharp'; $metaRobots = '';
+   require_once(LIB_PATH.'compare.php');
+   ?>
+
+    define paths and some variables for the u64 webpages
+    set which benchmarks and which language implementations
+    filter the data and set template variables for 'compare.tpl.php'
+
+   (See Brian E. Lozier's website/lib/lib.php)
+
+    
+
+ #3 PHP SCRIPTS
+
+ - Originally more script functions were placed in library files and
+    those lib_* files were included into the pages; but now some 
+    functions are defined for more than one page, rather than
+    include many functions for the sake of reusing one or two.
+
+   So website/lib/compare.php defines Percentiles and Median, duplicating
+    the definitions in website/lib/boxplot.php rather than include 
+    website/lib/lib_boxplot.php
+
+   (With the notable exception of the objects in website/lib/lib_chart.php)
 
 
 

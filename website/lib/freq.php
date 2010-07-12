@@ -156,7 +156,6 @@ for ($i=0; $i<sizeof($p); $i++){
    // left shift measurement batches to time zero
    for ($k=0; $k<sizeof($p[$i]); $k++){
       $p[$i][$k][1] = YrMth($p[$i][$k]) - $firstYrMth;
-//      $p[$i][$k][1] = YrMth($p[$i][$k]) - $firstYrMth;
       printf("%s,%s,%s,%0.2f\n", $p[$i][$k][0], $p[$i][$k][1], $p[$i][$k][2], $p[$i][$k][3]);
    }
 }
