@@ -157,7 +157,7 @@ $langs = array(
    array('vw','Smalltalk VisualWorks','uniform reflective environment - real live objects','smalltalk',$onecoresites),
    array('scala','Scala','higher-order type-safe programming for jvm','scala',$allsites),
    array('ruby','Ruby MRI','programmer fun - everything is an object scripting','ruby',$basesite),
-   array('jruby','JRuby','everything is an object scripting for jvm','jruby',$u32sites),
+   array('jruby','JRuby','everything is an object scripting for jvm','jruby',$onecoresites),
    array('yarv','Ruby 1.9','the new Ruby','',$onecoresites),
    array('racket','Racket','statically-scoped properly tail-recursive dialect of lisp','racket',$onecoresites),
    array('python','CPython','uncluttered imperative programming plus objects','python',$u32sites),

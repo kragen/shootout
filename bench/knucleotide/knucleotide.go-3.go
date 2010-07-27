@@ -181,7 +181,7 @@ func main() {
       ch := make(chan string, 1)
       results[i] = ch
       go func(result chan string, ss string) {
-         result <- fmt.Sprintf("%d %s\n", countOne(str, []byte(ss)), ss)
+         result <- fmt.Sprintf("%d\t%s\n", countOne(str, []byte(ss)), ss)
       }(ch, s)
    }
    <-countsdone
