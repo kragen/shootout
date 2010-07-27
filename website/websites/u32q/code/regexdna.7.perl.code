@@ -1,0 +1,62 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc"># contributed by Danny Sauer</span>
+<span class="hl slc"># completely rewritten and cleaned up for speed and fun by Mirco Wahab</span>
+<span class="hl slc"># improved STDIN read, regex clean up by Jake Berner</span>
+<span class="hl slc"># more speed and multithreading by Andrew Rodland</span>
+<span class="hl slc"># moved alternation out of the regexes into the program logic for speed by Daniel Green</span>
+
+<span class="hl kwa">use</span> <span class="hl kwd">strict</span><span class="hl sym">;</span>
+<span class="hl kwa">use</span> <span class="hl kwd">warnings</span><span class="hl sym">;</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">$l_file</span>  <span class="hl sym">= -</span>s <span class="hl kwd">STDIN</span><span class="hl sym">;</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$content</span><span class="hl sym">;</span> read STDIN<span class="hl sym">,</span> <span class="hl kwb">$content</span><span class="hl sym">,</span> <span class="hl kwb">$l_file</span><span class="hl sym">;</span>
+<span class="hl slc"># this is significantly faster than using &lt;&gt; in this case</span>
+
+<span class="hl kwb">$content</span> <span class="hl sym">=~</span> <span class="hl kwc">s/^&gt;.*//mg</span><span class="hl sym">;</span>
+<span class="hl kwb">$content</span> <span class="hl sym">=~</span> <span class="hl kwc">tr/\n//</span><span class="hl kwd">d</span><span class="hl sym">;</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$l_code</span>  <span class="hl sym">=</span>  length <span class="hl kwb">$content</span><span class="hl sym">;</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">&#64;seq</span> <span class="hl sym">= ( [</span><span class="hl str">'agggtaaa'</span><span class="hl sym">,</span> <span class="hl str">'tttaccct'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'[cgt]gggtaaa'</span><span class="hl sym">,</span> <span class="hl str">'tttaccc[acg]'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'a[act]ggtaaa'</span><span class="hl sym">,</span> <span class="hl str">'tttacc[agt]t'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'ag[act]gtaaa'</span><span class="hl sym">,</span> <span class="hl str">'tttac[agt]ct'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'agg[act]taaa'</span><span class="hl sym">,</span> <span class="hl str">'ttta[agt]cct'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'aggg[acg]aaa'</span><span class="hl sym">,</span> <span class="hl str">'ttt[cgt]ccct'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'agggt[cgt]aa'</span><span class="hl sym">,</span> <span class="hl str">'tt[acg]accct'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'agggta[cgt]a'</span><span class="hl sym">,</span> <span class="hl str">'t[acg]taccct'</span><span class="hl sym">],</span>
+        <span class="hl sym">[</span><span class="hl str">'agggtaa[cgt]'</span><span class="hl sym">,</span> <span class="hl str">'[acg]ttaccct'</span><span class="hl sym">] );</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">&#64;procs</span><span class="hl sym">;</span>
+<span class="hl kwa">for</span> <span class="hl kwc">my</span> <span class="hl kwb">$s</span> <span class="hl sym">(</span><span class="hl kwb">&#64;seq</span><span class="hl sym">) {</span>
+  <span class="hl kwc">my</span> <span class="hl sym">(</span><span class="hl kwb">$pat_l</span><span class="hl sym">,</span> <span class="hl kwb">$pat_r</span><span class="hl sym">) = (</span>qr<span class="hl kwc">/$s-&gt;[0]/</span><span class="hl sym">,</span> qr<span class="hl kwc">/$s-&gt;[1]/</span><span class="hl sym">);</span>
+  <span class="hl kwc">my</span> <span class="hl kwb">$pid</span> <span class="hl sym">=</span> open <span class="hl kwc">my</span> <span class="hl kwb">$fh</span><span class="hl sym">,</span> <span class="hl str">'-|'</span><span class="hl sym">;</span>
+  defined <span class="hl kwb">$pid</span> <span class="hl kwa">or</span> die <span class="hl str">&quot;Error creating process&quot;</span><span class="hl sym">;</span>
+  <span class="hl kwa">unless</span> <span class="hl sym">(</span><span class="hl kwb">$pid</span><span class="hl sym">) {</span>
+    <span class="hl kwc">my</span> <span class="hl kwb">$cnt</span> <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+    <span class="hl sym">++</span><span class="hl kwb">$cnt</span> <span class="hl kwa">while</span> <span class="hl kwb">$content</span> <span class="hl sym">=~</span> <span class="hl kwc">/$pat_l/</span><span class="hl kwd">gi</span><span class="hl sym">;</span>
+    <span class="hl sym">++</span><span class="hl kwb">$cnt</span> <span class="hl kwa">while</span> <span class="hl kwb">$content</span> <span class="hl sym">=~</span> <span class="hl kwc">/$pat_r/</span><span class="hl kwd">gi</span><span class="hl sym">;</span>
+    <span class="hl kwc">print</span> <span class="hl str">&quot;$s-&gt;[0]|$s-&gt;[1] $cnt</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">;</span>
+    exit <span class="hl num">0</span><span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  push <span class="hl kwb">&#64;procs</span><span class="hl sym">,</span> <span class="hl kwb">$fh</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">for</span> <span class="hl kwc">my</span> <span class="hl kwb">$proc</span> <span class="hl sym">(</span><span class="hl kwb">&#64;procs</span><span class="hl sym">) {</span>
+  <span class="hl kwc">print</span> <span class="hl sym">&lt;</span><span class="hl kwb">$proc</span><span class="hl sym">&gt;;</span>
+  close <span class="hl kwb">$proc</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwc">my</span> <span class="hl kwb">%iub</span> <span class="hl sym">= (</span>         B <span class="hl sym">=&gt;</span> <span class="hl str">'(c|g|t)'</span><span class="hl sym">,</span>  D <span class="hl sym">=&gt;</span> <span class="hl str">'(a|g|t)'</span><span class="hl sym">,</span>
+  H <span class="hl sym">=&gt;</span> <span class="hl str">'(a|c|t)'</span><span class="hl sym">,</span>   K <span class="hl sym">=&gt;</span> <span class="hl str">'(g|t)'</span><span class="hl sym">,</span>    M <span class="hl sym">=&gt;</span> <span class="hl str">'(a|c)'</span><span class="hl sym">,</span>
+  N <span class="hl sym">=&gt;</span> <span class="hl str">'(a|c|g|t)'</span><span class="hl sym">,</span> R <span class="hl sym">=&gt;</span> <span class="hl str">'(a|g)'</span><span class="hl sym">,</span>    S <span class="hl sym">=&gt;</span> <span class="hl str">'(c|g)'</span><span class="hl sym">,</span>
+  V <span class="hl sym">=&gt;</span> <span class="hl str">'(a|c|g)'</span><span class="hl sym">,</span>   W <span class="hl sym">=&gt;</span> <span class="hl str">'(a|t)'</span><span class="hl sym">,</span>    Y <span class="hl sym">=&gt;</span> <span class="hl str">'(c|t)'</span> <span class="hl sym">);</span>
+
+<span class="hl slc"># We could cheat here by using $&amp; in the subst and doing it inside a string</span>
+<span class="hl slc"># eval to &quot;hide&quot; the fact that we're using $&amp; from the rest of the code... but</span>
+<span class="hl slc"># it's only worth 0.4 seconds on my machine.</span>
+<span class="hl kwc">my</span> <span class="hl kwb">$findiub</span> <span class="hl sym">=</span> <span class="hl str">'(['</span><span class="hl sym">.(</span>join <span class="hl str">''</span><span class="hl sym">,</span> keys <span class="hl kwb">%iub</span><span class="hl sym">).</span><span class="hl str">'])'</span><span class="hl sym">;</span>
+
+<span class="hl kwb">$content</span> <span class="hl sym">=~</span> <span class="hl kwc">s/$findiub/$iub{$1}/g</span><span class="hl sym">;</span>
+
+printf <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwb">$l_file</span><span class="hl sym">,</span> <span class="hl kwb">$l_code</span><span class="hl sym">,</span> length <span class="hl kwb">$content</span><span class="hl sym">;</span>
