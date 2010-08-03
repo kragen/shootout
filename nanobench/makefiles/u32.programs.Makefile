@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32.programs.Makefile,v 1.36 2010-06-04 22:48:13 igouy-guest Exp $
+# $Id: u32.programs.Makefile,v 1.37 2010-08-03 15:26:22 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -109,7 +109,7 @@ STD_COPTS := -O3 -fomit-frame-pointer -march=native
 ########################################
 
 %.go_run: %.go $(GOC) $(GOLINK)
-	-$(GOC) -o $<.8 $< && \
+	-$(GOC) -B -o $<.8 $< && \
 	$(GOLINK) -o $@ $<.8
 
 
