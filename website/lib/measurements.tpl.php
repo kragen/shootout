@@ -33,7 +33,7 @@ MkLangsMenuForm($Langs,$SelectedLang);
 
 <p>Each row shows those measurements for a particular <?=$LangName;?> program with a particular <a href="<?=CORE_SITE;?>help.php#inputvalue" title="? Help">command-line input value N</a>.</p>
 
-<p>This table shows <b>all the accepted <strong><?=$LangName;?></strong> programs</b>.</p>
+<p>This table shows <b>the current <strong><?=$LangName;?></strong> programs</b>.</p>
 
 <table>
 <colgroup span="1" class="txt"></colgroup>
