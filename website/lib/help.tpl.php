@@ -1,5 +1,6 @@
 <?   // Copyright (c) Isaac Gouy 2004-2010 ?>
 
+
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 
 <dl>
@@ -8,7 +9,7 @@
 <dl> 
 
 <dd>
-<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages.</p>
+<p>There are 4 sets of up-to-date measurements. Measurements for different OS/machine combinations are shown on different color-coded pages - <a href="<?=CORE_SITE;?>sitemap.php"><b>Site&nbsp;Map</b></a>.</p>
 </dd>
 
 <dt><a href="#several" name="several">Compare performance for <b>3 or 4 <i>or more</i> programming languages</b></a></dt>
