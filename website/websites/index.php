@@ -139,8 +139,6 @@ unset($pagechoices);
 
 <div id="home">
 
-<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php">Flawed</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp; <a href="http://shootout.alioth.debian.org/sitemap.php">Site&nbsp;Map</a> &nbsp;</p>
-
 <h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> and &asymp;1100 programs</h5>
 
 <p><br/>After all, facts are facts, <br/>and although we may quote one to another with a chuckle <br/>the words of the Wise Statesman, 'Lies--damned lies--and statistics,' <br/>still there are some easy figures the simplest must understand, <br/>and the astutest cannot wriggle out of. <br/><span class="smaller">Leonard Henry Courtney, 1895</span></p>
