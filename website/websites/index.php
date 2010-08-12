@@ -21,7 +21,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 <meta name="description" content="Compare the performance of ~30 programming languages using ~12 flawed benchmarks and ~1100 programs. Contribute faster more elegant programs." />
 
 <title>Computer Language Benchmarks Game</title>
-<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_08mar2010.php" />
+<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_12aug2010.php" />
 <link rel="shortcut icon" href="http://shootout.alioth.debian.org/favicon_ico_11dec2009.php" />
 </head>
 
@@ -237,7 +237,7 @@ We can't - <strong>we measure particular programs</strong>.</p>
    <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
-<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php">Flawed</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
+<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php">Flawed</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp; <a href="http://shootout.alioth.debian.org/sitemap.php">Site&nbsp;Map</a> &nbsp;</p>
 
 </div>
 
