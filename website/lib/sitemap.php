@@ -58,7 +58,7 @@ $Page->set('Robots', $metaRobots);
 $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
 $Page->set('MetaKeywords', $MetaKeywords);
-$Page->set('PageId', 'boxplot');
+$Page->set('PageId', 'sitemap');
 
 echo $Page->fetch('page.tpl.php');
 ?>

@@ -1,19 +1,19 @@
 <?   // Copyright (c) Isaac Gouy 2010 ?>
 
-<p class="imgfooter">&nbsp; <a href="<?=CORE_SITE;?>">Home</a> &nbsp; <a href="<?=CORE_SITE;?>flawed-benchmarks.php">Flawed</a> &nbsp; <a href="<?=CORE_SITE;?>fastest-programming-language.php">Fastest</a> &nbsp; <a href="<?=CORE_SITE;?>license.php">License</a> &nbsp; <a href="<?=CORE_SITE;?>help.php">Help</a> &nbsp;</p>
+<p class="imgfooter">&nbsp; <a href="<?=CORE_SITE;?>">Home</a> &nbsp; <a href="<?=CORE_SITE;?>flawed-benchmarks.php">Flawed</a> &nbsp; <a href="<?=CORE_SITE;?>fastest-programming-language.php">Fastest</a> &nbsp; <a href="<?=CORE_SITE;?>license.php">License</a> &nbsp; <a href="<?=CORE_SITE;?>help.php">Help</a> &nbsp; <a href="<?=CORE_SITE;?>sitemap.php">Site&nbsp;Map</a> &nbsp;</p>
 
 <table>
 
 <?
 function PrintHeaders(){
-   echo '<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>';
+   echo '<tr><th>&nbsp;</th><th></th><th></th><th></th></tr>';
    echo '<tr>';
-   echo '<td><span class="u32">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</span></td>';
-   echo '<td><span class="u32q">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</span></td>';
-   echo '<td><span class="u64">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</span></td>';
-   echo '<td><span class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</span></td>';
+   echo '<th class="u32">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
+   echo '<th class="u32q">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
+   echo '<th class="u64">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
+   echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '</tr>';
-   echo '<tr><td>&nbsp;</td><td></td><td></td><td></></tr>';
+   echo '<tr><th>&nbsp;</th><th></th><th></th><th></></tr>';
 }
 
 
