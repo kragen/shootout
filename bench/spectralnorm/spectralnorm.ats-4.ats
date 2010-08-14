@@ -166,8 +166,7 @@ fn eval_A_times_u {lws:agz} {N:nat} {l:addr} (
     // nothing
   end // end of [loop1_]
 //
-  val nworker =
-    workshop_nworker_get (ws)
+  val nworker = workshop_get_nworker (ws)
   val () = assert_errmsg (nworker > 0, #LOCATION)
   val INC = (N+nworker-1)/nworker/64
   val INC = max (1, (int1_of_int)INC)
@@ -269,7 +268,7 @@ implement main (argc, argv) = let
   val () = darr_free (pf_tmp | p_tmp)
 //
   var i: Nat = 0
-  val nworker = workshop_nworker_get (ws)
+  val nworker = workshop_get_nworker (ws)
   val () = while (i < nworker) let
     val _quit = $extval (work, "(void*)0")
     val () = workshop_insert_work (ws, _quit) in i := i + 1

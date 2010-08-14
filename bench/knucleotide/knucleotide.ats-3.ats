@@ -188,7 +188,7 @@ end // end of [fwork]
 
 (* ****** ****** *)
 
-val eqfn = $extval ($H.eq symbol_t, "0")
+val eqfn = $extval ($H.eqfn symbol_t, "0")
 val fhash = $extval ($H.hash symbol_t, "0")
 macdef hastbl_make () = $H.hashtbl_make_hint (fhash, eqfn, 24593)
 
