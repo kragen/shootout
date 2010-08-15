@@ -9,7 +9,7 @@
 <dl> 
 
 <dd>
-<p>There are 4 sets of up-to-date measurements. Measurements for the 4 different OS/machine combinations are shown on color-coded pages - <a href="<?=CORE_SITE;?>sitemap.php"><b>Site&nbsp;Map</b></a>.</p>
+<p>There are 4 sets of up-to-date measurements. Measurements for the 4 different OS/machine combinations are shown on color-coded pages.</p>
 </dd>
 
 <dt><a href="#several" name="several">Compare performance for <b>3 or 4 <i>or more</i> programming languages</b></a></dt>
