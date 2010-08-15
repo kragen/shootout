@@ -54,10 +54,10 @@ function PrintHeaders(){
 PrintHeaders();
 
 $page = array(
-   array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
-   ,array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
+    array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
    ,array('which-language-is-best.php','Which programming language is best?','Which programming languages have benchmark programs that use less memory or less source code?')
    ,array('summarydata.php','Summary Data', 'Take the summary data and do your own analysis')
+   ,array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
    );
 
 foreach($page as $p){
