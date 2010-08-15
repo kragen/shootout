@@ -1,6 +1,6 @@
 <?php
 ob_start('ob_gzhandler');
-$s = time(); $m = floor($s/60); $h = floor($m/60); $rotate = floor($h/7);
+$s = time();
 
 // REVISED - don't have all pages expire at the same time!
 // EXPIRE pages 31 hours after they are visited.
@@ -31,164 +31,113 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 <td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php" title="How to compare these programming language measurements. How programs were measured. How to contribute programs. FAQs">[[ Help ]]</a></h1></td>
 </tr></table>
 
+<div id="sitemap">
+<h5><strong>Compare the performance of &asymp;30 programming languages</strong> using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> and &asymp;1100 programs</h5>
 
-<?php
-$choices = array(
-   array('u32','u64q'),
-   array('u64q','u32'),
-   array('u32q','u64q'),
-   array('u64','u32'),
-   array('u32q','u64'),
-   array('u64','u32q'),
-   array('u32','u64'),
-   array('u64q','u32q')
+
+<table>
+
+<?
+$sites = array('u32','u32q','u64','u64q');
+
+function PrintHeaders(){
+   echo '<tr><th>&nbsp;</th><th></th><th></th><th></th></tr>';
+   echo '<tr>';
+   echo '<th class="u32">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
+   echo '<th class="u32q">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
+   echo '<th class="u64">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
+   echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
+   echo '</tr>';
+   echo '<tr><th>&nbsp;</th><th></th><th></th><th></></tr>';
+}
+
+PrintHeaders();
+
+$page = array(
+   array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
+   ,array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
+   ,array('which-language-is-best.php','Which programming language is best?','Which programming languages have benchmark programs that use less memory or less source code?')
+   ,array('summarydata.php','Summary Data', 'Take the summary data and do your own analysis')
    );
 
-$nchoices = sizeof($choices);
-$chosen = $choices[$rotate%$nchoices];
+foreach($page as $p){
+   printf('<tr></tr><tr>');
+   foreach($sites as $s){
+      printf('<td><a href="http://shootout.alioth.debian.org/%s/%s" title="%s">%s</a></td>', $s, $p[0], $p[2], $p[1] );
+   }
+   echo "</tr>";
+}
 
+PrintHeaders();
 
-$siteTip = array(
-   'u32' => ' on one core x86 Ubuntu'
-   ,'u32q' =>' on quad-core x86 Ubuntu'
-   ,'u64' =>' on one core x64 Ubuntu'
-   ,'u64q' =>' on quad-core x64 Ubuntu'
-   );
-$chosenSiteTip = $siteTip[$chosen[1]];
-
-
-$testchoices = array(
-   'fannkuchredux'
-   ,'knucleotide'
-   ,'mandelbrot'
-   ,'nbody'
-   ,'fasta'
-   ,'spectralnorm'
-   ,'threadring'
-   ,'chameneosredux'
-   ,'regexdna'
-   ,'pidigits'
-   ,'binarytrees'
-   ,'revcomp'
-   );
-
-
-$testtips = array(  // SHOULD MATCH $testchoices
-   'repeatedly access a tiny integer-sequence'
-   ,'repeatedly update hashtables and k-nucleotide strings'
-   ,'generate a Mandelbrot set and write a portable bitmap'
-   ,'perform an N-body simulation of the Jovian planets'
-   ,'generate and write random DNA sequences'
-   ,'calculate an eigenvalue using the power method'
-   ,'repeatedly switch from thread to thread passing one token'
-   ,'repeatedly perform symmetrical thread rendezvous requests'
-   ,'match DNA 8-mers and substitute nucleotides for IUB code'
-   ,'calculate the digits of Pi with streaming arbitrary-precision arithmetic'
-   ,'allocate and deallocate many many binary trees'
-   ,'read DNA sequences and write their reverse-complement'
-   );
-
-$nchoices = sizeof($testchoices);
-$chosentest = $testchoices[$rotate%$nchoices];
-$chosenTip = 'Fastest in each programming language to '.$testtips[$rotate%$nchoices];
-
-
-
-$pagechoices = array(
-   array(
-      '/code-used-time-used-shapes.php'
-      ,'Look for patterns in Code-used Time-used Shapes'.$chosenSiteTip)
-   ,array(
-      '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
-   ,array(
-      '/performance.php?test='.$chosentest
-      ,$chosenTip.$chosenSiteTip)
-   ,array(
-      '/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=1&xloc=0'
-      ,'Which programming languages have benchmark programs that use less memory'.$chosenSiteTip.'?')
-   ,array(
-      '/performance.php?test='.$chosentest
-      ,$chosenTip.$chosenSiteTip)
-   ,array(
-      '/which-programming-languages-are-fastest.php'
-      ,'Which programming languages have the fastest benchmark programs'.$chosenSiteTip.'?')
-   ,array(
-      '/performance.php?test='.$chosentest
-      ,$chosenTip.$chosenSiteTip)
-   ,array(
-      '/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=0&xloc=1'
-      ,'Which programming languages have benchmark programs that use less source code'.$chosenSiteTip.'?')
-   );
-
-$nchoices = sizeof($pagechoices);
-$chosenpage = $pagechoices[$rotate%$nchoices];
-
-$ChosenSite = $chosen[1];
-$ChosenUrl = $chosenpage[0];
-$ChosenTip = $chosenpage[1];
-
-unset($choices);
-unset($siteTip);
-unset($testchoices);
-unset($testtips);
-unset($pagechoices);
-?>
-
-
-
-<div id="home">
-
-<h5><strong>Compare the performance of &asymp;30 programming languages</strong> <br/>using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> and &asymp;1100 programs</h5>
-
-<p><br/>After all, facts are facts, <br/>and although we may quote one to another with a chuckle <br/>the words of the Wise Statesman, 'Lies--damned lies--and statistics,' <br/>still there are some easy figures the simplest must understand, <br/>and the astutest cannot wriggle out of. <br/><span class="smaller">Leonard Henry Courtney, 1895</span></p>
-
-
-
-<h5><br/><strong>Programming language performance comparisons</strong> Z to A</h5><br/>
-
-
-<?php
 $basesite = array('u32');
 $onecoresites = array('u32','u64');
 $u32sites = array('u32','u32q');
 $allsites = array('u32','u32q','u64','u64q');
 
 $langs = array(
-   array('vw','Smalltalk VisualWorks','uniform reflective environment - real live objects','smalltalk',$onecoresites),
-   array('scala','Scala','higher-order type-safe programming for jvm','scala',$allsites),
-   array('ruby','Ruby MRI','programmer fun - everything is an object scripting','ruby',$basesite),
-   array('jruby','JRuby','everything is an object scripting for jvm','jruby',$onecoresites),
-   array('yarv','Ruby 1.9','the new Ruby','',$onecoresites),
-   array('racket','Racket','statically-scoped properly tail-recursive dialect of lisp','racket',$onecoresites),
-   array('python','CPython','uncluttered imperative programming plus objects','python',$u32sites),
-   array('python3','Python 3','the new Python','python3',$allsites),
-   array('pypy','PyPy','jit compiler compatible with python 2.5','',$basesite),
-   array('php','PHP','scripts embedded in html and much more','php',$u32sites),
-   array('perl','Perl','server-side shell &amp; cgi scripts','perl',$u32sites),
-   array('fpascal','Free Pascal','imperative programming plus objects','pascal',$allsites),
-   array('ocaml','OCaml','modular type-safe strict functional programming plus objects','ocaml',$allsites),
-   array('oz','Mozart/Oz','multi-multi-multi-paradigm distributed programming','oz',$basesite),
-   array('luajit','LuaJIT','jit compiler fully compatible with lua 5.1','luajit',$onecoresites),
-   array('lua','Lua','associative arrays for extensible embedded scripting','lua',$onecoresites),
-   array('sbcl','Lisp SBCL','pioneering s-expression oriented programming','lisp',$allsites),
-   array('v8','JavaScript V8','web-browser embedded scripting','javascript',$onecoresites),
-   array('tracemonkey','JavaScript TraceMonkey','ubiquitous web-browser embedded scripting','',$onecoresites),
-   array('javasteady','Java 6 steady state','approximate jvm steady state','',$allsites),
-   array('javaxint','Java 6 -Xint','ubiquitous bytecode interpreter virtual machine','',$allsites),
-   array('java','Java 6 -server','ubiquitous jit server virtual machine','java',$allsites),
-   array('ghc','Haskell GHC','lazy pure functional programming','haskell',$allsites),
-   array('go','Go 6g 8g','types just are - Go is an experiment','',$allsites),
-   array('ifc','Fortran Intel','pioneering numeric and scientific programming','fortran',$allsites),
-   array('fsharp','F# Mono','higher-order type-safe programming (mono is not ms .net)','fsharp',$allsites),
-   array('hipe','Erlang HiPE','concurrent real-time distributed fault-tolerant software','erlang',$allsites),
-   array('gpp','C++ GNU','c plus objects plus generics','cpp',$allsites),
-   array('csharp','C# Mono','oo plus functional style (mono is not ms .net)','csharp',$allsites),
-   array('clean','Clean','lazy &amp; strict pure functional programming','clean',$onecoresites),
-   array('gcc','C GNU','unchecked low-level programming','c',$allsites),
-   array('ats','ATS','dependent types &amp; linear types plus theorem proving','ats',$allsites),
-   array('gnat','Ada 2005 GNAT','large-scale safety-critical software','ada',$allsites)
+   array('gnat','Ada 2005 GNAT','ada',$allsites),
+   array('ats','ATS','ats',$allsites),
+   array('gcc','C GNU','c',$allsites),
+   array('clean','Clean','clean',$onecoresites),
+   array('csharp','C# Mono','csharp',$allsites),
+   array('gpp','C++ GNU','cpp',$allsites),
+   array('hipe','Erlang HiPE','erlang',$allsites),
+   array('fsharp','F# Mono','fsharp',$allsites),
+   array('ifc','Fortran Intel','fortran',$allsites),
+   array('go','Go 6g 8g','',$allsites),
+   array('ghc','Haskell GHC','haskell',$allsites),
+   array('java','Java 6 -server','java',$allsites),
+   array('javaxint','Java 6 -Xint','',$allsites),
+   array('javasteady','Java 6 steady state','',$allsites),
+   array('tracemonkey','JavaScript TraceMonkey','',$onecoresites),
+   array('v8','JavaScript V8','javascript',$onecoresites),
+   array('sbcl','Lisp SBCL','lisp',$allsites),
+   array('lua','Lua','lua',$onecoresites),
+   array('luajit','LuaJIT','luajit',$onecoresites),
+   array('oz','Mozart/Oz','oz',$basesite),
+   array('ocaml','OCaml','ocaml',$allsites),
+   array('fpascal','Free Pascal','pascal',$allsites),
+   array('perl','Perl','perl',$u32sites),
+   array('php','PHP','php',$u32sites),
+   array('pypy','PyPy','',$basesite),
+   array('python3','Python 3','python3',$allsites),
+   array('python','CPython','python',$u32sites),
+   array('racket','Racket','racket',$onecoresites),
+   array('yarv','Ruby 1.9','',$onecoresites),
+   array('jruby','JRuby','jruby',$onecoresites),
+   array('ruby','Ruby MRI','ruby',$basesite),
+   array('scala','Scala','scala',$allsites),
+   array('vw','Smalltalk VisualWorks','smalltalk',$onecoresites)
    );
+
+
+$tag = array(
+    'u32' => 'on single core 32 bit Linux'
+   ,'u32q' =>'on multi core 32 bit Linux'
+   ,'u64' =>'on single core 64 bit Linux'
+   ,'u64q' =>'on multi core 64 bit Linux'
+   );
+
+foreach($langs as $lang){
+   printf('<tr>');
+   $name = $lang[1];
+   $langsites = $lang[3];
+   foreach($sites as $s){
+      if (in_array($s,$langsites)){
+         if (!empty($lang[2])){
+            printf('<td><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s program performance %s">%s</a></td>', $s, $lang[2], $name, $tag[$s], $name );
+         } else {
+            printf('<td><a href="http://shootout.alioth.debian.org/%s/compare.php?lang=%s" title="Compare %s program performance %s">%s</a></td>', $s, $lang[0], $name, $tag[$s], $name );
+         }
+      }
+      else {
+         printf('<td>&nbsp;</td>');
+      }
+   }
+   printf('</tr>');
+}
+
 
 
 function PrintIncludedLanguages($site,$lang){
@@ -204,34 +153,36 @@ function PrintIncludedLanguages($site,$lang){
 }
 
 
-$site0 = $chosen[0];
-$site1 = $chosen[1];
-$site3 = $basesite[0];
-foreach($langs as $i => $lang){
-   $sites = $lang[4];
-   if (in_array($site0,$sites)){
-      PrintIncludedLanguages($site0,$lang);
-   } elseif (in_array($site1,$sites)){
-      PrintIncludedLanguages($site1,$lang);
-   } elseif (in_array($site3,$sites)){
-      PrintIncludedLanguages($site3,$lang);
+
+PrintHeaders();
+
+$tests = array(
+    array('binarytrees','binary-trees','Allocate and deallocate many many binary trees')
+   ,array('chameneosredux','chameneos-redux','Repeatedly perform symmetrical thread rendezvous requests')
+   ,array('fannkuchredux','fannkuch-redux','Repeatedly access a tiny integer-sequence')
+   ,array('fasta','fasta','Generate and write random DNA sequences')
+   ,array('knucleotide','k-nucleotide','Repeatedly update hashtables and k-nucleotide strings')
+   ,array('mandelbrot','mandelbrot','Generate a Mandelbrot set and write a portable bitmap')
+   ,array('meteor','meteor-contest','Search for solutions to shape packing puzzle')
+   ,array('nbody','n-body','Perform an N-body simulation of the Jovian planets')
+   ,array('pidigits','pidigits','Calculate the digits of Pi with streaming arbitrary-precision arithmetic')
+   ,array('regexdna','regex-dna','Match DNA 8-mers and substitute nucleotides for IUB code')
+   ,array('revcomp','reverse-complement','Read DNA sequences and write their reverse-complement')
+   ,array('spectralnorm','spectral-norm','Calculate an eigenvalue using the power method')
+   ,array('threadring','thread-ring','Repeatedly switch from thread to thread passing one token')
+   );
+
+foreach($tests as $t){
+   printf('<tr>');
+   foreach($sites as $s){
+      printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s" title="%s">%s</a></td>', $s, $t[0], $t[2], $t[1] );
    }
+   printf('</tr>');
 }
-unset($langs);
+
 ?>
 
-<h5><br/><strong>Benchmarking programming languages</strong>?</h5>
-<p><br/>How can we benchmark a programming language?<br/>
-We can't - we benchmark programming language implementations.</p>
-<p>How can we benchmark language implementations?<br/>
-We can't - <strong>we measure particular programs</strong>.</p>
-
-<p><a href="http://shootout.alioth.debian.org/<?=$ChosenSite;?><?=$ChosenUrl;?>" title="<?=$ChosenTip;?>"><strong>Today's performance comparison</strong>.</a></p>
-
-<p>Read the source code. Contribute faster more elegant programs.</p>
-
-
-
+</table>
 
 <p class="imgfooter">
 <a href="http://shootout.alioth.debian.org/license.php" title="The Computer Language Benchmarks Game is published under this revised BSD license" >
