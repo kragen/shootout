@@ -1,1 +1,1 @@
-<p>ruby 1.9.1p376 (2009-12-07 revision 26041) [i686-linux]</p>
+<p>ruby 1.9.2p0 (2010-08-18 revision 29036) [i686-linux]</p>
