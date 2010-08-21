@@ -12,7 +12,7 @@
    <li>print the name of the last thread (1 to 503) to take the token</li>
 </ul>
 
-<p>Similar benchmarks are described in <a href="http://www.sics.se/~joe/ericsson/du98024.html">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.cl.cam.ac.uk/users/mr/Cobench.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a>
+<p>Similar benchmarks are described in <a href="http://webcache.googleusercontent.com/search?q=cache:1ML6BYvCHOoJ:www.sics.se/~joe/ericsson/du98024.html+%22Performance+Measurements+of+Threads+in+Java+and+Processes+in+Erlang%22+1998-11-02&cd=1&hl=en&ct=clnk&gl=us">Performance Measurements of Threads in Java and Processes in Erlang, 1998;</a> and <a href="http://www.cl.cam.ac.uk/users/mr/Cobench.html">A Benchmark Test for BCPL Style Coroutines, 2004.</a>
 For some language implementations increasing the number of threads quickly results in <a href="http://www.mozart-oz.org/documentation/apptut/node9.html#chapter.concurrency.cheap">Death by Concurrency</a>.</p>
 
 <p>Programs may use kernel threads, lightweight threads; but <b>coroutines, cooperative threads and other programs with custom schedulers will be listed as interesting alternative implementations</b>. Briefly say what concurrency technique is used in the program header comment.</p>
