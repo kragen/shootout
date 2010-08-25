@@ -9,7 +9,7 @@
    <li>allocate, walk, and deallocate many bottom-up binary trees
       <ul>
       <li>allocate a tree</li>
-      <li>walk the tree nodes, checksum node items (and maybe deallocate the node)</li>
+      <li>walk the tree nodes, checksum the node items (and maybe deallocate the node)</li>
       <li>deallocate the tree</li>
       </ul>      
    </li>
