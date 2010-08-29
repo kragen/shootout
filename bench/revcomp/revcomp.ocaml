@@ -1,0 +1,94 @@
+(*
+ * The Computer Language Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ *
+ * Contributed by Paolo Ribeca
+ *)
+
+let lines_per_worker = 400000
+and chars_per_line = 60
+
+let rc_table = String.make 256 '\000'
+let _ =
+  rc_table.[Char.code 'A'] <- 'T'; rc_table.[Char.code 'T'] <- 'A';
+  rc_table.[Char.code 'a'] <- 'T'; rc_table.[Char.code 't'] <- 'A';
+  rc_table.[Char.code 'C'] <- 'G'; rc_table.[Char.code 'G'] <- 'C';
+  rc_table.[Char.code 'c'] <- 'G'; rc_table.[Char.code 'g'] <- 'C';
+  rc_table.[Char.code 'U'] <- 'A'; rc_table.[Char.code 'u'] <- 'A';
+  rc_table.[Char.code 'M'] <- 'K'; rc_table.[Char.code 'K'] <- 'M';
+  rc_table.[Char.code 'm'] <- 'K'; rc_table.[Char.code 'k'] <- 'M';
+  rc_table.[Char.code 'R'] <- 'Y'; rc_table.[Char.code 'Y'] <- 'R';
+  rc_table.[Char.code 'r'] <- 'Y'; rc_table.[Char.code 'y'] <- 'R';
+  rc_table.[Char.code 'W'] <- 'W'; rc_table.[Char.code 'S'] <- 'S';
+  rc_table.[Char.code 'w'] <- 'W'; rc_table.[Char.code 's'] <- 'S';
+  rc_table.[Char.code 'V'] <- 'B'; rc_table.[Char.code 'B'] <- 'V';
+  rc_table.[Char.code 'v'] <- 'B'; rc_table.[Char.code 'b'] <- 'V';
+  rc_table.[Char.code 'H'] <- 'D'; rc_table.[Char.code 'D'] <- 'H';
+  rc_table.[Char.code 'h'] <- 'D'; rc_table.[Char.code 'd'] <- 'H';
+  rc_table.[Char.code 'N'] <- 'N'; rc_table.[Char.code 'n'] <- 'N'
+
+let _ =
+  Gc.set { (Gc.get ()) with
+           Gc.minor_heap_size = 524288;
+           Gc.major_heap_increment = 7864320; (* 1048576; *)
+           Gc.max_overhead = 160 };
+  let rec spawn tag first =
+    let output_tag () =
+      print_string tag;
+      print_char '\n'
+    and buf = Buffer.create (lines_per_worker * chars_per_line) in
+    let process_buffer () =
+      let seq = Buffer.contents buf in
+      let red_len = String.length seq - 1 in
+      let mid_point = red_len / 2 in
+      for i = 0 to mid_point do
+	let ri = red_len - i and tmp = seq.[i] in
+	seq.[i] <- rc_table.[Char.code seq.[ri]];
+	seq.[ri] <- rc_table.[Char.code tmp]
+      done;
+      seq
+    and write_by_cols seq rem =
+      let len = String.length seq and beg = ref 0 in
+      if rem > 0 then begin
+	let to_do = min rem len in
+	print_string (String.sub seq !beg to_do);
+	print_char '\n';
+	beg := !beg + to_do
+      end;
+      while len - !beg >= chars_per_line do
+	print_string (String.sub seq !beg chars_per_line);
+	print_char '\n';
+	beg := !beg + chars_per_line
+      done;
+      let rem = len - !beg in
+      if rem > 0 then begin
+	print_string (String.sub seq !beg rem);
+	if first then
+	  print_char '\n'
+      end;
+      flush stdout;
+      rem in
+    try
+      for i = 1 to lines_per_worker do
+	let line = read_line () in
+	if line.[0] = '>' then begin
+	  match Unix.fork () with
+	  | 0 -> spawn line true
+	  | _ ->
+	      output_tag ();
+	      exit (write_by_cols (process_buffer ()) 0)
+	end;
+	Buffer.add_string buf line
+      done;
+      match Unix.fork () with
+      | 0 -> spawn tag false
+      | pid ->
+	  let seq = process_buffer () in
+	  match Unix.waitpid [] pid with
+	  | _, Unix.WEXITED rem ->
+	      exit (write_by_cols seq (chars_per_line - rem))
+	  | _ -> assert false
+    with End_of_file ->
+      output_tag ();
+      exit (write_by_cols (process_buffer ()) 0) in
+  spawn (read_line ()) true
