@@ -5,12 +5,17 @@
  * Contributed by Paolo Ribeca
  *)
 
-let lines_per_worker = 400000
-and chars_per_line = 60
+let chars_per_line = 60
+and lines_per_worker =
+  match Sys.word_size with
+  | 32 -> 200000
+  | 64 -> 500000
+  | _ -> assert false
 
 let rc_table = String.make 256 '\000'
 let _ =
   rc_table.[Char.code 'A'] <- 'T'; rc_table.[Char.code 'T'] <- 'A';
+  rc_table.[Char.code 'w'] <- 'W'; rc_table.[Char.code 's'] <- 'S';
   rc_table.[Char.code 'a'] <- 'T'; rc_table.[Char.code 't'] <- 'A';
   rc_table.[Char.code 'C'] <- 'G'; rc_table.[Char.code 'G'] <- 'C';
   rc_table.[Char.code 'c'] <- 'G'; rc_table.[Char.code 'g'] <- 'C';
@@ -28,14 +33,21 @@ let _ =
   rc_table.[Char.code 'N'] <- 'N'; rc_table.[Char.code 'n'] <- 'N'
 
 let _ =
-  Gc.set { (Gc.get ()) with
-           Gc.minor_heap_size = 524288;
-           Gc.major_heap_increment = 7864320; (* 1048576; *)
-           Gc.max_overhead = 160 };
+  let in_ack, out_ack = Unix.pipe () and in_end, out_end = Unix.pipe ()
+  and put out_pipe () =
+    if Unix.write out_pipe " " 0 1 <> 1 then
+      failwith "Pipe problem"
+  and get in_pipe () =
+    let res = " " in
+    if Unix.read in_pipe res 0 1 <> 1 then
+      failwith "Pipe problem" in
+  let put_ack = put out_ack and get_ack = get in_ack
+  and put_end_ack = put out_end and get_end_ack = get in_end in
   let rec spawn tag first =
     let output_tag () =
       print_string tag;
-      print_char '\n'
+      print_char '\n';
+      flush stdout
     and buf = Buffer.create (lines_per_worker * chars_per_line) in
     let process_buffer () =
       let seq = Buffer.contents buf in
@@ -47,7 +59,7 @@ let _ =
 	seq.[ri] <- rc_table.[Char.code tmp]
       done;
       seq
-    and write_by_cols seq rem =
+    and write_by_cols seq rem eol =
       let len = String.length seq and beg = ref 0 in
       if rem > 0 then begin
 	let to_do = min rem len in
@@ -63,11 +75,14 @@ let _ =
       let rem = len - !beg in
       if rem > 0 then begin
 	print_string (String.sub seq !beg rem);
-	if first then
+	if eol then
 	  print_char '\n'
       end;
       flush stdout;
-      rem in
+      if eol then
+	0
+      else
+	rem in
     try
       for i = 1 to lines_per_worker do
 	let line = read_line () in
@@ -75,8 +90,12 @@ let _ =
 	  match Unix.fork () with
 	  | 0 -> spawn line true
 	  | _ ->
+	      get_ack ();
 	      output_tag ();
-	      exit (write_by_cols (process_buffer ()) 0)
+	      let rem = (write_by_cols (process_buffer ()) 0 first) in
+	      if first then
+		put_ack ();
+	      exit rem
 	end;
 	Buffer.add_string buf line
       done;
@@ -86,9 +105,24 @@ let _ =
 	  let seq = process_buffer () in
 	  match Unix.waitpid [] pid with
 	  | _, Unix.WEXITED rem ->
-	      exit (write_by_cols seq (chars_per_line - rem))
+	      let rem = (write_by_cols seq (chars_per_line - rem) first) in
+	      if first then
+		put_ack ();
+	      exit rem
 	  | _ -> assert false
     with End_of_file ->
+      get_ack ();
+      put_end_ack ();
       output_tag ();
-      exit (write_by_cols (process_buffer ()) 0) in
-  spawn (read_line ()) true
+      let rem = (write_by_cols (process_buffer ()) 0 first) in
+      if first then
+	put_ack ();
+      exit rem in
+  match Unix.fork () with
+  | 0 ->
+      put_ack ();
+      spawn (read_line ()) true
+  | _ ->
+      get_end_ack ();
+      get_ack ();
+      exit 0
