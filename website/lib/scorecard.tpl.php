@@ -13,6 +13,8 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <p>This chart shows 1 or 2 or 3 <em>comparisons</em> - Time-used and/or Memory-used and/or Code-used ~ speed and size.</p>
 
+<p>Remember - these measurements are just of the fastest programs for each programming language implementation, measured on this OS/machine.</p>
+
 <p>Selected and weighted "<i>how many times more</i> compared to the program that used least <i>scores</i>" are compressed into one number - <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
 <p>Each chart bar shows that weighted geometric mean for one unidentified programming language implementation.</p>

@@ -131,6 +131,8 @@
 
 <p>Also, click a scatter plot to compare that language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
+<p>Remember - these measurements are just of the fastest programs for each programming language implementation, measured on this OS/machine.</p>
+
 <?
    printf('<table>');
 
