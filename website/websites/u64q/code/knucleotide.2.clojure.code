@@ -1,0 +1,211 @@
+<span class="hl slc">;;   The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;   http://shootout.alioth.debian.org/</span>
+
+<span class="hl slc">;; contributed by Andy Fingerhut</span>
+
+<span class="hl sym">(</span>ns knucleotide
+  <span class="hl sym">(:</span>gen<span class="hl sym">-</span>class<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>set<span class="hl sym">! *</span>warn<span class="hl sym">-</span>on<span class="hl sym">-</span>reflection<span class="hl sym">*</span> true<span class="hl sym">)</span>
+
+
+<span class="hl sym">(</span>defn my<span class="hl sym">-</span>lazy<span class="hl sym">-</span>map <span class="hl sym">[</span>f coll<span class="hl sym">]</span>
+  <span class="hl sym">(</span>lazy<span class="hl sym">-</span>seq
+    <span class="hl sym">(</span>when<span class="hl sym">-</span>let <span class="hl sym">[</span>s <span class="hl sym">(</span>seq coll<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>cons <span class="hl sym">(</span>f <span class="hl sym">(</span>first s<span class="hl sym">)) (</span>my<span class="hl sym">-</span>lazy<span class="hl sym">-</span>map f <span class="hl sym">(</span>rest s<span class="hl sym">))))))</span>
+
+
+<span class="hl slc">;; modified-pmap is like pmap from Clojure 1.1, but with only as much</span>
+<span class="hl slc">;; parallelism as specified by the parameter num-threads.  Uses</span>
+<span class="hl slc">;; my-lazy-map instead of map from core.clj, since that version of map</span>
+<span class="hl slc">;; can use unwanted additional parallelism for chunked collections,</span>
+<span class="hl slc">;; like ranges.</span>
+
+<span class="hl sym">(</span>defn modified<span class="hl sym">-</span>pmap
+  <span class="hl sym">([</span>num<span class="hl sym">-</span>threads f coll<span class="hl sym">]</span>
+     <span class="hl sym">(</span>if <span class="hl sym">(==</span> num<span class="hl sym">-</span>threads <span class="hl num">1</span><span class="hl sym">)</span>
+       <span class="hl sym">(</span>map f coll<span class="hl sym">)</span>
+       <span class="hl sym">(</span>let <span class="hl sym">[</span>n <span class="hl sym">(</span>if <span class="hl sym">(&gt;=</span> num<span class="hl sym">-</span>threads <span class="hl num">2</span><span class="hl sym">) (</span>dec num<span class="hl sym">-</span>threads<span class="hl sym">)</span> <span class="hl num">1</span><span class="hl sym">)</span>
+             rets <span class="hl sym">(</span>my<span class="hl sym">-</span>lazy<span class="hl sym">-</span>map #<span class="hl sym">(</span>future <span class="hl sym">(</span>f %<span class="hl sym">))</span> coll<span class="hl sym">)</span>
+             step <span class="hl sym">(</span>fn step <span class="hl sym">[[</span>x <span class="hl sym">&amp;</span> xs <span class="hl sym">:</span>as vs<span class="hl sym">]</span> fs<span class="hl sym">]</span>
+                    <span class="hl sym">(</span>lazy<span class="hl sym">-</span>seq
+                      <span class="hl sym">(</span>if<span class="hl sym">-</span>let <span class="hl sym">[</span>s <span class="hl sym">(</span>seq fs<span class="hl sym">)]</span>
+                        <span class="hl sym">(</span>cons <span class="hl sym">(</span>deref x<span class="hl sym">) (</span>step xs <span class="hl sym">(</span>rest s<span class="hl sym">)))</span>
+                        <span class="hl sym">(</span>map deref vs<span class="hl sym">))))]</span>
+         <span class="hl sym">(</span>step rets <span class="hl sym">(</span>drop n rets<span class="hl sym">)))))</span>
+  <span class="hl sym">([</span>num<span class="hl sym">-</span>threads f coll <span class="hl sym">&amp;</span> colls<span class="hl sym">]</span>
+     <span class="hl sym">(</span>let <span class="hl sym">[</span>step <span class="hl sym">(</span>fn step <span class="hl sym">[</span>cs<span class="hl sym">]</span>
+                  <span class="hl sym">(</span>lazy<span class="hl sym">-</span>seq
+                    <span class="hl sym">(</span>let <span class="hl sym">[</span>ss <span class="hl sym">(</span>my<span class="hl sym">-</span>lazy<span class="hl sym">-</span>map seq cs<span class="hl sym">)]</span>
+                      <span class="hl sym">(</span>when <span class="hl sym">(</span>every? identity ss<span class="hl sym">)</span>
+                        <span class="hl sym">(</span>cons <span class="hl sym">(</span>my<span class="hl sym">-</span>lazy<span class="hl sym">-</span>map first ss<span class="hl sym">)</span>
+			      <span class="hl sym">(</span>step <span class="hl sym">(</span>my<span class="hl sym">-</span>lazy<span class="hl sym">-</span>map rest ss<span class="hl sym">)))))))]</span>
+       <span class="hl sym">(</span>modified<span class="hl sym">-</span>pmap num<span class="hl sym">-</span>threads #<span class="hl sym">(</span>apply f %<span class="hl sym">) (</span>step <span class="hl sym">(</span>cons coll colls<span class="hl sym">))))))</span>
+
+
+<span class="hl slc">;; Return true when the line l is a FASTA description line</span>
+
+<span class="hl sym">(</span>defn fasta<span class="hl sym">-</span>description<span class="hl sym">-</span>line <span class="hl sym">[</span>l<span class="hl sym">]</span>
+  <span class="hl sym">(=</span> \<span class="hl sym">&gt; (</span>first <span class="hl sym">(</span>seq l<span class="hl sym">))))</span>
+
+
+<span class="hl slc">;; Return true when the line l is a FASTA description line that begins</span>
+<span class="hl slc">;; with the string desc-str.</span>
+
+<span class="hl sym">(</span>defn fasta<span class="hl sym">-</span>description<span class="hl sym">-</span>line<span class="hl sym">-</span>beginning <span class="hl sym">[</span>desc<span class="hl sym">-</span>str l<span class="hl sym">]</span>
+  <span class="hl sym">(</span>and <span class="hl sym">(</span>fasta<span class="hl sym">-</span>description<span class="hl sym">-</span>line l<span class="hl sym">)</span>
+       <span class="hl sym">(=</span> desc<span class="hl sym">-</span>str <span class="hl sym">(</span>subs l <span class="hl num">1</span> <span class="hl sym">(</span>min <span class="hl sym">(</span>count l<span class="hl sym">) (</span>inc <span class="hl sym">(</span>count desc<span class="hl sym">-</span>str<span class="hl sym">)))))))</span>
+
+
+<span class="hl slc">;; Take a sequence of lines from a FASTA format file, and a string</span>
+<span class="hl slc">;; desc-str.  Look for a FASTA record with a description that begins</span>
+<span class="hl slc">;; with desc-str, and if one is found, return its DNA sequence as a</span>
+<span class="hl slc">;; single (potentially quite long) string.  If input file is big,</span>
+<span class="hl slc">;; you'll save lots of memory if you call this function in a with-open</span>
+<span class="hl slc">;; for the file, and don't hold on to the head of the lines parameter.</span>
+
+<span class="hl sym">(</span>defn fasta<span class="hl sym">-</span>dna<span class="hl sym">-</span>str<span class="hl sym">-</span>with<span class="hl sym">-</span>desc<span class="hl sym">-</span>beginning <span class="hl sym">[</span>desc<span class="hl sym">-</span>str lines<span class="hl sym">]</span>
+  <span class="hl sym">(</span>when<span class="hl sym">-</span>let <span class="hl sym">[</span>x <span class="hl sym">(</span>drop<span class="hl sym">-</span>while
+		<span class="hl sym">(</span>fn <span class="hl sym">[</span>l<span class="hl sym">] (</span>not <span class="hl sym">(</span>fasta<span class="hl sym">-</span>description<span class="hl sym">-</span>line<span class="hl sym">-</span>beginning desc<span class="hl sym">-</span>str l<span class="hl sym">)))</span>
+		lines<span class="hl sym">)]</span>
+    <span class="hl sym">(</span>when<span class="hl sym">-</span>let <span class="hl sym">[</span>x <span class="hl sym">(</span>seq x<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>y <span class="hl sym">(</span>take<span class="hl sym">-</span>while <span class="hl sym">(</span>fn <span class="hl sym">[</span>l<span class="hl sym">] (</span>not <span class="hl sym">(</span>fasta<span class="hl sym">-</span>description<span class="hl sym">-</span>line l<span class="hl sym">)))</span>
+                          <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>#^java.lang.String s<span class="hl sym">] (</span>.toUpperCase s<span class="hl sym">))</span>
+                               <span class="hl sym">(</span>rest x<span class="hl sym">)))]</span>
+        <span class="hl sym">(</span>apply str y<span class="hl sym">)))))</span>
+
+
+<span class="hl sym">(</span>def dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val <span class="hl sym">{</span>\A <span class="hl num">0</span><span class="hl sym">,</span> \C <span class="hl num">1</span><span class="hl sym">,</span> \T <span class="hl num">2</span><span class="hl sym">,</span> \G <span class="hl num">3</span><span class="hl sym">})</span>
+<span class="hl sym">(</span>def code<span class="hl sym">-</span>val<span class="hl sym">-</span>to<span class="hl sym">-</span>dna<span class="hl sym">-</span>char <span class="hl sym">{</span><span class="hl num">0</span> \A<span class="hl sym">,</span> <span class="hl num">1</span> \C<span class="hl sym">,</span> <span class="hl num">2</span> \T<span class="hl sym">,</span> <span class="hl num">3</span> \G<span class="hl sym">})</span>
+
+
+<span class="hl slc">;; In the hash map 'tally' in tally-dna-subs-with-len, it is more</span>
+<span class="hl slc">;; straightforward to use a Clojure string (same as a Java string) as</span>
+<span class="hl slc">;; the key, but such a key is significantly bigger than it needs to</span>
+<span class="hl slc">;; be, increasing memory and time required to hash the value.  By</span>
+<span class="hl slc">;; converting a string of A, C, T, and G characters down to an integer</span>
+<span class="hl slc">;; that contains only 2 bits for each character, we make a value that</span>
+<span class="hl slc">;; is significantly smaller and faster to use as a key in the map.</span>
+
+<span class="hl slc">;;    most                 least</span>
+<span class="hl slc">;; significant          significant</span>
+<span class="hl slc">;; bits of int          bits of int</span>
+<span class="hl slc">;;  |                         |</span>
+<span class="hl slc">;;  V                         V</span>
+<span class="hl slc">;; code code code ....  code code</span>
+<span class="hl slc">;;  ^                         ^</span>
+<span class="hl slc">;;  |                         |</span>
+<span class="hl slc">;; code for               code for</span>
+<span class="hl slc">;; *latest*               *earliest*</span>
+<span class="hl slc">;; char in                char in</span>
+<span class="hl slc">;; sequence               sequence</span>
+
+<span class="hl slc">;; Note: Given Clojure 1.2's implementation of bit-shift-left/right</span>
+<span class="hl slc">;; operations, when the value being shifted is larger than a 32-bit</span>
+<span class="hl slc">;; int, they are faster when the shift amount is a compile time</span>
+<span class="hl slc">;; constant.</span>
+
+<span class="hl sym">(</span>defn dna<span class="hl sym">-</span>str<span class="hl sym">-</span>to<span class="hl sym">-</span>key <span class="hl sym">[</span>s<span class="hl sym">]</span>
+  <span class="hl slc">;; Accessing a local let binding is much faster than accessing a var</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val<span class="hl sym">]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>key <span class="hl num">0</span>
+	   offset <span class="hl sym">(</span>int <span class="hl sym">(</span>dec <span class="hl sym">(</span>count s<span class="hl sym">)))]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(</span>neg? offset<span class="hl sym">)</span>
+	key
+	<span class="hl sym">(</span>let <span class="hl sym">[</span>c <span class="hl sym">(</span>nth s offset<span class="hl sym">)</span>
+	      new<span class="hl sym">-</span>key <span class="hl sym">(+ (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left key <span class="hl num">2</span><span class="hl sym">) (</span>dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val c<span class="hl sym">))]</span>
+	  <span class="hl sym">(</span>recur new<span class="hl sym">-</span>key <span class="hl sym">(</span>dec offset<span class="hl sym">)))))))</span>
+
+
+<span class="hl sym">(</span>defn key<span class="hl sym">-</span>to<span class="hl sym">-</span>dna<span class="hl sym">-</span>str <span class="hl sym">[</span>k len<span class="hl sym">]</span>
+  <span class="hl sym">(</span>apply str <span class="hl sym">(</span>map code<span class="hl sym">-</span>val<span class="hl sym">-</span>to<span class="hl sym">-</span>dna<span class="hl sym">-</span>char
+		  <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>pos<span class="hl sym">] (</span>bit<span class="hl sym">-</span>and <span class="hl num">3</span> <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right k pos<span class="hl sym">)))</span>
+		       <span class="hl sym">(</span>range <span class="hl num">0</span> <span class="hl sym">(*</span> <span class="hl num">2</span> len<span class="hl sym">)</span> <span class="hl num">2</span><span class="hl sym">)))))</span>
+
+
+<span class="hl sym">(</span>defn tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl sym">[</span>len dna<span class="hl sym">-</span>str<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>mask<span class="hl sym">-</span>width <span class="hl sym">(*</span> <span class="hl num">2</span> len<span class="hl sym">)</span>
+	mask <span class="hl sym">(</span>dec <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl num">1</span> mask<span class="hl sym">-</span>width<span class="hl sym">))</span>
+	dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val<span class="hl sym">]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>offset <span class="hl sym">(</span>int <span class="hl sym">(- (</span>count dna<span class="hl sym">-</span>str<span class="hl sym">)</span> len<span class="hl sym">))</span>
+	   key <span class="hl sym">(</span>dna<span class="hl sym">-</span>str<span class="hl sym">-</span>to<span class="hl sym">-</span>key <span class="hl sym">(</span>subs dna<span class="hl sym">-</span>str offset <span class="hl sym">(+</span> offset len<span class="hl sym">)))</span>
+	   tally <span class="hl sym">(</span>transient <span class="hl sym">{</span>key <span class="hl num">1</span><span class="hl sym">})]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? offset<span class="hl sym">)</span>
+	<span class="hl sym">(</span>persistent<span class="hl sym">!</span> tally<span class="hl sym">)</span>
+	<span class="hl sym">(</span>let <span class="hl sym">[</span>new<span class="hl sym">-</span>offset <span class="hl sym">(</span>dec offset<span class="hl sym">)</span>
+	      new<span class="hl sym">-</span>first<span class="hl sym">-</span>char<span class="hl sym">-</span>code <span class="hl sym">(</span>dna<span class="hl sym">-</span>char<span class="hl sym">-</span>to<span class="hl sym">-</span>code<span class="hl sym">-</span>val
+                                   <span class="hl sym">(</span>nth dna<span class="hl sym">-</span>str new<span class="hl sym">-</span>offset<span class="hl sym">))</span>
+	      new<span class="hl sym">-</span>key <span class="hl sym">(</span>bit<span class="hl sym">-</span>and mask
+			       <span class="hl sym">(+ (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left key <span class="hl num">2</span><span class="hl sym">)</span> new<span class="hl sym">-</span>first<span class="hl sym">-</span>char<span class="hl sym">-</span>code<span class="hl sym">))</span>
+	      new<span class="hl sym">-</span>tally <span class="hl sym">(</span>assoc<span class="hl sym">!</span> tally new<span class="hl sym">-</span>key <span class="hl sym">(</span>inc <span class="hl sym">(</span>get tally new<span class="hl sym">-</span>key <span class="hl num">0</span><span class="hl sym">)))]</span>
+	  <span class="hl sym">(</span>recur new<span class="hl sym">-</span>offset new<span class="hl sym">-</span>key new<span class="hl sym">-</span>tally<span class="hl sym">))))))</span>
+
+
+<span class="hl sym">(</span>defn all<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl sym">[</span>tally fn<span class="hl sym">-</span>key<span class="hl sym">-</span>to<span class="hl sym">-</span>str<span class="hl sym">]</span>
+  <span class="hl sym">(</span>with<span class="hl sym">-</span>out<span class="hl sym">-</span>str
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>total <span class="hl sym">(</span>reduce <span class="hl sym">+ (</span>vals tally<span class="hl sym">))]</span>
+      <span class="hl sym">(</span>doseq <span class="hl sym">[</span>k <span class="hl sym">(</span>sort #<span class="hl sym">(&gt;= (</span>tally %<span class="hl num">1</span><span class="hl sym">) (</span>tally %<span class="hl num">2</span><span class="hl sym">))</span> <span class="hl slc">; sort by tally, largest first</span>
+                      <span class="hl sym">(</span>keys tally<span class="hl sym">))]</span>
+        <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;%s %.3f&quot;</span> <span class="hl sym">(</span>fn<span class="hl sym">-</span>key<span class="hl sym">-</span>to<span class="hl sym">-</span>str k<span class="hl sym">)</span>
+                         <span class="hl sym">(</span>double <span class="hl sym">(*</span> <span class="hl num">100</span> <span class="hl sym">(/ (</span>tally k<span class="hl sym">)</span> total<span class="hl sym">)))))))))</span>
+
+
+<span class="hl sym">(</span>defn one<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl sym">[</span>dna<span class="hl sym">-</span>str tally<span class="hl sym">]</span>
+  <span class="hl sym">(</span>format <span class="hl str">&quot;%d</span><span class="hl esc">\</span><span class="hl str">t%s&quot;</span> <span class="hl sym">(</span>get tally <span class="hl sym">(</span>dna<span class="hl sym">-</span>str<span class="hl sym">-</span>to<span class="hl sym">-</span>key dna<span class="hl sym">-</span>str<span class="hl sym">)</span> <span class="hl num">0</span><span class="hl sym">)</span> dna<span class="hl sym">-</span>str<span class="hl sym">))</span>
+
+
+<span class="hl sym">(</span>defn compute<span class="hl sym">-</span>one<span class="hl sym">-</span>part <span class="hl sym">[</span>dna<span class="hl sym">-</span>str part<span class="hl sym">]</span>
+  <span class="hl sym">(</span>.println System<span class="hl sym">/</span>err <span class="hl sym">(</span>format <span class="hl str">&quot;Starting part %d&quot;</span> part<span class="hl sym">))</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>ret<span class="hl sym">-</span>val
+	<span class="hl sym">[</span>part
+	 <span class="hl sym">(</span>condp <span class="hl sym">=</span> part
+	     <span class="hl num">0</span> <span class="hl sym">(</span>all<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">1</span> dna<span class="hl sym">-</span>str<span class="hl sym">)</span>
+				 <span class="hl sym">(</span>fn <span class="hl sym">[</span>k<span class="hl sym">] (</span>key<span class="hl sym">-</span>to<span class="hl sym">-</span>dna<span class="hl sym">-</span>str k <span class="hl num">1</span><span class="hl sym">)))</span>
+	     <span class="hl num">1</span> <span class="hl sym">(</span>all<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">2</span> dna<span class="hl sym">-</span>str<span class="hl sym">)</span>
+				 <span class="hl sym">(</span>fn <span class="hl sym">[</span>k<span class="hl sym">] (</span>key<span class="hl sym">-</span>to<span class="hl sym">-</span>dna<span class="hl sym">-</span>str k <span class="hl num">2</span><span class="hl sym">)))</span>
+	     <span class="hl num">2</span> <span class="hl sym">(</span>one<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl str">&quot;GGT&quot;</span>
+				 <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">3</span> dna<span class="hl sym">-</span>str<span class="hl sym">))</span>
+	     <span class="hl num">3</span> <span class="hl sym">(</span>one<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl str">&quot;GGTA&quot;</span>
+				 <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">4</span> dna<span class="hl sym">-</span>str<span class="hl sym">))</span>
+	     <span class="hl num">4</span> <span class="hl sym">(</span>one<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl str">&quot;GGTATT&quot;</span>
+				 <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">6</span> dna<span class="hl sym">-</span>str<span class="hl sym">))</span>
+	     <span class="hl num">5</span> <span class="hl sym">(</span>one<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl str">&quot;GGTATTTTAATT&quot;</span>
+				 <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">12</span> dna<span class="hl sym">-</span>str<span class="hl sym">))</span>
+	     <span class="hl num">6</span> <span class="hl sym">(</span>one<span class="hl sym">-</span>tally<span class="hl sym">-</span>to<span class="hl sym">-</span>str <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span>
+				 <span class="hl sym">(</span>tally<span class="hl sym">-</span>dna<span class="hl sym">-</span>subs<span class="hl sym">-</span>with<span class="hl sym">-</span>len <span class="hl num">18</span> dna<span class="hl sym">-</span>str<span class="hl sym">)))]]</span>
+    <span class="hl sym">(</span>.println System<span class="hl sym">/</span>err <span class="hl sym">(</span>format <span class="hl str">&quot;Finished part %d&quot;</span> part<span class="hl sym">))</span>
+    ret<span class="hl sym">-</span>val<span class="hl sym">))</span>
+
+
+<span class="hl sym">(</span>def <span class="hl sym">*</span>default<span class="hl sym">-</span>modified<span class="hl sym">-</span>pmap<span class="hl sym">-</span>num<span class="hl sym">-</span>threads<span class="hl sym">*</span>
+     <span class="hl sym">(+</span> <span class="hl num">2</span> <span class="hl sym">(</span>.. Runtime getRuntime availableProcessors<span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn <span class="hl sym">-</span>main <span class="hl sym">[&amp;</span> args<span class="hl sym">]</span>
+  <span class="hl sym">(</span>def num<span class="hl sym">-</span>threads
+       <span class="hl sym">(</span>if <span class="hl sym">(</span>and <span class="hl sym">(&gt;= (</span>count args<span class="hl sym">)</span> <span class="hl num">1</span><span class="hl sym">)</span>
+		<span class="hl sym">(</span>re<span class="hl sym">-</span>matches #<span class="hl str">&quot;^</span><span class="hl esc">\</span><span class="hl str">d+$&quot;</span> <span class="hl sym">(</span>nth args <span class="hl num">0</span><span class="hl sym">)))</span>
+	 <span class="hl sym">(</span>let <span class="hl sym">[</span>n <span class="hl sym">(</span>. Integer valueOf <span class="hl sym">(</span>nth args <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl num">10</span><span class="hl sym">)]</span>
+	   <span class="hl sym">(</span>if <span class="hl sym">(==</span> n <span class="hl num">0</span><span class="hl sym">)</span>
+	     <span class="hl sym">*</span>default<span class="hl sym">-</span>modified<span class="hl sym">-</span>pmap<span class="hl sym">-</span>num<span class="hl sym">-</span>threads<span class="hl sym">*</span>
+	     n<span class="hl sym">))</span>
+         <span class="hl sym">*</span>default<span class="hl sym">-</span>modified<span class="hl sym">-</span>pmap<span class="hl sym">-</span>num<span class="hl sym">-</span>threads<span class="hl sym">*))</span>
+  <span class="hl sym">(</span>with<span class="hl sym">-</span>open <span class="hl sym">[</span>br <span class="hl sym">(</span>java.io.BufferedReader. <span class="hl sym">*</span>in<span class="hl sym">*)]</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>dna<span class="hl sym">-</span>str <span class="hl sym">(</span>fasta<span class="hl sym">-</span>dna<span class="hl sym">-</span>str<span class="hl sym">-</span>with<span class="hl sym">-</span>desc<span class="hl sym">-</span>beginning <span class="hl str">&quot;THREE&quot;</span> <span class="hl sym">(</span>line<span class="hl sym">-</span>seq br<span class="hl sym">))</span>
+          <span class="hl slc">;; Select the order of computing parts such that it is</span>
+          <span class="hl slc">;; unlikely that parts 5 and 6 will be computed concurrently.</span>
+          <span class="hl slc">;; Those are the two that take the most memory.  It would be</span>
+          <span class="hl slc">;; nice if we could specify a DAG for which jobs should finish</span>
+          <span class="hl slc">;; before others begin -- then we could prevent those two</span>
+          <span class="hl slc">;; parts from running simultaneously.</span>
+          results <span class="hl sym">(</span>map second
+                       <span class="hl sym">(</span>sort #<span class="hl sym">(&lt; (</span>first %<span class="hl num">1</span><span class="hl sym">) (</span>first %<span class="hl num">2</span><span class="hl sym">))</span>
+                             <span class="hl sym">(</span>modified<span class="hl sym">-</span>pmap num<span class="hl sym">-</span>threads
+                                            #<span class="hl sym">(</span>compute<span class="hl sym">-</span>one<span class="hl sym">-</span>part dna<span class="hl sym">-</span>str %<span class="hl sym">)</span>
+                                            <span class="hl slc">;; '(6 0 1 2 3 4 5)</span>
+                                            <span class="hl sym">'(</span><span class="hl num">0 5 6 1 2 3 4</span><span class="hl sym">)</span>
+					    <span class="hl sym">)))]</span>
+      <span class="hl sym">(</span>doseq <span class="hl sym">[</span>r results<span class="hl sym">]</span>
+        <span class="hl sym">(</span>println r<span class="hl sym">)</span>
+        <span class="hl sym">(</span>flush<span class="hl sym">))))</span>
+  <span class="hl sym">(</span>. System <span class="hl sym">(</span>exit <span class="hl num">0</span><span class="hl sym">)))</span>
