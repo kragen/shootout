@@ -80,7 +80,7 @@ $langs = array(
    array('ats','ATS','ats',$allsites),
    array('gcc','C GNU','c',$allsites),
    array('clean','Clean','clean',$onecoresites),
-   array('clojure','Clojure','clojure',$allsites),
+   array('clojure','Clojure','',$allsites),
    array('csharp','C# Mono','csharp',$allsites),
    array('gpp','C++ GNU','cpp',$allsites),
    array('hipe','Erlang HiPE','erlang',$allsites),
