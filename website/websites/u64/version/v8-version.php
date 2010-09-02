@@ -1,1 +1,1 @@
-<p>V8 version 2.2.9 [console: dumb]</p>
+<p>V8 version 2.4.0 [console: dumb]</p>
