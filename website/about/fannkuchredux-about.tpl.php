@@ -1,5 +1,6 @@
-<p><strong>diff</strong> program output N = 7 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.
-</p>
+<p><strong>diff</strong> program output N = 7 with this <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=output">output file</a> to check your program is correct before contributing.</p>
+
+<p>For N = 7 programs should generate <a href="iofile.php?test=<?=$SelectedTest;?>&amp;file=permutations">these permutations</a> (40KB).</p>
 
 <p>Each program should</p> 
 <ul>
