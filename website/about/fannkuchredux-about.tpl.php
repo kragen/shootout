@@ -12,6 +12,10 @@
 <p>The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."</p>
 <br />
 
-<p>Thanks to Oleg Mazurov for insisting on a checksum.</p>
+<p>Thanks to Oleg Mazurov for insisting on a checksum</p>
+<ul>
+<li>check_sum = check_sum + (if permutation_index is even then flips_count else -flips_count)</li>
+<li>check_sum = check_sum + (toggle_sign_-1_1 * flips_count)</li>
+</ul>
 
 <p>The fannkuch benchmark is defined in <a href="http://www.apl.jhu.edu/~hall/text/Papers/Lisp-Benchmarking-and-Fannkuch.ps">Performing Lisp Analysis of the FANNKUCH Benchmark</a>, Kenneth R. Anderson and Duane Rettig (26KB postscript)</p>
