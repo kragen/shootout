@@ -9,8 +9,8 @@
 <li>Count the number of flips, here 5.</li>
 <li>Keep a checksum
 <ul>
-<li>check_sum = check_sum + (if permutation_index is even then flips_count else -flips_count)</li>
-<li>check_sum = check_sum + (toggle_sign_-1_1 * flips_count)</li>
+<li>checksum = checksum + (if permutation_index is even then flips_count else -flips_count)</li>
+<li>checksum = checksum + (toggle_sign_-1_1 * flips_count)</li>
 </ul>
 </li>
 <li>Do this for all n! permutations, and record the maximum number of flips needed for any permutation.</li>
