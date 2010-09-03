@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2004-2009
+// Copyright (c) Isaac Gouy 2004-2010
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -22,7 +22,7 @@ if (!isset($T)){ $T = 'nbody'; }
 if (isset($HTTP_GET_VARS['file'])
       && strlen($HTTP_GET_VARS['file']) && (strlen($HTTP_GET_VARS['file']) <= 6)){
    $X = $HTTP_GET_VARS['file'];
-   if (ereg("^[a-z]+$",$X) && ($X == 'input')){ $F = $X; }
+   if (ereg("^[a-z]+$",$X) && ($X == 'input' || $X == 'extra')){ $F = $X; }
 }
 if (!isset($F)){ $F = 'output'; }
 
@@ -33,10 +33,12 @@ $TestName = $Tests[$T][TEST_NAME];
 
 if ($F == 'input'){ $Title = $TestName.' input file'; } 
 elseif ($F == 'output'){ $Title = $TestName.' output file'; }
+elseif ($F == 'extra'){ $Title = $TestName.' file'; }
 else { $Title = $TestName; }
 
 $faqUrl = CORE_SITE.'help.php';
-$bannerUrl = CORE_SITE;
+$bannerUrl = CORE_SITE;
+
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
