@@ -1,0 +1,83 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+   
+   swap and copy2 contributed by John van Groningen
+   contributed by Isaac Gouy (Clean novice) 
+   based on the Lua program by Mike Pall
+*/
+
+module fannkuchredux
+
+import StdEnv,LanguageShootout
+		
+swap i j a :== let (ai,a1)=a![i]; (aj1,a2)=a1![j] in {a2 & [i]=aj1,[j]=ai}		
+
+flop p=:{[0]=q0} q n sign chksum maxflips      // Cache 0th element
+   | q0 == 0
+      = (p,q,chksum,maxflips)
+      # (p,q) = copy2 1 n p q                  // Work on a copy
+      = count p q0 q 1
+      
+   where
+      
+   copy2 i n a a2
+      | i < n
+         #! e = a.[i]
+         = copy2 (i+1) n a {a2 & [i] = e}
+         = (a,a2)
+            
+   count p q0 q=:{[q0]=qq} flips
+      | qq == 0                                // ... until 0th element is 0
+         | flips > maxflips                    // New maximum?
+            = (p,q,chksum+(sign*flips),flips) 
+            = (p,q,chksum+(sign*flips),maxflips)
+      #! q = {q & [q0] = q0}
+      # q = if (q0 >= 3) (flop2 1 (q0-1) q) q
+      = count p qq q (flips+1)
+            
+   flop2 i j a
+      | i < j
+         = flop2 (i+1) (j-1) (swap i j a)
+         = a         
+      			
+permute :: !*{#Int} !*{#Int} !Int !Int -> (!*{#Int},!*{#Int},!Int)
+permute p s m sign 
+   | sign == 1
+      = ((swap 0 1 p), s, -1)                  // Rotate 0<-1
+      = perm (swap 1 2 p) 2 s m 1              // Rotate 0<-1 and 0<-1<-2  
+          
+   where 
+   
+   perm p=:{[0]=t} i s=:{[i]=sx} m sign
+      | sx <> 0 
+         = (p, {s&[i]=sx-1}, sign)             // Next permutation
+         | i == m
+            = ({p & [0]=0,[1]=0}, s, sign)     // Out of permutations
+            = perm (rotate 0 i p t) (i+1) {s&[i]=i} m sign
+            
+   rotate j i p t
+      # (pj1,p) = p![j+1]
+      #! p = {p & [j]=pj1}
+      | j < i   = rotate (j+1) i p t
+                = {p & [i+1]=t}            
+            
+pfannkuchen :: !*{#Int} !*{#Int} !*{#Int} !Int !Int !Int !Int !Int -> (!Int,!Int)            
+pfannkuchen p q s n m sign chksum maxflips
+   # (p,q,chksum,maxflips) = flop p q n sign chksum maxflips            
+     (p,s,sign) = permute p s m sign
+     (p0,p) = p![0]
+     (p1,p) = p![1]     
+   | p0==0 && p1==0 
+      = (chksum,maxflips)
+      = pfannkuchen p q s n m sign chksum maxflips	
+				
+Start world
+   # n = argi 
+     p = {i\\i<-[0..n-1]}
+     q = {i\\i<-[0..n-1]}
+     s = {i\\i<-[0..n-1]}
+     (file,world) = stdio world
+     (chksum,maxflips) = pfannkuchen p q s n (n-1) 1 0 0
+     file = file <<< chksum <<< '\n'
+     file = file <<< "Pfannkuchen(" <<< n <<< ") = " <<< maxflips <<< '\n'	  
+   = fclose file world		
