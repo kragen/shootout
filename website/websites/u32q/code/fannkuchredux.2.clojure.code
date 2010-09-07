@@ -1,0 +1,183 @@
+<span class="hl slc">;;   The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;   http://shootout.alioth.debian.org/</span>
+
+<span class="hl slc">;; contributed by Andy Fingerhut</span>
+
+<span class="hl sym">(</span>ns fannkuchredux
+  <span class="hl sym">(:</span>require clojure.string<span class="hl sym">)</span>
+  <span class="hl sym">(:</span>gen<span class="hl sym">-</span>class<span class="hl sym">))</span>
+
+<span class="hl slc">;(set! *warn-on-reflection* true)</span>
+
+
+<span class="hl slc">;; This macro assumes that 1 &lt;= n &lt;= (alength a), where a is a Java</span>
+<span class="hl slc">;; array of ints.  No guarantees are made of its correctness if this</span>
+<span class="hl slc">;; condition is violated.  It does this merely to avoid checking a few</span>
+<span class="hl slc">;; conditions, and thus perhaps be a bit faster.</span>
+
+<span class="hl sym">(</span>defmacro reverse<span class="hl sym">-</span>first<span class="hl sym">-</span>n<span class="hl sym">! [</span>n #^ints a<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>let <span class="hl sym">[</span>n# <span class="hl sym">(</span>int ~n<span class="hl sym">)</span>
+         n<span class="hl sym">-</span>to<span class="hl sym">-</span>swap# <span class="hl sym">(</span>int <span class="hl sym">(</span>quot n# <span class="hl num">2</span><span class="hl sym">))</span>
+         n<span class="hl sym">-</span><span class="hl num">1</span># <span class="hl sym">(</span>int <span class="hl sym">(</span>dec n#<span class="hl sym">))]</span>
+     <span class="hl sym">(</span>loop <span class="hl sym">[</span>i# <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+       <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> i# n<span class="hl sym">-</span>to<span class="hl sym">-</span>swap#<span class="hl sym">)</span>
+         <span class="hl sym">(</span>let <span class="hl sym">[</span>temp# <span class="hl sym">(</span>aget ~a i#<span class="hl sym">)</span>
+               n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span>i# <span class="hl sym">(</span>int <span class="hl sym">(-</span> n<span class="hl sym">-</span><span class="hl num">1</span># i#<span class="hl sym">))]</span>
+           <span class="hl sym">(</span>aset<span class="hl sym">-</span>int ~a i# <span class="hl sym">(</span>aget ~a n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span>i#<span class="hl sym">))</span>
+           <span class="hl sym">(</span>aset<span class="hl sym">-</span>int ~a n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span>i# temp#<span class="hl sym">))</span>
+         <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc i#<span class="hl sym">))))))</span>
+
+
+<span class="hl sym">(</span>defmacro rotate<span class="hl sym">-</span>left<span class="hl sym">-</span>first<span class="hl sym">-</span>n<span class="hl sym">! [</span>n #^ints a<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>let <span class="hl sym">[</span>n# <span class="hl sym">(</span>int ~n<span class="hl sym">)</span>
+	 n<span class="hl sym">-</span><span class="hl num">1</span># <span class="hl sym">(</span>dec n#<span class="hl sym">)</span>
+	 a0# <span class="hl sym">(</span>aget ~a <span class="hl num">0</span><span class="hl sym">)]</span>
+     <span class="hl sym">(</span>loop <span class="hl sym">[</span>i# <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+       <span class="hl sym">(</span>if <span class="hl sym">(==</span> i# n<span class="hl sym">-</span><span class="hl num">1</span>#<span class="hl sym">)</span>
+	 <span class="hl sym">(</span>aset<span class="hl sym">-</span>int ~a n<span class="hl sym">-</span><span class="hl num">1</span># a0#<span class="hl sym">)</span>
+	 <span class="hl sym">(</span>let <span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span># <span class="hl sym">(</span>inc i#<span class="hl sym">)]</span>
+	   <span class="hl sym">(</span>aset<span class="hl sym">-</span>int ~a i# <span class="hl sym">(</span>aget ~a i<span class="hl sym">+</span><span class="hl num">1</span>#<span class="hl sym">))</span>
+	   <span class="hl sym">(</span>recur i<span class="hl sym">+</span><span class="hl num">1</span>#<span class="hl sym">))))))</span>
+
+
+<span class="hl sym">(</span>defn fannkuch<span class="hl sym">-</span>of<span class="hl sym">-</span>permutation <span class="hl sym">[</span>#^ints p<span class="hl sym">]</span>
+  <span class="hl sym">(</span>if <span class="hl sym">(==</span> <span class="hl num">1</span> <span class="hl sym">(</span>aget p <span class="hl num">0</span><span class="hl sym">))</span>
+    <span class="hl slc">;; Handle this special case without bothering to create a Java</span>
+    <span class="hl slc">;; array.</span>
+    <span class="hl num">0</span>
+    <span class="hl slc">;; Using aclone instead of copy-java-int-array was a big</span>
+    <span class="hl slc">;; improvement.</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>p2 <span class="hl sym">(</span>aclone p<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>loop <span class="hl sym">[</span>flips <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+        <span class="hl sym">(</span>let <span class="hl sym">[</span>first<span class="hl sym">-</span>num <span class="hl sym">(</span>int <span class="hl sym">(</span>aget p2 <span class="hl num">0</span><span class="hl sym">))]</span>
+          <span class="hl sym">(</span>if <span class="hl sym">(==</span> <span class="hl num">1</span> first<span class="hl sym">-</span>num<span class="hl sym">)</span>
+            flips
+            <span class="hl sym">(</span>do
+              <span class="hl sym">(</span>reverse<span class="hl sym">-</span>first<span class="hl sym">-</span>n<span class="hl sym">!</span> first<span class="hl sym">-</span>num p2<span class="hl sym">)</span>
+              <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc flips<span class="hl sym">)))))))))</span>
+
+
+<span class="hl slc">;; initialize the permutation generation algorithm.  The permutations</span>
+<span class="hl slc">;; need to be generated in a particular order so that the checksum may</span>
+<span class="hl slc">;; be computed correctly (or if you can determine some way to</span>
+<span class="hl slc">;; calculate the sign from an arbitrary permutation, then you can</span>
+<span class="hl slc">;; generate the permutations in any order you wish).</span>
+
+<span class="hl slc">;; With the particular order of generating permutations used in this</span>
+<span class="hl slc">;; program, it turns out that each consecutive &quot;group&quot; of (n-1)!</span>
+<span class="hl slc">;; permutations begin with these permutations (example given for n=6):</span>
+
+<span class="hl slc">;;   1st permutation: 1 2 3 4 5 6    sign: 1  count vals: 1 2 3 4 5 6</span>
+<span class="hl slc">;; 121st permutation: 2 3 4 5 6 1    sign: 1  count vals: 1 2 3 4 5 5</span>
+<span class="hl slc">;; 241st permutation: 3 4 5 6 1 2    sign: 1  count vals: 1 2 3 4 5 4</span>
+<span class="hl slc">;; 361st permutation: 4 5 6 1 2 3    sign: 1  count vals: 1 2 3 4 5 3</span>
+<span class="hl slc">;; 481st permutation: 5 6 1 2 3 4    sign: 1  count vals: 1 2 3 4 5 2</span>
+<span class="hl slc">;; 601st permutation: 6 1 2 3 4 5    sign: 1  count vals: 1 2 3 4 5 1</span>
+
+<span class="hl slc">;; This makes it very easy to divide the work into n parallel tasks</span>
+<span class="hl slc">;; that each start at one of the permutations above, and generate only</span>
+<span class="hl slc">;; (n-1)! permutations each.  Then combine the checksum and maxflips</span>
+<span class="hl slc">;; values of each thread and print.</span>
+
+<span class="hl sym">(</span>defn init<span class="hl sym">-</span>permutations <span class="hl sym">[</span>n<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">(</span>dec n<span class="hl sym">)]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl num">1</span>
+           p <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl sym">(</span>range <span class="hl num">1</span> <span class="hl sym">(</span>inc n<span class="hl sym">)))</span>
+           sign <span class="hl num">1</span>
+           c <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl sym">(</span>range <span class="hl num">1</span> <span class="hl sym">(</span>inc n<span class="hl sym">)))</span>
+           tasks <span class="hl sym">[{:</span>perm p <span class="hl sym">:</span>sign sign <span class="hl sym">:</span>counts c<span class="hl sym">}]]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(==</span> i n<span class="hl sym">)</span>
+        tasks
+        <span class="hl sym">(</span>let <span class="hl sym">[</span>p2 <span class="hl sym">(</span>aclone p<span class="hl sym">)</span>
+              c2 <span class="hl sym">(</span>aclone c<span class="hl sym">)]</span>
+          <span class="hl sym">(</span>rotate<span class="hl sym">-</span>left<span class="hl sym">-</span>first<span class="hl sym">-</span>n<span class="hl sym">!</span> n p2<span class="hl sym">)</span>
+          <span class="hl sym">(</span>aset<span class="hl sym">-</span>int c2 n<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">(</span>dec <span class="hl sym">(</span>aget c2 n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)))</span>
+          <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc i<span class="hl sym">)</span> p2 sign c2
+                 <span class="hl sym">(</span>conj tasks <span class="hl sym">{:</span>perm p2 <span class="hl sym">:</span>sign sign <span class="hl sym">:</span>counts c2<span class="hl sym">})))))))</span>
+
+
+<span class="hl sym">(</span>defmacro swap<span class="hl sym">-</span>array<span class="hl sym">-</span>elems<span class="hl sym">! [</span>a i j<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>let <span class="hl sym">[</span>temp# <span class="hl sym">(</span>aget ~a ~i<span class="hl sym">)]</span>
+     <span class="hl sym">(</span>aset<span class="hl sym">-</span>int ~a ~i <span class="hl sym">(</span>aget ~a ~j<span class="hl sym">))</span>
+     <span class="hl sym">(</span>aset<span class="hl sym">-</span>int ~a ~j temp#<span class="hl sym">)))</span>
+
+
+<span class="hl slc">;; Modify the passed Java arrays p (a permutation) and c (count</span>
+<span class="hl slc">;; values) in place.  Let caller negate the sign themselves.</span>
+
+<span class="hl slc">;; Return true if the final value of p is a new permutation, false if</span>
+<span class="hl slc">;; there are no more permutations and the caller should not use the</span>
+<span class="hl slc">;; value of p for anything.</span>
+
+<span class="hl sym">(</span>defn next<span class="hl sym">-</span>permutation<span class="hl sym">! [</span>N #^ints p sign #^ints c<span class="hl sym">]</span>
+  <span class="hl sym">(</span>if <span class="hl sym">(</span>neg? sign<span class="hl sym">)</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>N <span class="hl sym">(</span>int N<span class="hl sym">)</span>
+	  N<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">(</span>dec N<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>swap<span class="hl sym">-</span>array<span class="hl sym">-</span>elems<span class="hl sym">!</span> p <span class="hl num">1 2</span><span class="hl sym">)</span>
+      <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">)]</span>
+	<span class="hl sym">(</span>if <span class="hl sym">(==</span> i N<span class="hl sym">)</span>
+	  true<span class="hl sym">)</span>
+	<span class="hl sym">(</span>let <span class="hl sym">[</span>cx <span class="hl sym">(</span>aget c i<span class="hl sym">)</span>
+	      i<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">(</span>inc i<span class="hl sym">)]</span>
+	  <span class="hl sym">(</span>if <span class="hl sym">(</span>not<span class="hl sym">=</span> cx <span class="hl num">1</span><span class="hl sym">)</span>
+	    <span class="hl sym">(</span>do
+	      <span class="hl sym">(</span>aset<span class="hl sym">-</span>int c i <span class="hl sym">(</span>dec cx<span class="hl sym">))</span>
+	      true<span class="hl sym">)</span>
+	    <span class="hl sym">(</span>if <span class="hl sym">(==</span> i N<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+	      false
+	      <span class="hl sym">(</span>do
+		<span class="hl sym">(</span>aset<span class="hl sym">-</span>int c i i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
+		<span class="hl sym">(</span>rotate<span class="hl sym">-</span>left<span class="hl sym">-</span>first<span class="hl sym">-</span>n<span class="hl sym">! (</span>inc i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span> p<span class="hl sym">)</span>
+		<span class="hl sym">(</span>recur i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)))))))</span>
+    <span class="hl slc">;; else sign is +1</span>
+    <span class="hl sym">(</span>swap<span class="hl sym">-</span>array<span class="hl sym">-</span>elems<span class="hl sym">!</span> p <span class="hl num">0 1</span><span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn partial<span class="hl sym">-</span>fannkuch <span class="hl sym">[</span>num<span class="hl sym">-</span>perms #^ints p<span class="hl sym">-</span>arg first<span class="hl sym">-</span>sign #^ints c<span class="hl sym">-</span>arg<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>#^ints p <span class="hl sym">(</span>aclone p<span class="hl sym">-</span>arg<span class="hl sym">)</span>
+        #^ints c <span class="hl sym">(</span>aclone c<span class="hl sym">-</span>arg<span class="hl sym">)</span>
+        N <span class="hl sym">(</span>int <span class="hl sym">(</span>count p<span class="hl sym">))]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int num<span class="hl sym">-</span>perms<span class="hl sym">)</span>
+           sign <span class="hl sym">(</span>int first<span class="hl sym">-</span>sign<span class="hl sym">)</span>
+	   maxflips <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)</span>
+	   checksum <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? i<span class="hl sym">)</span>
+        <span class="hl sym">[</span>checksum maxflips<span class="hl sym">]</span>
+        <span class="hl sym">(</span>let <span class="hl sym">[</span>curflips <span class="hl sym">(</span>int <span class="hl sym">(</span>fannkuch<span class="hl sym">-</span>of<span class="hl sym">-</span>permutation p<span class="hl sym">))]</span>
+<span class="hl slc">;;          (print (clojure.string/join &quot;&quot; (seq p)) &quot; &quot;</span>
+<span class="hl slc">;;                 (clojure.string/join &quot;&quot; (seq c)))</span>
+<span class="hl slc">;;          (if (zero? curflips)</span>
+<span class="hl slc">;;            (println &quot; ----- --&quot;)</span>
+<span class="hl slc">;;            (println (format &quot; %5d %2d %5d&quot; curflips sign</span>
+<span class="hl slc">;;                             (+ checksum (* sign curflips)))))</span>
+          <span class="hl sym">(</span>next<span class="hl sym">-</span>permutation<span class="hl sym">!</span> N p sign c<span class="hl sym">)</span>
+          <span class="hl sym">(</span>recur <span class="hl sym">(</span>dec i<span class="hl sym">) (-</span> sign<span class="hl sym">) (</span>int <span class="hl sym">(</span>max maxflips curflips<span class="hl sym">))</span>
+                 <span class="hl sym">(+</span> checksum <span class="hl sym">(*</span> sign curflips<span class="hl sym">))))))))</span>
+
+
+<span class="hl sym">(</span>defn fannkuch <span class="hl sym">[</span>N<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>init<span class="hl sym">-</span>perms <span class="hl sym">(</span>init<span class="hl sym">-</span>permutations N<span class="hl sym">)</span>
+        N<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span>factorial <span class="hl sym">(</span>reduce <span class="hl sym">* (</span>range <span class="hl num">1</span> N<span class="hl sym">))</span>
+        partial<span class="hl sym">-</span>results <span class="hl sym">(</span>pmap <span class="hl sym">(</span>fn <span class="hl sym">[{</span>p <span class="hl sym">:</span>perm<span class="hl sym">,</span> s <span class="hl sym">:</span>sign<span class="hl sym">,</span> c <span class="hl sym">:</span>counts<span class="hl sym">}]</span>
+<span class="hl slc">;;                                (println &quot;Starting perm &quot;</span>
+<span class="hl slc">;;                                         (clojure.string/join &quot; &quot; (seq p))</span>
+<span class="hl slc">;;                                         &quot;sign&quot; s &quot;counts&quot;</span>
+<span class="hl slc">;;                                         (clojure.string/join &quot; &quot; (seq c)))</span>
+                                <span class="hl sym">(</span>partial<span class="hl sym">-</span>fannkuch N<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span>factorial p s c<span class="hl sym">))</span>
+                              init<span class="hl sym">-</span>perms<span class="hl sym">)]</span>
+<span class="hl slc">;;    (doseq [[checksum maxflips] partial-results]</span>
+<span class="hl slc">;;      (println &quot;checksum&quot; checksum &quot;maxflips&quot; maxflips))</span>
+    <span class="hl sym">(</span>reduce <span class="hl sym">(</span>fn <span class="hl sym">[[</span>checksum1 maxflips1<span class="hl sym">] [</span>checksum2 maxflips2<span class="hl sym">]]</span>
+              <span class="hl sym">[(+</span> checksum1 checksum2<span class="hl sym">) (</span>max maxflips1 maxflips2<span class="hl sym">)])</span>
+            partial<span class="hl sym">-</span>results<span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn <span class="hl sym">-</span>main <span class="hl sym">[&amp;</span> args<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>N <span class="hl sym">(</span>if <span class="hl sym">(</span>and <span class="hl sym">(&gt;= (</span>count args<span class="hl sym">)</span> <span class="hl num">1</span><span class="hl sym">)</span>
+		   <span class="hl sym">(</span>re<span class="hl sym">-</span>matches #<span class="hl str">&quot;^</span><span class="hl esc">\</span><span class="hl str">d+$&quot;</span> <span class="hl sym">(</span>nth args <span class="hl num">0</span><span class="hl sym">)))</span>
+	    <span class="hl sym">(</span>. Integer valueOf <span class="hl sym">(</span>nth args <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl num">10</span><span class="hl sym">)</span>
+	    <span class="hl num">10</span><span class="hl sym">)]</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[[</span>checksum maxflips<span class="hl sym">] (</span>fannkuch N<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;%d&quot;</span> checksum<span class="hl sym">))</span>
+      <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;Pfannkuchen(%d) = %d&quot;</span> N maxflips<span class="hl sym">))))</span>
+  <span class="hl sym">(</span>. System <span class="hl sym">(</span>exit <span class="hl num">0</span><span class="hl sym">)))</span>
