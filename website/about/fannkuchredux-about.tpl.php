@@ -4,10 +4,29 @@
 
 <p>The fannkuch benchmark is defined by programs in <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.35.5124">Performing Lisp Analysis of the FANNKUCH Benchmark</a>, Kenneth R. Anderson and Duane Rettig.</p>
 
+<p>Each program should</p> 
+<ul>
+<li>"Take a permutation of {1,...,n}, for example: {4,2,1,5,3}.</li>
+<li>Take the first element, here 4, and reverse the order of the first 4 elements: {5,1,2,4,3}.</li>
+<li>Repeat this until the first element is a 1, so flipping won't change anything more: {3,4,2,1,5}, {2,4,3,1,5}, {4,2,3,1,5}, {1,3,2,4,5}.</li>
+<li>Count the number of flips, here 5.</li>
+<li>Keep a checksum
+<ul>
+<li>checksum = checksum + (if permutation_index is even then flips_count else -flips_count)</li>
+<li>checksum = checksum + (toggle_sign_-1_1 * flips_count)</li>
+</ul>
+</li>
+<li>Do this for all n! permutations, and record the maximum number of flips needed for any permutation.</li>
+</ul>
+<p>The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."</p>
+<br />
+
+
 <p>Thanks to Oleg Mazurov for insisting on a checksum and providing this helpful description of <a href="./program.php?test=fannkuchredux&lang=java&id=1">the approach he took</a> -</p>
 <ul>
 <li>A common idea for parallel implementation is to divide all work (n! permutations) into chunks small enough to avoid load imbalance but large enough to keep overhead low. I set the number of chunks as a parameter (NCHUNKS = 150) from which I derive the size of a chunk (CHUNKSZ) and the actual number of chunks/tasks to be processed (NTASKS), which may be different from NCHUNKS because of rounding.</li>
 <li>Task scheduling is trivial: threads will atomically get and increment the taskId variable to derive a range of permutation indices to work on: <pre>
+
     task = taskId.getAndIncrement();
     idxMin = task * CHUNKSZ;
     idxMax = min( idxMin + CHUNKSZ, n! );
