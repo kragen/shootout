@@ -6,7 +6,7 @@
 
 <p>Each program should</p> 
 <ul>
-<li>"Take a permutation of {1,...,n}, for example: {4,2,1,5,3}.</li>
+<li>Take a permutation of {1,...,n}, for example: {4,2,1,5,3}.</li>
 <li>Take the first element, here 4, and reverse the order of the first 4 elements: {5,1,2,4,3}.</li>
 <li>Repeat this until the first element is a 1, so flipping won't change anything more: {3,4,2,1,5}, {2,4,3,1,5}, {4,2,3,1,5}, {1,3,2,4,5}.</li>
 <li>Count the number of flips, here 5.</li>
@@ -18,7 +18,7 @@
 </li>
 <li>Do this for all n! permutations, and record the maximum number of flips needed for any permutation.</li>
 </ul>
-<p>The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes."</p>
+<p>The conjecture is that this maximum count is approximated by n*log(n) when n goes to infinity.</p><p><i>FANNKUCH</i> is an abbreviation for the German word <i>Pfannkuchen</i>, or pancakes, in analogy to flipping pancakes.</p>
 <br />
 
 
