@@ -1,0 +1,55 @@
+<span class="hl com">/* The Computer Language Shootout</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   contributed by Kannan Goundan</span>
+<span class="hl com">   modified by Isaac Gouy</span>
+<span class="hl com">   optimized by David Pollak</span>
+<span class="hl com">   updated for 2.8 and parallelized by Rex Kerr</span>
+<span class="hl com">*/</span>
+
+<span class="hl kwa">import</span> scala<span class="hl sym">.</span>actors<span class="hl sym">.</span>Futures<span class="hl sym">.</span>_
+
+<span class="hl kwa">object</span> binarytrees <span class="hl sym">{</span>
+  <span class="hl kwa">def</span> report<span class="hl sym">(</span>name<span class="hl sym">:</span> <span class="hl kwc">String</span><span class="hl sym">,</span> depth<span class="hl sym">:</span> Int<span class="hl sym">,</span> check<span class="hl sym">:</span> Int<span class="hl sym">) =</span>
+    println<span class="hl sym">(</span>name <span class="hl sym">+</span> <span class="hl str">&quot; of depth &quot;</span> <span class="hl sym">+</span> depth <span class="hl sym">+</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span> <span class="hl str">check: &quot;</span> <span class="hl sym">+</span> check<span class="hl sym">)</span>
+
+  <span class="hl kwa">def</span> main<span class="hl sym">(</span>args<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">String</span><span class="hl sym">]) = {</span>
+    <span class="hl kwa">val</span> n <span class="hl sym">=</span> <span class="hl kwa">try</span><span class="hl sym">{</span> args<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">).</span>toInt <span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">{</span> <span class="hl kwa">case</span> _ <span class="hl sym">=&gt;</span> <span class="hl num">1</span> <span class="hl sym">}</span>
+    <span class="hl kwa">val</span> minDepth <span class="hl sym">=</span> <span class="hl num">4</span>
+    <span class="hl kwa">val</span> maxDepth <span class="hl sym">=</span> n max <span class="hl sym">(</span>minDepth<span class="hl sym">+</span><span class="hl num">2</span><span class="hl sym">)</span>
+    <span class="hl kwa">val</span> threads <span class="hl sym">=</span> <span class="hl num">3</span>  <span class="hl slc">// More than 3 tends to overwhelm GC</span>
+
+    report<span class="hl sym">(</span><span class="hl str">&quot;stretch tree&quot;</span><span class="hl sym">,</span> maxDepth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> Tree<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>maxDepth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">).</span>isum<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> longLivedTree <span class="hl sym">=</span> Tree<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>maxDepth<span class="hl sym">)</span>
+    <span class="hl kwa">var</span> depth <span class="hl sym">=</span> minDepth
+    <span class="hl kwa">while</span> <span class="hl sym">(</span>depth <span class="hl sym">&lt;=</span> maxDepth<span class="hl sym">) {</span>
+      <span class="hl kwa">val</span> iterations <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt; (</span>maxDepth <span class="hl sym">-</span> depth <span class="hl sym">+</span> minDepth<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> limits <span class="hl sym">= (</span><span class="hl num">0</span> to threads<span class="hl sym">).</span>map<span class="hl sym">(</span>_<span class="hl sym">*</span>iterations<span class="hl sym">/</span>threads<span class="hl sym">).</span>sliding<span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">).</span>toList
+      <span class="hl kwa">val</span> check <span class="hl sym">=</span> limits<span class="hl sym">.</span>map<span class="hl sym">(</span>i <span class="hl sym">=&gt;</span> future<span class="hl sym">(</span>Go<span class="hl sym">(</span>i<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)+</span><span class="hl num">1</span><span class="hl sym">,</span>i<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">),</span>depth<span class="hl sym">).</span>calc<span class="hl sym">))</span>
+      report<span class="hl sym">(</span>iterations<span class="hl sym">*</span><span class="hl num">2</span> <span class="hl sym">+</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span> <span class="hl str">trees&quot;</span><span class="hl sym">,</span> depth<span class="hl sym">,</span> check<span class="hl sym">.</span>map<span class="hl sym">(</span>_<span class="hl sym">()).</span>sum<span class="hl sym">)</span>
+      depth <span class="hl sym">+=</span> <span class="hl num">2</span>
+    <span class="hl sym">}</span>
+    report<span class="hl sym">(</span><span class="hl str">&quot;long lived tree&quot;</span><span class="hl sym">,</span> maxDepth<span class="hl sym">,</span> longLivedTree<span class="hl sym">.</span>isum<span class="hl sym">)</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">case class</span> Sum<span class="hl sym">(</span><span class="hl kwa">var</span> sum<span class="hl sym">:</span> Int<span class="hl sym">) {</span>
+  <span class="hl kwa">def</span> <span class="hl sym">+=(</span>i<span class="hl sym">:</span> Int<span class="hl sym">) = {</span> sum<span class="hl sym">+=</span>i<span class="hl sym">;</span> <span class="hl kwa">this</span> <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">case class</span> Go<span class="hl sym">(</span>i0<span class="hl sym">:</span> Int<span class="hl sym">,</span> i1<span class="hl sym">:</span> Int<span class="hl sym">,</span> depth<span class="hl sym">:</span> Int<span class="hl sym">) {</span>
+  <span class="hl kwa">def</span> calc <span class="hl sym">= (</span>Sum<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) /: (</span>i0 to i1<span class="hl sym">))((</span>s<span class="hl sym">,</span>i<span class="hl sym">) =&gt;</span>
+    s <span class="hl sym">+=</span> Tree<span class="hl sym">(</span>i<span class="hl sym">,</span>depth<span class="hl sym">).</span>isum <span class="hl sym">+</span> Tree<span class="hl sym">(-</span>i<span class="hl sym">,</span>depth<span class="hl sym">).</span>isum
+  <span class="hl sym">).</span>sum
+<span class="hl sym">}</span>
+
+<span class="hl kwa">final class</span> Tree<span class="hl sym">(</span>i<span class="hl sym">:</span> Int<span class="hl sym">,</span> left<span class="hl sym">:</span> Tree<span class="hl sym">,</span> right<span class="hl sym">:</span> Tree<span class="hl sym">) {</span>
+  <span class="hl kwa">def</span> isum<span class="hl sym">:</span> Int <span class="hl sym">=</span> <span class="hl kwa">if</span> <span class="hl sym">(</span>left eq null<span class="hl sym">)</span> i <span class="hl kwa">else</span> i <span class="hl sym">+</span> left<span class="hl sym">.</span>isum <span class="hl sym">-</span> right<span class="hl sym">.</span>isum
+<span class="hl sym">}</span>
+<span class="hl kwa">object</span> Tree <span class="hl sym">{</span>
+  <span class="hl kwa">def</span> apply<span class="hl sym">(</span>i<span class="hl sym">:</span> Int<span class="hl sym">,</span> depth<span class="hl sym">:</span> Int<span class="hl sym">):</span> Tree <span class="hl sym">= {</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>depth <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">new</span> Tree<span class="hl sym">(</span>i<span class="hl sym">,</span> Tree<span class="hl sym">(</span>i<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span> depth<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">),</span> Tree<span class="hl sym">(</span>i<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">,</span> depth<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">))</span>
+    <span class="hl kwa">else new</span> Tree<span class="hl sym">(</span>i<span class="hl sym">,</span> null<span class="hl sym">,</span> null<span class="hl sym">)</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
