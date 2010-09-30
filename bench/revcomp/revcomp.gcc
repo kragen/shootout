@@ -1,0 +1,289 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+
+   contributed by Petr Prokhorenkov
+*/
+#define _GNU_SOURCE
+
+#include <assert.h>
+#include <ctype.h>
+#include <pthread.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#define LINE_LENGTH 60 
+#define STDOUT 1
+
+typedef struct lookup {
+    uint8_t bytes[256];
+    uint16_t pairs[256*256];
+} lookup_t;
+
+void
+init_lookup(const char *from, const char *to, lookup_t *lookup) {
+    for (int i = 0; i < 256; ++i) {
+        lookup->bytes[i] = i;
+    }
+    for (; *from && *to; ++from, ++to) {
+        lookup->bytes[tolower(*from)] = *to;
+        lookup->bytes[toupper(*from)] = *to;
+    }
+
+    for (int i = 0; i != 256; ++i) {
+        for (int j = 0; j != 256; ++j) {
+            lookup->pairs[(i << 8) + j] =
+                ((uint16_t)lookup->bytes[j] << 8) + lookup->bytes[i];
+        }
+    }
+}
+
+typedef struct job {
+    struct job *prev_job;
+
+    pthread_mutex_t *io_mutex;
+    pthread_cond_t condition;
+
+    const char *header_begin;
+    const char *header_end;
+    const char *body_begin;
+    const char *body_end;
+    const lookup_t *lookup;
+    pthread_t thread;
+    char *buffer;
+    int free_buffer;
+} job_t;
+
+off_t get_file_size(FILE *f) {
+    long begin = ftell(f);
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f) - begin;
+    fseek(f, begin, SEEK_SET);
+
+    return size;
+}
+
+void
+persistent_write(int fd, const void *ptr, size_t size) {
+    while (size > 0) {
+        ssize_t result = write(fd, ptr, size);
+
+        assert(result >= 0);
+
+        size -= result;
+    }
+}
+
+size_t
+reverse_complement(
+        const char *begin,
+        const char *end,
+        const lookup_t *lookup,
+        char *buffer) {
+    size_t size = end - begin;
+    const char *read_p = end;
+    char *buffer_begin = buffer;
+
+    while (size >= LINE_LENGTH) {
+        uint16_t *pair_buffer = (uint16_t *)buffer;
+        const uint16_t *read_pair = (const uint16_t *)read_p;
+
+        for (size_t i = 0; i < LINE_LENGTH; i += 2) {
+            *pair_buffer++ = lookup->pairs[*--read_pair];
+        }
+
+        read_p -= LINE_LENGTH&(~1);
+        buffer += LINE_LENGTH&(~1);
+
+        if (LINE_LENGTH % 2 != 0) {
+            *buffer++ = *--read_p;
+        }
+
+        *buffer++ = '\n';
+        size -= LINE_LENGTH;
+    }
+
+    if (size > 0) {
+       while (read_p > begin) {
+           *buffer++ = lookup->bytes[*--read_p];
+       }
+       *buffer++ = '\n';
+    }
+
+    return buffer - buffer_begin;
+}
+
+size_t round_by(size_t a, size_t b) {
+    return a - a%b;
+}
+
+void
+process_block(
+        job_t *job) {
+    const char *header_begin = job->header_begin;
+    const char *header_end = job->header_end;
+    const char *body_begin = job->body_begin;
+    const char *body_end = job->body_end;
+    const lookup_t *lookup = job->lookup;
+    pthread_mutex_t *io_mutex = job->io_mutex;
+    pthread_cond_t *prev_condition =
+        job->prev_job ? &job->prev_job->condition : 0;
+    pthread_cond_t *condition = &job->condition;
+    char *buffer = job->buffer;
+
+    size_t size = reverse_complement(
+            body_begin, body_end,
+            lookup,
+            buffer);
+
+    pthread_mutex_lock(io_mutex);
+    if (prev_condition) {
+        pthread_cond_wait(prev_condition, io_mutex);
+    }
+    
+    if (header_begin && header_end) {
+        persistent_write(
+                STDOUT, header_begin, header_end - header_begin);
+    }
+    persistent_write(STDOUT, buffer, size);
+    pthread_mutex_unlock(io_mutex);
+
+    pthread_cond_signal(condition);
+}
+
+job_t *detach_job(
+        const char *header_begin, const char *header_end,
+        const char *body_begin, const char *body_end,
+        const lookup_t *lookup,
+        pthread_mutex_t *mutex,
+        job_t *prev_job,
+        char *buffer,
+        int free_buffer) {
+    job_t *job = calloc(1, sizeof(*job));
+    assert(job);
+
+    job->io_mutex = mutex;
+    pthread_cond_init(&job->condition, 0);
+    job->header_begin = header_begin;
+    job->header_end = header_end;
+    job->body_begin = body_begin;
+    job->body_end = body_end;
+    job->lookup = lookup;
+    job->buffer = buffer;
+    job->free_buffer = free_buffer;
+
+    pthread_t thread;
+    pthread_create(&job->thread, 0, (void *(*)(void *))&process_block, job);
+
+    return job;
+}
+
+job_t *
+do_process_block(
+        const char *header_begin, const char *header_end,
+        const char *body_begin, const char *body_end,
+        const lookup_t *lookup,
+        pthread_mutex_t *mutex,
+        job_t *prev_job) {
+    size_t body_size = body_end - body_begin;
+    size_t tail_len = round_by(body_size/2, LINE_LENGTH);
+    const char *split_at = body_end - tail_len;
+
+    char *buffer = malloc(
+            body_size*(LINE_LENGTH + 1)/LINE_LENGTH + LINE_LENGTH);
+    assert(buffer);
+
+    prev_job = detach_job(
+            header_begin, header_end,
+            split_at, body_end,
+            lookup,
+            mutex,
+            prev_job,
+            buffer,
+            1);
+    prev_job = detach_job(
+            0, 0,
+            body_begin, split_at,
+            lookup,
+            mutex,
+            prev_job,
+            buffer + tail_len*(LINE_LENGTH + 1)/LINE_LENGTH,
+            0);
+
+    return prev_job;
+}
+
+int
+main(void) {
+    setvbuf(stdin, 0, _IOFBF, 1024*1024);
+
+    long stdin_size = get_file_size(stdin);
+    char *buffer = malloc(stdin_size + LINE_LENGTH);
+    assert(buffer);
+    lookup_t lookup;
+    pthread_mutex_t mutex;
+    job_t *job = 0;
+
+    init_lookup("acbdghkmnsrutwvy", "TGVHCDMKNSYAAWBR", &lookup);
+
+    pthread_mutex_init(&mutex, 0);
+
+    char *current = buffer;
+    char *end = buffer + stdin_size;
+    char *header_begin = 0;
+    char *header_end = 0;
+    char *body_begin = 0;
+
+    while (fgets_unlocked(current, end - current, stdin)) {
+        if (current[0] == '>') {
+            if (body_begin != 0) {
+                job = do_process_block(
+                        header_begin, header_end,
+                        body_begin, current,
+                        &lookup,
+                        &mutex,
+                        job); 
+            }
+            size_t len = strlen(current);
+            header_begin = current;
+            header_end = current + len;
+            current += len;
+            body_begin = current;
+        } else {
+            if (current[LINE_LENGTH] == '\n') {
+                current += LINE_LENGTH;
+            } else {
+                size_t len = strlen(current);
+                if (current[len - 1] == '\n') {
+                    --len;
+                }
+                current += len;
+            }
+        }
+    }
+
+    if (body_begin != 0) {
+        job = do_process_block(
+                header_begin, header_end,
+                body_begin, current,
+                &lookup,
+                &mutex,
+                job); 
+    }
+
+    while (job) {
+        pthread_join(job->thread, 0);
+
+        if (job->free_buffer) {
+            free(job->buffer);
+        }
+        job = job->prev_job;
+    }
+    
+    free(buffer);
+
+    return 0;
+}
