@@ -1,1 +1,1 @@
-<p>6g version 6348 release.2010-09-22 release</p>
+<p>6g version 6432 release release.2010-09-29</p>
