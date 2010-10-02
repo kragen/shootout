@@ -10,73 +10,72 @@
 (in-package :fannkuch-redux)
 
 (defun make-facts-vector (seq-length)
-  (make-array seq-length
-              :initial-contents (cons 1 (loop :with r = 1 :for i from 1 to (1- seq-length)
+  (make-array (1+ seq-length)
+              :initial-contents (cons 1 (loop :with r = 1 :for i from 1 to seq-length
                                            :collect (setf r (* r i))))))
 
-(defmacro with-named-gensyms ((&rest symbols) &body body)
-  `(let (,@(mapcar (lambda (sym) `(,sym (gensym ,(format nil "~a" sym)))) symbols))
+(defmacro with-vars-bound ((vars bind-vars) &body body)
+  `(let (,@(loop :for var :in vars :for bind-var :in bind-vars :collect `(,var ,bind-var)))
+     (declare (type fixnum ,@vars) (ignorable ,@vars))
      ,@body))
 
-(defmacro with-permutations ((seq-accessor seq seq-length perm-index-start &optional perm-count) &body body)
-  (let ((facts (make-facts-vector (1+ seq-length))))
-    (with-named-gensyms (outer-tag count)
-      (labels ((build-loop (depth)
-                 (if (>= depth seq-length)
-                     `(progn (when (zerop ,count)
-                               (return-from ,outer-tag))
-                             (decf ,count)
-                             ,@body)
-                     (with-named-gensyms (first)
-                       (let* ((loop-body (build-loop (1+ depth)))
-                              (shift-body `(let ((,first (elt ,seq ,(* depth seq-length))))
-                                             (setf ,@(loop :for i :from 0 :below (- seq-length depth 1)
-                                                        :collect `(elt ,seq ,(+ (* depth seq-length) i))
-                                                        :collect `(elt ,seq ,(+ (* depth seq-length) i 1)))
-                                                   (elt ,seq ,(+ (* depth seq-length) (- seq-length depth 1))) ,first)))
-                              (repeat-body (if (= depth (1- seq-length))
-                                               loop-body
-                                               `(prog1 (if (>= ,perm-index-start ,(elt facts (- seq-length depth 1)))
-                                                           (decf ,perm-index-start ,(elt facts (- seq-length depth 1)))
-                                                           (progn (setf ,@(loop :for i :from 0 :below seq-length
-                                                                             :collect `(elt ,seq ,(+ (* (1+ depth) seq-length) i))
-                                                                             :collect `(elt ,seq ,(+ (* depth seq-length) i))))
-                                                                  ,loop-body))
-                                                  ,shift-body))))
-                         (if (> (- seq-length depth) 1)
-                             `(loop :repeat ,(- seq-length depth) :do ,repeat-body)
-                             repeat-body))))))
-        `(let ((,count ,(or perm-count `(- ,(elt facts seq-length) ,perm-index-start))))
-           (declare (type (integer 0 ,(elt facts seq-length)) ,count))
-           (setf ,@(loop :for i :from 0 :below seq-length :collect `(elt ,seq ,i) :collect i))
-           (block ,outer-tag
-             (macrolet ((,seq-accessor (idx) `(elt ,',seq (+ ,idx ,',(* (1- seq-length) seq-length)))))
-               ,(build-loop 0))))))))
+(defmacro with-permutations (((&rest seq-vars) perm-index-start perm-count) &body body)
+  (let* ((seq-length (length seq-vars))
+         (facts (make-facts-vector seq-length))
+         (outer-tag (gensym))
+         (count (gensym)))
+    (labels ((build-loop (depth upper-seq-vars)
+               (if (>= depth seq-length)
+                   `(with-vars-bound (,seq-vars ,upper-seq-vars)
+                      (when (zerop ,count)
+                        (return-from ,outer-tag))
+                      (decf ,count)
+                      ,@body)
+                   (let* ((my-seq-vars (loop :repeat (- seq-length depth) :collect (gensym)))
+                          (shift-body `(let ((first ,(car my-seq-vars)))
+                                         (setf ,@(loop :for src :in my-seq-vars and dst = src
+                                                    :when dst :collect dst and :collect src)
+                                               ,(car (last my-seq-vars)) first)))
+                          (repeat-body (if (= depth (1- seq-length))
+                                           (build-loop (1+ depth) upper-seq-vars)
+                                           `(prog1 (if (>= ,perm-index-start ,(elt facts (- seq-length depth 1)))
+                                                       (decf ,perm-index-start ,(elt facts (- seq-length depth 1)))
+                                                       ,(build-loop (1+ depth)
+                                                                    (append my-seq-vars (subseq upper-seq-vars
+                                                                                                (length my-seq-vars)))))
+                                              ,shift-body))))
+                     (if (> (- seq-length depth) 1)
+                         `(with-vars-bound (,my-seq-vars ,upper-seq-vars)
+                            (loop :repeat ,(- seq-length depth) :do ,repeat-body))
+                         repeat-body)))))
+      `(let ((,count ,perm-count))
+         (declare (type (integer 0 ,(elt facts seq-length)) ,count))
+         (block ,outer-tag
+           ,(build-loop 0 (loop :for i :from 0 :below seq-length :collect i)))))))
 
-(defmacro with-flips-count ((seq-elt flips-count seq-length) &body body)
-  (with-named-gensyms (first l r)
+(defmacro with-flips-count (((&rest seq-vars) flips-count) &body body)
+  (let ((head (car seq-vars)))
     `(let ((,flips-count 0))
        (declare (type fixnum ,flips-count))
-       (loop :for ,first :of-type (integer 0 ,(1- seq-length)) = (,seq-elt 0)
-          :until (zerop ,first)
-          :do (incf ,flips-count)
-          :do (loop
-                 :for ,l :from 0
-                 :for ,r :downfrom ,first
-                 :while (< ,l ,r)
-                 :do (rotatef (,seq-elt ,l) (,seq-elt ,r))))
+       (unless (zerop ,head)
+         (loop
+            (incf ,flips-count)
+            (cond
+              ,@(loop :for value :from 1 :below (length seq-vars)
+                   :collect `((= ,head ,value)
+                              (when (zerop ,(elt seq-vars value))
+                                (return))
+                              ,@(loop :for l :from 0 :for r :downfrom value :while (< l r)
+                                   :collect `(rotatef ,(elt seq-vars l) ,(elt seq-vars r))))))))
        ,@body)))
 
-#+x86-64
 (defstruct atomic
-  (counter 0 :type (unsigned-byte 64)))
-#+x86
-(defstruct atomic
-  (counter 0 :type (unsigned-byte 32)))
+  (counter 0 :type (unsigned-byte #+x86-64 64 #+x86 32)))
 
 (defmacro deffannkuch (seq-length &key (workers 1) worker-chunk-size)
-  (let* ((facts (make-facts-vector (1+ seq-length)))
-         (chunk-size (or worker-chunk-size (min (elt facts seq-length) 400))))
+  (let* ((facts (make-facts-vector seq-length))
+         (chunk-size (or worker-chunk-size (min (elt facts seq-length) 400)))
+         (seq-vars (loop :for i :from 0 :below seq-length :collect (gensym))))
     `(lambda ()
        (declare (optimize (speed 3) (safety 0) (debug 0)))
        (let ((wrk-max-flips (make-array ,workers :element-type 'fixnum))
@@ -84,38 +83,35 @@
              (current-idx (make-atomic)))
          (flet ((make-worker (wrk-index)
                   (declare (type (integer 0 ,(1- workers)) wrk-index))
-                  (let ((seq (make-array ,(* seq-length seq-length) :element-type 'fixnum)))
-                    (lambda ()
-                      (loop
-                         :with checksum :of-type fixnum = 0
-                         :with max-flips :of-type fixnum = 0
-                         :for perm-index :of-type fixnum = (sb-ext:atomic-incf (atomic-counter current-idx)
-                                                                               ,chunk-size)
-                         :while (< perm-index ,(elt facts seq-length))
-                         :for sign :of-type boolean = (evenp perm-index)
-                         :do (with-permutations (seq-elt seq ,seq-length perm-index ,chunk-size)
-                               (with-flips-count (seq-elt flips-count ,seq-length)
-                                 (when (> flips-count max-flips)
-                                   (setf max-flips flips-count))
-                                 (incf checksum (if sign flips-count (- flips-count)))
-                                 (setf sign (not sign))))
-                         :finally (setf (elt wrk-max-flips wrk-index) max-flips
-                                        (elt wrk-checksums wrk-index) checksum))))))
+                  (lambda ()
+                    (loop
+                       :with checksum :of-type fixnum = 0
+                       :with max-flips :of-type fixnum = 0
+                       :for perm-index :of-type fixnum = (sb-ext:atomic-incf (atomic-counter current-idx)
+                                                                             ,chunk-size)
+                       :while (< perm-index ,(elt facts seq-length))
+                       :for sign :of-type boolean = (evenp perm-index)
+                       :do (with-permutations ((,@seq-vars) perm-index ,chunk-size)
+                             (with-flips-count ((,@seq-vars) flips-count)
+                               (when (> flips-count max-flips)
+                                 (setf max-flips flips-count))
+                               (incf checksum (if sign flips-count (- flips-count)))
+                               (setf sign (not sign))))
+                       :finally (setf (elt wrk-max-flips wrk-index) max-flips
+                                      (elt wrk-checksums wrk-index) checksum)))))
            (mapc #'sb-thread:join-thread
                  (list ,@(loop :for wrk-index :from 0 :below workers
-                            :collect `(sb-thread:make-thread
-                                       (make-worker ,wrk-index)
-                                       :name ,(format nil "fannkuch-worker-~a" wrk-index))))))
+                            :collect `(sb-thread:make-thread (make-worker ,wrk-index))))))
          (loop :for i :from 0 :below ,workers
             :summing (elt wrk-checksums i) :into checksum :of-type fixnum
             :maximizing (elt wrk-max-flips i) :into max-flips
             :finally (return (values checksum max-flips)))))))
-         
-(defun main (&optional (force-n 12))
+
+(defun main (&optional force-n)
   (let* ((args (cdr sb-ext:*posix-argv*))
          (n (or force-n (if args (parse-integer (car args)) 12))))
     (multiple-value-bind (checksum max-flips-count)
-        (funcall (eval `(deffannkuch ,n :workers 4 :worker-chunk-size 5000)))
+        (funcall (the function (eval `(deffannkuch ,n :workers 4 :worker-chunk-size 12000))))
       (format t "~a~%Pfannkuchen(~a) = ~a~%" checksum n max-flips-count))))
 
 
