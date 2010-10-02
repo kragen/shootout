@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u32.programs.Makefile,v 1.40 2010-08-26 16:30:31 igouy-guest Exp $
+# $Id: u32.programs.Makefile,v 1.41 2010-10-02 05:08:47 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -366,11 +366,11 @@ SBCL_TRACE :=
 #SBCL_TRACE := :trace-file t
 %.sbcl_run: %.sbcl $(SBCL_SRCS) $(SBCL)
 	-@rm -f $@ ; \
-	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $@ ; \
+#	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $@ ; \
 	COMPILE=$@; COMPILE=$${COMPILE%_run}_compile ; \
 	FILES="" ; \
 	for f in $(SBCL_SRCS) ; do cp $$f . ; FILES="$$FILES $${f##*/}" ; done ; \
-	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $$COMPILE ; \
+#	echo "(proclaim '(optimize (speed 3) (safety 0) (debug 0) (compilation-speed 0) (space 0)))" > $$COMPILE ; \
 	for src in $$FILES ; do \
 	    echo "(compile-file \"$$src\" $(SBCL_TRACE)) (load \"$$src\" :verbose nil :print nil)" >> $$COMPILE ; \
 	    base=$${src%.*} ; \
