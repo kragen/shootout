@@ -1,0 +1,104 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> * original contributed by Kenneth Jonsson</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">import</span> scala<span class="hl sym">.</span>actors<span class="hl sym">.</span>Actor
+<span class="hl kwa">import</span> scala<span class="hl sym">.</span>actors<span class="hl sym">.</span>Actor<span class="hl sym">.</span>_
+
+<span class="hl kwa">class</span> Worker<span class="hl sym">(</span>size<span class="hl sym">:</span> Int<span class="hl sym">)</span> <span class="hl kwa">extends</span> Actor <span class="hl sym">{</span>
+    <span class="hl kwa">private val</span> bytesPerRow <span class="hl sym">= (</span>size <span class="hl sym">+</span> <span class="hl num">7</span><span class="hl sym">) &gt;&gt;</span> <span class="hl num">3</span>
+    <span class="hl kwa">private val</span> maxIterations <span class="hl sym">=</span> <span class="hl num">50</span>
+    <span class="hl kwa">private val</span> limitSquared <span class="hl sym">=</span> <span class="hl num">4.0</span>
+
+    <span class="hl slc">// Calculate all pixes for one row [-i..i], the real-part</span>
+    <span class="hl slc">// coordinate is constant throughout this method</span>
+    <span class="hl kwa">private def</span> calcRow<span class="hl sym">(</span>rowNum<span class="hl sym">:</span> Int<span class="hl sym">): (</span>Actor<span class="hl sym">,</span> Int<span class="hl sym">,</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">]) = {</span>
+	<span class="hl kwa">var</span> rowBitmap <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">](</span>bytesPerRow<span class="hl sym">)</span>
+	<span class="hl kwa">var</span> column <span class="hl sym">=</span> <span class="hl num">0</span>
+	<span class="hl kwa">val</span> ci <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">*</span> rowNum <span class="hl sym">/</span> size <span class="hl sym">-</span> <span class="hl num">1.0</span>
+
+	<span class="hl kwa">while</span> <span class="hl sym">(</span>column <span class="hl sym">&lt;</span> size<span class="hl sym">) {</span>
+	    <span class="hl kwa">val</span> cr <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">*</span> column <span class="hl sym">/</span> size <span class="hl sym">-</span> <span class="hl num">1.5</span>
+	    <span class="hl kwa">var</span> zr<span class="hl sym">,</span> tr<span class="hl sym">,</span> zi<span class="hl sym">,</span> ti <span class="hl sym">=</span> <span class="hl num">0.0</span>
+            <span class="hl kwa">var</span> iterations <span class="hl sym">=</span> <span class="hl num">0</span>
+
+            <span class="hl kwa">do</span> <span class="hl sym">{</span>
+		zi <span class="hl sym">=</span> <span class="hl num">2</span> <span class="hl sym">*</span> zr <span class="hl sym">*</span> zi <span class="hl sym">+</span> ci
+		zr <span class="hl sym">=</span> tr <span class="hl sym">-</span> ti <span class="hl sym">+</span> cr
+		ti <span class="hl sym">=</span> zi <span class="hl sym">*</span> zi
+		tr <span class="hl sym">=</span> zr <span class="hl sym">*</span> zr
+		iterations <span class="hl sym">+=</span> <span class="hl num">1</span>
+            <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>tr <span class="hl sym">+</span> ti <span class="hl sym">&lt;=</span> limitSquared <span class="hl sym">&amp;&amp;</span> iterations <span class="hl sym">&lt;</span> maxIterations<span class="hl sym">)</span>
+
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>tr <span class="hl sym">+</span> ti <span class="hl sym">&lt;=</span> limitSquared<span class="hl sym">)</span>
+		rowBitmap<span class="hl sym">(</span>column <span class="hl sym">&gt;&gt;</span> <span class="hl num">3</span><span class="hl sym">) = (</span>rowBitmap<span class="hl sym">(</span>column <span class="hl sym">&gt;&gt;</span> <span class="hl num">3</span><span class="hl sym">)</span>
+					  <span class="hl sym">| (</span><span class="hl num">0x80</span> <span class="hl sym">&gt;&gt; (</span>column <span class="hl sym">&amp;</span> <span class="hl num">7</span><span class="hl sym">))).</span>toByte
+
+            column <span class="hl sym">+=</span> <span class="hl num">1</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">return</span> <span class="hl sym">(</span>self<span class="hl sym">,</span> rowNum<span class="hl sym">,</span> rowBitmap<span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> act<span class="hl sym">() {</span>
+	<span class="hl kwa">while</span> <span class="hl sym">(</span>true<span class="hl sym">) {</span>
+	    receive <span class="hl sym">{</span>
+		<span class="hl kwa">case</span> rowNum<span class="hl sym">:</span> Int <span class="hl sym">=&gt;</span>
+		    reply<span class="hl sym">(</span>calcRow<span class="hl sym">(</span>rowNum<span class="hl sym">))</span>
+		<span class="hl kwa">case</span> <span class="hl str">&quot;EXIT&quot;</span> <span class="hl sym">=&gt;</span>
+		    exit<span class="hl sym">()</span>
+	    <span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">class</span> MandelbrotCoordinator<span class="hl sym">(</span>size<span class="hl sym">:</span> Int<span class="hl sym">)</span> <span class="hl kwa">extends</span> Actor <span class="hl sym">{</span>
+
+    <span class="hl kwa">private var</span> nextRowNum <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">private var</span> rowsRemaining <span class="hl sym">=</span> size
+    <span class="hl kwa">private var</span> bitmap <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">]](</span>size<span class="hl sym">)</span>
+
+    <span class="hl kwa">private def</span> calcNextRow<span class="hl sym">(</span>worker<span class="hl sym">:</span> Actor<span class="hl sym">) {</span>
+	<span class="hl kwa">if</span> <span class="hl sym">(</span>nextRowNum <span class="hl sym">==</span> size<span class="hl sym">)</span>
+	    <span class="hl slc">// All rows has been dispatched, tell the worker to exit</span>
+	    worker <span class="hl sym">!</span> <span class="hl str">&quot;EXIT&quot;</span>
+	<span class="hl kwa">else</span> <span class="hl sym">{</span>
+	    worker <span class="hl sym">!</span> nextRowNum
+	    nextRowNum <span class="hl sym">+=</span> <span class="hl num">1</span>
+	<span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">def</span> act<span class="hl sym">() {</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;-</span> <span class="hl num">1</span> to <span class="hl kwc">Runtime</span><span class="hl sym">.</span>getRuntime<span class="hl sym">().</span>availableProcessors<span class="hl sym">()) {</span>
+	    <span class="hl kwa">val</span> worker <span class="hl sym">=</span> <span class="hl kwa">new</span> Worker<span class="hl sym">(</span>size<span class="hl sym">)</span>
+	    <span class="hl slc">// Keep two rows in flight per worker to avoid any worker</span>
+	    <span class="hl slc">// idle time, probably not neccessary on a quad-core</span>
+	    <span class="hl slc">// machine but might help at higher core count...</span>
+	    calcNextRow<span class="hl sym">(</span>worker<span class="hl sym">)</span>
+	    calcNextRow<span class="hl sym">(</span>worker<span class="hl sym">)</span>
+	    worker<span class="hl sym">.</span>start
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">while</span> <span class="hl sym">(</span>true<span class="hl sym">) {</span>
+	    receive <span class="hl sym">{</span>
+		<span class="hl kwa">case</span> <span class="hl sym">(</span>sender<span class="hl sym">:</span> Actor<span class="hl sym">,</span> rowNum<span class="hl sym">:</span> Int<span class="hl sym">,</span> rowBitmap<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">]) =&gt;</span>
+		    calcNextRow<span class="hl sym">(</span>sender<span class="hl sym">)</span>
+		    bitmap<span class="hl sym">(</span>rowNum<span class="hl sym">) =</span> rowBitmap
+		    rowsRemaining <span class="hl sym">-=</span> <span class="hl num">1</span>
+		    <span class="hl kwa">if</span> <span class="hl sym">(</span>rowsRemaining <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+			<span class="hl slc">// The image is finished, write it to stdout and exit</span>
+			println<span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">&quot;</span> <span class="hl sym">+</span> size <span class="hl sym">+</span> <span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> size<span class="hl sym">)</span>
+			bitmap<span class="hl sym">.</span>foreach<span class="hl sym">(</span>row <span class="hl sym">=&gt;</span> <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span>write<span class="hl sym">(</span>row<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> row<span class="hl sym">.</span>length<span class="hl sym">))</span>
+			exit<span class="hl sym">()</span>
+		    <span class="hl sym">}</span>
+	    <span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">object</span> mandelbrot <span class="hl sym">{</span>
+    <span class="hl kwa">def</span> main<span class="hl sym">(</span>args<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">String</span><span class="hl sym">]) {</span>
+	<span class="hl kwa">val</span> coordinator <span class="hl sym">=</span> <span class="hl kwa">new</span> MandelbrotCoordinator<span class="hl sym">(</span>args<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">).</span>toInt<span class="hl sym">)</span>
+	coordinator<span class="hl sym">.</span>start
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
