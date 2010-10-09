@@ -6,7 +6,7 @@
 <dl>
 
 
-<dt><a href="#why" name="why">Why make these comparisons between programming languages?</a></dt>
+<dt><a href="#why" name="why">&nbsp;Why compare these programming language implementations?</a></dt>
 <dd>
 <ol>
 <li>To show working programs written in <i>less familiar</i> programming languages</li>
