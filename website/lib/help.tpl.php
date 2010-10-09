@@ -5,7 +5,8 @@
 
 <dl>
 
-
+<dd>
+<dl> 
 <dt><a href="#why" name="why">&nbsp;Why compare these programming language implementations?</a></dt>
 <dd>
 <ol>
@@ -13,6 +14,8 @@
 <li>To show <i>the least</i> we should expect from performance comparisons</li>
 <li>To show how difficult it can be to make <i>meaningful</i> comparisons</li>
 </ol>
+</dd>
+</dl>
 </dd>
 
 
