@@ -4,6 +4,18 @@
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
 
 <dl>
+
+
+<dt><a href="#why" name="why">Why make these comparisons between programming languages?</a></dt>
+<dd>
+<ol>
+<li>To show working programs written in <i>less familiar</i> programming languages</li>
+<li>To show <i>the least</i> we should expect from performance comparisons</li>
+<li>To show how difficult it can be to make <i>meaningful</i> comparisons</li>
+</ol>
+</dd>
+
+
 <dt><a href="#compare" name="compare">&nbsp;How to compare these programming language measurements</a></dt>
 <dd>
 <dl> 
@@ -428,14 +440,6 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </table>
 </dd>
 
-<dt><a href="#why" name="why">Why make these comparisons between programming languages?</a></dt>
-<dd>
-<ol>
-<li>To show working programs written in <i>less familiar</i> programming languages</li>
-<li>To show <i>the least</i> we should expect from performance comparisons</li>
-<li>To show how difficult it can be to make <i>meaningful</i> comparisons</li>
-</ol>
-</dd>
 
 </dl>
 </dd>

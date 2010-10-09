@@ -185,6 +185,9 @@ foreach($tests as $t){
 
 </table>
 
+<p><br/>After all, facts are facts, <br/>and although we may quote one to another with a chuckle <br/>the words of the Wise Statesman, 'Lies--damned lies--and statistics,' <br/>still there are some easy figures the simplest must understand, <br/>and the astutest cannot wriggle out of. <br/><span class="smaller">Leonard Henry Courtney, 1895</span></p>
+
+
 <p class="imgfooter">
 <a href="http://shootout.alioth.debian.org/license.php" title="The Computer Language Benchmarks Game is published under this revised BSD license" >
    <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
