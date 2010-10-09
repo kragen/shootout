@@ -7,7 +7,7 @@
 
 <dd>
 <dl> 
-<dt><a href="#why" name="why">Why compare these programming language implementations?</a></dt>
+<dt><a href="#why" name="why">Why measure programs written in different programming languages?</a></dt>
 <dd>
 <ol>
 <li>To show working programs written in <i>less familiar</i> programming languages</li>
@@ -19,7 +19,7 @@
 </dd>
 
 
-<dt><a href="#compare" name="compare">&nbsp;How to compare these programming language measurements</a></dt>
+<dt><a href="#compare" name="compare">&nbsp;How to compare these measurements</a></dt>
 <dd>
 <dl> 
 
