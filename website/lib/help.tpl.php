@@ -418,7 +418,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
    title=""
    width="400" height="225"
  /></p>
-<p>The out-of-date measurements are for many different programming languages. The program source code written in those other programming languages is interesting.</p>
+<p>The out-of-date measurements are for many different programming languages -</p>
 </dd>
 
 <dd>
@@ -438,6 +438,7 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </td>
 </tr>
 </table>
+<p>The program source code written in those other programming languages is interesting.</p>
 </dd>
 
 
