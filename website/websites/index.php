@@ -105,8 +105,8 @@ $langs = array(
    array('python3','Python 3','python3',$allsites),
    array('python','CPython','python',$u32sites),
    array('racket','Racket','racket',$onecoresites),
-   array('yarv','Ruby 1.9','',$onecoresites),
-   array('jruby','JRuby','jruby',$onecoresites),
+   array('yarv','Ruby 1.9','',$u32sites),
+   array('jruby','JRuby','jruby',$u32sites),
    array('ruby','Ruby MRI','ruby',$basesite),
    array('scala','Scala','scala',$allsites),
    array('vw','Smalltalk VisualWorks','smalltalk',$onecoresites)
