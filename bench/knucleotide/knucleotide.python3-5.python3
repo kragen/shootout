@@ -1,0 +1,61 @@
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+#
+# submitted by Ian Osgood
+# modified by Sokolov Yura
+# modified by bearophile
+# modified by jacek2v: few changes in algorytm, added multiprocessing, used str.count (nucleo newer overlapping)
+# modified by Rick Branson
+
+from sys import stdin
+from collections import defaultdict
+from multiprocessing import Process, Pool, cpu_count
+
+def gen_freq(seq, frame):
+    frequences = defaultdict(int)
+    ns = len(seq) + 1 - frame
+    for ii in range(ns):
+        frequences[seq[ii:ii + frame]] += 1
+    return ns, frequences
+
+def sort_seq(seq, length):
+    n, frequences = gen_freq(seq, length)
+    #l = sorted(frequences.items(), reverse=True, key=lambda (seq,freq): (freq,seq))
+    l = sorted(list(frequences.items()), reverse=True, key=lambda seq_freq: (seq_freq[1],seq_freq[0]))
+    return [(st, 100.0*fr/n) for st, fr in l]
+
+def find_seq(seq, nucleo):
+    n, frequences = gen_freq(seq, len(nucleo))
+    count = frequences[nucleo]
+    return nucleo, count
+
+def load():
+    for line in stdin:
+        if line[0:3] == ">TH":
+            break
+    seq = []
+    for line in stdin:
+        if line[0] in ">;":
+            break
+        seq.append( line[:-1] )
+    return seq
+
+def main():
+    nucleos = "GGT GGTA GGTATT GGTATTTTAATT GGTATTTTAATTTATAGT"
+    sequence = "".join(load()).upper()
+    plres = []
+    pl = Pool(processes=cpu_count() + 1)
+
+    for nl in 1,2:
+        plres.append(pl.apply_async(sort_seq, (sequence, nl, )))
+    for se in nucleos.split():
+        plres.append(pl.apply_async(find_seq, (sequence, se, )))
+    pl.close()
+    pl.join()
+
+    for ii in 0,1:
+        print('\n'.join("%s %.3f" % (st, fr) for st,fr in plres[ii].get()))
+        print('')
+    for ii in range(2, len(nucleos.split()) + 2):
+        print("%d\t%s" % (plres[ii].get()[1], plres[ii].get()[0]))
+main()
