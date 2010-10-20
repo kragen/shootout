@@ -1,1 +1,1 @@
-<p>The version of ATS/Anairiats is 0.2.1</p>
+<p>The version of ATS/Anairiats is 0.2.2</p>
