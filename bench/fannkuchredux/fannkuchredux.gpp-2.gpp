@@ -1,0 +1,305 @@
+/* The Computer Language Benchmarks Game
+   http://shootout.alioth.debian.org/
+
+contributed by Miroslav Rubanets
+based on Java 6 source code by Oleg Mazurov.
+
+License full text is here: http://shootout.alioth.debian.org/license.php
+
+Building checked in Ubuntu 10.4 with g++ (Ubuntu 4.4.3-4ubuntu5) 4.4.3
+   one needs to install libboost-thread-dev package to get this working 
+   g++ -c -O3 -pthread -flax-vector-conversions -march=native fannkuchredux_optimized.cpp
+   g++ -O3 -lpthread -lboost_thread fannkuchredux_optimized.o
+*/
+//std stuff
+#include <algorithm>
+#include <cstdio>
+using std::copy;using std::max;using std::min; using std::atoi;
+using std::printf;using std::swap;
+//threads stuff
+#include <boost/thread.hpp>
+using boost::thread;using boost::thread_group;using boost::ref;
+//platform specific
+//vector stuff
+#ifdef __SSE__
+#   include <xmmintrin.h>
+#endif //sse
+#ifdef __SSSE3__
+#   include <tmmintrin.h>
+#endif // sse3
+#ifdef __SSE4_1__
+#   include <smmintrin.h>
+#endif // sse4.1
+typedef char v16si __attribute__ ((vector_size (16)));
+typedef v16si P;
+#define INLINE __attribute__ ((__always_inline__))
+//static data
+//0  1  2  3  4  5  6  7  8  9   a   b   c   d   e  f 
+const P reverse_data[16]={
+{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 2, 1, 0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 4, 3, 2, 1, 0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 5, 4, 3, 2, 1, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 6, 5, 4, 3, 2, 1, 0, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 7, 6, 5, 4, 3, 2, 1, 0, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 8, 7, 6, 5, 4, 3, 2, 1, 0, 9, 10, 11, 12, 13, 14, 15},
+{ 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 10, 11, 12, 13, 14, 15},
+{10, 9, 8, 7, 6, 5, 4, 3, 2, 1,  0, 11, 12, 13, 14, 15},
+{11,10, 9, 8, 7, 6, 5, 4, 3, 2,  1,  0, 12, 13, 14, 15},
+{12,11,10, 9, 8, 7, 6, 5, 4, 3,  2,  1,  0, 13, 14, 15}, 
+{13,12,11,10, 9, 8, 7, 6, 5, 4,  3,  2,  1,  0, 14, 15},
+{14,13,12,11,10, 9, 8, 7, 6, 5,  4,  3,  2,  1,  0, 15},
+{15,14,13,12,11,10, 9, 8, 7, 6,  5,  4,  3,  2,  1,  0},
+};
+const P rotate_data[16] = {
+{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 0, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 0, 8, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 0, 9, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10,  0, 11, 12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 0,  12, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12,  0, 13, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12, 13,  0, 14, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12, 13, 14,  0, 15},
+{ 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12, 13, 14, 15,  0},
+};
+//fwd
+int p0(P p) INLINE;
+P assign(const char d[16])INLINE;
+P reverse(P p, int first)INLINE;
+P rotate1(P p) INLINE;
+P rotate(P p, int f)INLINE;
+//fallback 
+char& access(P const& p, int i) INLINE;
+P& reverse_slow(P& p, int first)INLINE;
+P& rotate1_slow(P& p, int f)INLINE;
+P& rotate_slow(P& p, int f)INLINE;
+int p0(P p) 
+{ 
+#ifdef __SSE4_1__
+    return _mm_extract_epi8(p, 0);
+#else
+    return static_cast<int>( reinterpret_cast<const char*>(&p)[0] );
+#endif
+}
+P assign(const char d[16])
+{
+    P ld = {
+        d[0], d[1], d[ 2], d[ 3],     d[ 4], d[ 5], d[ 6], d[ 7], 
+        d[8], d[9], d[10], d[11],     d[12], d[13], d[14], d[15]
+    };
+    return ld;
+}
+P reverse(P p, int first)
+{
+#ifdef __SSSE3__
+    register P mask = reverse_data[first];
+    return _mm_shuffle_epi8( p, mask);
+#else
+    return reverse_slow( p, first );
+#endif
+}
+P rotate1(P p) 
+{
+#ifdef __SSSE3__
+    register P mask = rotate_data[1];
+    return _mm_shuffle_epi8( p, mask );
+#else
+    return rotate_slow( p, 1 );
+#endif
+}
+P rotate(P p, int f)
+{
+#ifdef __SSSE3__
+    register P mask = rotate_data[f];
+    return _mm_shuffle_epi8( p, mask);
+#else
+    return rotate_slow( p, f );
+#endif
+}
+// this functions really should not be called unless its very old march=native
+char& access(P & p, int i) 
+{
+    return reinterpret_cast<char*>(&p)[i];
+}
+P& reverse_slow(P& p, int n)
+{
+    for ( int lo = 0, hi = n ; lo < hi; ++lo, --hi ) 
+    {
+        swap( access(p, lo), access( p, hi) );
+    }
+    return p;
+}
+P& rotate1_slow(P&p)
+{
+    swap( access( p, 0), access( p, 1 ) );
+    return p;
+}
+P& rotate_slow(P&p, int i)
+{
+    int first = access( p, 0 );
+    for ( int j=0; j<i; ++j ) 
+    {
+        access( p, j) = access( p, j+1);
+    }
+    access( p, i ) = first;
+    return p;
+}
+struct G
+{// permutation generator
+    P p;
+    int count[16];
+    int fact[16];
+    int len;
+    int padding[3];
+    void init(int n)
+    {
+        len = n;
+        std::fill( &count[0], &count[16], 0);
+        fact[0] = 1;
+        for(int i = 1; i<len+1; ++i)
+        {
+            fact[i] = fact[i-1]*i;
+        }
+        first_permutation(0);
+    }
+    void first_permutation(int idx)
+    {
+        char p[16]={};
+        char pp[16]={};
+        for ( int i=0; i<len; ++i ) 
+           p[i] = i;
+        for ( int i=len-1; i>0; --i ) 
+        {
+            int d = idx / fact[i];
+            count[i] = d;
+            idx = idx % fact[i];
+            copy( &p[0], &p[i+1], &pp[0] );
+            for ( int j=0; j<=i; ++j ) 
+            {
+                p[j] = j+d <= i ? pp[j+d] : pp[j+d-i-1];
+            }
+        }
+        this->p = assign( p );
+    }
+    void next_permutation()
+    {
+        p = rotate1( p );
+        int i=1;
+        while ( ++count[i] > i ) 
+        {
+            count[i++] = 0;
+            p = rotate( p, i );
+        }
+    }
+};
+struct Fannkuchredux
+{
+    G g;
+    struct R{ int maxflips, checksum; };
+    void init(int len)
+    {
+        g.init( len );
+    }
+    void count_flips(R&r, int i)
+    {//performance magic happen here. 
+        register int flips = 0;
+        register P p = g.p;
+        register int f = p0( p );
+        if( f )
+        {
+            do{
+                ++flips;
+                p = reverse( p, f);
+            }while( f = p0(p) );
+        }
+        int total_flips = flips;
+        r.maxflips = max( r.maxflips, total_flips );
+        r.checksum += i%2 ==0 ? total_flips : -total_flips;
+    }
+    R run(int i, int N)
+    {
+        R r = { 0, 0};
+        g.first_permutation( i );
+        for(;;)
+        { 
+            count_flips( r, i );
+            ++i;
+            if( i >= N )
+                break;
+            g.next_permutation();
+        }
+        return r;
+    }
+};
+struct Part
+{
+    Fannkuchredux f;
+    Fannkuchredux::R r;
+    int first_index, last_index;
+    void operator()()
+    {
+        r = f.run( first_index, last_index );
+    }
+};
+const char* usage = "usage fannkuchredux number\n\
+number has to be in range [3-12]\n";
+int main(int argc, char* argv[])
+{
+    if( argc < 2 )
+    {
+        printf("%s", usage);
+        return 1;
+    }
+    int len = atoi(argv[1] ); 
+    if( len < 3 || len > 12 )
+    {
+        printf("%s", usage);
+        return 2;
+    }
+    unsigned n_cpu = thread::hardware_concurrency();
+    Fannkuchredux::R r= { 0, 0};
+    Fannkuchredux f;
+    f.init(len);
+    if( n_cpu == 1 )
+    {
+        r = f.run(0, f.g.fact[len]);
+    }else
+    {   // hack to use 4 cpus.
+        // used here to avoid bringing in alignment machinery.
+        const unsigned max_cpu_limit = 4;
+        Part parts[max_cpu_limit];
+        thread_group tg;
+        unsigned n = min(n_cpu, max_cpu_limit);
+        int index = 0; 
+        int index_max = f.g.fact[len]; 
+        int index_step = (index_max + n-1 )/ n;
+        for(unsigned i = 0; i<n; ++i, index += index_step )
+        {            
+            Part& p = parts[i];
+            p.f = f;
+            p.first_index = index;
+            p.last_index = min( index + index_step, index_max );
+            p.r.checksum = 0; 
+            p.r.maxflips = 0;                        
+            tg.create_thread( ref( p ) );
+        }
+        tg.join_all();
+        for(unsigned i = 0; i<n; ++i )
+        {
+            Part const& p = parts[i];
+            r.maxflips = max( p.r.maxflips, r.maxflips );
+            r.checksum += p.r.checksum;
+        }
+    }
+    printf("%d\nPfannkuchen(%d) = %d\n", r.checksum, len, r.maxflips);
+    return 0;
+}
