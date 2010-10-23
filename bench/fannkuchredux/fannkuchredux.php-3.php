@@ -32,7 +32,7 @@ function Fannkuch($n) {
         } else
             $c[$t++]=1;
     } while ($t<$n);
-    printf("%d\nPfannkuchen(%d) = %d", $sum, $n, $max);
+    printf("%d\nPfannkuchen(%d) = %d\n", $sum, $n, $max);
 }
 
 Fannkuch($argv[1]);
