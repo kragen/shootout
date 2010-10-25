@@ -6,7 +6,7 @@
 ** multicore version of regex-dna benchmark using PCRE
 **
 ** compilation command:
-**   atscc -D_ATS_MULTITHREAD -O3 -fomit-frame-pointer regex-dna_smp.dats -o regex-dna_smp -lpthread -lpcre
+**   atscc -D_ATS_MULTITHREAD -lpthread -lpcre -O3 -fomit-frame-pointer regex-dna_smp.dats -o regex-dna_smp
 *)
 
 (* ****** ****** *)
@@ -24,13 +24,12 @@ staload _(*anonymous*) = "prelude/DATS/array.dats"
 
 extern fun malloc_atm {n:nat}
   (n: int n): [l:addr] @(bytes n @ l | ptr l) = "malloc_atm"
-
 extern fun free_atm {n:nat} {l:addr}
   (pf: bytes n @ l | p: ptr l): void = "free_atm"
 
 %{^
 
-static inline
+ATSinline()
 ats_ptr_type malloc_atm (ats_int_type n) {
   ats_ptr_type p = malloc (n) ;
   if (!p) {
@@ -39,7 +38,7 @@ ats_ptr_type malloc_atm (ats_int_type n) {
   return p ;
 }
 
-static inline
+ATSinline()
 ats_void_type free_atm (ats_ptr_type p) { free (p) ; return ; }
 
 %}
@@ -169,7 +168,7 @@ extern fun count_pattern_match {n:nat} {l:addr}
 (* ****** ****** *)
 
 #define variants_length 9
-val variants: array (string, variants_length) = array_make_arraysize $arrsz{string}(
+val variants: array (string, variants_length) = array_make_arrsz $arrsz{string}(
   "agggtaaa|tttaccct"
 , "[cgt]gggtaaa|tttaccc[acg]"
 , "a[act]ggtaaa|tttacc[agt]t"
@@ -191,7 +190,7 @@ val answers: array (int, variants_length) = array_make_elt<int> (variants_length
 // this is all standard and should probably go into a library
 static pthread_mutex_t mutex_fin = PTHREAD_MUTEX_INITIALIZER;
 
-static inline
+ATSinline()
 ats_void_type finlock_lock () {
   pthread_mutex_lock (&mutex_fin) ; return ;
 }
@@ -200,7 +199,7 @@ static the_nticket ; static the_nthread ;
 static pthread_mutex_t mutex_nticket = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutex_nthread = PTHREAD_MUTEX_INITIALIZER;
 
-static inline
+ATSinline()
 ats_void_type thread_v_return () {
   int n ;
   pthread_mutex_lock (&mutex_nthread) ;
@@ -220,12 +219,12 @@ ats_int_type nticket_get () {
   return n ;
 }
 
-static inline
+ATSinline()
 ats_void_type main_init () {
   pthread_mutex_lock (&mutex_fin) ; return ;
 }
 
-static inline
+ATSinline()
 ats_void_type nthread_init (ats_int_type n) {
   the_nticket = 0 ; the_nthread = n ; return ;
 }
@@ -236,9 +235,9 @@ absview thread_v; absview nthread_v (int)
 
 extern fun thread_v_return
   (pf: thread_v | (*none*)): void = "thread_v_return"
-extern prfun nthread_v_take {n:pos}
+extern praxi nthread_v_take {n:pos}
   (pf: !nthread_v n >> nthread_v (n-1)): thread_v
-extern prfun nthread_v_elim (pf: nthread_v 0):<> void
+extern praxi nthread_v_elim (pf: nthread_v 0):<> void
 extern fun nticket_get
   (pf: !thread_v | (*none*)): Nat = "nticket_get"
   
@@ -258,7 +257,7 @@ staload "libc/SATS/pthread.sats"
 
 fun count_worker {n:nat} {l:addr}
   (pf1: thread_v, pf2: bytes n @ l | n: int n, p: ptr l): void = let
-  extern prfun bytes_v_elim (pf: bytes n @ l): void
+  extern praxi bytes_v_elim (pf: bytes n @ l): void
   val i = nticket_get (pf1 | (*none*))
 in
   case+ 0 of
@@ -276,7 +275,7 @@ end // end of [count_one]
 
 fun count_all {n:nat} {l:addr}
   (pf: !bytes n @ l | n: int n, p: ptr l): void = let
-  extern prfun bytes_v_make (): bytes n @ l
+  extern praxi bytes_v_make (): bytes n @ l
   fun workerlst_gen {t:nat}
     (pf_nthread: nthread_v t | t: int t):<cloref1> void =
     if t > 0 then let
@@ -330,7 +329,8 @@ extern typedef "int_ptr_type" = @(void | int, ptr)
 %{$
 
 ats_void_type subst_copy (
-  char *dst, char *src, int nsrc, seglst_cons_pstruct sgs, char *sub, int nsub
+  char *dst, char *src, int nsrc
+, seglst_cons_pstruct sgs, char *sub, int nsub
 ) {
   int ofs, beg, len ; seglst_cons_pstruct sgs_nxt ;
   for (ofs = 0 ; ; ) {
@@ -386,7 +386,7 @@ extern fun subst_pattern_string {n:nat} {l:addr}
 (* ****** ****** *)
 
 #define subst_length 22
-val subst: array (string, subst_length) = array_make_arraysize $arrsz{string}(
+val subst: array (string, subst_length) = array_make_arrsz $arrsz{string}(
   "B", "(c|g|t)"
 , "D", "(a|g|t)"
 , "H", "(a|c|t)"
@@ -450,4 +450,4 @@ end // end of [main]
 
 (* ****** ****** *)
 
-(* end of [regex-dna.dats] *)
+(* end of [regex-dna_smp.dats] *)
