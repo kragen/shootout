@@ -12,10 +12,9 @@ import (
    "fmt"
    "io/ioutil"
    "os"
+   "runtime"
    "sort"
 )
-
-var in *bufio.Reader
 
 func count(data string, n int) map[string]int {
    counts := make(map[string]int)
@@ -51,16 +50,14 @@ func sortedArray(m map[string]int) kNucArray {
    kn := make(kNucArray, len(m))
    i := 0
    for k, v := range m {
-      kn[i].name = k
-      kn[i].count = v
+      kn[i] = kNuc{k, v}
       i++
    }
    sort.Sort(kn)
    return kn
 }
 
-func print(m map[string]int) {
-   a := sortedArray(m)
+func printKnucs(a kNucArray) {
    sum := 0
    for _, kn := range a {
       sum += kn.count
@@ -68,10 +65,12 @@ func print(m map[string]int) {
    for _, kn := range a {
       fmt.Printf("%s %.3f\n", kn.name, 100*float64(kn.count)/float64(sum))
    }
+   fmt.Print("\n")
 }
 
 func main() {
-   in = bufio.NewReader(os.Stdin)
+   runtime.GOMAXPROCS(4)
+   in := bufio.NewReader(os.Stdin)
    three := []byte(">THREE ")
    for {
       line, err := in.ReadSlice('\n')
@@ -98,14 +97,32 @@ func main() {
    }
    str := string(data[0:j])
 
-   print(count(str, 1))
-   fmt.Print("\n")
-
-   print(count(str, 2))
-   fmt.Print("\n")
+   var arr1, arr2 kNucArray
+   countsdone := make(chan bool)
+   go func() {
+      arr1 = sortedArray(count(str, 1))
+      countsdone <- true
+   }()
+   go func() {
+      arr2 = sortedArray(count(str, 2))
+      countsdone <- true
+   }()
 
    interests := []string{"GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT"}
-   for _, s := range interests {
-      fmt.Printf("%d\t%s\n", countOne(str, s), s)
+   results := make([]chan string, len(interests))
+   for i, s := range interests {
+      ch := make(chan string)
+      results[i] = ch
+      go func(result chan string, ss string) {
+         result <- fmt.Sprintf("%d\t%s\n", countOne(str, ss), ss)
+      }(ch, s)
    }
+   <-countsdone
+   <-countsdone
+   printKnucs(arr1)
+   printKnucs(arr2)
+   for _, rc := range results {
+      fmt.Print(<-rc)
+   }
+
 }
