@@ -1,0 +1,74 @@
+;; The Computer Language Benchmarks Game
+;;   http://shootout.alioth.debian.org/
+;;
+;;  contributed by Jim Kannampuzha
+;;  version 0.95 (single threaded)
+
+(ns spectralnorm
+  (:import (java.text DecimalFormat) (java.util Locale))
+  (:gen-class))
+
+(set! *warn-on-reflection* true)
+
+(def n (atom 10))
+(def indices (atom (int-array (range 1 (int @n)))))
+
+(defn ^doubles eval-A [^Integer ii]
+  (let [ai (double-array @n)]
+    (loop [index (int 0)
+       offset (int ii)
+       start (int (/ (* offset (inc offset)) 2))]
+      (if (= index @n)
+    ai
+    (do
+      (aset-double ai index (/ 1.0 start))
+      (recur (inc index) (inc offset) (+ start offset)))))))
+
+(defn ^doubles eval-At [^Integer ii]
+  (let [i (int ii)
+    ati (double-array @n)]
+    (loop [index (int 0)
+       offset (inc i)
+       start (int (inc (/ (* i (dec i)) 2)))]
+      (if (= index @n)
+        ati
+    (do
+      (aset-double ati index (/ 1.0 start))
+      (recur (inc index) (inc offset) (+ start offset)))))))
+
+(defn ^Double asum [^doubles a]
+  (areduce a i r (double 0) (+ r (aget a i))))
+
+(defn ^doubles amult [^doubles u ^doubles w]
+  (amap u i r (* (aget r i) (aget w i))))
+
+(defn ^doubles mult-Av [^doubles v]
+  (let [^doubles values (double-array @n)]
+    (doseq [i @indices :let [idx (dec i)]]
+      (aset values idx (asum (amult (eval-A i) v))))
+    values))
+
+(defn ^doubles mult-Atv [^doubles v]
+  (let [^doubles values (double-array @n)]
+    (doseq [i @indices :let [idx (dec i)]]
+      (aset values idx (asum (amult (eval-At i) v))))
+    values))
+     
+(defn ^doubles mult-AtAv [^doubles v] (mult-Atv (mult-Av v)))
+
+(defn spec [size]
+  (reset! n (int size))
+  (reset! indices (int-array (range 1 (inc @n))))
+  (let [u (double-array (repeat @n 1.0))
+        v (nth (iterate mult-AtAv u) 19)
+        uv (mult-AtAv v)
+        vBv (asum (amult uv v))
+        vv (asum (amult v v))]
+    (java.lang.Math/sqrt (double (/ vBv vv)))))
+
+(defn -main [& args]
+  (let [n (if (first args) (Integer/parseInt (first args)) 1000)
+        df (doto ^DecimalFormat (DecimalFormat/getNumberInstance Locale/US)
+                 (.applyPattern "#.000000000"))]
+    (println (.format df (spec n)))))
+
