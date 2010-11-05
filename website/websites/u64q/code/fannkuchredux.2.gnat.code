@@ -1,0 +1,304 @@
+<span class="hl slc">--</span>
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Based on code by Dave Fladebo, Eckehard Berns, Heiner Marxen, Hongwei Xi,</span>
+<span class="hl slc">-- and The Anh Tran, and on the Java version of fannkuchredux by Oleg Mazurov.</span>
+<span class="hl slc">-- Contributed by Jonathan Parker and Georg Bauhaus, Nov 2010.</span>
+<span class="hl slc">--</span>
+
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Text_Io<span class="hl sym">;</span> <span class="hl kwa">use</span> Ada<span class="hl sym">.</span>Text_Io<span class="hl sym">;</span>
+<span class="hl kwa">with</span> System<span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> Fannkuchredux <span class="hl kwa">is</span>
+
+   Multitasking_Desired <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">Boolean</span> <span class="hl sym">:=</span> <span class="hl kwd">True</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Fann_Int <span class="hl kwa">is mod</span> <span class="hl num">2</span><span class="hl sym">**</span>System<span class="hl sym">.</span>Word_Size<span class="hl sym">;</span>
+
+   <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">.</span>Argument_Count <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> 
+     <span class="hl str">&quot;Exactly one input argument is required.&quot;</span><span class="hl sym">);</span>
+
+   N_image <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span>   <span class="hl sym">:=</span> Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">.</span>Argument <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+   N       <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fann_Int <span class="hl sym">:=</span> Fann_Int'Value <span class="hl sym">(</span>N_image<span class="hl sym">);</span>
+
+   <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>N <span class="hl sym">&gt;</span> <span class="hl num">1</span><span class="hl sym">,</span>  <span class="hl str">&quot;Input argument N must be integer &gt; 1.&quot;</span><span class="hl sym">);</span>
+
+   Fann_0 <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fann_Int <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   Fann_First <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fann_Int <span class="hl sym">:=</span> Fann_0<span class="hl sym">;</span>
+   Fann_Last  <span class="hl sym">:</span> <span class="hl kwa">constant</span> Fann_Int <span class="hl sym">:=</span> Fann_0 <span class="hl sym">+ (</span>N <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">subtype</span> Perm_Index <span class="hl kwa">is</span> Fann_Int <span class="hl kwa">range</span> Fann_First <span class="hl sym">..</span> Fann_Last<span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Permutation <span class="hl kwa">is array</span><span class="hl sym">(</span>Perm_Index<span class="hl sym">)</span> <span class="hl kwa">of</span> Fann_Int<span class="hl sym">;</span>
+
+   <span class="hl slc">-- The N! permutations are indexed from 0 to N!-1.  The indices </span>
+   <span class="hl slc">-- and the factorials have type Perm_id_Range. </span>
+
+   <span class="hl kwa">type</span> Perm_id_Range <span class="hl kwa">is mod</span> <span class="hl num">2</span><span class="hl sym">**</span>System<span class="hl sym">.</span>Word_Size<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>N <span class="hl sym">&lt;</span> <span class="hl num">13</span> <span class="hl kwa">or</span> System<span class="hl sym">.</span>Word_Size <span class="hl sym">=</span> <span class="hl num">64</span><span class="hl sym">);</span>
+   <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>N <span class="hl sym">&lt;</span> <span class="hl num">21</span><span class="hl sym">,</span> <span class="hl str">&quot;Input argument N must be integer &lt; 21.&quot;</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">subtype</span> Enum_Index <span class="hl kwa">is</span> Fann_Int <span class="hl kwa">range</span> Fann_First <span class="hl sym">..</span> Fann_Last<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">type</span> Enumeration <span class="hl kwa">is array</span><span class="hl sym">(</span>Enum_Index<span class="hl sym">)</span> <span class="hl kwa">of</span> Perm_id_Range<span class="hl sym">;</span> <span class="hl slc">-- holds N!'s</span>
+
+   No_of_Tasks <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">12</span><span class="hl sym">;</span>
+   <span class="hl slc">-- Using stnd setting of 12, Chunk_Size = (N! / No_of_Tasks) is even for N&gt;3.</span>
+
+   <span class="hl kwa">type</span> Task_id_Range <span class="hl kwa">is range</span> <span class="hl num">1</span> <span class="hl sym">..</span> No_of_Tasks<span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Checksum_Int <span class="hl kwa">is range</span>
+      <span class="hl sym">-</span><span class="hl num">2</span><span class="hl sym">**(</span>System<span class="hl sym">.</span>Word_Size<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)+</span><span class="hl num">1</span> <span class="hl sym">..</span> <span class="hl num">2</span><span class="hl sym">**(</span>System<span class="hl sym">.</span>Word_Size<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)-</span><span class="hl num">1</span><span class="hl sym">;</span> <span class="hl slc">-- for checksums</span>
+
+
+   <span class="hl kwa">function</span> Count_of_Flips
+     <span class="hl sym">(</span>Perm <span class="hl sym">:</span> <span class="hl kwa">in</span> Permutation<span class="hl sym">)</span>
+      <span class="hl kwa">return</span> Fann_Int
+   <span class="hl kwa">is</span> 
+      Flip_Count <span class="hl sym">:</span> Fann_Int <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Lo<span class="hl sym">,</span> Hi <span class="hl sym">:</span> Fann_Int<span class="hl sym">;</span>
+      tmp    <span class="hl sym">:</span> Fann_Int <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      P_1st  <span class="hl sym">:</span> Fann_Int    <span class="hl sym">:=</span> Perm<span class="hl sym">(</span>Perm'First<span class="hl sym">);</span>
+      Perm1  <span class="hl sym">:</span> Permutation <span class="hl sym">:=</span> Perm<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">loop</span>                      <span class="hl slc">-- Flip until P_1st = Fann_First</span>
+         <span class="hl kwa">exit when</span> P_1st <span class="hl sym">=</span> Fann_First<span class="hl sym">;</span>
+         Flip_Count <span class="hl sym">:=</span> Flip_Count <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         Lo <span class="hl sym">:=</span> Fann_First <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         Hi <span class="hl sym">:=</span> P_1st <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">while</span> Lo <span class="hl sym">&lt;</span> Hi <span class="hl kwa">loop</span>
+            tmp       <span class="hl sym">:=</span> Perm1<span class="hl sym">(</span>Lo<span class="hl sym">);</span>
+            Perm1<span class="hl sym">(</span>Lo<span class="hl sym">) :=</span> Perm1<span class="hl sym">(</span>Hi<span class="hl sym">);</span>
+            Lo <span class="hl sym">:=</span> Lo <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            Perm1<span class="hl sym">(</span>Hi<span class="hl sym">) :=</span> tmp<span class="hl sym">;</span>
+            Hi <span class="hl sym">:=</span> Hi <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+         tmp          <span class="hl sym">:=</span> Perm1<span class="hl sym">(</span>P_1st<span class="hl sym">);</span>
+         Perm1<span class="hl sym">(</span>P_1st<span class="hl sym">) :=</span> P_1st<span class="hl sym">;</span>
+         P_1st        <span class="hl sym">:=</span> tmp<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> Flip_Count<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Count_of_Flips<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Get_First_Permutation 
+     <span class="hl sym">(</span>Perm_id   <span class="hl sym">:</span> <span class="hl kwa">in</span>     Perm_id_Range<span class="hl sym">;</span>
+      Factorial <span class="hl sym">:</span> <span class="hl kwa">in</span>     Enumeration<span class="hl sym">;</span>
+      Perm      <span class="hl sym">:</span>    <span class="hl kwa">out</span> Permutation<span class="hl sym">;</span>
+      Count     <span class="hl sym">:</span>    <span class="hl kwa">out</span> Permutation<span class="hl sym">)</span> 
+   <span class="hl kwa">is</span>
+      d <span class="hl sym">:</span> Fann_Int<span class="hl sym">;</span>
+      p_id <span class="hl sym">:</span> Perm_id_Range <span class="hl sym">:=</span> Perm_id<span class="hl sym">;</span>
+      Perm1 <span class="hl sym">:</span> Permutation<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      Count <span class="hl sym">:= (</span><span class="hl kwa">others</span> <span class="hl sym">=&gt;</span> Fann_Int'First<span class="hl sym">);</span>
+      Perm  <span class="hl sym">:= (</span><span class="hl kwa">others</span> <span class="hl sym">=&gt;</span> Fann_Int'First<span class="hl sym">);</span>
+
+      <span class="hl kwa">for</span> i <span class="hl kwa">in</span> Perm'<span class="hl kwa">Range loop</span>
+         Perm<span class="hl sym">(</span>i<span class="hl sym">) :=</span> i<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> i <span class="hl kwa">in reverse</span> Fann_First<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">..</span> Fann_Last <span class="hl kwa">loop</span>
+         d        <span class="hl sym">:=</span> Fann_Int <span class="hl sym">(</span>p_id  <span class="hl sym">/</span>  Factorial<span class="hl sym">(</span>i<span class="hl sym">));</span>
+         p_id     <span class="hl sym">:=</span> p_id <span class="hl kwa">mod</span> Factorial<span class="hl sym">(</span>i<span class="hl sym">);</span> 
+         Count<span class="hl sym">(</span>i<span class="hl sym">) :=</span> d<span class="hl sym">;</span>
+
+         Perm1 <span class="hl sym">:=</span> Perm<span class="hl sym">;</span>
+         <span class="hl kwa">for</span> j <span class="hl kwa">in</span> <span class="hl num">0</span> <span class="hl sym">..</span> i <span class="hl kwa">loop</span>
+            <span class="hl kwa">if</span> j<span class="hl sym">+</span>d <span class="hl sym">&lt;=</span> i <span class="hl kwa">then</span>
+               Perm<span class="hl sym">(</span>j<span class="hl sym">) :=</span>  Perm1<span class="hl sym">(</span>j<span class="hl sym">+</span>d<span class="hl sym">);</span>
+            <span class="hl kwa">else</span>
+               Perm<span class="hl sym">(</span>j<span class="hl sym">) :=</span>  Perm1<span class="hl sym">(</span>j<span class="hl sym">+</span>d<span class="hl sym">-</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">);</span>
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end</span> Get_First_Permutation<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Get_Next_Permutation 
+     <span class="hl sym">(</span>Perm  <span class="hl sym">:</span> <span class="hl kwa">in out</span> Permutation<span class="hl sym">;</span>
+      Count <span class="hl sym">:</span> <span class="hl kwa">in out</span> Permutation<span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      Next_First <span class="hl sym">:</span> Fann_Int<span class="hl sym">;</span>
+      i<span class="hl sym">,</span> j  <span class="hl sym">:</span> Fann_Int <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      First <span class="hl sym">:</span> Fann_Int <span class="hl sym">:=</span> Perm<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+   <span class="hl kwa">begin</span>
+      Perm<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">) :=</span> Perm<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+      Perm<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) :=</span> First<span class="hl sym">;</span>
+      Count<span class="hl sym">(</span>i<span class="hl sym">) :=</span> Count<span class="hl sym">(</span>i<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+    
+      <span class="hl kwa">if</span> Count<span class="hl sym">(</span>i<span class="hl sym">) &gt;</span> i <span class="hl kwa">then</span>
+      <span class="hl kwa">loop</span>
+         Count<span class="hl sym">(</span>i<span class="hl sym">) :=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+         j <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         i <span class="hl sym">:=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         Next_First <span class="hl sym">:=</span> Perm<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+         Perm<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)    :=</span> Next_First<span class="hl sym">;</span>
+         <span class="hl kwa">loop</span>
+            Perm<span class="hl sym">(</span>j<span class="hl sym">) :=</span> Perm<span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">);</span>
+            j <span class="hl sym">:=</span> j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl kwa">exit when</span> j <span class="hl sym">=</span> i<span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+         Perm<span class="hl sym">(</span>i<span class="hl sym">)  :=</span> First<span class="hl sym">;</span>
+         First    <span class="hl sym">:=</span> Next_First<span class="hl sym">;</span>
+         Count<span class="hl sym">(</span>i<span class="hl sym">) :=</span> Count<span class="hl sym">(</span>i<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">exit when</span> Count<span class="hl sym">(</span>i<span class="hl sym">) &lt;=</span> i<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end</span> Get_Next_Permutation<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Get_Checksum_and_Flips 
+     <span class="hl sym">(</span>Task_id   <span class="hl sym">:</span> <span class="hl kwa">in</span>     Task_id_Range<span class="hl sym">;</span>
+      Factorial <span class="hl sym">:</span> <span class="hl kwa">in</span>     Enumeration<span class="hl sym">;</span>
+      Max_Flips <span class="hl sym">:</span>    <span class="hl kwa">out</span> Fann_Int<span class="hl sym">;</span>
+      Checksum  <span class="hl sym">:</span>    <span class="hl kwa">out</span> Checksum_Int<span class="hl sym">)</span>
+   <span class="hl kwa">is</span>
+      Perm_id<span class="hl sym">,</span> Perm_id_Min<span class="hl sym">,</span> Perm_id_Max <span class="hl sym">:</span> Perm_id_Range<span class="hl sym">;</span>
+      Flip_Count  <span class="hl sym">:</span> Fann_Int<span class="hl sym">;</span>
+      Perm<span class="hl sym">,</span> Count <span class="hl sym">:</span> Permutation<span class="hl sym">;</span>
+      Chunk_Size  <span class="hl sym">:</span> Perm_id_Range<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+
+      Chunk_Size <span class="hl sym">:=</span> Factorial<span class="hl sym">(</span>N<span class="hl sym">) /</span> No_of_Tasks<span class="hl sym">;</span>
+      <span class="hl kwa">pragma</span> Assert <span class="hl sym">(</span>Chunk_Size <span class="hl kwa">mod</span> <span class="hl num">2</span> <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">);</span> <span class="hl slc">-- so checksums work if No_of_Tasks&gt;1.</span>
+
+      Perm_id_Min <span class="hl sym">:=</span> Perm_id_Range <span class="hl sym">(</span>Task_id <span class="hl sym">-</span> Task_id_Range'First<span class="hl sym">) *</span> Chunk_Size<span class="hl sym">;</span>
+      Perm_id_Max <span class="hl sym">:=</span> Perm_id_Range'Min <span class="hl sym">(</span>Factorial<span class="hl sym">(</span>N<span class="hl sym">),</span> Perm_id_Min<span class="hl sym">+</span>Chunk_Size<span class="hl sym">) -</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      <span class="hl slc">--  for the First task:   Perm_id_Min = 0;  Perm_id_Max := Chunk_Size-1</span>
+      <span class="hl slc">--  Perm_id ultimately runs from 0 .. Factorial(N)-1</span>
+
+      Get_First_Permutation <span class="hl sym">(</span>Perm_id_Min<span class="hl sym">,</span> Factorial<span class="hl sym">,</span> Perm<span class="hl sym">,</span> Count<span class="hl sym">);</span>
+      <span class="hl slc">--  Initialize Perm and Count</span>
+
+      Max_Flips <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+      Checksum  <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Perm_id   <span class="hl sym">:=</span> Perm_id_Min<span class="hl sym">;</span>
+      <span class="hl kwa">loop</span>
+
+         <span class="hl kwa">if</span>  Perm<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) &gt;</span> <span class="hl num">0</span>  <span class="hl kwa">then</span>
+            Flip_Count <span class="hl sym">:=</span> Count_of_Flips <span class="hl sym">(</span>Perm<span class="hl sym">);</span>
+            Max_Flips  <span class="hl sym">:=</span> Fann_Int'Max <span class="hl sym">(</span>Max_Flips<span class="hl sym">,</span> Flip_Count<span class="hl sym">);</span>
+            <span class="hl kwa">if</span> Perm_id <span class="hl kwa">mod</span> <span class="hl num">2</span> <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span> 
+               Checksum <span class="hl sym">:=</span> Checksum <span class="hl sym">+</span> Checksum_Int <span class="hl sym">(</span>Flip_Count<span class="hl sym">);</span> 
+            <span class="hl kwa">else</span> 
+               Checksum <span class="hl sym">:=</span> Checksum <span class="hl sym">-</span> Checksum_Int <span class="hl sym">(</span>Flip_Count<span class="hl sym">);</span> 
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">exit when</span> Perm_id <span class="hl sym">&gt;=</span> Perm_id_Max<span class="hl sym">;</span>
+         Perm_id <span class="hl sym">:=</span> Perm_id <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         Get_Next_Permutation <span class="hl sym">(</span>Perm<span class="hl sym">,</span> Count<span class="hl sym">);</span>
+
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end</span> Get_Checksum_and_Flips<span class="hl sym">;</span>
+
+   <span class="hl kwa">task type</span> Flip_Counter <span class="hl kwa">is</span>
+      <span class="hl kwa">pragma</span> Storage_Size <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">**</span><span class="hl num">12</span><span class="hl sym">);</span>
+      <span class="hl kwa">entry</span> Start 
+        <span class="hl sym">(</span>Task_id   <span class="hl sym">:</span> <span class="hl kwa">in</span> Task_id_Range<span class="hl sym">;</span>
+         Factorial <span class="hl sym">:</span> <span class="hl kwa">in</span> Enumeration<span class="hl sym">);</span>
+      <span class="hl kwa">entry</span> Return_Result 
+        <span class="hl sym">(</span>Partial_Flip_Count <span class="hl sym">:</span> <span class="hl kwa">out</span> Fann_Int<span class="hl sym">;</span>
+         Partial_Checksum   <span class="hl sym">:</span> <span class="hl kwa">out</span> Checksum_Int<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Flip_Counter<span class="hl sym">;</span>
+
+
+   <span class="hl kwa">task body</span> Flip_Counter <span class="hl kwa">is</span>
+      Task_id_Local <span class="hl sym">:</span> Task_id_Range<span class="hl sym">;</span>
+      Max_Flips     <span class="hl sym">:</span> Fann_Int<span class="hl sym">;</span>
+      Checksum      <span class="hl sym">:</span> Checksum_Int<span class="hl sym">;</span>
+      F <span class="hl sym">:</span> Enumeration<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">accept</span> Start 
+        <span class="hl sym">(</span>Task_id   <span class="hl sym">:</span> <span class="hl kwa">in</span> Task_id_Range<span class="hl sym">;</span>
+         Factorial <span class="hl sym">:</span> <span class="hl kwa">in</span> Enumeration<span class="hl sym">)</span>
+      <span class="hl kwa">do</span>
+         Task_id_Local <span class="hl sym">:=</span> Task_id<span class="hl sym">;</span>
+         F <span class="hl sym">:=</span> Factorial<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Start<span class="hl sym">;</span>
+
+      Get_Checksum_and_Flips <span class="hl sym">(</span>Task_id_Local<span class="hl sym">,</span> F<span class="hl sym">,</span> Max_Flips<span class="hl sym">,</span> Checksum<span class="hl sym">);</span>
+
+      <span class="hl kwa">accept</span> Return_Result 
+        <span class="hl sym">(</span>Partial_Flip_Count <span class="hl sym">:</span> <span class="hl kwa">out</span> Fann_Int<span class="hl sym">;</span>
+         Partial_Checksum   <span class="hl sym">:</span> <span class="hl kwa">out</span> Checksum_Int<span class="hl sym">)</span>
+      <span class="hl kwa">do</span>
+         Partial_Flip_Count <span class="hl sym">:=</span> Max_Flips<span class="hl sym">;</span>
+         Partial_Checksum   <span class="hl sym">:=</span> Checksum<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Return_Result<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Flip_Counter<span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Flip_Data   <span class="hl kwa">is array</span> <span class="hl sym">(</span>Task_id_Range<span class="hl sym">)</span> <span class="hl kwa">of</span> Fann_Int<span class="hl sym">;</span>
+   <span class="hl kwa">type</span> Chksum_Data <span class="hl kwa">is array</span> <span class="hl sym">(</span>Task_id_Range<span class="hl sym">)</span> <span class="hl kwa">of</span> Checksum_Int<span class="hl sym">;</span>
+   Flip_Count_Storage <span class="hl sym">:</span> Flip_Data   <span class="hl sym">:= (</span><span class="hl kwa">others</span> <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+   Checksum_Storage   <span class="hl sym">:</span> Chksum_Data <span class="hl sym">:= (</span><span class="hl kwa">others</span> <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+   Max_Flips <span class="hl sym">:</span> Fann_Int     <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   Checksum  <span class="hl sym">:</span> Checksum_Int <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   Factorial <span class="hl sym">:</span> Enumeration<span class="hl sym">;</span>
+
+<span class="hl kwa">begin</span>
+   <span class="hl kwa">if not</span> <span class="hl sym">(</span>N <span class="hl sym">&gt;</span> <span class="hl num">3</span> <span class="hl kwa">or</span> <span class="hl sym">(</span><span class="hl kwa">not</span> Multitasking_Desired <span class="hl kwa">and</span> No_of_Tasks <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">))</span> <span class="hl kwa">then</span>
+      Put_Line <span class="hl sym">(</span><span class="hl str">&quot;Set Multitasking_Desired = False and No_of_Tasks = 1 for N &lt; 4&quot;</span><span class="hl sym">);</span>
+      <span class="hl kwa">raise</span> Program_Error<span class="hl sym">;</span>
+   <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+   Factorial<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) :=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> i <span class="hl kwa">in</span> Enum_Index <span class="hl kwa">range</span> <span class="hl num">1</span> <span class="hl sym">..</span> Enum_Index'Last <span class="hl kwa">loop</span>
+      Factorial<span class="hl sym">(</span>i<span class="hl sym">) :=</span> Factorial<span class="hl sym">(</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">) *</span> Perm_id_Range <span class="hl sym">(</span>i<span class="hl sym">);</span>
+   <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">if</span> Multitasking_Desired <span class="hl kwa">then</span>
+
+      <span class="hl kwa">declare</span>  <span class="hl slc">-- and launch 1 task for each t in Task_id_Range:</span>
+
+         Counter <span class="hl sym">:</span> <span class="hl kwa">array</span><span class="hl sym">(</span>Task_id_Range<span class="hl sym">)</span> <span class="hl kwa">of</span> Flip_Counter<span class="hl sym">;</span> <span class="hl slc">-- the tasks.</span>
+
+      <span class="hl kwa">begin</span> 
+
+         <span class="hl kwa">for</span> t <span class="hl kwa">in</span> Task_id_Range <span class="hl kwa">loop</span>
+            Counter<span class="hl sym">(</span>t<span class="hl sym">).</span>Start <span class="hl sym">(</span>t<span class="hl sym">,</span> Factorial<span class="hl sym">);</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+         <span class="hl kwa">for</span> t <span class="hl kwa">in</span> Task_id_Range <span class="hl kwa">loop</span>
+            Counter<span class="hl sym">(</span>t<span class="hl sym">).</span>Return_Result <span class="hl sym">(</span>Max_Flips<span class="hl sym">,</span> Checksum<span class="hl sym">);</span>
+            Flip_Count_Storage<span class="hl sym">(</span>t<span class="hl sym">) :=</span> Max_Flips<span class="hl sym">;</span>
+            Checksum_Storage<span class="hl sym">(</span>t<span class="hl sym">)   :=</span> Checksum<span class="hl sym">;</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">else</span>  <span class="hl slc">-- Sequential:</span>
+    
+      <span class="hl kwa">for</span> t <span class="hl kwa">in</span> Task_id_Range <span class="hl kwa">loop</span>
+         Get_Checksum_and_Flips <span class="hl sym">(</span>t<span class="hl sym">,</span> Factorial<span class="hl sym">,</span> Max_Flips<span class="hl sym">,</span> Checksum<span class="hl sym">);</span>
+         Flip_Count_Storage<span class="hl sym">(</span>t<span class="hl sym">) :=</span> Max_Flips<span class="hl sym">;</span>
+         Checksum_Storage<span class="hl sym">(</span>t<span class="hl sym">)   :=</span> Checksum<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+   Max_Flips <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> t <span class="hl kwa">in</span> Task_id_Range <span class="hl kwa">loop</span>
+      <span class="hl kwa">if</span> Flip_Count_Storage<span class="hl sym">(</span>t<span class="hl sym">) &gt;</span> Max_Flips <span class="hl kwa">then</span>
+         Max_Flips <span class="hl sym">:=</span> Flip_Count_Storage<span class="hl sym">(</span>t<span class="hl sym">);</span>
+      <span class="hl kwa">end if</span><span class="hl sym">;</span>
+   <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   Checksum <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">for</span> t <span class="hl kwa">in</span> Task_id_Range <span class="hl kwa">loop</span>
+      Checksum <span class="hl sym">:=</span> Checksum <span class="hl sym">+</span> Checksum_Storage<span class="hl sym">(</span>t<span class="hl sym">);</span> 
+   <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">declare</span>
+      C_Image <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl kwb">String</span> <span class="hl sym">:=</span> Checksum_Int'Image <span class="hl sym">(</span>Checksum<span class="hl sym">);</span>
+   <span class="hl kwa">begin</span>
+      Put_Line <span class="hl sym">(</span>C_image<span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">..</span>C_image'Last<span class="hl sym">));</span>
+      Put <span class="hl sym">(</span><span class="hl str">&quot;Pfannkuchen(&quot;</span><span class="hl sym">);</span> Put <span class="hl sym">(</span>N_image<span class="hl sym">);</span> Put <span class="hl sym">(</span><span class="hl str">&quot;) =&quot;</span><span class="hl sym">);</span>
+      Put <span class="hl sym">(</span>Fann_Int'Image <span class="hl sym">(</span>Max_Flips<span class="hl sym">));</span>
+   <span class="hl kwa">end</span><span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Fannkuchredux<span class="hl sym">;</span>
