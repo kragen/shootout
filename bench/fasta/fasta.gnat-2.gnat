@@ -1,0 +1,227 @@
+
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+--
+-- Based on code by Pascal Obry, Gautier de Montmollin, Andrew Moon
+-- Jason Blevins, and Petr Prokhorenkov
+-- Contributed by Jonathan Parker and Georg Bauhaus (Nov 2010)
+
+
+with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Streams.Stream_IO;
+
+procedure Fasta is
+
+   type Real is digits 15;
+
+   type Gene_id_Type is range -2**15 .. 2**15-1;
+
+   type Aminoacid is record
+      C : Character;  -- IUB code
+      P : Real;       -- probability
+   end record;
+
+   type Aminoacid_Set is array (Gene_id_Type range <>) of Aminoacid;
+
+   Homo_Sapiens : constant Aminoacid_Set(0 .. 3) :=
+    (('a', 0.3029549426680), ('c', 0.1979883004921),
+     ('g', 0.1975473066391), ('t', 0.3015094502008));
+
+   Genes : constant Aminoacid_Set(0 .. 14) :=
+    (('a', 0.27), ('c', 0.12), ('g', 0.12), ('t', 0.27),
+     ('B', 0.02), ('D', 0.02), ('H', 0.02), ('K', 0.02),
+     ('M', 0.02), ('N', 0.02), ('R', 0.02), ('S', 0.02),
+     ('V', 0.02), ('W', 0.02), ('Y', 0.02));
+
+   ALU : constant String :=
+     "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTG" &
+     "GGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGA" &
+     "GACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAA" &
+     "AATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAAT" &
+     "CCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAAC" &
+     "CCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTG" &
+     "CACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA";
+
+   ALU_Length : constant Positive := ALU'Length;
+
+   Lookup_Table_Size : constant := 4096;
+   Lookup_Scale : constant Real := Real (Lookup_Table_Size - 1);
+
+   type Lookup_Table is
+      array (Gene_id_Type range 0..Lookup_Table_Size-1) of Gene_id_Type;
+
+   type Random_State is mod 2**32;
+   Max   : constant Real := 1.0;
+   Seed  : constant := 42;
+   State : Random_State := Seed;
+
+   Line_Length : constant Positive := 60;
+   End_of_Line : constant String := (1 => ASCII.LF);
+
+   package Streamed_Line_IO is
+
+      procedure Put (Item : String);
+
+      procedure Close;  --  close output
+
+   end Streamed_Line_IO;
+
+
+   package body Streamed_Line_IO is
+
+      use Ada.Streams;
+
+      Stdout : Stream_IO.File_Type;
+
+      procedure Put (Item : String) is
+         subtype Index is Stream_Element_Offset range 1 .. Item'Length;
+         subtype XBytes is Stream_Element_Array (Index);
+         Item_Bytes: XBytes;
+         pragma Import (Ada, Item_Bytes);
+         for Item_Bytes'Address use Item'Address;
+         pragma Assert (Item'Size = Item_Bytes'Size);
+      begin
+         Stream_IO.Write (Stdout, Item_Bytes);
+      end Put;
+
+      procedure Close is
+      begin
+         Stream_IO.Close (Stdout);
+      end Close;
+
+   begin
+      Stream_IO.Open (Stdout,
+                      Mode => Stream_IO.Out_File,
+                      Name => "/dev/stdout");
+   end Streamed_Line_IO;
+
+
+   procedure Gen_Random
+     (Next_Result :    out Real;
+      State       : in out Random_State)
+   is
+      IM : constant := 139_968;
+      IA : constant :=   3_877;
+      IC : constant :=  29_573;
+   begin
+      State := (State * IA + IC) mod IM;
+      Next_Result := Max *(Real (State)) * (Lookup_Scale / Real (IM));
+   end Gen_Random;
+
+
+   procedure New_Line is begin
+      Streamed_Line_IO.Put (End_of_Line);
+   end New_Line;
+
+   procedure Repeat
+     (Title : in String;
+      N     : in Natural)
+   is
+      Buffer : String(1 .. ALU_Length + Line_Length);
+      nn, pos, bytes : Integer;
+   begin
+      nn := N;
+      pos := 1;
+
+      Buffer(1 .. ALU_Length) := ALU(1 .. ALU_Length);
+      Buffer(ALU_Length+1 .. Buffer'Last) := ALU(1 .. Buffer'Last-ALU_Length);
+
+      Streamed_Line_IO.Put (Title); New_Line;
+
+      while nn > 1 loop
+         Bytes := Positive'Min (Line_Length, Nn);
+
+         Streamed_Line_IO.Put (Buffer(pos .. pos+bytes-1)); New_Line;
+
+         pos := pos + bytes;
+         if pos > ALU_Length then
+            pos := pos - ALU_Length;
+         end if;
+         nn := nn - bytes;
+      end loop;
+   end Repeat;
+
+
+   procedure Randomize
+     (Genes : in Aminoacid_Set;
+      Title : in String;
+      N     : in Integer)
+   is
+      Line_Buffer : String (1 .. Line_Length + End_of_Line'Length);
+      Gene_Lookup : Lookup_Table;
+      Cumulative_Prob : array (Gene_id_Type range 0..15) of Real;
+      j : Positive;
+      u : Gene_id_Type;
+      r : Real;
+      Local_State : Random_State;
+
+      procedure Init_Lookup_Table (Genes : in Aminoacid_Set) is
+         Sum_of_Ps : Real := 0.0;
+      begin
+         for i in Genes'Range loop
+            Sum_of_Ps := Sum_of_Ps + Genes(i).p;
+            Cumulative_Prob (i) := Sum_of_Ps * Lookup_Scale;
+         end loop;
+
+         Cumulative_Prob(Genes'Last) := Lookup_Scale;
+
+         declare
+            g : Gene_id_Type := Genes'First;
+            Threshold : Real := Real(Gene_Lookup'First) - 1.0;
+         begin
+            for i in Gene_Lookup'Range loop
+               while Cumulative_Prob(g) < Threshold loop
+                  g := g + 1;
+               end loop;
+               Threshold := Threshold + 1.0;
+               Gene_Lookup(i) := g;
+            end loop;
+         end;
+      end Init_Lookup_Table;
+
+      subtype Line_End_Positions is Positive
+        range Line_Buffer'Last - End_of_Line'Length + 1 .. Line_Buffer'Last;
+   begin
+      Streamed_Line_IO.Put (Title); New_Line;
+
+      Init_Lookup_Table (Genes);
+
+      Line_Buffer(Line_End_Positions) := End_of_Line;
+
+      Local_State := State;
+      j := 1;
+      for i in 1 .. N loop
+         Gen_Random(r, Local_State);
+         u := Gene_Lookup(Gene_id_Type(Real'Truncation(r)));
+         while Cumulative_Prob(u) < r loop
+            u := u + 1;
+         end loop;
+
+         Line_Buffer(j) := Genes(u).C;
+
+         if j = Line_Length then
+            Streamed_Line_IO.Put (Line_Buffer);
+            j := 1;
+         else
+            j := j + 1;
+         end if;
+      end loop;
+      if j > 1 then
+         Streamed_Line_IO.Put (Line_Buffer(1 .. j-1) & End_of_Line);
+      end if;
+
+      State := Local_State;
+   end Randomize;
+
+   N : constant Positive := Positive'Value (Argument (1));
+
+begin
+
+  Repeat (">ONE Homo sapiens alu", N*2);
+  Randomize (Genes, ">TWO IUB ambiguity codes", N*3);
+  Randomize (Homo_Sapiens, ">THREE Homo sapiens frequency", N*5);
+
+  Streamed_Line_IO.Close;
+
+end Fasta;
+
