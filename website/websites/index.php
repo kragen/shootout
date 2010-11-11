@@ -90,7 +90,6 @@ $langs = array(
    array('ghc','Haskell GHC','haskell',$allsites),
    array('java','Java 6 -server','java',$allsites),
    array('javaxint','Java 6 -Xint','',$allsites),
-   array('javasteady','Java 6 steady state','',$allsites),
    array('tracemonkey','JavaScript TraceMonkey','',$onecoresites),
    array('v8','JavaScript V8','javascript',$onecoresites),
    array('sbcl','Lisp SBCL','lisp',$allsites),
