@@ -1,0 +1,220 @@
+<span class="hl slc">;;   The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;   http://shootout.alioth.debian.org/</span>
+
+<span class="hl slc">;; contributed by Johannes Friestad</span>
+<span class="hl slc">;; modified by Marko Kocic</span>
+
+<span class="hl sym">(</span>ns nbody
+  <span class="hl sym">(:</span>gen<span class="hl sym">-</span>class<span class="hl sym">))</span>
+
+<span class="hl sym">(</span>set<span class="hl sym">! *</span>warn<span class="hl sym">-</span>on<span class="hl sym">-</span>reflection<span class="hl sym">*</span> true<span class="hl sym">)</span>
+
+<span class="hl sym">(</span>definterface IBody
+  <span class="hl sym">(</span>^String name <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double mass <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double x <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double y <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double z <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double vx <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double vy <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>^double vz <span class="hl sym">[])</span>
+  <span class="hl sym">(</span>clone <span class="hl sym">[]</span> <span class="hl str">&quot;returns copy of self&quot;</span><span class="hl sym">)</span>
+  <span class="hl sym">(</span>p_BANG_ <span class="hl sym">[</span>^double x ^double y ^double z<span class="hl sym">]</span> <span class="hl str">&quot;set position&quot;</span><span class="hl sym">)</span>
+  <span class="hl sym">(</span>p_dt_BANG_ <span class="hl sym">[</span>^double dt<span class="hl sym">]</span> <span class="hl str">&quot;update position&quot;</span><span class="hl sym">)</span>
+  <span class="hl sym">(</span>v_dt_BANG_ <span class="hl sym">[</span>^double dt other<span class="hl sym">]</span> <span class="hl str">&quot;update velocity&quot;</span><span class="hl sym">)</span>
+  <span class="hl sym">(</span>v_BANG_ <span class="hl sym">[</span>^double vx ^double vy ^double vz<span class="hl sym">]</span> <span class="hl str">&quot;set velocity&quot;</span><span class="hl sym">)</span>
+  <span class="hl sym">(</span>v_PLUS__BANG_ <span class="hl sym">[</span>^double vx ^double vy ^double vz<span class="hl sym">]</span> <span class="hl str">&quot;add to velocity&quot;</span><span class="hl sym">)</span>
+  <span class="hl sym">(</span>energy <span class="hl sym">[</span>nbodies<span class="hl sym">]</span> <span class="hl str">&quot;energy relative to nbodies&quot;</span><span class="hl sym">))</span>
+
+
+<span class="hl sym">(</span>deftype Body <span class="hl sym">[</span>^String name
+               ^double mass
+               ^<span class="hl sym">{:</span>unsynchronized<span class="hl sym">-</span>mutable true <span class="hl sym">:</span>tag double<span class="hl sym">}</span> x
+               ^<span class="hl sym">{:</span>unsynchronized<span class="hl sym">-</span>mutable true <span class="hl sym">:</span>tag double<span class="hl sym">}</span> y
+               ^<span class="hl sym">{:</span>unsynchronized<span class="hl sym">-</span>mutable true <span class="hl sym">:</span>tag double<span class="hl sym">}</span> z
+               ^<span class="hl sym">{:</span>unsynchronized<span class="hl sym">-</span>mutable true <span class="hl sym">:</span>tag double<span class="hl sym">}</span> vx
+               ^<span class="hl sym">{:</span>unsynchronized<span class="hl sym">-</span>mutable true <span class="hl sym">:</span>tag double<span class="hl sym">}</span> vy
+               ^<span class="hl sym">{:</span>unsynchronized<span class="hl sym">-</span>mutable true <span class="hl sym">:</span>tag double<span class="hl sym">}</span> vz <span class="hl sym">]</span>
+  IBody
+  <span class="hl sym">(</span>name <span class="hl sym">[</span>this<span class="hl sym">]</span> name<span class="hl sym">)</span>
+  <span class="hl sym">(</span>x <span class="hl sym">[</span>this<span class="hl sym">]</span> x<span class="hl sym">)</span>
+  <span class="hl sym">(</span>y <span class="hl sym">[</span>this<span class="hl sym">]</span> y<span class="hl sym">)</span>
+  <span class="hl sym">(</span>z <span class="hl sym">[</span>this<span class="hl sym">]</span> z<span class="hl sym">)</span>
+  <span class="hl sym">(</span>vx <span class="hl sym">[</span>this<span class="hl sym">]</span> vx<span class="hl sym">)</span>
+  <span class="hl sym">(</span>vy <span class="hl sym">[</span>this<span class="hl sym">]</span> vy<span class="hl sym">)</span>
+  <span class="hl sym">(</span>vz <span class="hl sym">[</span>this<span class="hl sym">]</span> vz<span class="hl sym">)</span>
+  <span class="hl sym">(</span>mass <span class="hl sym">[</span>this<span class="hl sym">]</span> mass<span class="hl sym">)</span>
+  <span class="hl sym">(</span>clone <span class="hl sym">[</span>this<span class="hl sym">] (</span>Body. name mass x y z vx vy vz<span class="hl sym">))</span>
+
+  <span class="hl sym">(</span>p<span class="hl sym">! [</span>this nx ny nz<span class="hl sym">]</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> x nx<span class="hl sym">) (</span>set<span class="hl sym">!</span> y ny<span class="hl sym">) (</span>set<span class="hl sym">!</span> z nz<span class="hl sym">)</span>
+    this<span class="hl sym">)</span>
+
+  <span class="hl sym">(</span>v<span class="hl sym">! [</span>this nvx nvy nvz<span class="hl sym">]</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> vx nvx<span class="hl sym">) (</span>set<span class="hl sym">!</span> vy nvy<span class="hl sym">) (</span>set<span class="hl sym">!</span> vz nvz<span class="hl sym">)</span>
+    this<span class="hl sym">)</span>
+
+  <span class="hl sym">(</span>v<span class="hl sym">+! [</span>this dvx dvy dvz<span class="hl sym">]</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> vx <span class="hl sym">(+</span> vx dvx<span class="hl sym">))</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> vy <span class="hl sym">(+</span> vy dvy<span class="hl sym">))</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> vz <span class="hl sym">(+</span> vz dvz<span class="hl sym">)))</span>
+
+  <span class="hl sym">(</span>p<span class="hl sym">-</span>dt<span class="hl sym">! [</span>this dt<span class="hl sym">]</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> x <span class="hl sym">(+</span> x <span class="hl sym">(*</span> dt vx<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> y <span class="hl sym">(+</span> y <span class="hl sym">(*</span> dt vy<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>set<span class="hl sym">!</span> z <span class="hl sym">(+</span> z <span class="hl sym">(*</span> dt vz<span class="hl sym">)))</span>
+    this <span class="hl sym">)</span>
+
+  <span class="hl sym">(</span>v<span class="hl sym">-</span>dt<span class="hl sym">! [</span>this dt other<span class="hl sym">]</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>^Body nbody other
+          dx <span class="hl sym">(-</span> x <span class="hl sym">(</span>.x nbody<span class="hl sym">))</span>
+          dy <span class="hl sym">(-</span> y <span class="hl sym">(</span>.y nbody<span class="hl sym">))</span>
+          dz <span class="hl sym">(-</span> z <span class="hl sym">(</span>.z nbody<span class="hl sym">))</span>
+          dsq <span class="hl sym">(+ (*</span> dx dx<span class="hl sym">)</span>
+                <span class="hl sym">(+ (*</span> dy dy<span class="hl sym">)</span>
+                  <span class="hl sym">(*</span> dz dz<span class="hl sym">)))</span>
+          mag <span class="hl sym">(/</span> dt <span class="hl sym">(*</span> dsq <span class="hl sym">(</span>Math<span class="hl sym">/</span>sqrt dsq<span class="hl sym">)))</span>
+          m1 <span class="hl sym">(- (* (</span>.mass nbody<span class="hl sym">)</span> mag<span class="hl sym">))</span>
+          m2 <span class="hl sym">(*</span> mass mag<span class="hl sym">) ]</span>
+      <span class="hl slc">; own velocity</span>
+      <span class="hl sym">(</span>set<span class="hl sym">!</span> vx <span class="hl sym">(+</span> vx <span class="hl sym">(*</span> dx m1<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>set<span class="hl sym">!</span> vy <span class="hl sym">(+</span> vy <span class="hl sym">(*</span> dy m1<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>set<span class="hl sym">!</span> vz <span class="hl sym">(+</span> vz <span class="hl sym">(*</span> dz m1<span class="hl sym">)))</span>
+      <span class="hl slc">; v of other</span>
+      <span class="hl sym">(</span>.v<span class="hl sym">+!</span> nbody <span class="hl sym">(*</span> dx m2<span class="hl sym">) (*</span> dy m2<span class="hl sym">) (*</span> dz m2<span class="hl sym">))</span>
+      this <span class="hl sym">))</span>
+
+  <span class="hl sym">(</span>energy <span class="hl sym">[</span>this nbodies<span class="hl sym">]</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>v<span class="hl sym">-</span>sq <span class="hl sym">(+ (*</span> vx vx<span class="hl sym">) (*</span> vy vy<span class="hl sym">) (*</span> vz vz<span class="hl sym">))</span>
+          e <span class="hl sym">(*</span> <span class="hl num">1</span><span class="hl sym">/</span><span class="hl num">2</span> mass v<span class="hl sym">-</span>sq<span class="hl sym">)</span>  <span class="hl slc">; kinetic energy: 1/2 * m * v^2</span>
+          f <span class="hl sym">(</span>fn <span class="hl sym">[</span>e ^Body nbody<span class="hl sym">]</span>
+              <span class="hl sym">(</span>let <span class="hl sym">[</span>dx <span class="hl sym">(-</span> x <span class="hl sym">(</span>.x nbody<span class="hl sym">))</span>
+                    dy <span class="hl sym">(-</span> y <span class="hl sym">(</span>.y nbody<span class="hl sym">))</span>
+                    dz <span class="hl sym">(-</span> z <span class="hl sym">(</span>.z nbody<span class="hl sym">))</span>
+                    dist <span class="hl sym">(</span>Math<span class="hl sym">/</span>sqrt
+                           <span class="hl sym">(+ (*</span> dx dx<span class="hl sym">) (*</span> dy dy<span class="hl sym">) (*</span> dz dz<span class="hl sym">))) ]</span>
+                <span class="hl sym">(-</span> e <span class="hl sym">(/ (*</span> mass <span class="hl sym">(</span>.mass nbody<span class="hl sym">))</span>
+                       dist<span class="hl sym">)))) ]</span>
+      <span class="hl sym">(</span>reduce f e nbodies<span class="hl sym">)))</span>
+
+  Object
+  <span class="hl sym">(</span>toString <span class="hl sym">[</span>this<span class="hl sym">]</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>fmt <span class="hl str">&quot; %s mass %.3f</span><span class="hl esc">\</span><span class="hl str">n p: [%.3f %.3f %.3f]</span><span class="hl esc">\</span><span class="hl str">n v: [%.3f %.3f %.3f]</span><span class="hl esc">\</span><span class="hl str">n&quot;</span><span class="hl sym">]</span>
+      <span class="hl sym">(</span>format fmt name mass x y z vx vy vz <span class="hl sym">(</span>type x<span class="hl sym">)))) )</span>
+
+<span class="hl sym">(</span>let <span class="hl sym">[</span>solar<span class="hl sym">-</span>mass <span class="hl sym">(*</span> <span class="hl num">4</span> Math<span class="hl sym">/</span>PI Math<span class="hl sym">/</span>PI<span class="hl sym">)</span>
+      days<span class="hl sym">-</span>year <span class="hl num">365.24</span> <span class="hl sym">]</span>
+  <span class="hl sym">(</span>defn mk<span class="hl sym">-</span>body <span class="hl sym">[</span>b<span class="hl sym">-</span>name <span class="hl sym">&amp;</span> args<span class="hl sym">]</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[{:</span>keys <span class="hl sym">[</span>x y z vx vy vz mass<span class="hl sym">]} (</span>apply hash<span class="hl sym">-</span>map args<span class="hl sym">) ]</span>
+      <span class="hl sym">(</span>Body. <span class="hl sym">(</span>name b<span class="hl sym">-</span>name<span class="hl sym">) (*</span> mass solar<span class="hl sym">-</span>mass<span class="hl sym">)</span> x y z
+        <span class="hl sym">(*</span> vx days<span class="hl sym">-</span>year<span class="hl sym">) (*</span> vy days<span class="hl sym">-</span>year<span class="hl sym">) (*</span> vz days<span class="hl sym">-</span>year<span class="hl sym">)))))</span>
+
+<span class="hl slc">; Data for initial state</span>
+<span class="hl sym">(</span>def <span class="hl sym">*</span>data<span class="hl sym">*</span>
+  <span class="hl sym">(</span>list
+    <span class="hl sym">(</span>mk<span class="hl sym">-</span>body <span class="hl sym">:</span>sun
+      <span class="hl sym">:</span>x <span class="hl num">0.0</span>
+      <span class="hl sym">:</span>y <span class="hl num">0.0</span>
+      <span class="hl sym">:</span>z <span class="hl num">0.0</span>
+      <span class="hl sym">:</span>vx <span class="hl num">0.0</span>
+      <span class="hl sym">:</span>vy <span class="hl num">0.0</span>
+      <span class="hl sym">:</span>vz <span class="hl num">0.0</span>
+      <span class="hl sym">:</span>mass <span class="hl num">1.0</span> <span class="hl sym">)</span>
+    <span class="hl sym">(</span>mk<span class="hl sym">-</span>body <span class="hl sym">:</span>jupiter
+      <span class="hl sym">:</span>x <span class="hl num">4.84143144246472090e+00</span>
+      <span class="hl sym">:</span>y <span class="hl sym">-</span><span class="hl num">1.16032004402742839e+00</span>
+      <span class="hl sym">:</span>z <span class="hl sym">-</span><span class="hl num">1.03622044471123109e-01</span>
+      <span class="hl sym">:</span>vx <span class="hl num">1.66007664274403694e-03</span>
+      <span class="hl sym">:</span>vy <span class="hl num">7.69901118419740425e-03</span>
+      <span class="hl sym">:</span>vz <span class="hl sym">-</span><span class="hl num">6.90460016972063023e-05</span>
+      <span class="hl sym">:</span>mass <span class="hl num">9.54791938424326609e-04</span> <span class="hl sym">)</span>
+    <span class="hl sym">(</span>mk<span class="hl sym">-</span>body <span class="hl sym">:</span>saturn
+      <span class="hl sym">:</span>x <span class="hl num">8.34336671824457987e+00</span>
+      <span class="hl sym">:</span>y <span class="hl num">4.12479856412430479e+00</span>
+      <span class="hl sym">:</span>z <span class="hl sym">-</span><span class="hl num">4.03523417114321381e-01</span>
+      <span class="hl sym">:</span>vx <span class="hl sym">-</span><span class="hl num">2.76742510726862411e-03</span>
+      <span class="hl sym">:</span>vy <span class="hl num">4.99852801234917238e-03</span>
+      <span class="hl sym">:</span>vz <span class="hl num">2.30417297573763929e-05</span>
+      <span class="hl sym">:</span>mass <span class="hl num">2.85885980666130812e-04</span> <span class="hl sym">)</span>
+    <span class="hl sym">(</span>mk<span class="hl sym">-</span>body <span class="hl sym">:</span>uranus
+      <span class="hl sym">:</span>x <span class="hl num">1.28943695621391310e+01</span>
+      <span class="hl sym">:</span>y <span class="hl sym">-</span><span class="hl num">1.51111514016986312e+01</span>
+      <span class="hl sym">:</span>z <span class="hl sym">-</span><span class="hl num">2.23307578892655734e-01</span>
+      <span class="hl sym">:</span>vx <span class="hl num">2.96460137564761618e-03</span>
+      <span class="hl sym">:</span>vy <span class="hl num">2.37847173959480950e-03</span>
+      <span class="hl sym">:</span>vz <span class="hl sym">-</span><span class="hl num">2.96589568540237556e-05</span>
+      <span class="hl sym">:</span>mass <span class="hl num">4.36624404335156298e-05</span> <span class="hl sym">)</span>
+    <span class="hl sym">(</span>mk<span class="hl sym">-</span>body <span class="hl sym">:</span>neptune
+      <span class="hl sym">:</span>x <span class="hl num">1.53796971148509165e+01</span>
+      <span class="hl sym">:</span>y <span class="hl sym">-</span><span class="hl num">2.59193146099879641e+01</span>
+      <span class="hl sym">:</span>z <span class="hl num">1.79258772950371181e-01</span>
+      <span class="hl sym">:</span>vx <span class="hl num">2.68067772490389322e-03</span>
+      <span class="hl sym">:</span>vy <span class="hl num">1.62824170038242295e-03</span>
+      <span class="hl sym">:</span>vz <span class="hl sym">-</span><span class="hl num">9.51592254519715870e-05</span>
+      <span class="hl sym">:</span>mass <span class="hl num">5.15138902046611451e-05</span> <span class="hl sym">) ))</span>
+
+
+<span class="hl sym">(</span>def <span class="hl sym">*</span>bodies<span class="hl sym">*)</span>
+
+<span class="hl sym">(</span>defn init<span class="hl sym">-</span>state <span class="hl sym">[]</span>
+  <span class="hl slc">;;   &quot;Initialize state&quot;</span>
+  <span class="hl slc">;; clone is a convenience for repeated runs in the REPL.</span>
+  <span class="hl sym">(</span>def <span class="hl sym">*</span>bodies<span class="hl sym">* (</span>into<span class="hl sym">-</span>array Object <span class="hl sym">(</span>map #<span class="hl sym">(</span>.clone ^Body %<span class="hl sym">) *</span>data<span class="hl sym">*)))</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[[</span>px py pz<span class="hl sym">] (</span>reduce <span class="hl sym">(</span>fn <span class="hl sym">[[</span>px py pz<span class="hl sym">]</span> ^Body b<span class="hl sym">]</span>
+                             <span class="hl sym">(</span>vector
+                              <span class="hl sym">(+</span> px <span class="hl sym">(* (</span>.vx b<span class="hl sym">) (</span>.mass b<span class="hl sym">)))</span>
+                              <span class="hl sym">(+</span> py <span class="hl sym">(* (</span>.vy b<span class="hl sym">) (</span>.mass b<span class="hl sym">)))</span>
+                              <span class="hl sym">(+</span> pz <span class="hl sym">(* (</span>.vz b<span class="hl sym">) (</span>.mass b<span class="hl sym">))) ))</span>
+                           <span class="hl sym">[</span><span class="hl num">0.0 0.0 0.0</span><span class="hl sym">]</span>
+                           <span class="hl sym">*</span>bodies<span class="hl sym">*)</span>
+        ^Body sun <span class="hl sym">(</span>aget ^objects <span class="hl sym">*</span>bodies<span class="hl sym">*</span> <span class="hl num">0</span><span class="hl sym">)</span>
+        mass <span class="hl sym">(</span>.mass sun<span class="hl sym">) ]</span>
+    <span class="hl sym">(</span>.v<span class="hl sym">!</span> sun <span class="hl sym">(/ (-</span> px<span class="hl sym">)</span> mass<span class="hl sym">) (/ (-</span> py<span class="hl sym">)</span> mass<span class="hl sym">) (/ (-</span> pz<span class="hl sym">)</span> mass<span class="hl sym">))))</span>
+
+<span class="hl sym">(</span>defn energy
+<span class="hl slc">;   &quot;Total energy for current state&quot;</span>
+  <span class="hl sym">([] (</span>energy <span class="hl sym">*</span>bodies<span class="hl sym">*))</span> <span class="hl slc">; total</span>
+  <span class="hl sym">([</span>bodies<span class="hl sym">]</span>              <span class="hl slc">; loop</span>
+    <span class="hl sym">(</span>if<span class="hl sym">-</span>not bodies <span class="hl num">0.0</span>
+      <span class="hl sym">(+ (</span>.energy ^Body <span class="hl sym">(</span>first bodies<span class="hl sym">) (</span>next bodies<span class="hl sym">))</span>
+        <span class="hl sym">(</span>energy <span class="hl sym">(</span>next bodies<span class="hl sym">))))))</span>
+
+<span class="hl sym">(</span>defn advance <span class="hl sym">[</span>dt<span class="hl sym">]</span>
+<span class="hl slc">;   &quot;Move system one dt timestep forwards&quot;</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>^objects bodies <span class="hl sym">*</span>bodies<span class="hl sym">*</span>
+        len <span class="hl sym">(</span>int <span class="hl sym">(</span>alength bodies<span class="hl sym">))</span>
+        dt <span class="hl sym">(</span>double dt<span class="hl sym">) ]</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i len<span class="hl sym">]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>^Body body <span class="hl sym">(</span>aget bodies i<span class="hl sym">) ]</span>
+        <span class="hl slc">; update velocity</span>
+        <span class="hl sym">(</span>loop <span class="hl sym">[</span>j <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc i<span class="hl sym">) ]</span>
+          <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> j len<span class="hl sym">)</span>
+            <span class="hl sym">(</span>let <span class="hl sym">[</span>^Body nbody <span class="hl sym">(</span>aget bodies j<span class="hl sym">)]</span>
+              <span class="hl sym">(</span>.v<span class="hl sym">-</span>dt<span class="hl sym">!</span> body dt nbody<span class="hl sym">)</span>
+              <span class="hl sym">(</span>recur <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc j<span class="hl sym">)))))</span>
+        <span class="hl slc">; update position</span>
+        <span class="hl sym">(</span>.p<span class="hl sym">-</span>dt<span class="hl sym">!</span> body dt<span class="hl sym">)))))</span>
+
+
+<span class="hl sym">(</span>defn usage <span class="hl sym">[</span>exit<span class="hl sym">-</span>code<span class="hl sym">]</span>
+  <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;usage: %s n&quot;</span> <span class="hl sym">*</span>file<span class="hl sym">*))</span>
+  <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;    n, a positive integer, is the number of simulation steps to run&quot;</span><span class="hl sym">))</span>
+  <span class="hl sym">(</span>. System <span class="hl sym">(</span>exit exit<span class="hl sym">-</span>code<span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn <span class="hl sym">-</span>main <span class="hl sym">[&amp;</span> args<span class="hl sym">]</span>
+  <span class="hl sym">(</span>when <span class="hl sym">(</span>not<span class="hl sym">= (</span>count args<span class="hl sym">)</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl sym">(</span>usage <span class="hl num">1</span><span class="hl sym">))</span>
+  <span class="hl sym">(</span>def n
+       <span class="hl sym">(</span>let <span class="hl sym">[</span>arg <span class="hl sym">(</span>nth args <span class="hl num">0</span><span class="hl sym">)]</span>
+         <span class="hl sym">(</span>when <span class="hl sym">(</span>not <span class="hl sym">(</span>re<span class="hl sym">-</span>matches #<span class="hl str">&quot;^</span><span class="hl esc">\</span><span class="hl str">d+$&quot;</span> arg<span class="hl sym">))</span>
+           <span class="hl sym">(</span>usage <span class="hl num">1</span><span class="hl sym">))</span>
+         <span class="hl sym">(</span>let <span class="hl sym">[</span>temp <span class="hl sym">(</span>. Integer valueOf arg <span class="hl num">10</span><span class="hl sym">)]</span>
+           <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> temp <span class="hl num">1</span><span class="hl sym">)</span>
+             <span class="hl sym">(</span>usage <span class="hl num">1</span><span class="hl sym">))</span>
+           temp<span class="hl sym">)))</span>
+  <span class="hl sym">(</span>init<span class="hl sym">-</span>state<span class="hl sym">)</span>
+  <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;%.9f&quot;</span> <span class="hl sym">(</span>energy<span class="hl sym">)))</span>
+  <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>_ <span class="hl sym">(</span>int n<span class="hl sym">)]</span>
+    <span class="hl sym">(</span>advance <span class="hl num">0.01</span><span class="hl sym">))</span>
+  <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;%.9f&quot;</span> <span class="hl sym">(</span>energy<span class="hl sym">))))</span>
