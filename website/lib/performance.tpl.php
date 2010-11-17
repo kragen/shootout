@@ -235,6 +235,9 @@ if (sizeof($Special)>0){
       } elseif ($Sort=='kb'){
          if (($TestName=='startup')||($first[DATA_MEMORY]==0)){ $ratio = 0; }
          else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
+      } elseif ($Sort=='gz'){
+         if ($first[DATA_GZ]==0){ $ratio = 0; }
+         else { $ratio = $d[DATA_GZ]/$first[DATA_GZ]; }
       }
 
 
