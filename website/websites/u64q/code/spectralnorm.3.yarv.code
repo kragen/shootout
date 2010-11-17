@@ -1,0 +1,137 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc"># Contributed by Rick Branson</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># There is currently a bug in JRuby as of 11/16/2010 that causes</span>
+<span class="hl slc"># Marshal to read IOs in a blocking manner, which will cause this</span>
+<span class="hl slc"># script to hang.</span>
+
+IS_THREADED <span class="hl sym">=</span> <span class="hl kwc">RUBY_PLATFORM</span> <span class="hl sym">==</span> <span class="hl str">&quot;java&quot;</span>
+
+<span class="hl kwa">if</span> IS_THREADED
+  <span class="hl kwa">require</span> <span class="hl str">&quot;fcntl&quot;</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">class</span> Worker
+  
+  attr_reader <span class="hl sym">:</span>reader
+  
+  <span class="hl kwa">def</span> <span class="hl kwd">initialize</span><span class="hl sym">(</span>enum<span class="hl sym">,</span> index<span class="hl sym">,</span> total<span class="hl sym">, &amp;</span>block<span class="hl sym">)</span>
+    <span class="hl kwb">&#64;enum</span>   <span class="hl sym">=</span> enum
+    <span class="hl kwb">&#64;index</span>  <span class="hl sym">=</span> index
+    <span class="hl kwb">&#64;total</span>  <span class="hl sym">=</span> total
+    
+    <span class="hl kwb">&#64;reader</span><span class="hl sym">,</span> <span class="hl kwb">&#64;writer</span> <span class="hl sym">=</span> IO<span class="hl sym">.</span>pipe
+      
+    <span class="hl kwa">if</span> IS_THREADED
+      <span class="hl kwb">&#64;thread</span> <span class="hl sym">=</span> Thread<span class="hl sym">.</span>new <span class="hl kwa">do</span>
+        <span class="hl kwa">self</span><span class="hl sym">.</span><span class="hl kwd">execute</span><span class="hl sym">(&amp;</span>block<span class="hl sym">)</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwb">&#64;p</span> <span class="hl sym">=</span> Process<span class="hl sym">.</span>fork <span class="hl kwa">do</span>
+        <span class="hl kwb">&#64;reader</span><span class="hl sym">.</span>close
+        <span class="hl kwa">self</span><span class="hl sym">.</span><span class="hl kwd">execute</span><span class="hl sym">(&amp;</span>block<span class="hl sym">)</span>
+        <span class="hl kwb">&#64;writer</span><span class="hl sym">.</span>close
+      <span class="hl kwa">end</span>
+      
+      <span class="hl kwb">&#64;writer</span><span class="hl sym">.</span>close
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+  
+  <span class="hl kwa">def</span> <span class="hl kwd">execute</span><span class="hl sym">(&amp;</span>block<span class="hl sym">)</span>
+    chk   <span class="hl sym">=</span> <span class="hl kwb">&#64;enum</span><span class="hl sym">.</span>size <span class="hl sym">/</span> <span class="hl kwb">&#64;total</span>
+    
+    <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">...</span> <span class="hl kwb">&#64;enum</span><span class="hl sym">.</span>size<span class="hl sym">).</span><span class="hl kwd">step</span><span class="hl sym">(</span><span class="hl kwb">&#64;total</span><span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>i<span class="hl sym">|</span>
+      idx <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl kwb">&#64;index</span>
+      d <span class="hl sym">=</span> <span class="hl kwb">&#64;enum</span><span class="hl sym">[</span>idx<span class="hl sym">]</span>
+      <span class="hl kwd">to_parent</span><span class="hl sym">([</span>idx<span class="hl sym">,</span> <span class="hl kwa">yield</span><span class="hl sym">(</span>d<span class="hl sym">)])</span> <span class="hl kwa">unless</span> d <span class="hl sym">==</span> <span class="hl kwa">nil</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  <span class="hl kwa">def</span> <span class="hl kwd">to_parent</span><span class="hl sym">(</span>msg<span class="hl sym">)</span>
+    Marshal<span class="hl sym">.</span><span class="hl kwd">dump</span><span class="hl sym">(</span>msg<span class="hl sym">,</span> <span class="hl kwb">&#64;writer</span><span class="hl sym">)</span>
+  <span class="hl kwa">end</span>
+  
+  <span class="hl kwa">def self</span><span class="hl sym">.</span><span class="hl kwd">gather</span><span class="hl sym">(</span>workers<span class="hl sym">)</span>
+    res <span class="hl sym">= []</span>
+    ios <span class="hl sym">=</span> workers<span class="hl sym">.</span>map <span class="hl sym">{ |</span>w<span class="hl sym">|</span> w<span class="hl sym">.</span>reader <span class="hl sym">}</span>
+
+    <span class="hl kwa">while</span> ios<span class="hl sym">.</span>size <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">do</span>
+      sr<span class="hl sym">,</span> sw<span class="hl sym">,</span> se <span class="hl sym">=</span> IO<span class="hl sym">.</span><span class="hl kwd">select</span><span class="hl sym">(</span>ios<span class="hl sym">,</span> <span class="hl kwa">nil</span><span class="hl sym">,</span> <span class="hl kwa">nil</span><span class="hl sym">)</span>
+
+      <span class="hl kwa">if</span> sr
+        sr<span class="hl sym">.</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>io<span class="hl sym">|</span>
+          <span class="hl kwa">begin</span>
+            <span class="hl kwa">loop do</span>
+              msg <span class="hl sym">=</span> Marshal<span class="hl sym">.</span><span class="hl kwd">load</span><span class="hl sym">(</span>io<span class="hl sym">)</span>          
+              idx<span class="hl sym">,</span> content <span class="hl sym">=</span> msg
+              res<span class="hl sym">[</span>idx<span class="hl sym">] =</span> content
+            <span class="hl kwa">end</span>
+          <span class="hl kwa">rescue</span> EOFError
+            ios<span class="hl sym">.</span><span class="hl kwd">delete</span><span class="hl sym">(</span>io<span class="hl sym">)</span>
+          <span class="hl kwa">end</span>
+        <span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    
+    Process<span class="hl sym">.</span>waitall
+    res
+  <span class="hl kwa">end</span>
+
+  <span class="hl kwa">def self</span><span class="hl sym">.</span><span class="hl kwd">map</span><span class="hl sym">(</span>enum<span class="hl sym">,</span> worker_count <span class="hl sym">=</span> <span class="hl num">6</span><span class="hl sym">, &amp;</span>block<span class="hl sym">)</span>
+    count <span class="hl sym">= [</span>enum<span class="hl sym">.</span>size<span class="hl sym">,</span> worker_count<span class="hl sym">].</span>min
+
+    workers <span class="hl sym">= (</span><span class="hl num">0</span> <span class="hl sym">...</span> count<span class="hl sym">).</span>map <span class="hl kwa">do</span> <span class="hl sym">|</span>idx<span class="hl sym">|</span>
+      Worker<span class="hl sym">.</span><span class="hl kwd">new</span><span class="hl sym">(</span>enum<span class="hl sym">,</span> idx<span class="hl sym">,</span> count<span class="hl sym">, &amp;</span>block<span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+
+    Worker<span class="hl sym">.</span><span class="hl kwd">gather</span><span class="hl sym">(</span>workers<span class="hl sym">)</span>    
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">eval_A_times_u</span><span class="hl sym">(</span>u<span class="hl sym">)</span>
+  usz     <span class="hl sym">=</span> u<span class="hl sym">.</span>size
+  urange  <span class="hl sym">= (</span><span class="hl num">0</span> <span class="hl sym">...</span> usz<span class="hl sym">)</span>
+  umap    <span class="hl sym">=</span> urange<span class="hl sym">.</span>to_a
+  
+  Worker<span class="hl sym">.</span><span class="hl kwd">map</span><span class="hl sym">(</span>umap<span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>i<span class="hl sym">|</span>
+    urange<span class="hl sym">.</span><span class="hl kwd">inject</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>sum<span class="hl sym">,</span> j<span class="hl sym">|</span>
+      sum <span class="hl sym">+= (</span><span class="hl num">1.0</span> <span class="hl kwc">/ ((i + j) * (i + j + 1) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) *</span> u<span class="hl sym">[</span>j<span class="hl sym">]</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span>u<span class="hl sym">)</span>
+  usz     <span class="hl sym">=</span> u<span class="hl sym">.</span>size
+  urange  <span class="hl sym">= (</span><span class="hl num">0</span> <span class="hl sym">...</span> usz<span class="hl sym">)</span>
+  umap    <span class="hl sym">=</span> urange<span class="hl sym">.</span>to_a
+  
+  Worker<span class="hl sym">.</span><span class="hl kwd">map</span><span class="hl sym">(</span>umap<span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>i<span class="hl sym">|</span>
+    urange<span class="hl sym">.</span><span class="hl kwd">inject</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>sum<span class="hl sym">,</span> j<span class="hl sym">|</span>
+      sum <span class="hl sym">+= (</span><span class="hl num">1.0</span> <span class="hl kwc">/ ((j + i) * (j + i + 1) /</span> <span class="hl num">2</span> <span class="hl sym">+</span> j <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">)) *</span> u<span class="hl sym">[</span>j<span class="hl sym">]</span>      
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>u<span class="hl sym">)</span>
+  <span class="hl kwd">eval_At_times_u</span><span class="hl sym">(</span><span class="hl kwd">eval_A_times_u</span><span class="hl sym">(</span>u<span class="hl sym">))</span>
+<span class="hl kwa">end</span>
+
+n <span class="hl sym">=</span> <span class="hl kwc">ARGV</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>to_i
+u <span class="hl sym">= [</span><span class="hl num">1</span><span class="hl sym">] *</span> n
+v <span class="hl sym">=</span> <span class="hl kwa">nil</span>
+
+<span class="hl num">10</span><span class="hl sym">.</span>times <span class="hl kwa">do</span>
+  v <span class="hl sym">=</span> <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>u<span class="hl sym">)</span>
+  u <span class="hl sym">=</span> <span class="hl kwd">eval_AtA_times_u</span><span class="hl sym">(</span>v<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+vBv <span class="hl sym">=</span> <span class="hl num">0</span>
+vv  <span class="hl sym">=</span> <span class="hl num">0</span>
+
+<span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">...</span> n<span class="hl sym">).</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>i<span class="hl sym">|</span>
+  vBv <span class="hl sym">+=</span> u<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">]</span>
+  vv  <span class="hl sym">+=</span> v<span class="hl sym">[</span>i<span class="hl sym">] *</span> v<span class="hl sym">[</span>i<span class="hl sym">]</span>
+<span class="hl kwa">end</span>
+
+print <span class="hl str">&quot;%0.9f&quot;</span> <span class="hl sym">% (</span>Math<span class="hl sym">.</span><span class="hl kwd">sqrt</span><span class="hl sym">(</span>vBv <span class="hl sym">/</span> vv<span class="hl sym">)),</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span>
