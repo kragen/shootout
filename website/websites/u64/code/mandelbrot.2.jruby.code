@@ -1,0 +1,144 @@
+<span class="hl slc">#  The Computer Language Benchmarks Game</span>
+<span class="hl slc">#  http://shootout.alioth.debian.org/</span>
+<span class="hl slc">#</span>
+<span class="hl slc">#  contributed by Karl von Laudermann</span>
+<span class="hl slc">#  modified by Jeremy Echols</span>
+<span class="hl slc">#  modified by Detlef Reichl</span>
+<span class="hl slc">#  modified by Joseph LaFata</span>
+
+PAD <span class="hl sym">=</span> <span class="hl str">&quot;</span><span class="hl esc">\\\\</span><span class="hl str">__MARSHAL_RECORD_SEPARATOR__//&quot;</span> <span class="hl slc"># silly, but works</span>
+
+<span class="hl kwa">class</span> Worker
+  
+  attr_reader <span class="hl sym">:</span>reader
+  
+  <span class="hl kwa">def</span> <span class="hl kwd">initialize</span><span class="hl sym">(</span>enum<span class="hl sym">,</span> index<span class="hl sym">,</span> total<span class="hl sym">, &amp;</span>block<span class="hl sym">)</span>
+    <span class="hl kwb">&#64;enum</span>             <span class="hl sym">=</span> enum
+    <span class="hl kwb">&#64;index</span>            <span class="hl sym">=</span> index
+    <span class="hl kwb">&#64;total</span>            <span class="hl sym">=</span> total
+    <span class="hl kwb">&#64;reader</span><span class="hl sym">,</span> <span class="hl kwb">&#64;writer</span>  <span class="hl sym">=</span> IO<span class="hl sym">.</span>pipe
+    
+    <span class="hl kwa">if</span> <span class="hl kwc">RUBY_PLATFORM</span> <span class="hl sym">==</span> <span class="hl str">&quot;java&quot;</span>
+      <span class="hl kwb">&#64;t</span> <span class="hl sym">=</span> Thread<span class="hl sym">.</span>new <span class="hl kwa">do</span>
+        <span class="hl kwa">self</span><span class="hl sym">.</span><span class="hl kwd">execute</span><span class="hl sym">(&amp;</span>block<span class="hl sym">)</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">else</span>
+      <span class="hl kwb">&#64;p</span> <span class="hl sym">=</span> Process<span class="hl sym">.</span>fork <span class="hl kwa">do</span>
+        <span class="hl kwb">&#64;reader</span><span class="hl sym">.</span>close
+        <span class="hl kwa">self</span><span class="hl sym">.</span><span class="hl kwd">execute</span><span class="hl sym">(&amp;</span>block<span class="hl sym">)</span>
+        <span class="hl kwb">&#64;writer</span><span class="hl sym">.</span>close
+      <span class="hl kwa">end</span>
+      
+      <span class="hl kwb">&#64;writer</span><span class="hl sym">.</span>close
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+  
+  <span class="hl kwa">def</span> <span class="hl kwd">execute</span><span class="hl sym">(&amp;</span>block<span class="hl sym">)</span>
+    <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">...</span> <span class="hl kwb">&#64;enum</span><span class="hl sym">.</span>size<span class="hl sym">).</span><span class="hl kwd">step</span><span class="hl sym">(</span><span class="hl kwb">&#64;total</span><span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>bi<span class="hl sym">|</span>
+      idx <span class="hl sym">=</span> bi <span class="hl sym">+</span> <span class="hl kwb">&#64;index</span>
+      <span class="hl kwa">if</span> item <span class="hl sym">=</span> <span class="hl kwb">&#64;enum</span><span class="hl sym">[</span>idx<span class="hl sym">]</span>
+        res <span class="hl sym">=</span> <span class="hl kwa">yield</span><span class="hl sym">(</span>item<span class="hl sym">)</span>
+        <span class="hl kwb">&#64;writer</span><span class="hl sym">.</span><span class="hl kwd">write</span><span class="hl sym">(</span>Marshal<span class="hl sym">.</span><span class="hl kwd">dump</span><span class="hl sym">([</span>idx<span class="hl sym">,</span> res<span class="hl sym">]) +</span> PAD<span class="hl sym">)</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    
+    <span class="hl kwb">&#64;writer</span><span class="hl sym">.</span><span class="hl kwd">write</span><span class="hl sym">(</span>Marshal<span class="hl sym">.</span><span class="hl kwd">dump</span><span class="hl sym">(:</span><span class="hl kwa">end</span><span class="hl sym">) +</span> PAD<span class="hl sym">)</span>
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">parallel_map</span><span class="hl sym">(</span>enum<span class="hl sym">,</span> worker_count <span class="hl sym">=</span> <span class="hl num">8</span><span class="hl sym">, &amp;</span>block<span class="hl sym">)</span>
+  count <span class="hl sym">= [</span>enum<span class="hl sym">.</span>size<span class="hl sym">,</span> worker_count<span class="hl sym">].</span>min
+  
+  Array<span class="hl sym">.</span><span class="hl kwd">new</span><span class="hl sym">(</span>enum<span class="hl sym">.</span>size<span class="hl sym">).</span>tap <span class="hl kwa">do</span> <span class="hl sym">|</span>res<span class="hl sym">|</span>  
+    workers <span class="hl sym">= (</span><span class="hl num">0</span> <span class="hl sym">...</span> count<span class="hl sym">).</span>map <span class="hl kwa">do</span> <span class="hl sym">|</span>idx<span class="hl sym">|</span>
+      Worker<span class="hl sym">.</span><span class="hl kwd">new</span><span class="hl sym">(</span>enum<span class="hl sym">,</span> idx<span class="hl sym">,</span> count<span class="hl sym">, &amp;</span>block<span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+  
+    ios <span class="hl sym">=</span> workers<span class="hl sym">.</span>map <span class="hl sym">{ |</span>w<span class="hl sym">|</span> w<span class="hl sym">.</span>reader <span class="hl sym">}</span>
+
+    <span class="hl kwa">while</span> ios<span class="hl sym">.</span>size <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">do</span>
+      sr<span class="hl sym">,</span> sw<span class="hl sym">,</span> se <span class="hl sym">=</span> IO<span class="hl sym">.</span><span class="hl kwd">select</span><span class="hl sym">(</span>ios<span class="hl sym">,</span> <span class="hl kwa">nil</span><span class="hl sym">,</span> <span class="hl kwa">nil</span><span class="hl sym">,</span> <span class="hl num">0.01</span><span class="hl sym">)</span>
+
+      <span class="hl kwa">if</span> sr
+        sr<span class="hl sym">.</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>io<span class="hl sym">|</span>
+          buf <span class="hl sym">=</span> <span class="hl str">&quot;&quot;</span>
+          
+          <span class="hl kwa">while</span> sbuf <span class="hl sym">=</span> io<span class="hl sym">.</span><span class="hl kwd">readpartial</span><span class="hl sym">(</span><span class="hl num">4096</span><span class="hl sym">)</span>
+            buf <span class="hl sym">+=</span> sbuf
+            <span class="hl kwa">break if</span> sbuf<span class="hl sym">.</span>size <span class="hl sym">&lt;</span> <span class="hl num">4096</span>
+          <span class="hl kwa">end</span>
+          
+          msgs <span class="hl sym">=</span> buf<span class="hl sym">.</span><span class="hl kwd">split</span><span class="hl sym">(</span>PAD<span class="hl sym">)</span>
+          
+          msgs<span class="hl sym">.</span>each <span class="hl kwa">do</span> <span class="hl sym">|</span>msg<span class="hl sym">|</span>
+            m <span class="hl sym">=</span> Marshal<span class="hl sym">.</span><span class="hl kwd">load</span><span class="hl sym">(</span>msg<span class="hl sym">)</span>
+            <span class="hl kwa">if</span> m <span class="hl sym">== :</span><span class="hl kwa">end</span>
+              ios<span class="hl sym">.</span><span class="hl kwd">delete</span><span class="hl sym">(</span>io<span class="hl sym">)</span>
+            <span class="hl kwa">else</span>
+              idx<span class="hl sym">,</span> content <span class="hl sym">=</span> m
+              res<span class="hl sym">[</span>idx<span class="hl sym">] =</span> content
+            <span class="hl kwa">end</span>
+          <span class="hl kwa">end</span>
+        <span class="hl kwa">end</span>
+      <span class="hl kwa">end</span>      
+    <span class="hl kwa">end</span>
+    
+    Process<span class="hl sym">.</span>waitall
+  <span class="hl kwa">end</span>
+<span class="hl kwa">end</span>
+
+<span class="hl kwb">$size</span> <span class="hl sym">= (</span><span class="hl kwc">ARGV</span><span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ||</span> <span class="hl num">100</span><span class="hl sym">).</span>to_i
+csize <span class="hl sym">=</span> <span class="hl kwb">$size</span> <span class="hl sym">-</span> <span class="hl num">1</span>
+
+puts <span class="hl str">&quot;P4&quot;</span>
+puts <span class="hl str">&quot;#{$size} #{$size}&quot;</span>
+
+set <span class="hl sym">= (</span><span class="hl num">0</span> <span class="hl sym">...</span> <span class="hl kwb">$size</span><span class="hl sym">).</span>to_a
+
+results <span class="hl sym">=</span> <span class="hl kwd">parallel_map</span><span class="hl sym">(</span>set<span class="hl sym">,</span> <span class="hl num">8</span><span class="hl sym">)</span> <span class="hl kwa">do</span> <span class="hl sym">|</span>y<span class="hl sym">|</span>
+  res <span class="hl sym">=</span> <span class="hl str">&quot;&quot;</span>
+  
+  byte_acc <span class="hl sym">=</span> <span class="hl num">0</span>
+  bit_num  <span class="hl sym">=</span> <span class="hl num">0</span>
+  
+  ci <span class="hl sym">= (</span><span class="hl num">2.0</span> <span class="hl sym">*</span> y <span class="hl sym">/</span> <span class="hl kwb">$size</span><span class="hl sym">) -</span> <span class="hl num">1.0</span>
+
+  <span class="hl kwb">$size</span><span class="hl sym">.</span>times <span class="hl kwa">do</span> <span class="hl sym">|</span>x<span class="hl sym">|</span>
+    zrzr <span class="hl sym">=</span> zr <span class="hl sym">=</span> <span class="hl num">0.0</span>
+    zizi <span class="hl sym">=</span> zi <span class="hl sym">=</span> <span class="hl num">0.0</span>
+    cr <span class="hl sym">= (</span><span class="hl num">2.0</span> <span class="hl sym">*</span> x <span class="hl sym">/</span> <span class="hl kwb">$size</span><span class="hl sym">) -</span> <span class="hl num">1.5</span>
+    escape <span class="hl sym">=</span> <span class="hl num">0b1</span>
+  
+    <span class="hl num">50</span><span class="hl sym">.</span>times <span class="hl kwa">do</span>
+      tr <span class="hl sym">=</span> zrzr <span class="hl sym">-</span> zizi <span class="hl sym">+</span> cr
+      ti <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">*</span> zr <span class="hl sym">*</span> zi <span class="hl sym">+</span> ci
+      zr <span class="hl sym">=</span> tr
+      zi <span class="hl sym">=</span> ti
+      <span class="hl slc"># preserve recalculation</span>
+      zrzr <span class="hl sym">=</span> zr <span class="hl sym">*</span> zr
+      zizi <span class="hl sym">=</span> zi <span class="hl sym">*</span> zi
+      <span class="hl kwa">if</span> zrzr <span class="hl sym">+</span> zizi <span class="hl sym">&gt;</span> <span class="hl num">4.0</span>
+        escape <span class="hl sym">=</span> <span class="hl num">0b0</span>
+        <span class="hl kwa">break</span>
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+  
+    byte_acc <span class="hl sym">= (</span>byte_acc <span class="hl sym">&lt;&lt;</span> <span class="hl num">1</span><span class="hl sym">) |</span> escape
+    bit_num  <span class="hl sym">+=</span> <span class="hl num">1</span>
+    
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>bit_num <span class="hl sym">==</span> <span class="hl num">8</span><span class="hl sym">)</span>
+      res <span class="hl sym">+=</span> byte_acc<span class="hl sym">.</span>chr
+      byte_acc <span class="hl sym">=</span> <span class="hl num">0</span>
+      bit_num <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">elsif</span> <span class="hl sym">(</span>x <span class="hl sym">==</span> csize<span class="hl sym">)</span>
+      byte_acc <span class="hl sym">&lt;&lt;= (</span><span class="hl num">8</span> <span class="hl sym">-</span> bit_num<span class="hl sym">)</span>
+      res <span class="hl sym">+=</span> byte_acc<span class="hl sym">.</span>chr
+      byte_acc <span class="hl sym">=</span> <span class="hl num">0</span>
+      bit_num <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">end</span>
+
+  res
+<span class="hl kwa">end</span>
+
+print results<span class="hl sym">.</span>join
