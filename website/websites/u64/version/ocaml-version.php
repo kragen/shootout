@@ -1,1 +1,1 @@
-<p>The Objective Caml native-code compiler, version 3.11.2</p>
+<p>The Objective Caml native-code compiler, version 3.12.0</p>
