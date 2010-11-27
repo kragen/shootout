@@ -100,7 +100,7 @@ $langs = array(
    array('fpascal','Free Pascal','pascal',$allsites),
    array('perl','Perl','perl',$u32sites),
    array('php','PHP','php',$u32sites),
-   array('pypy','PyPy','',$basesite),
+   array('pypy','PyPy','',$onecoresites),
    array('python3','Python 3','python3',$allsites),
    array('python','CPython','python',$u32sites),
    array('racket','Racket','racket',$onecoresites),
