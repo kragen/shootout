@@ -4,7 +4,7 @@
  * contributed by The Go Authors.
  * based on C program by Kevin Carson
  * flag.Arg hack by Isaac Gouy
- * custom allocator and parallel loops by JONNALAGADDA Srinivas
+ * custom pool and parallel loops by JONNALAGADDA Srinivas
  */
 
 package main
@@ -12,21 +12,24 @@ package main
 import (
    "flag"
    "fmt"
-   "math"
    "runtime"
    "strconv"
 )
 
 type NodeStore struct {
-   brk int
-   idx int
+   brk   int
+   idx   int
    store []Node
 }
 
-func (s *NodeStore) Init(depth, mult int) {
-   s.brk = int(math.Pow(2.0, float64(depth+1)))*mult
+func (s *NodeStore) Init(depth int) {
+   s.brk = 1 << uint(depth+1)
    s.idx = -1
    s.store = make([]Node, s.brk)
+}
+
+func (s *NodeStore) ReInit() {
+   s.idx = -1
 }
 
 func (s *NodeStore) Alloc(i int, l, r *Node) *Node {
@@ -41,11 +44,11 @@ func (s *NodeStore) Alloc(i int, l, r *Node) *Node {
 var n = 0
 
 type Node struct {
-   item   int
-   left, right     *Node
+   item        int
+   left, right *Node
 }
 
-func  bottomUpTree(item, depth int, store *NodeStore) *Node {
+func bottomUpTree(item, depth int, store *NodeStore) *Node {
    if depth <= 0 {
       return store.Alloc(item, nil, nil)
    }
@@ -66,35 +69,39 @@ const MAXPROCS = 4
 
 func main() {
    flag.Parse()
-   if flag.NArg() > 0 { n,_ = strconv.Atoi( flag.Arg(0) ) }
+   if flag.NArg() > 0 {
+      n, _ = strconv.Atoi(flag.Arg(0))
+   }
 
    runtime.GOMAXPROCS(MAXPROCS)
 
    maxDepth := n
-   if minDepth + 2 > n {
+   if minDepth+2 > n {
       maxDepth = minDepth + 2
    }
    stretchDepth := maxDepth + 1
 
    store := new(NodeStore)
-   store.Init(stretchDepth, 1)
+   store.Init(stretchDepth)
    check := bottomUpTree(0, stretchDepth, store).itemCheck()
    fmt.Printf("stretch tree of depth %d\t check: %d\n", stretchDepth, check)
 
    longLivedStore := new(NodeStore)
-   longLivedStore.Init(maxDepth, 1)
+   longLivedStore.Init(maxDepth)
    longLivedTree := bottomUpTree(0, maxDepth, longLivedStore)
 
    ss := make([]string, maxDepth+1)
-   fn := func (min, max int, ch chan int) {
-      for depth := min; depth <= max; depth+=(2*MAXPROCS) {
-         iterations := 1 << uint(maxDepth - depth + minDepth)
+   fn := func(min, max int, ch chan int) {
+      for depth := min; depth <= max; depth += (2 * MAXPROCS) {
+         iterations := 1 << uint(maxDepth-depth+minDepth)
          check := 0
 
+         store := new(NodeStore)
+         store.Init(depth)
          for i := 1; i <= iterations; i++ {
-            store := new(NodeStore)
-            store.Init(depth, 2)
+            store.ReInit()
             check += bottomUpTree(i, depth, store).itemCheck()
+            store.ReInit()
             check += bottomUpTree(-i, depth, store).itemCheck()
          }
          ss[depth] = fmt.Sprintf("%d\t trees of depth %d\t check: %d\n",
@@ -110,7 +117,7 @@ func main() {
    for i := 0; i < MAXPROCS; i++ {
       <-ch
    }
-   for i := minDepth; i <= maxDepth; i+=2 {
+   for i := minDepth; i <= maxDepth; i += 2 {
       fmt.Print(ss[i])
    }
 

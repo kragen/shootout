@@ -4,7 +4,7 @@
 <span class="hl com"> * contributed by The Go Authors.</span>
 <span class="hl com"> * based on C program by Kevin Carson</span>
 <span class="hl com"> * flag.Arg hack by Isaac Gouy</span>
-<span class="hl com"> * custom allocator and parallel loops by JONNALAGADDA Srinivas</span>
+<span class="hl com"> * custom pool and parallel loops by JONNALAGADDA Srinivas</span>
 <span class="hl com"> */</span>
 
 <span class="hl kwa">package</span> main
@@ -12,21 +12,24 @@
 <span class="hl kwa">import</span> <span class="hl sym">(</span>
    <span class="hl str">&quot;flag&quot;</span>
    <span class="hl str">&quot;fmt&quot;</span>
-   <span class="hl str">&quot;math&quot;</span>
    <span class="hl str">&quot;runtime&quot;</span>
    <span class="hl str">&quot;strconv&quot;</span>
 <span class="hl sym">)</span>
 
 <span class="hl kwa">type</span> NodeStore <span class="hl kwa">struct</span> <span class="hl sym">{</span>
-   brk int
-   idx int
+   brk   int
+   idx   int
    store <span class="hl sym">[]</span>Node
 <span class="hl sym">}</span>
 
-<span class="hl kwa">func</span> <span class="hl sym">(</span>s <span class="hl sym">*</span>NodeStore<span class="hl sym">)</span> Init<span class="hl sym">(</span>depth<span class="hl sym">,</span> mult int<span class="hl sym">) {</span>
-   s<span class="hl sym">.</span>brk <span class="hl sym">=</span> int<span class="hl sym">(</span>math<span class="hl sym">.</span>Pow<span class="hl sym">(</span><span class="hl num">2.0</span><span class="hl sym">,</span> float64<span class="hl sym">(</span>depth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)))*</span>mult
+<span class="hl kwa">func</span> <span class="hl sym">(</span>s <span class="hl sym">*</span>NodeStore<span class="hl sym">)</span> Init<span class="hl sym">(</span>depth int<span class="hl sym">) {</span>
+   s<span class="hl sym">.</span>brk <span class="hl sym">=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> uint<span class="hl sym">(</span>depth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
    s<span class="hl sym">.</span>idx <span class="hl sym">= -</span><span class="hl num">1</span>
    s<span class="hl sym">.</span>store <span class="hl sym">=</span> make<span class="hl sym">([]</span>Node<span class="hl sym">,</span> s<span class="hl sym">.</span>brk<span class="hl sym">)</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">func</span> <span class="hl sym">(</span>s <span class="hl sym">*</span>NodeStore<span class="hl sym">)</span> ReInit<span class="hl sym">() {</span>
+   s<span class="hl sym">.</span>idx <span class="hl sym">= -</span><span class="hl num">1</span>
 <span class="hl sym">}</span>
 
 <span class="hl kwa">func</span> <span class="hl sym">(</span>s <span class="hl sym">*</span>NodeStore<span class="hl sym">)</span> Alloc<span class="hl sym">(</span>i int<span class="hl sym">,</span> l<span class="hl sym">,</span> r <span class="hl sym">*</span>Node<span class="hl sym">) *</span>Node <span class="hl sym">{</span>
@@ -41,11 +44,11 @@
 <span class="hl kwa">var</span> n <span class="hl sym">=</span> <span class="hl num">0</span>
 
 <span class="hl kwa">type</span> Node <span class="hl kwa">struct</span> <span class="hl sym">{</span>
-   item   int
-   left<span class="hl sym">,</span> right     <span class="hl sym">*</span>Node
+   item        int
+   left<span class="hl sym">,</span> right <span class="hl sym">*</span>Node
 <span class="hl sym">}</span>
 
-<span class="hl kwa">func</span>  bottomUpTree<span class="hl sym">(</span>item<span class="hl sym">,</span> depth int<span class="hl sym">,</span> store <span class="hl sym">*</span>NodeStore<span class="hl sym">) *</span>Node <span class="hl sym">{</span>
+<span class="hl kwa">func</span> bottomUpTree<span class="hl sym">(</span>item<span class="hl sym">,</span> depth int<span class="hl sym">,</span> store <span class="hl sym">*</span>NodeStore<span class="hl sym">) *</span>Node <span class="hl sym">{</span>
    <span class="hl kwa">if</span> depth <span class="hl sym">&lt;=</span> <span class="hl num">0</span> <span class="hl sym">{</span>
       <span class="hl kwa">return</span> store<span class="hl sym">.</span>Alloc<span class="hl sym">(</span>item<span class="hl sym">,</span> nil<span class="hl sym">,</span> nil<span class="hl sym">)</span>
    <span class="hl sym">}</span>
@@ -66,35 +69,39 @@
 
 <span class="hl kwa">func</span> main<span class="hl sym">() {</span>
    flag<span class="hl sym">.</span>Parse<span class="hl sym">()</span>
-   <span class="hl kwa">if</span> flag<span class="hl sym">.</span>NArg<span class="hl sym">() &gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span> n<span class="hl sym">,</span>_ <span class="hl sym">=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span> flag<span class="hl sym">.</span>Arg<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">) ) }</span>
+   <span class="hl kwa">if</span> flag<span class="hl sym">.</span>NArg<span class="hl sym">() &gt;</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      n<span class="hl sym">,</span> _ <span class="hl sym">=</span> strconv<span class="hl sym">.</span>Atoi<span class="hl sym">(</span>flag<span class="hl sym">.</span>Arg<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">))</span>
+   <span class="hl sym">}</span>
 
    runtime<span class="hl sym">.</span>GOMAXPROCS<span class="hl sym">(</span>MAXPROCS<span class="hl sym">)</span>
 
    maxDepth <span class="hl sym">:=</span> n
-   <span class="hl kwa">if</span> minDepth <span class="hl sym">+</span> <span class="hl num">2</span> <span class="hl sym">&gt;</span> n <span class="hl sym">{</span>
+   <span class="hl kwa">if</span> minDepth<span class="hl sym">+</span><span class="hl num">2</span> <span class="hl sym">&gt;</span> n <span class="hl sym">{</span>
       maxDepth <span class="hl sym">=</span> minDepth <span class="hl sym">+</span> <span class="hl num">2</span>
    <span class="hl sym">}</span>
    stretchDepth <span class="hl sym">:=</span> maxDepth <span class="hl sym">+</span> <span class="hl num">1</span>
 
    store <span class="hl sym">:=</span> new<span class="hl sym">(</span>NodeStore<span class="hl sym">)</span>
-   store<span class="hl sym">.</span>Init<span class="hl sym">(</span>stretchDepth<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">)</span>
+   store<span class="hl sym">.</span>Init<span class="hl sym">(</span>stretchDepth<span class="hl sym">)</span>
    check <span class="hl sym">:=</span> bottomUpTree<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> stretchDepth<span class="hl sym">,</span> store<span class="hl sym">).</span>itemCheck<span class="hl sym">()</span>
    fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;stretch tree of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> stretchDepth<span class="hl sym">,</span> check<span class="hl sym">)</span>
 
    longLivedStore <span class="hl sym">:=</span> new<span class="hl sym">(</span>NodeStore<span class="hl sym">)</span>
-   longLivedStore<span class="hl sym">.</span>Init<span class="hl sym">(</span>maxDepth<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">)</span>
+   longLivedStore<span class="hl sym">.</span>Init<span class="hl sym">(</span>maxDepth<span class="hl sym">)</span>
    longLivedTree <span class="hl sym">:=</span> bottomUpTree<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span> maxDepth<span class="hl sym">,</span> longLivedStore<span class="hl sym">)</span>
 
    ss <span class="hl sym">:=</span> make<span class="hl sym">([]</span>string<span class="hl sym">,</span> maxDepth<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">)</span>
-   fn <span class="hl sym">:=</span> <span class="hl kwa">func</span> <span class="hl sym">(</span>min<span class="hl sym">,</span> max int<span class="hl sym">,</span> ch <span class="hl kwa">chan</span> int<span class="hl sym">) {</span>
-      <span class="hl kwa">for</span> depth <span class="hl sym">:=</span> min<span class="hl sym">;</span> depth <span class="hl sym">&lt;=</span> max<span class="hl sym">;</span> depth<span class="hl sym">+=(</span><span class="hl num">2</span><span class="hl sym">*</span>MAXPROCS<span class="hl sym">) {</span>
-         iterations <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> uint<span class="hl sym">(</span>maxDepth <span class="hl sym">-</span> depth <span class="hl sym">+</span> minDepth<span class="hl sym">)</span>
+   fn <span class="hl sym">:=</span> <span class="hl kwa">func</span><span class="hl sym">(</span>min<span class="hl sym">,</span> max int<span class="hl sym">,</span> ch <span class="hl kwa">chan</span> int<span class="hl sym">) {</span>
+      <span class="hl kwa">for</span> depth <span class="hl sym">:=</span> min<span class="hl sym">;</span> depth <span class="hl sym">&lt;=</span> max<span class="hl sym">;</span> depth <span class="hl sym">+= (</span><span class="hl num">2</span> <span class="hl sym">*</span> MAXPROCS<span class="hl sym">) {</span>
+         iterations <span class="hl sym">:=</span> <span class="hl num">1</span> <span class="hl sym">&lt;&lt;</span> uint<span class="hl sym">(</span>maxDepth<span class="hl sym">-</span>depth<span class="hl sym">+</span>minDepth<span class="hl sym">)</span>
          check <span class="hl sym">:=</span> <span class="hl num">0</span>
 
+         store <span class="hl sym">:=</span> new<span class="hl sym">(</span>NodeStore<span class="hl sym">)</span>
+         store<span class="hl sym">.</span>Init<span class="hl sym">(</span>depth<span class="hl sym">)</span>
          <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> iterations<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
-            store <span class="hl sym">:=</span> new<span class="hl sym">(</span>NodeStore<span class="hl sym">)</span>
-            store<span class="hl sym">.</span>Init<span class="hl sym">(</span>depth<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">)</span>
+            store<span class="hl sym">.</span>ReInit<span class="hl sym">()</span>
             check <span class="hl sym">+=</span> bottomUpTree<span class="hl sym">(</span>i<span class="hl sym">,</span> depth<span class="hl sym">,</span> store<span class="hl sym">).</span>itemCheck<span class="hl sym">()</span>
+            store<span class="hl sym">.</span>ReInit<span class="hl sym">()</span>
             check <span class="hl sym">+=</span> bottomUpTree<span class="hl sym">(-</span>i<span class="hl sym">,</span> depth<span class="hl sym">,</span> store<span class="hl sym">).</span>itemCheck<span class="hl sym">()</span>
          <span class="hl sym">}</span>
          ss<span class="hl sym">[</span>depth<span class="hl sym">] =</span> fmt<span class="hl sym">.</span>Sprintf<span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\t</span> <span class="hl str">trees of depth %d</span><span class="hl esc">\t</span> <span class="hl str">check: %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>
@@ -110,7 +117,7 @@
    <span class="hl kwa">for</span> i <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> MAXPROCS<span class="hl sym">;</span> i<span class="hl sym">++ {</span>
       <span class="hl sym">&lt;-</span>ch
    <span class="hl sym">}</span>
-   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> minDepth<span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> maxDepth<span class="hl sym">;</span> i<span class="hl sym">+=</span><span class="hl num">2</span> <span class="hl sym">{</span>
+   <span class="hl kwa">for</span> i <span class="hl sym">:=</span> minDepth<span class="hl sym">;</span> i <span class="hl sym">&lt;=</span> maxDepth<span class="hl sym">;</span> i <span class="hl sym">+=</span> <span class="hl num">2</span> <span class="hl sym">{</span>
       fmt<span class="hl sym">.</span>Print<span class="hl sym">(</span>ss<span class="hl sym">[</span>i<span class="hl sym">])</span>
    <span class="hl sym">}</span>
 
