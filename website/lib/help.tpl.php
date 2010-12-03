@@ -252,7 +252,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#languagex" name="languagex"><b>Why don't you include language X?</b></a></dt>
 <dd>
-<p><b>Why don't you</b> use our measurement scripts and publish measurements for language X?</p>
+<p>Why don't <i>you</i> use our measurement scripts and publish measurements for language X?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p>
 <p>For example - <a href="http://per.bothner.com/blog/2010/Kawa-in-shootout/">Kawa in Languages shootout</a>.</p>
 <p>(As an alternative, you should take a look at these Python measurement scripts designed for statistically rigorous Java performance evaluation - <a href="http://www.elis.ugent.be/JavaStats">JavaStats</a>).</p>
@@ -394,7 +394,7 @@ language, benchmark, your-name, date, (version)<br />
 </dd>
 
 <dt><a href="#os" name="os">What OS are you using on the test machine?</a></dt>
-<dd><p>We use <b>Ubuntu&#8482; 10.10 Linux</b> Kernel 2.6.35-22-generic</p>
+<dd><p>We use <b>Ubuntu&#8482; 10.10 Linux</b> Kernel 2.6.35-23-generic</p>
 
 <p>The out-of-date measurements used Debian Linux 'unstable', Kernel 2.6.18-3-k7 and Gentoo Linux gentoo-sources-2.6.20-r6</p>
 </dd>
