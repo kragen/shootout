@@ -264,7 +264,7 @@ language, benchmark, your-name, date, (version)<br />
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your c:\ directory, check the  <a href="http://sourceforge.net/projects/pywin32/" title="Python Win32 Extensions">requirements</a> and <a href="http://gnuwin32.sourceforge.net/packages/make.htm" title="GNU Make for Windows, GNU DiffUtils for Windows">recommendations</a>, and read the license before use.</p>
 <p>(Here are some measurements made <i>just as a demo</i> of what you could do with <a href="http://shootout.alioth.debian.org/demo/python.php">bencher.py on Windows Vista</a>.)</p></dd>
 
-<dt><a href="#java" name="java"><b>What about Java</b>&#174;?</a></dt>
+<dt><a href="#java" name="java">What about Java&#174;?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
 <p>The usual startup measurements and the "Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
 
