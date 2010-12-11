@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 </tr></table>
 
 <div id="sitemap">
-<h5><strong>Compare the performance of &asymp;30 programming languages</strong> for 4 different combinations of OS/machine. (Is generalizing from particular measurements a sign of <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Flawed Benchmarks or Broken Thinking?"><strong>flawed benchmarks</strong> or <strong>broken thinking</strong></a>?) <strong>Contribute faster more elegant programs.</strong></h5>
+<h5><strong>Compare the performance of &asymp;30 programming languages</strong> for 4 different combinations of OS/machine. (Is generalizing from particular measurements a sign of <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Flawed Benchmarks or Broken Thinking?"><strong>flawed benchmarks</strong> or <strong>broken thinking</strong>?</a>) <strong>Contribute faster more elegant programs.</strong></h5>
 
 
 <table>
