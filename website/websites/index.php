@@ -18,7 +18,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 <meta name="robots" content="all" /><meta name="revisit" content="1 days" />
 
-<meta name="description" content="Compare the performance of ~30 programming languages using ~12 simple benchmarks and ~1100 programs. Contribute faster more elegant programs." />
+<meta name="description" content="Compare the performance of ~24 programming languages using ~12 simple benchmarks and ~1100 programs. Contribute faster more elegant programs." />
 
 <title>Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_18aug2010.php" />
@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 </tr></table>
 
 <div id="sitemap">
-<h5><strong>Compare the performance of &asymp;30 programming languages</strong> for 4 different combinations of OS/machine. (Is generalizing from particular measurements a sign of <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Flawed Benchmarks or Broken Thinking?"><strong>flawed benchmarks</strong> or <strong>broken thinking</strong>?</a>) <strong>Contribute faster more elegant programs.</strong></h5>
+<h5><strong>Compare the performance of &asymp;24 programming languages</strong> for 4 different combinations of OS/machine. (Is generalizing from particular measurements a sign of <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Flawed Benchmarks or Broken Thinking?"><strong>flawed benchmarks</strong> or <strong>broken thinking</strong>?</a>) <strong>Contribute faster more elegant programs.</strong></h5>
 
 
 <table>
