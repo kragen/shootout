@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 </tr></table>
 
 <div id="sitemap">
-<h5><strong>Compare the performance of &asymp;30 programming languages</strong> using &asymp;12 <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title="Some of the many ways in which benchmark comparisons of programming language performance are flawed"><strong>flawed benchmarks</strong></a> for 4 different combinations of OS/machine. <strong>Contribute faster more elegant programs.</strong></h5>
+<h5><strong>Compare the performance of &asymp;30 programming languages</strong> for 4 different combinations of OS/machine. Is generalizing from particular measurements <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php" title=""><strong>broken thinking</strong></a> or <strong>flawed benchmarks</strong>? <strong>Contribute faster more elegant programs.</strong></h5>
 
 
 <table>
