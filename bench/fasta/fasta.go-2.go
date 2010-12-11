@@ -9,7 +9,6 @@
 package main
 
 import (
-   "bytes"
    "flag"
    "os"
    "strconv"
@@ -147,11 +146,11 @@ func main() {
          "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA")
 
    out.WriteString(">ONE Homo sapiens alu\n")
-   Repeat(alu, 2**n)
+   Repeat(alu, 2*n)
    out.WriteString(">TWO IUB ambiguity codes\n")
-   Random(iub, 3**n)
+   Random(iub, 3*n)
    out.WriteString(">THREE Homo sapiens frequency\n")
-   Random(homosapiens, 5**n)
+   Random(homosapiens, 5*n)
 }
 
 
