@@ -1,4 +1,4 @@
-<p>online book <a href="http://www.oberon.ethz.ch/wirthPiO/">Programming in Oberon - Niklaus Wirth</a></p>
+<p>online book <a href="http://www-old.oberon.ethz.ch/WirthPubl/ProgInOberonWR.pdf">Programming in Oberon - Niklaus Wirth</a> pdf</p>
 <p>OO2C translates Oberon-2 source-code to C source-code, and compiles with GCC.</p>
 <?=$Version;?>
 <p>Home Page: <a href="http://sourceforge.net/projects/ooc">http://sourceforge.net/projects/ooc</a></p>
