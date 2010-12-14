@@ -66,9 +66,11 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <dt><a href="#analytics" name="analytics">Jun 12, 2010 - Dec 12, 2010</a></dt>
 <dd>
-<p>148,095 Absolute Unique Visitors</p>
-<p>1,030,641 Pageviews</p>
-<p>4.80 Average Pageviews</p>
+<ul>
+<li>148,095 Absolute Unique Visitors</li>
+<li>1,030,641 Pageviews</li>
+<li>4.80 Average Pageviews</li>
+</ul>
 </dd>
 
 </dl>
