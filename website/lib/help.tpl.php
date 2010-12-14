@@ -64,6 +64,13 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <p>Example select <a href="./u64/measurements.php?lang=java" title="Compare performance measurements of all the accepted Java 6 -server programs">Java -6 server</a> in the drop-down menu.</p>
 </dd>
 
+<dt><a href="#analytics" name="analytics">Jun 12, 2010 - Dec 12, 2010</a></dt>
+<dd>
+<p>148,095 Absolute Unique Visitors</p>
+<p>1,030,641 Pageviews</p>
+<p>4.80 Average Pageviews</p>
+</dd>
+
 </dl>
 </dd>
 
