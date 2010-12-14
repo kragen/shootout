@@ -168,12 +168,12 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <tr><td>Go</td><td>1.0</td></tr>
 <tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
 <tr><th colspan="2">% programs contributed, by year 2005-2010</th></tr>
-<tr><td>2005</td><td>28</td></tr>
-<tr><td>2006</td><td>20</td></tr>
-<tr><td>2007</td><td>11</td></tr>
+<tr><td>2005</td><td>23</td></tr>
+<tr><td>2006</td><td>17</td></tr>
+<tr><td>2007</td><td>12</td></tr>
 <tr><td>2008</td><td>17</td></tr>
-<tr><td>2009</td><td>12</td></tr>
-<tr><td>2010</td><td>12</td></tr>
+<tr><td>2009</td><td>15</td></tr>
+<tr><td>2010</td><td>16</td></tr>
 </table>
 
 </dd>
