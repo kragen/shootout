@@ -158,7 +158,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <tr><td>Smalltalk</td><td>1.0</td></tr>
 <tr><td>Go</td><td>1.0</td></tr>
  
-<tr><th colspan="2">% programs contributed, by year</th></tr>
+<tr><th colspan="2">% programs contributed, by year 2005-2010</th></tr>
 <tr><td>2005</td><td>28</td></tr>
 <tr><td>2006</td><td>20</td></tr>
 <tr><td>2007</td><td>11</td></tr>
