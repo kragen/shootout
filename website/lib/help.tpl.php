@@ -175,13 +175,11 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <tr><td>2009</td><td>15</td></tr>
 <tr><td>2010</td><td>16</td></tr>
 <tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
-<tr><th colspan="2">% Haskell programs contributed 2005-2010, by year</th></tr>
-<tr><td>2005</td><td>18</td></tr>
-<tr><td>2006</td><td>13</td></tr>
-<tr><td>2007</td><td>20</td></tr>
-<tr><td>2008</td><td>22</td></tr>
-<tr><td>2009</td><td>14</td></tr>
-<tr><td>2010</td><td>13</td></tr>
+<tr><th colspan="2">The year the fastest current Haskell programs were contributed</th></tr>
+<tr><td>2007</td><td>1</td></tr>
+<tr><td>2008</td><td>3</td></tr>
+<tr><td>2009</td><td>2</td></tr>
+<tr><td>2010</td><td>7</td></tr>
 </table>
 
 </dd>
