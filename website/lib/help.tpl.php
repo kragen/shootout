@@ -141,7 +141,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <dd>
 
 <table>
-<tr><th colspan="2">% programs contributed, by language 2005-2010</th></tr>
+<tr><th colspan="2">% programs contributed 2005-2010, by language</th></tr>
 <tr><td>Python</td><td>12.2</td></tr>
 <tr><td>C++</td><td>9.0</td></tr>
 <tr><td>C</td><td>7.1</td></tr>
@@ -167,7 +167,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <tr><td>Smalltalk</td><td>1.0</td></tr>
 <tr><td>Go</td><td>1.0</td></tr>
 <tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
-<tr><th colspan="2">% programs contributed, by year 2005-2010</th></tr>
+<tr><th colspan="2">% programs contributed 2005-2010, by year</th></tr>
 <tr><td>2005</td><td>23</td></tr>
 <tr><td>2006</td><td>17</td></tr>
 <tr><td>2007</td><td>12</td></tr>
