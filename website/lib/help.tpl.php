@@ -127,6 +127,51 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <dd>
 <dl>
 
+
+<dt>&nbsp;</dt>
+<dd>
+
+<table>
+<tr><th colspan="2">% contributed, by language 2005-2010</th></tr>
+<tr><td>Python</td><td>12.2</td></tr>
+<tr><td>C++</td><td>9.0</td></tr>
+<tr><td>C</td><td>7.1</td></tr>
+<tr><td>Haskell</td><td>7.1</td></tr>
+<tr><td>Java</td><td>6.4</td></tr>
+<tr><td>Pascal</td><td>6.2</td></tr>
+<tr><td>Perl</td><td>5.8</td></tr>
+<tr><td>Lisp</td><td>5.0</td></tr>
+<tr><td>OCaml</td><td>4.2</td></tr>
+<tr><td>Ruby</td><td>4.1</td></tr>
+<tr><td>Lua</td><td>3.5</td></tr>
+<tr><td>Erlang</td><td>3.5</td></tr>
+<tr><td>Scala</td><td>3.2</td></tr>
+<tr><td>Ada</td><td>2.9</td></tr>
+<tr><td>ATS</td><td>2.9</td></tr>
+<tr><td>Scheme</td><td>2.9</td></tr>
+<tr><td>C#</td><td>2.4</td></tr>
+<tr><td>F#</td><td>2.0</td></tr>
+<tr><td>Fortran</td><td>1.6</td></tr>
+<tr><td>Clojure</td><td>1.5</td></tr>
+<tr><td>JavaScript</td><td>1.5</td></tr>
+<tr><td>PHP</td><td>1.5</td></tr>
+<tr><td>Smalltalk</td><td>1.0</td></tr>
+<tr><td>Go</td><td>1.0</td></tr>
+</table>
+
+<table>
+<tr><th colspan="2">% programs contributed, by year</th></tr>
+<tr><td>2005</td><td>28</td></tr>
+<tr><td>2006</td><td>20</td></tr>
+<tr><td>2007</td><td>11</td></tr>
+<tr><td>2008</td><td>17</td></tr>
+<tr><td>2009</td><td>12</td></tr>
+<tr><td>2010</td><td>12</td></tr>
+</table>
+
+</dd>
+
+
 <dt><a href="#diff" name="diff">How much effort should I put into getting the program correct?</a></dt>
 <dd><p>Do design-iteration on your machine, or in a language newsgroup. Only contribute programs which give correct results on your machine - <b>diff the program output with the provided output file before you contribute the program</b>.</p>
 </dd>
