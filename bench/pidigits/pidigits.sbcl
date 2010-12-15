@@ -1,0 +1,170 @@
+;; The Computer Language Benchmarks Game
+;; http://shootout.alioth.debian.org/
+;;
+;; Adapted from the C (gcc) code by Lorenzo Bolla
+
+(declaim (optimize (speed 3) (safety 0) (debug 0)))
+
+(define-alien-type mp-limb-t unsigned-int)
+(define-alien-type mp-bitcnt-t unsigned-long)
+(define-alien-type mpz-struct
+				   (struct nil
+						   (mp-alloc int)
+						   (mp-size int)
+						   (mp-d mp-limb-t)))
+(define-alien-type mpz-ptr (* mpz-struct))
+(define-alien-type mpz-srcptr (* mpz-struct))
+
+(declaim (inline mpz-init))
+(define-alien-routine ("__gmpz_init" mpz-init)
+					  void
+					  (a mpz-ptr))
+
+(declaim (inline mpz-init-set-ui))
+(define-alien-routine ("__gmpz_init_set_ui" mpz-init-set-ui)
+					  void
+					  (a mpz-ptr)
+					  (b unsigned-long))
+
+(declaim (inline mpz-get-ui))
+(define-alien-routine ("__gmpz_get_ui" mpz-get-ui)
+					  unsigned-long
+					  (a mpz-srcptr))
+
+(declaim (inline mpz-set-ui))
+(define-alien-routine ("__gmpz_set_ui" mpz-set-ui)
+					  void
+					  (a mpz-ptr)
+					  (b unsigned-long))
+
+(declaim (inline mpz-cmp))
+(define-alien-routine ("__gmpz_cmp" mpz-cmp)
+					  int
+					  (a mpz-srcptr)
+					  (b mpz-srcptr))
+
+(declaim (inline mpz-add))
+(define-alien-routine ("__gmpz_add" mpz-add)
+					  void
+					  (a mpz-ptr)
+					  (b mpz-srcptr)
+					  (c mpz-srcptr))
+
+(declaim (inline mpz-mul-2exp))
+(define-alien-routine ("__gmpz_mul_2exp" mpz-mul-2exp)
+					  void
+					  (a mpz-ptr)
+					  (b mpz-srcptr)
+					  (c mp-bitcnt-t))
+
+(declaim (inline mpz-fdiv-qr))
+(define-alien-routine ("__gmpz_fdiv_qr" mpz-fdiv-qr)
+					  void
+					  (a mpz-ptr)
+					  (b mpz-ptr)
+					  (c mpz-srcptr)
+					  (d mpz-srcptr))
+
+(declaim (inline mpz-mul-ui))
+(define-alien-routine ("__gmpz_mul_ui" mpz-mul-ui)
+					  void
+					  (a mpz-ptr)
+					  (b mpz-srcptr)
+					  (c unsigned-long))
+
+(declaim (inline mpz-submul-ui))
+(define-alien-routine ("__gmpz_submul_ui" mpz-submul-ui)
+					  void
+					  (a mpz-ptr)
+					  (b mpz-srcptr)
+					  (c unsigned-long))
+
+(defvar *libgmp-so* (load-shared-object "libgmp.so"))
+(defvar *tmp1*)
+(defvar *tmp2*)
+(defvar *num*)
+(defvar *acc*)
+(defvar *den*)
+
+(defun init ()
+  (setf *tmp1* (make-alien mpz-struct))
+  (setf *tmp2* (make-alien mpz-struct))
+  (setf *num* (make-alien mpz-struct))
+  (setf *acc* (make-alien mpz-struct))
+  (setf *den* (make-alien mpz-struct)))
+
+(defun cleanup ()
+  (free-alien *tmp1*)
+  (free-alien *tmp2*)
+  (free-alien *num*)
+  (free-alien *acc*)
+  (free-alien *den*))
+
+(defun extract-digit ()
+  (if (> (mpz-cmp *num* *acc*) 0)
+	-1
+	(progn
+	  (mpz-mul-2exp *tmp1* *num* 1)
+	  (mpz-add *tmp1* *tmp1* *num*)
+	  (mpz-add *tmp1* *tmp1* *acc*)
+	  (mpz-fdiv-qr *tmp1* *tmp2* *tmp1* *den*)
+	  (mpz-add *tmp2* *tmp2* *num*)
+	  (if (>= (mpz-cmp *tmp2* *den*) 0)
+		-1
+		(mpz-get-ui *tmp1*)))))
+
+(defun next-term (k)
+  (declare (type fixnum k))
+  (let ((y2 (1+ (* 2 k))))
+	(mpz-mul-2exp *tmp1* *num* 1)
+	(mpz-add *acc* *acc* *tmp1*)
+	(mpz-mul-ui *acc* *acc* y2)
+	(mpz-mul-ui *num* *num* k)
+	(mpz-mul-ui *den* *den* y2)))
+
+(defun eliminate-digit (d)
+  (mpz-submul-ui *acc* *den* d)
+  (mpz-mul-ui *acc* *acc* 10)
+  (mpz-mul-ui *num* *num* 10))
+
+(defun pidigits (n)
+  (declare (type fixnum n))
+  (let ((d 0)
+		(k 0)
+		(i 0)
+		(m 0))
+	(declare (type fixnum d k i m))
+	(mpz-init *tmp1*)
+	(mpz-init *tmp2*)
+	(mpz-init-set-ui *num* 1)
+	(mpz-init-set-ui *acc* 0)
+	(mpz-init-set-ui *den* 1)
+	(loop
+	  (loop
+		(incf k)
+		(next-term k)
+		(setf d (extract-digit))
+		(unless (= d -1)
+		  (return)))
+	  (format t "~D" d)
+	  (incf i)
+	  (setf m (rem i 10))
+	  (when (= m 0)
+		(format t "	:~D~%" i))
+	  (when (>= i n)
+		(return))
+	  (eliminate-digit d))
+	(unless (= m 0)
+	  (format t "	:~D~%" n))))
+
+(defun main (&optional n-supplied)
+  (let ((n (or n-supplied
+			   (parse-integer (or (car (last #+sbcl sb-ext:*posix-argv*
+											 #+clisp ext:*args*
+											 #+cmu extensions:*command-line-strings*
+											 #+gcl  si::*command-args*))
+								  "2000")))))
+	(init)
+	(pidigits n)
+	(cleanup)))
+
