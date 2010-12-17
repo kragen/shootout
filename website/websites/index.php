@@ -157,18 +157,18 @@ function PrintIncludedLanguages($site,$lang){
 PrintHeaders();
 
 $tests = array(
-   array('meteor','meteor-contest','Search for solutions to shape packing puzzle')
-   ,array('nbody','n-body','Perform an N-body simulation of the Jovian planets')
-   ,array('fasta','fasta','Generate and write random DNA sequences')
-   ,array('fannkuchredux','fannkuch-redux','Repeatedly access a tiny integer-sequence')
-   ,array('knucleotide','k-nucleotide','Repeatedly update hashtables and k-nucleotide strings')
-   ,array('spectralnorm','spectral-norm','Calculate an eigenvalue using the power method')
-   ,array('regexdna','regex-dna','Match DNA 8-mers and substitute nucleotides for IUB code')
-   ,array('mandelbrot','mandelbrot','Generate a Mandelbrot set and write a portable bitmap')
-   ,array('pidigits','pidigits','Calculate the digits of Pi with streaming arbitrary-precision arithmetic')
-   ,array('revcomp','reverse-complement','Read DNA sequences and write their reverse-complement')
-   ,array('binarytrees','binary-trees','Allocate and deallocate many many binary trees')
+   array('binarytrees','binary-trees','Allocate and deallocate many many binary trees')
    ,array('chameneosredux','chameneos-redux','Repeatedly perform symmetrical thread rendezvous requests')
+   ,array('fannkuchredux','fannkuch-redux','Repeatedly access a tiny integer-sequence')
+   ,array('fasta','fasta','Generate and write random DNA sequences')
+   ,array('knucleotide','k-nucleotide','Repeatedly update hashtables and k-nucleotide strings')
+   ,array('mandelbrot','mandelbrot','Generate a Mandelbrot set and write a portable bitmap')
+   ,array('meteor','meteor-contest','Search for solutions to shape packing puzzle')
+   ,array('nbody','n-body','Perform an N-body simulation of the Jovian planets')
+   ,array('pidigits','pidigits','Calculate the digits of Pi with streaming arbitrary-precision arithmetic')
+   ,array('regexdna','regex-dna','Match DNA 8-mers and substitute nucleotides for IUB code')
+   ,array('revcomp','reverse-complement','Read DNA sequences and write their reverse-complement')
+   ,array('spectralnorm','spectral-norm','Calculate an eigenvalue using the power method')
    ,array('threadring','thread-ring','Repeatedly switch from thread to thread passing one token')
    );
 

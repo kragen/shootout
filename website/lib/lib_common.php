@@ -71,34 +71,6 @@ function CompareTestName($a, $b){
    return strcasecmp($a[TEST_NAME],$b[TEST_NAME]);
 }
 
-/*
-function CompareProgramDataTime($a, $b){
-   if ($a[DATA_STATUS] < 0){
-      return 1;
-   } elseif ($b[DATA_STATUS] < 0){
-      return -1;
-   } else {
-      if ($a[DATA_TESTVALUE] == $b[DATA_TESTVALUE]){
-         return  ($a[DATA_TIME] < $b[DATA_TIME]) ? -1 : 1;
-      } else {
-         return  ($b[DATA_TESTVALUE] < $a[DATA_TESTVALUE]) ? -1 : 1;
-      }
-   }
-}
-
-
-function CompareProgramTestValue($a, $b){
-   return  ($a[DATA_TESTVALUE] < $b[DATA_TESTVALUE]) ? -1 : 1;
-}
-*/
-
-/*
-function IdName($id){
-   if ($id>1){ return '&nbsp;#'.$id; } else { return ''; }
-}
-*/
-
-
 function ExcludeData($d,$langs,$Excl){
    if( !isset($langs[$d[DATA_LANG]]) ) { return LANGUAGE_EXCLUDED; }
 
@@ -109,53 +81,6 @@ function ExcludeData($d,$langs,$Excl){
    }
    return $d[DATA_STATUS];
 }
-
-/*
-function ProgramData($FileName,$T,$L,$I,$Langs,$Incl,$Excl,$HasHeading=TRUE){
-   $data = array();
-   $prefix = substr($T,1).','.$L.',';
-   $lines = file($FileName);
-
-   foreach($lines as $line) {
-      if (strpos($line,$prefix)){
-         $row = explode( ',', $line);
-         settype($row[DATA_ID],'integer');
-         settype($row[DATA_TESTVALUE],'integer');
-         settype($row[DATA_GZ],'integer');
-         settype($row[DATA_FULLCPU],'double');
-         settype($row[DATA_MEMORY],'integer');
-         settype($row[DATA_STATUS],'integer');
-         settype($row[DATA_ELAPSED],'double');
-
-         if ($I == -1){ $data[] = $row; }
-         elseif ($row[DATA_ID]==$I){ $data[] = $row; }
-      }
-   }
-   unset($lines);
-
-   if ($I == -1){
-      $filtered = array();
-      foreach($data as $ar){
-         if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])
-               && !ExcludeData($ar,$Langs,$Excl)){
-            $filtered[] = $ar;
-         }
-      }
-      $data = array();
-      foreach($filtered as $ar){
-         if (isset($Incl[$ar[DATA_TEST]]) && isset($Incl[$ar[DATA_LANG]])){
-           $ex = ExcludeData($ar,$Langs,$Excl);
-           //if (($ex == PROGRAM_TIMEOUT)||($ex == PROGRAM_ERROR)){
-           if ($ex != PROGRAM_EXCLUDED && $ex != LANGUAGE_EXCLUDED){
-              $data[] = $ar;
-           }
-         }
-      }
-   }
-   usort($data, 'CompareProgramDataTime');
-   return $data;
-}
-*/
 
 
 // CONTENT ///////////////////////////////////////////////////
@@ -194,25 +119,6 @@ function MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang){
    echo '</p></form>', "\n";
 }
 
-/*
-function MkLangsMenuForm($Langs,$SelectedLang,$Action='measurements.php'){
-   echo '<form method="get" action="'.$Action.'">', "\n";
-   echo '<p><select name="lang">', "\n";
-   foreach($Langs as $Row){
-      $Link = $Row[LANG_LINK];
-      $Name = $Row[LANG_FULL];
-      if ($Link==$SelectedLang){
-         $Selected = 'selected="selected"';
-      } else {
-         $Selected = '';
-      }
-      printf('<option %s value="%s">%s</option>', $Selected,$Link,$Name); echo "\n";
-   }
-   echo '</select>', "\n";
-   echo '<input type="submit" value="Show" />', "\n";
-   echo '</p></form>', "\n";
-}
-*/
 
 function MkTestsMenuForm($Tests,$SelectedTest,$Action='benchmarks.php'){
    echo '<form method="get" action="benchmark.php">', "\n";
