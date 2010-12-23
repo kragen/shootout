@@ -10,6 +10,7 @@
    <span class="hl str">&quot;fmt&quot;</span>
    <span class="hl str">&quot;io/ioutil&quot;</span>
    <span class="hl str">&quot;os&quot;</span>
+   <span class="hl str">&quot;runtime&quot;</span>
    <span class="hl str">&quot;regexp&quot;</span>
 <span class="hl sym">)</span>
 
@@ -47,8 +48,8 @@
    re <span class="hl sym">:=</span> regexp<span class="hl sym">.</span>MustCompile<span class="hl sym">(</span>pat<span class="hl sym">)</span>
    n <span class="hl sym">:=</span> <span class="hl num">0</span>
    <span class="hl kwa">for</span> <span class="hl sym">{</span>
-      e <span class="hl sym">:=</span> re<span class="hl sym">.</span>Execute<span class="hl sym">(</span>bytes<span class="hl sym">)</span>
-      <span class="hl kwa">if</span> len<span class="hl sym">(</span>e<span class="hl sym">) ==</span> <span class="hl num">0</span> <span class="hl sym">{</span>
+      e <span class="hl sym">:=</span> re<span class="hl sym">.</span>FindIndex<span class="hl sym">(</span>bytes<span class="hl sym">)</span>
+      <span class="hl kwa">if</span> e <span class="hl sym">==</span> nil <span class="hl sym">{</span>
          <span class="hl kwa">break</span>
       <span class="hl sym">}</span>
       n<span class="hl sym">++</span>
@@ -58,6 +59,7 @@
 <span class="hl sym">}</span>
 
 <span class="hl kwa">func</span> main<span class="hl sym">() {</span>
+   runtime<span class="hl sym">.</span>GOMAXPROCS<span class="hl sym">(</span><span class="hl num">4</span><span class="hl sym">)</span>
    bytes<span class="hl sym">,</span> err <span class="hl sym">:=</span> ioutil<span class="hl sym">.</span>ReadFile<span class="hl sym">(</span><span class="hl str">&quot;/dev/stdin&quot;</span><span class="hl sym">)</span>
    <span class="hl kwa">if</span> err <span class="hl sym">!=</span> nil <span class="hl sym">{</span>
       fmt<span class="hl sym">.</span>Fprintf<span class="hl sym">(</span>os<span class="hl sym">.</span>Stderr<span class="hl sym">,</span> <span class="hl str">&quot;can't read input: %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> err<span class="hl sym">)</span>
@@ -67,11 +69,27 @@
    <span class="hl slc">// Delete the comment lines and newlines</span>
    bytes <span class="hl sym">=</span> regexp<span class="hl sym">.</span>MustCompile<span class="hl sym">(</span><span class="hl str">&quot;(&gt;[^</span><span class="hl esc">\n</span><span class="hl str">]+)?</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">).</span>ReplaceAll<span class="hl sym">(</span>bytes<span class="hl sym">, []</span>byte<span class="hl sym">{})</span>
    clen <span class="hl sym">:=</span> len<span class="hl sym">(</span>bytes<span class="hl sym">)</span>
-   <span class="hl kwa">for</span> _<span class="hl sym">,</span> s <span class="hl sym">:=</span> <span class="hl kwa">range</span> variants <span class="hl sym">{</span>
-      fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%s %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">,</span> countMatches<span class="hl sym">(</span>s<span class="hl sym">,</span> bytes<span class="hl sym">))</span>
+
+   mresults <span class="hl sym">:=</span> make<span class="hl sym">([]</span><span class="hl kwa">chan</span> int<span class="hl sym">,</span> len<span class="hl sym">(</span>variants<span class="hl sym">))</span>
+   <span class="hl kwa">for</span> i<span class="hl sym">,</span> s <span class="hl sym">:=</span> <span class="hl kwa">range</span> variants <span class="hl sym">{</span>
+      ch <span class="hl sym">:=</span> make<span class="hl sym">(</span><span class="hl kwa">chan</span> int<span class="hl sym">)</span>
+      mresults<span class="hl sym">[</span>i<span class="hl sym">] =</span> ch
+      <span class="hl kwa">go func</span><span class="hl sym">(</span>ss string<span class="hl sym">) {</span>
+         ch <span class="hl sym">&lt;-</span> countMatches<span class="hl sym">(</span>ss<span class="hl sym">,</span> bytes<span class="hl sym">)</span>
+      <span class="hl sym">}(</span>s<span class="hl sym">)</span>
    <span class="hl sym">}</span>
-   <span class="hl kwa">for</span> _<span class="hl sym">,</span> sub <span class="hl sym">:=</span> <span class="hl kwa">range</span> substs <span class="hl sym">{</span>
-      bytes <span class="hl sym">=</span> regexp<span class="hl sym">.</span>MustCompile<span class="hl sym">(</span>sub<span class="hl sym">.</span>pat<span class="hl sym">).</span>ReplaceAll<span class="hl sym">(</span>bytes<span class="hl sym">, []</span>byte<span class="hl sym">(</span>sub<span class="hl sym">.</span>repl<span class="hl sym">))</span>
+
+   lenresult <span class="hl sym">:=</span> make<span class="hl sym">(</span><span class="hl kwa">chan</span> int<span class="hl sym">)</span>
+   bb <span class="hl sym">:=</span> bytes
+   <span class="hl kwa">go func</span><span class="hl sym">() {</span>
+      <span class="hl kwa">for</span> _<span class="hl sym">,</span> sub <span class="hl sym">:=</span> <span class="hl kwa">range</span> substs <span class="hl sym">{</span>
+         bb <span class="hl sym">=</span> regexp<span class="hl sym">.</span>MustCompile<span class="hl sym">(</span>sub<span class="hl sym">.</span>pat<span class="hl sym">).</span>ReplaceAll<span class="hl sym">(</span>bb<span class="hl sym">, []</span>byte<span class="hl sym">(</span>sub<span class="hl sym">.</span>repl<span class="hl sym">))</span>
+      <span class="hl sym">}</span>
+      lenresult <span class="hl sym">&lt;-</span> len<span class="hl sym">(</span>bb<span class="hl sym">)</span>
+   <span class="hl sym">}()</span>
+
+   <span class="hl kwa">for</span> i<span class="hl sym">,</span> s <span class="hl sym">:=</span> <span class="hl kwa">range</span> variants <span class="hl sym">{</span>
+      fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;%s %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">, &lt;-</span>mresults<span class="hl sym">[</span>i<span class="hl sym">])</span>
    <span class="hl sym">}</span>
-   fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> ilen<span class="hl sym">,</span> clen<span class="hl sym">,</span> len<span class="hl sym">(</span>bytes<span class="hl sym">))</span>
+   fmt<span class="hl sym">.</span>Printf<span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> ilen<span class="hl sym">,</span> clen<span class="hl sym">, &lt;-</span>lenresult<span class="hl sym">)</span>
 <span class="hl sym">}</span>
