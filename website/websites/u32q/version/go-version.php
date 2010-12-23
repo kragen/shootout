@@ -1,1 +1,1 @@
-<p>8g version 6870 release release.2010-12-08</p>
+<p>8g version 7008 release release.2010-12-22</p>
