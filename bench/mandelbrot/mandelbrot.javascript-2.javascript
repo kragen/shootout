@@ -2,7 +2,7 @@
    http://shootout.alioth.debian.org/
    contributed by Thomas GODART (based on Greg Buchholz's C program)
    modified by TA
- */
+*/
 
 var i, x, y,
     bit_num = 0,
@@ -10,7 +10,7 @@ var i, x, y,
     iter = 50,
     limit = 4,
     Zr, Zi, Cr, Ci, Tr, Ti,
-    d = N;
+    d = +arguments[0];
 
 print("P4 " + d + " " + d + "\n");
 
