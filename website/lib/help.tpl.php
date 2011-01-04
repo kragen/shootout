@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2004-2010 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2011 ?>
 
 
 <p class="timestamp"><? printf('%s GMT', gmdate("d M Y, l, g:i a", $Changed)) ?></p>
@@ -258,7 +258,7 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em></p>
 <p>Please <a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a>, login and <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><b>Report a Bug</b></a>.</p>
-<p>Tell us about the latest language updates <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><b>Feature Request</b></a>.</p>
+<p>Tell us about new versions of language implementations shown on the website <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><b>Feature Request</b></a>.</p>
 <p>Please ask more general questions in <a href="https://alioth.debian.org/forum/forum.php?forum_id=999" title="Find Help, Share Opinions"><b>the discussion forum</b></a> </p>
 <p>(<b>debian issue their own security certificate</b> - your web browser will complain.)</p>
 </dd>
@@ -475,15 +475,8 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 <dt><a href="#history" name="history">Why do you continue to show out-of-date measurements?</a></dt>
 
 <dd>
-<p><img src="<?=IMAGE_PATH;?>fresh_png_14mar2010.php"
-   alt=""
-   title=""
-   width="400" height="225"
- /></p>
-<p>The out-of-date measurements are for many different programming languages -</p>
-</dd>
 
-<dd>
+<p>The Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 measurements and the Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482; measurements have not been updated for years and will not be updated in the future.</p>
 <table class="layout">
 <tr class="test">
 <td>
@@ -501,6 +494,14 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </tr>
 </table>
 <p>The program source code written in those other programming languages is interesting.</p>
+</dd>
+
+<dd>
+<p><img src="<?=IMAGE_PATH;?>fresh_png_14mar2010.php"
+   alt=""
+   title=""
+   width="400" height="225"
+ /></p>
 </dd>
 
 
