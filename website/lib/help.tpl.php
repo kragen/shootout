@@ -476,7 +476,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 
 <dd>
 
-<p>The Gentoo&nbsp;:&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 measurements and the Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron&#8482; measurements have not been updated for years and will not be updated in the future.</p>
+<p>The Gentoo :&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 measurements and the Debian :&nbsp;AMD&#8482;&nbsp;Sempron&#8482; measurements have not been updated for years and will not be updated in the future. Every webpage showing those measurements shouts OUT-OF-DATE!</p>
 <table class="layout">
 <tr class="test">
 <td>
@@ -493,6 +493,8 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </td>
 </tr>
 </table>
+
+<p>Those </p>
 
 <p><img src="<?=IMAGE_PATH;?>fresh_png_14mar2010.php"
    alt=""
