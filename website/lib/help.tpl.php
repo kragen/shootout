@@ -493,15 +493,13 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </td>
 </tr>
 </table>
-<p>The program source code written in those other programming languages is interesting.</p>
-</dd>
 
-<dd>
 <p><img src="<?=IMAGE_PATH;?>fresh_png_14mar2010.php"
    alt=""
    title=""
    width="400" height="225"
  /></p>
+
 </dd>
 
 
