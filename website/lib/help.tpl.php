@@ -476,7 +476,7 @@ correct result, but also <b>use the same algorithm</b> to calculate that result.
 
 <dd>
 
-<p>The Gentoo :&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 measurements and the Debian :&nbsp;AMD&#8482;&nbsp;Sempron&#8482; measurements have not been updated for years and will not be updated in the future. Every webpage showing those measurements shouts OUT-OF-DATE!</p>
+<p>The Gentoo :&nbsp;Intel&#174;&nbsp;Pentium&#174;&nbsp;4 measurements and the Debian :&nbsp;AMD&#8482;&nbsp;Sempron&#8482; measurements have not been updated for years and will not be updated in the future. Every web page showing those measurements shouts OUT-OF-DATE!</p>
 <table class="layout">
 <tr class="test">
 <td>
@@ -494,7 +494,7 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </tr>
 </table>
 
-<p>Those </p>
+<p>Nonetheless, because those OUT-OF-DATE! measurements were made for <b>a wider range of programming language implementations</b> than are included in the current benchmarks game, those programs (written in <i>less familiar</i> programming languages) are still interesting to some people.</p>
 
 <p><img src="<?=IMAGE_PATH;?>fresh_png_14mar2010.php"
    alt=""
