@@ -258,7 +258,7 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em></p>
 <p>Please <a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a>, login and <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><b>Report a Bug</b></a>.</p>
-<p>Tell us about new versions of language implementations shown on the website <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><b>Feature Request</b></a>.</p>
+<p>Tell us about new versions of language implementations shown in the current benchmarks game <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><b>Feature Request</b></a>.</p>
 <p>Please ask more general questions in <a href="https://alioth.debian.org/forum/forum.php?forum_id=999" title="Find Help, Share Opinions"><b>the discussion forum</b></a> </p>
 <p>(<b>debian issue their own security certificate</b> - your web browser will complain.)</p>
 </dd>
