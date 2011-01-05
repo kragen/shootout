@@ -3,7 +3,6 @@
    contributed by Thomas GODART (based on Greg Buchholz's C program)
    modified by TA
 */
-
 var i, x, y,
     bit_num = 0,
     byte_acc = 0,
@@ -12,20 +11,20 @@ var i, x, y,
     Zr, Zi, Cr, Ci, Tr, Ti,
     d = +arguments[0];
 
-print("P4 " + d + " " + d + "\n");
+print("P4\n" + d + " " + d + "\n");
 
 for (y = 0; y < d; y += 1) {
   for (x = 0; x < d; x += 1) {
     Zr = 0,
     Zi = 0,
-    Tr = 0,
-    Ti = 0,
+    Tr =0,
+    Ti =0,
     Cr = 2 * x / d - 1.5,
     Ci = 2 * y / d - 1;
 
     for (i = 0; i < iter && Tr + Ti <= limit; i += 1) {
-      Zr = Tr - Ti + Cr,
       Zi = 2 * Zr * Zi + Ci,
+      Zr = Tr - Ti + Cr,
       Tr = Zr * Zr,
       Ti = Zi * Zi;
     }
