@@ -192,7 +192,7 @@ foreach($tests as $t){
    <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
-<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/flawed-benchmarks.php">Flawed</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
+<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/beware-hasty-generalization.php">Generalization</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
 
 </div>
 
