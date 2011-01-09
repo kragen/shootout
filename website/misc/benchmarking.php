@@ -102,7 +102,7 @@ means that most programs are small and spend most of their time in I/O and nativ
 </dd>
 
 
-<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed benchmarks</strong></a></dt>
+<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed Benchmarks</strong></a></dt>
 <dd>
 <dl>
 <dt><a href="#broken" name="broken">Benchmarks can be broken and benchmarks can be flawed</a></dt>
