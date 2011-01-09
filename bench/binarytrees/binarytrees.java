@@ -8,7 +8,7 @@
 public class binarytrees {
 
    private final static int minDepth = 4;
-   private final static int threadCount = 4;
+   private final static int threadCount = Runtime.getRuntime().availableProcessors();
    private final static TreeGenerator[] threads = new TreeGenerator[threadCount];
    
    public static void main(String[] args)
@@ -54,7 +54,7 @@ public class binarytrees {
          }
 
          System.out.println((iterations * 2) + "\t trees of depth " + depth + "\t check: " + check);
-      }   
+      }
 
       System.out.println("long lived tree of depth " + maxDepth + "\t check: "+ longLived.getCheckResult());
    }
@@ -78,7 +78,7 @@ public class binarytrees {
          return result;
       }
       
-      private TreeNode bottomUpTree(int item, int depth)
+      private static TreeNode bottomUpTree(int item, int depth)
       {
          TreeNode node = new TreeNode();
          node.item = item;
@@ -91,12 +91,22 @@ public class binarytrees {
          return node;
       }
 
+      private static int checkItems(TreeNode node)
+      {
+         if (node.left == null) {
+            return node.item;
+         } else {
+            return node.item + checkItems(node.left) - checkItems(node.right);
+         }
+      }
+      
+      
       public void run()
       {
          if (start == end) {
-            result += bottomUpTree(start, depth).itemCheck();
+            result += checkItems(bottomUpTree(start, depth));
          } else for (int i = start; i < end; i++) {
-            result += bottomUpTree(i, depth).itemCheck() + bottomUpTree(-i, depth).itemCheck();
+            result += checkItems(bottomUpTree(i, depth)) + checkItems(bottomUpTree(-i, depth));
          }
       }
    }
@@ -105,14 +115,5 @@ public class binarytrees {
    {
       private int item;
       private TreeNode left, right;
-      
-      private int itemCheck()
-      {
-         if (left == null) {
-            return item;
-         } else {
-            return item + left.itemCheck() - right.itemCheck();
-         }
-      }
    }
 }
