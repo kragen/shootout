@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 </tr></table>
 
 <div id="sitemap">
-<h5><strong>Compare the performance of &asymp;24 programming languages</strong> for 4 different combinations of OS/machine. <strong>Contribute faster more elegant programs.</strong> <a href="http://shootout.alioth.debian.org/beware-hasty-generalization.php" title="The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."><strong>Beware hasty generalization!</strong></a></h5> 
+<h5><strong>Compare the performance of &asymp;24 programming languages</strong> for 4 different combinations of OS/machine. <strong>Contribute faster more elegant programs.</strong> <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php" title="The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."><strong>Please don't jump to conclusions!</strong></a></h5> 
 
 
 <table>
@@ -192,7 +192,7 @@ foreach($tests as $t){
    <img src="http://shootout.alioth.debian.org/open_source_button_png_11dec2009.php" alt="Revised BSD license" height="31" width="88" />
 </a>
 </p>
-<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/beware-hasty-generalization.php">Generalization</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
+<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php">Conclusions</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
 
 </div>
 

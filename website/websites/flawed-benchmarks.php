@@ -1,6 +1,6 @@
 <?php 
 header("HTTP/1.1 301 Moved Permanently");
-header("Location: http://shootout.alioth.debian.org/beware-hasty-generalization.php");
+header("Location: http://shootout.alioth.debian.org/dont-jump-to-conclusions.php");
 exit;
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
@@ -10,6 +10,6 @@ exit;
 <title>The Computer Language Benchmarks Game</title>
 </head>
 <body>
-<h3><a href="http://shootout.alioth.debian.org/beware-hasty-generalization.php">Beware hasty generalization!</a></h3>
+<h3><a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php">Please don't jump to conclusions!</a></h3>
 </body>
 </html>
