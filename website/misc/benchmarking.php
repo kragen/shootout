@@ -2,7 +2,7 @@
 </p>
 
 <dl>
-<dt><a href="#jump" name="jump">&nbsp;<strong>Please don't jump to conclusions!</strong></a></dt>
+<dt><a href="#jump" name="jump">&nbsp;<strong>And please don't jump to conclusions!</strong></a></dt>
 <dd>
 <dl>
 

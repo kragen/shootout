@@ -32,7 +32,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 </tr></table>
 
 <div id="sitemap">
-<h5><strong>Compare the performance of &asymp;24 programming languages</strong> for 4 different combinations of OS/machine. <strong>Contribute faster more elegant programs.</strong> <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php" title="The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."><strong>Please don't jump to conclusions!</strong></a></h5> 
+<h5><strong>Compare the performance of &asymp;24 programming languages</strong> for 4 different combinations of OS/machine. <strong>Contribute faster more elegant programs.</strong> And please <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php" title="The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."><strong>don't jump to conclusions!</strong></a></h5> 
 
 
 <table>
