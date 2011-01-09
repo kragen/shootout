@@ -1,32 +1,19 @@
-<p>"we have found that the <b>CPU time is rarely the limiting factor</b>; the expressibility of the language
-means that most programs are small and spend most of their time in I/O and native run-time code."
+<p>"we have found that the <b>CPU time is rarely the limiting factor</b>; the expressibility of the language means that most programs are small and spend most of their time in I/O and native run-time code."
 </p>
 
 <dl>
-<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed Benchmarks or Broken Thinking?</strong></a></dt>
+<dt><a href="#jump" name="jump">&nbsp;<strong>Please don't jump to conclusions!</strong></a></dt>
 <dd>
 <dl>
 
-<dt><a href="#broken" name="broken">What are Flawed Benchmarks?</a></dt>
+<dt><a href="#limits" name="limits">Please don't generalize from these particular measurements without understanding what limits performance in other situations!</a></dt>
 <dd>
-<ul>
-<li><p>When the measurement techniques don't record the data as claimed, that's broken not flawed - fix it.</p></li>
-<li><p>When measured programs are supposed to implement the same algorithm and don't because Wile E. Programmer pushed the boundaries, that's broken not flawed - fix it.</p></li>
-<li><p>When measured programs don't strictly implement the same algorithm because they are written in different programming languages which use very different implementation techniques - that's flawed.</p></li>
-</ul>
+<p>Page load times for this site are limited by what the other 880 hosted projects are doing with the server. Even if page generation was instantaneous, we'd still average 1.3s just waiting in line unless the server load changes: the server load changed - "On average, pages in your site take 0.7 seconds to load (updated on Jun 28, 2010). This is faster than 96% of sites."</p>
 </dd>
 
-
-<dt><a href="#thinking" name="thinking">What's Broken Thinking?</a></dt>
+<dt><a href="#representative" name="representative">Please don't generalize from these particular measurements without showing the measured programs are somehow representative of other situations!</a></dt>
 <dd>
-<ul>
-<li><p>Generalizing from particular measurements without understanding what limits performance in other situations.</p>
-<p>Page load times for this site are limited by what the other 880 hosted projects are doing with the server. Even if page generation was instantaneous, we'd still average 1.3s just waiting in line unless the server load changes: the server load changed - "On average, pages in your site take 0.7 seconds to load (updated on Jun 28, 2010). This is faster than 96% of sites."</p>
-</li>
-<li><p>Generalizing from particular measurements without showing the measured programs are somehow representative of other situations.</p>
 <p>"The performance of a benchmark, even if it is derived from a real program, <a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html" title="Benchmarks are a crock"><b>may not help</b></a> to predict the performance of similar programs that have different hot spots."</p>
-</li>
-</ul>
 </dd>
 
 <dt><a href="#app" name="app">Your application is <strong>the ultimate benchmark</strong></a></dt>
@@ -107,4 +94,21 @@ means that most programs are small and spend most of their time in I/O and nativ
 </dd>
 </dl>
 </dd>
+
+
+<dt><a href="#flawed" name="flawed">&nbsp;<strong>Flawed benchmarks</strong></a></dt>
+<dd>
+<dl>
+<dt><a href="#broken" name="broken">Benchmarks can be broken and benchmarks can be flawed</a></dt>
+<dd>
+<ul>
+<li><p>When the measurement techniques don't record the data as claimed, that's broken not flawed - fix it.</p></li>
+<li><p>When measured programs are supposed to implement the same algorithm and don't because Wile E. Programmer pushed the boundaries, that's broken not flawed - fix it.</p></li>
+<li><p>When measured programs don't strictly implement the same algorithm because they are written in different programming languages which use very different implementation techniques - that's flawed.</p></li>
+</ul>
+</dd>
 </dl>
+</dd>
+
+</dl>
+
