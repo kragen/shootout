@@ -6,14 +6,20 @@
 <dd>
 <dl>
 
-<dt><a href="#limits" name="limits">Please don't generalize from these particular measurements without understanding what limits performance in other situations!</a></dt>
+<dt><a href="#limits" name="limits">Please don't generalize from these particular measurements without&#8230;</a></dt>
 <dd>
-<p>Page load times for this site are limited by what the other 880 hosted projects are doing with the server. Even if page generation was instantaneous, we'd still average 1.3s just waiting in line unless the server load changes: the server load changed - "On average, pages in your site take 0.7 seconds to load (updated on Jun 28, 2010). This is faster than 96% of sites."</p>
+<ul>
+<li><p>Please don't generalize from these particular measurements without understanding what limits performance in other situations!</p></li>
+<li><p>Page load times for this site are limited by what the other 880 hosted projects are doing with the server. Even if page generation was instantaneous, we'd still average 1.3s just waiting in line unless the server load changes: the server load changed - "On average, pages in your site take 0.7 seconds to load (updated on Jun 28, 2010). This is faster than 96% of sites."</p></li>
+</ul>
 </dd>
 
-<dt><a href="#representative" name="representative">Please don't generalize from these particular measurements without showing the measured programs are somehow representative of other situations!</a></dt>
+<dt><a href="#representative" name="representative">Please don't generalize from these particular measurements without&#8230;</a></dt>
 <dd>
-<p>"The performance of a benchmark, even if it is derived from a real program, <a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html" title="Benchmarks are a crock"><b>may not help</b></a> to predict the performance of similar programs that have different hot spots."</p>
+<ul>
+<li><p>Please don't generalize from these particular measurements without showing the measured programs are somehow representative of other situations!</p></li>
+<li><p>"The performance of a benchmark, even if it is derived from a real program, <a href="http://www.ccs.neu.edu/home/will/Twobit/bmcrock.temp.html" title="Benchmarks are a crock"><b>may not help</b></a> to predict the performance of similar programs that have different hot spots."</p></li>
+</ul>
 </dd>
 
 <dt><a href="#app" name="app">Your application is <strong>the ultimate benchmark</strong></a></dt>
