@@ -315,7 +315,7 @@ language, benchmark, your-name, date, (version)<br />
 <p>For example
 <ul>
 <li><a href="http://per.bothner.com/blog/2010/Kawa-in-shootout/"><b>Per Bothner's Kawa timings</b></a></li>
-<li><blockquote>"We used a modified version &#8230; to measure the running times of each benchmark program. &#8230; In order to account for proper measurement and cache effects, we ran each program 50 successive times and the reported data represent arithmetic averages over those repetitions."<br /><a href="http://www.springerlink.com/content/p4u0851w34180n74/">Inline Caching meets Quickening</a> Stefan Brunthaler</li>
+<li>"We used a modified version &#8230; to measure the running times of each benchmark program. &#8230; In order to account for proper measurement and cache effects, we ran each program 50 successive times and the reported data represent arithmetic averages over those repetitions."<br /><a href="http://www.springerlink.com/content/p4u0851w34180n74/">Inline Caching meets Quickening</a> Stefan Brunthaler</li>
 </ul></p>
 
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p>
