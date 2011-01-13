@@ -313,8 +313,7 @@ language, benchmark, your-name, date, (version)<br />
 <p>Why don't <i>you</i> use our measurement scripts and publish measurements for language X?</p>
 
 
-<p>For example<ul>
-<li>Per Bothner's <a href="http://per.bothner.com/blog/2010/Kawa-in-shootout/"><strong>Kawa</strong> measurements</a></li>
+<p>For example<ul><li>Per Bothner's <a href="http://per.bothner.com/blog/2010/Kawa-in-shootout/"><strong>Kawa</strong> measurements</a></li>
 <li>"We used a modified version &#8230; to measure the running times of each benchmark program. &#8230; In order to account for proper measurement and cache effects, we ran each program 50 successive times and the reported data represent arithmetic averages over those repetitions." <a href="http://www.springerlink.com/content/p4u0851w34180n74/">Inline Caching meets Quickening</a> Stefan Brunthaler</li>
 </ul></p>
 
