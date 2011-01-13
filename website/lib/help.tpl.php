@@ -106,12 +106,11 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <li><b>Elapsed&nbsp;secs</b>: The time was taken before forking the child-process and after the child-process exits, using <a href="http://docs.python.org/library/time.html?highlight=time.time#time.time">time.time()</a></li>
 </ul>
 <p><strong>Time measurements include program startup time.</strong></p>
-<p><i>On win32 -
+<p><i>On win32 -</i></p>
 <ul>
-<li>CPU&nbsp;secs: QueryInformationJobObject(hJob,JobObjectBasicAccountingInformation) <a href="http://msdn.microsoft.com/en-us/library/ms684143(VS.85).aspx">TotalKernelTime+TotalUserTime</a><br /></li>
-<li>Elapsed&nbsp;secs: The time was taken before forking the child-process and after the child-process exits, using <a href="http://msdn.microsoft.com/en-us/library/ms644904(VS.85).aspx">QueryPerformanceCounter</a></li>
+<li><i>CPU&nbsp;secs: QueryInformationJobObject(hJob,JobObjectBasicAccountingInformation) <a href="http://msdn.microsoft.com/en-us/library/ms684143(VS.85).aspx">TotalKernelTime+TotalUserTime</a><br /></i></li>
+<li><i>Elapsed&nbsp;secs: The time was taken before forking the child-process and after the child-process exits, using <a href="http://msdn.microsoft.com/en-us/library/ms644904(VS.85).aspx">QueryPerformanceCounter</a></i></li>
 </ul>
-</i></p>
 </dd>
 
 <dt><a href="#memory" name="memory">How did you measure <strong>Memory-used?</strong></a></dt>
