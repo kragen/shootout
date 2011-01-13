@@ -50,12 +50,12 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <dt><a href="#comparememoryused" name="comparememoryused">Compare <b>Memory-used</b> for all the benchmarks</a></dt>
 <dd>
-<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=1&xloc=0" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
+<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&amp;xfullcpu=0&amp;xmem=1&amp;xloc=0" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
 </dd>
 
 <dt><a href="#comparecodeused" name="comparecodeused">Compare <b>Code-used</b> for all the benchmarks</a></dt>
 <dd>
-<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&xfullcpu=0&xmem=0&xloc=1" title="Which programming languages have benchmark programs that use less source code on one core x86 Ubuntu">Which programming language is best?</a> and set the Code B weight to 1 and the Time secs weight to 0.</p>
+<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&amp;xfullcpu=0&amp;xmem=0&amp;xloc=1" title="Which programming languages have benchmark programs that use less source code on one core x86 Ubuntu">Which programming language is best?</a> and set the Code B weight to 1 and the Time secs weight to 0.</p>
 </dd>
 
 
@@ -314,7 +314,7 @@ language, benchmark, your-name, date, (version)<br />
 
 
 <p>For example<ul>
-<li>"We used a modified version &#8230; to measure the running times of each benchmark program. &#8230; In order to account for proper measurement and cache effects, we ran each program 50 successive times and the reported data represent arithmetic averages over those repetitions." <a href="http://www.springerlink.com/content/p4u0851w34180n74/">Inline Caching meets Quickening</a> Stefan Brunthaler</li><br />
+<li>"We used a modified version &#8230; to measure the running times of each benchmark program. &#8230; In order to account for proper measurement and cache effects, we ran each program 50 successive times and the reported data represent arithmetic averages over those repetitions." <a href="http://www.springerlink.com/content/p4u0851w34180n74/">Inline Caching meets Quickening</a> Stefan Brunthaler</li>
 <li>Per Bothner's <a href="http://per.bothner.com/blog/2010/Kawa-in-shootout/"><strong>Kawa</strong> measurements</a></li>
 </ul></p>
 
