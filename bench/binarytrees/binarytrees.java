@@ -1,82 +1,90 @@
 /* The Computer Language Benchmarks Game
    http://shootout.alioth.debian.org/
  
-   contributed by Jarkko Miettinen
-   modified by Leonhard Holz
+   contributed by Leonhard Holz
+   based on contribution by Jarkko Miettinen
 */
 
 public class binarytrees {
 
    private final static int minDepth = 4;
-   private final static int threadCount = Runtime.getRuntime().availableProcessors();
-   private final static TreeGenerator[] threads = new TreeGenerator[threadCount];
+   private final static int threadCount = Runtime.getRuntime().availableProcessors() > 1 ? 2 : 1;
+   private final static TreeGenerator[] threads = new TreeGenerator[threadCount + 1];
    
    public static void main(String[] args)
    {
       int n = 0;
       if (args.length > 0) n = Integer.parseInt(args[0]);
-      
       int maxDepth = (minDepth + 2 > n) ? minDepth + 2 : n;
-      
-      TreeGenerator stretcher = new TreeGenerator(0, 0, maxDepth + 1);
-      try {
-         stretcher.start();
-         stretcher.join();
-      } catch (InterruptedException e) {
-         e.printStackTrace();
-      }
-      int check = stretcher.getCheckResult();
-      System.out.println("stretch tree of depth " + (maxDepth + 1) + "\t check: " + check);
 
-      TreeGenerator longLived = new TreeGenerator(0, 0, maxDepth);
-      try {
-         longLived.start();
-         longLived.join();
-      } catch (InterruptedException e) {
-         e.printStackTrace();
+      for (int i = 0; i < threadCount + 1; i++) {
+         threads[i] = new TreeGenerator();
+         threads[i].start();
       }
       
+      TreeGenerator lastThread = threads[threadCount];
+      lastThread.depth = maxDepth + 1;
+      lastThread.run = true;
+      try {
+         synchronized(lastThread) {
+            lastThread.notify();
+            lastThread.wait();
+         }
+      } catch (InterruptedException e) {}
+
+      System.out.println("stretch tree of depth " + lastThread.depth + "\t check: " + lastThread.result);
+
+      lastThread.depth = maxDepth;
+      lastThread.run = true;
+      try {
+         synchronized(lastThread) {
+            lastThread.notify();
+            lastThread.wait();
+         }
+      } catch (InterruptedException e) {}
+
       for (int depth = minDepth; depth <= maxDepth; depth+=2 ) {
 
-         check = 0;
+         int check = 0;
          int iterations = 1 << (maxDepth - depth + minDepth);
          int length = iterations / threadCount;
 
-         for (int i = 0; i < threadCount; i++) {
-            threads[i] = new TreeGenerator(i * length, (i + 1) * length, depth);
-            threads[i].start();
+         for (int i = 0; i < threadCount; i++) synchronized(threads[i]) {
+            threads[i].depth = depth;
+            threads[i].start = i * length;
+            threads[i].end = (i + 1) * length;
+            threads[i].run = true;
+            threads[i].notify();
          }
          for (int i = 0; i < threadCount; i++) try {
-            threads[i].join();
-            check += threads[i].getCheckResult();
-         } catch (InterruptedException e) {
-            e.printStackTrace();
-         }
+            synchronized(threads[i]) {
+               if (threads[i].run) threads[i].wait();
+            }
+            check += threads[i].result;
+         } catch (InterruptedException e) {}
 
          System.out.println((iterations * 2) + "\t trees of depth " + depth + "\t check: " + check);
       }
 
-      System.out.println("long lived tree of depth " + maxDepth + "\t check: "+ longLived.getCheckResult());
+      System.out.println("long lived tree of depth " + maxDepth + "\t check: "+ lastThread.result);
+
+      for (int i = 0; i < threadCount + 1; i++) {
+         threads[i].terminate = true;
+         synchronized(threads[i]) {
+            threads[i].notify();
+         }
+      }
    }
 
    private static class TreeGenerator extends Thread
    {
-      private int start;
-      private int end;
-      private int depth;
+      private boolean run = false;
+      private boolean terminate = false;
+
+      private int start = 0;
+      private int end = 0;
       private int result = 0;
-      
-      private TreeGenerator(int start, int end, int depth)
-      {
-         this.end = end;
-         this.start = start;
-         this.depth = depth;
-      }
-      
-      private int getCheckResult()
-      {
-         return result;
-      }
+      private int depth;
       
       private static TreeNode bottomUpTree(int item, int depth)
       {
@@ -101,12 +109,22 @@ public class binarytrees {
       }
       
       
-      public void run()
+      public synchronized void run()
       {
-         if (start == end) {
-            result += checkItems(bottomUpTree(start, depth));
-         } else for (int i = start; i < end; i++) {
-            result += checkItems(bottomUpTree(i, depth)) + checkItems(bottomUpTree(-i, depth));
+         while (!terminate) {
+            if (run) {
+               result = 0;
+               if (start == end) {
+                  result += checkItems(bottomUpTree(start, depth));
+               } else for (int i = start; i < end; i++) {
+                  result += checkItems(bottomUpTree(i, depth)) + checkItems(bottomUpTree(-i, depth));
+               }
+               run = false;
+               notify();
+            }
+            try {
+               wait();
+            } catch (InterruptedException e) {}
          }
       }
    }
