@@ -1,0 +1,171 @@
+<span class="hl com">/*</span>
+<span class="hl com">* The Computer Language Benchmarks Game</span>
+<span class="hl com">* http://shootout.alioth.debian.org/</span>
+<span class="hl com">* Based on C contribution by Premysl Hruby</span>
+<span class="hl com">* Contributed by The Anh Tran</span>
+<span class="hl com">*/</span>
+
+<span class="hl com">/*</span>
+<span class="hl com">   This program will create 503 OS threads.</span>
+<span class="hl com">   Those threads will wait inside boost::asio::io_service.run() queue,</span>
+<span class="hl com">   if there is task in this queue, a thread will be dispatch to process it.</span>
+<span class="hl com">   Each task is a token passing run.</span>
+<span class="hl com"></span>
+<span class="hl com">   asio::io_service:</span>
+<span class="hl com">      On Win:      NtIOCompletionPort</span>
+<span class="hl com">      On Linux:   kqueue</span>
+<span class="hl com">*/</span>
+
+<span class="hl dir">#include &lt;sched.h&gt;</span>
+<span class="hl dir">#include &lt;pthread.h&gt;</span>
+<span class="hl dir">#include &lt;cstdio&gt;</span>
+
+<span class="hl dir">#include &lt;boost/scoped_ptr.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/asio.hpp&gt;</span>
+<span class="hl dir">#include &lt;boost/lexical_cast.hpp&gt;</span>
+<span class="hl kwa">using namespace</span> boost<span class="hl sym">;</span>
+
+
+<span class="hl kwb">enum</span> 
+<span class="hl sym">{</span>   
+   THREAD_COUNT   <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">,</span>
+   STACK_SIZE      <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">*</span><span class="hl num">1024</span>
+<span class="hl sym">};</span>
+
+
+<span class="hl slc">// pthread handle</span>
+pthread_t         threadid<span class="hl sym">[</span>THREAD_COUNT<span class="hl sym">];</span>
+<span class="hl slc">// custom stack space</span>
+<span class="hl kwb">char</span>            stacks   <span class="hl sym">[</span>THREAD_COUNT<span class="hl sym">][</span>STACK_SIZE<span class="hl sym">];</span>
+
+
+<span class="hl slc">// Task queue:</span>
+scoped_ptr<span class="hl sym">&lt;</span>asio<span class="hl sym">::</span>io_service<span class="hl sym">&gt;</span> iosv<span class="hl sym">;</span>
+
+
+<span class="hl slc">// how many times remain to pass the token</span>
+<span class="hl kwb">int</span> token<span class="hl sym">;</span>
+
+<span class="hl slc">// Rule 4: &quot;pass the token from thread to thread N times&quot;</span>
+<span class="hl slc">// Any (real OS) thread can pick up the task inside asio::io_service.</span>
+<span class="hl slc">// In order to satisfy benchmark rule, this struct encapsulates a &quot;faked&quot; thread </span>
+<span class="hl slc">// that handle each token passing run. </span>
+<span class="hl slc">// The real thread impersonates a faked thread, and passes token to next faked thread.</span>
+<span class="hl kwb">struct</span> LogicalThread
+<span class="hl sym">{</span>
+   <span class="hl kwb">int</span> my_id<span class="hl sym">;</span>
+   <span class="hl kwb">int</span> next_id<span class="hl sym">;</span>
+   
+   <span class="hl kwb">void</span> <span class="hl kwc">operator</span><span class="hl sym">()()</span> <span class="hl kwb">const</span><span class="hl sym">;</span>
+<span class="hl sym">};</span>
+LogicalThread   threads<span class="hl sym">[</span>THREAD_COUNT<span class="hl sym">];</span>
+
+
+<span class="hl kwb">void</span> 
+LogicalThread<span class="hl sym">::</span><span class="hl kwc">operator</span><span class="hl sym">()()</span> <span class="hl kwb">const</span>
+<span class="hl sym">{</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>token <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span>
+   <span class="hl sym">{</span>
+      <span class="hl sym">--</span>token<span class="hl sym">;</span>
+      <span class="hl slc">// pass token to next</span>
+      iosv<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span> threads<span class="hl sym">[</span>next_id<span class="hl sym">] );</span>
+   <span class="hl sym">}</span>
+   <span class="hl kwa">else</span>
+      <span class="hl kwd">printf</span><span class="hl sym">(</span><span class="hl str">&quot;%d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> my_id<span class="hl sym">);</span>   <span class="hl slc">// done, print who is the final</span>
+<span class="hl sym">}</span>
+
+
+<span class="hl kwb">static</span>
+<span class="hl kwb">void</span><span class="hl sym">*</span> 
+<span class="hl kwd">thread_func</span><span class="hl sym">(</span> <span class="hl kwb">void</span><span class="hl sym">* )</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// gather at task queue, waiting for job</span>
+   <span class="hl slc">// this run() func will return when queue is empty</span>
+   iosv<span class="hl sym">-&gt;</span><span class="hl kwd">run</span><span class="hl sym">();</span>   
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+<span class="hl com">/*</span>
+<span class="hl com">static</span>
+<span class="hl com">void</span>
+<span class="hl com">SetSingleCPU()</span>
+<span class="hl com">{</span>
+<span class="hl com">   cpu_set_t   aff_set;</span>
+<span class="hl com">   CPU_ZERO(&amp;aff_set);</span>
+<span class="hl com">   </span>
+<span class="hl com">   sched_getaffinity(0, sizeof(aff_set), &amp;aff_set);</span>
+<span class="hl com">   </span>
+<span class="hl com">   int cpu_aff = 0, cpu_count = 0;</span>
+<span class="hl com">   for (int i = 0; i &lt; 64; ++i)</span>
+<span class="hl com">   {</span>
+<span class="hl com">      if (CPU_ISSET(i, &amp;aff_set))</span>
+<span class="hl com">      {</span>
+<span class="hl com">         cpu_aff = i;</span>
+<span class="hl com">         ++cpu_count;</span>
+<span class="hl com">      }</span>
+<span class="hl com">   }</span>
+<span class="hl com"></span>
+<span class="hl com">   if (cpu_count &gt; 1)</span>
+<span class="hl com">   {</span>
+<span class="hl com">      CPU_ZERO(&amp;aff_set);</span>
+<span class="hl com">      CPU_SET(cpu_aff, &amp;aff_set);</span>
+<span class="hl com">      sched_setaffinity(0, sizeof(aff_set), &amp;aff_set);</span>
+<span class="hl com">   }</span>
+<span class="hl com">}</span>
+<span class="hl com">*/</span>
+
+<span class="hl kwb">int</span> 
+<span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span><span class="hl sym">**</span> args<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+   <span class="hl slc">// set process affinity to 1 cpu,</span>
+   <span class="hl slc">// to avoid spreading thread context on all CPUs</span>
+<span class="hl slc">//   SetSingleCPU();</span>
+   
+   <span class="hl slc">// create task queue</span>
+   iosv<span class="hl sym">.</span><span class="hl kwd">reset</span><span class="hl sym">(</span> <span class="hl kwa">new</span> asio<span class="hl sym">::</span>io_service <span class="hl sym">);</span>
+
+   <span class="hl slc">// parse input</span>
+   <span class="hl kwa">if</span> <span class="hl sym">(</span>argc <span class="hl sym">&gt;=</span> <span class="hl num">2</span><span class="hl sym">)</span>
+      token <span class="hl sym">=</span> lexical_cast<span class="hl sym">&lt;</span><span class="hl kwb">int</span><span class="hl sym">&gt;(</span>args<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]);</span>
+   <span class="hl kwa">else</span>
+      token <span class="hl sym">=</span> <span class="hl num">1000</span><span class="hl sym">;</span>
+
+
+   <span class="hl slc">// Rule 2: &quot;thread 503 should be linked to thread 1, forming an unbroken ring&quot;</span>
+   <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> THREAD_COUNT<span class="hl sym">;</span> i<span class="hl sym">++)</span> 
+   <span class="hl sym">{</span>
+      threads<span class="hl sym">[</span>i<span class="hl sym">].</span>my_id <span class="hl sym">=</span> i <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+      threads<span class="hl sym">[</span>i<span class="hl sym">].</span>next_id <span class="hl sym">=</span> i <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+   threads<span class="hl sym">[</span>THREAD_COUNT <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">].</span>next_id <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+
+   <span class="hl slc">// Rule 3: &quot;pass a token to thread 1&quot;</span>
+   <span class="hl slc">// post first task to queue, so that task queue is not empty</span>
+   <span class="hl slc">// this task will be handled by &quot;thread 0&quot;</span>
+   iosv<span class="hl sym">-&gt;</span><span class="hl kwd">post</span><span class="hl sym">(</span> threads<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] );</span>
+   
+
+   <span class="hl slc">// Rule 1: &quot;create 503 linked threads (named 1 to 503)&quot;</span>
+   <span class="hl slc">// cannot use boost::thread here, b/c creating 503 threads with default </span>
+   <span class="hl slc">// stack size will overflow process's working set</span>
+   <span class="hl sym">{</span>
+      pthread_attr_t stack_attr<span class="hl sym">;</span>
+      <span class="hl kwd">pthread_attr_init</span><span class="hl sym">( &amp;</span>stack_attr <span class="hl sym">);</span>
+
+      <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> THREAD_COUNT<span class="hl sym">;</span> i<span class="hl sym">++)</span> 
+      <span class="hl sym">{</span>
+         <span class="hl slc">// manually set stack space &amp; stack size for each thread </span>
+         <span class="hl slc">// to reduce virtual memory cost</span>
+         <span class="hl kwd">pthread_attr_setstack</span><span class="hl sym">( &amp;</span>stack_attr<span class="hl sym">, &amp;</span>stacks<span class="hl sym">[</span>i<span class="hl sym">],</span> STACK_SIZE <span class="hl sym">);</span>
+
+         <span class="hl slc">// create thread using customized stack space</span>
+         <span class="hl kwd">pthread_create</span><span class="hl sym">( &amp;</span>threadid<span class="hl sym">[</span>i<span class="hl sym">], &amp;</span>stack_attr<span class="hl sym">, &amp;</span>thread_func<span class="hl sym">,</span> <span class="hl num">0</span> <span class="hl sym">);</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+   
+   <span class="hl slc">// waiting</span>
+   iosv<span class="hl sym">-&gt;</span><span class="hl kwd">run</span><span class="hl sym">();</span>
+
+   <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
