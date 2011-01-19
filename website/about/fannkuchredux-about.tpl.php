@@ -22,7 +22,7 @@
 <br />
 
 
-<p>Thanks to Oleg Mazurov for insisting on a checksum and providing this helpful description of <a href="./program.php?test=fannkuchredux&lang=java&id=1">the approach he took</a> -</p>
+<p>Thanks to Oleg Mazurov for insisting on a checksum and providing this helpful description of <a href="./program.php?test=fannkuchredux&amp;lang=java&id=1">the approach he took</a> -</p>
 <ul>
 <li>A common idea for parallel implementation is to divide all work (n! permutations) into chunks small enough to avoid load imbalance but large enough to keep overhead low. I set the number of chunks as a parameter (NCHUNKS = 150) from which I derive the size of a chunk (CHUNKSZ) and the actual number of chunks/tasks to be processed (NTASKS), which may be different from NCHUNKS because of rounding.</li>
 <li>Task scheduling is trivial: threads will atomically get and increment the taskId variable to derive a range of permutation indices to work on: <pre>

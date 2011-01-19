@@ -61,7 +61,7 @@ $page = array(
    );
 
 foreach($page as $p){
-   printf('<tr></tr><tr>');
+   printf('<tr>');
    foreach($sites as $s){
       printf('<td><a href="http://shootout.alioth.debian.org/%s/%s" title="%s">%s</a></td>', $s, $p[0], $p[2], $p[1] );
    }
