@@ -48,7 +48,7 @@ function PrintHeaders(){
    echo '<th class="u64">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
    echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '</tr>';
-   echo '<tr><th>&nbsp;</th><th></th><th></th><th></></tr>';
+   echo '<tr><th>&nbsp;</th><th></th><th></th><th></th></tr>';
 }
 
 PrintHeaders();
