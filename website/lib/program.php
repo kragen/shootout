@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2010
+// Copyright (c) Isaac Gouy 2010-2011
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -175,7 +175,7 @@ $Body->set('TimeUsed', $timeUsed);
 
 $Body->set('Data', $Data );
 $Body->set('Code', HtmlFragment( CODE_PATH.$T.'.'.$I.'.'.$L.'.code' ));
-$Body->set('Log', HtmlFragment( LOG_PATH.$T.'.'.$I.'.'.$L.'.log' ));
+$Body->set('Log', htmlspecialchars( HtmlFragment( LOG_PATH.$T.'.'.$I.'.'.$L.'.log' )) );
 $Body->set('Id', $I);
 $Body->set('Title', $Title);
 
