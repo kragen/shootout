@@ -120,6 +120,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <dt><a href="#gzbytes" name="gzbytes">How did you measure <strong>Code-used?</strong></a></dt>
 <dd><p>We started with the source-code markup you can see, removed comments, removed duplicate whitespace characters, and then applied minimum GZip compression. The Code-used measurement is the size in bytes of that GZip compressed source-code file.</p>
+<p>Thanks to Brian Hurt for the idea of using <em>size of compressed source code</em> instead of <em>lines of code</em>.</p>
 </dd>
 
 <dt><a href="#cpuload" name="cpuload">How did you measure <b>&asymp; CPU Load?</b></a></dt>
