@@ -7,7 +7,7 @@
    unset($selected);
 ?>
 
-<p>Which programming language implementations have the fastest benchmark programs?</p>
+<h2>Which programming language implementations have the fastest benchmark programs?</h2>
 <p>Median x86 Ubuntu (normalized) elapsed time measurements:</p>
 <ul><?
 foreach($score as $k => $v){
