@@ -73,7 +73,8 @@ $langs = array(
 <h1>The Computer Language Benchmarks Game</h1>
 
 <p><a href="http://shootout.alioth.debian.org/mobile/which-programming-languages-are-fastest.php">Which programming languages have the fastest benchmark programs?</a></p>
-<ol>Compare x86 Ubuntu measurements:
+<p>Compare x86 Ubuntu measurements:</p>
+<ol>
 <?
 foreach($langs as $lang){
    printf('<li>');

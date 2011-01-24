@@ -28,23 +28,13 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 define('SITE_NAME', 'mobile');
 define('SITE_TITLE','Ubuntu : Intel&#174; Q6600&#174; one core Computer Language Benchmarks Game');
-define('BANNER_TITLE','Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one&nbsp;core<br/>Computer&nbsp;<strong>Language</strong>&nbsp;<strong>Benchmarks</strong>&nbsp;Game&nbsp;');
+define('BANNER_TITLE','The Computer Language Benchmarks Game');
 define('PLATFORM_NAME', 'Ubuntu : Intel Q6600 one core');
 define('FAQ_TITLE','[[ Help ]]');
 define('BAR',' | ');
 define('DASH',' - ');
 define('BLANK','');
-define('STARTUP','hello');
+
 define('SEPARATOR','-');             // Separator in file names
-
-
-define('CHART_VSCALE',240);          
-define('CHART_HSCALE',1);
-define('CHART_V1',10);
-define('CHART_V2',100);
-define('CHART_V3',200);
-
-define('TESTS_PHRASE', 'benchmark');              
-define('LANGS_PHRASE','language');   
            
 ?>
