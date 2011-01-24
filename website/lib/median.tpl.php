@@ -17,8 +17,9 @@ foreach($score as $k => $v){
    printf('<li>%0.2f %s</li>', $v[STAT_MEDIAN], $HtmlName); 
    echo "\n";
 }
-</ul>
 ?>
+</ul>
+
 
 
 
