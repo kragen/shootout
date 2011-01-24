@@ -7,8 +7,9 @@
    unset($selected);
 ?>
 
-<h2><strong>Which programming language implementations have the fastest benchmark programs?</strong></h2>
-
+<h2>Which programming language implementations have the fastest benchmark programs?</h2>
+<p>Median (normalized) elapsed time measurements:</p>
+<ul>
 <?
 foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];
@@ -16,6 +17,7 @@ foreach($score as $k => $v){
    printf('<li>%0.2f %s</li>', $v[STAT_MEDIAN], $HtmlName); 
    echo "\n";
 }
+</ul>
 ?>
 
 
