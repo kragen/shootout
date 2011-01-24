@@ -24,7 +24,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 <body id="<?=SITE_NAME;?>">
 
-<h1>The Computer Language Benchmarks Game</h1>
+<h1><a href="<?=$BannerUrl;?>">The Computer Language Benchmarks Game</a></h1>
 <div id="<?=$PageId;?>">
 <?=$PageBody;?>
 </body>
