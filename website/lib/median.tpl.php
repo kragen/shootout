@@ -8,7 +8,7 @@
 ?>
 
 <h2>Which programming language implementations have the fastest benchmark programs?</h2>
-<p>Median (normalized) elapsed time measurements:</p>
+<p>Median x86 Ubuntu (normalized) elapsed time measurements:</p>
 <ul><?
 foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];

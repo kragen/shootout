@@ -172,7 +172,7 @@ $mark = MarkTime();
 $mark = $mark.' '.SITE_NAME;
 $Title = 'Which programming languages are fastest?';
 
-$bannerUrl = CORE_SITE;
+$bannerUrl = CORE_SITE.'mobile/';
 $faqUrl = CORE_SITE.'help.php';
 
 
