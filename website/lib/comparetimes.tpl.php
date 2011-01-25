@@ -15,8 +15,8 @@ unset($stats);
 </ul>
 
 <p>Compare x86 Ubuntu one-core elapsed time measurements for 10 tiny tasks:</p>
-<ul>
 
+<ul>
 <?
 foreach($sorted as $k => $rows){
    $test = $Tests[$k];
@@ -58,7 +58,20 @@ foreach($sorted as $k => $rows){
    echo "</li>\n";
 }
 ?>
+</ul>
 
+<ul>
+<?
+foreach($sorted as $k => $rows){
+   $test = $Tests[$k];
+   if ($test[TEST_WEIGHT]<=0){ continue; }
+   $testname = $test[TEST_NAME];
 
+   echo '<li>';
+   printf('%s<br/>', $testname);
+
+   echo "</li>\n";
+}
+?>
 </ul>
 
