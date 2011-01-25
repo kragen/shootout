@@ -21,10 +21,9 @@ unset($stats);
 foreach($sorted as $k => $rows){
    $test = $Tests[$k];
    if ($test[TEST_WEIGHT]<=0){ continue; }
-   $testname = $test[TEST_NAME];
 
    echo '<li>';
-   printf('%s<br/>', $testname);
+   printf('%s<br/>%s<br/>', $test[TEST_NAME], $test[TEST_TAG]);
 
    if (!empty($rows)){
 
@@ -55,21 +54,6 @@ foreach($sorted as $k => $rows){
    else { // empty($rows)     
       printf('%s', 'No&nbsp;programs');
    }
-   echo "</li>\n";
-}
-?>
-</ul>
-
-<ul>
-<?
-foreach($sorted as $k => $rows){
-   $test = $Tests[$k];
-   if ($test[TEST_WEIGHT]<=0){ continue; }
-   $testname = $test[TEST_NAME];
-
-   echo '<li>';
-   printf('%s - %s', $testname, $test[TEST_TAG]);
-
    echo "</li>\n";
 }
 ?>
