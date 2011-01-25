@@ -3,5 +3,5 @@
 ob_start('ob_gzhandler');
 require_once('config.php'); 
 $T = 'all'; $L = 'php'; $metaRobots = '';
-require_once(LIB_PATH.'compare.php'); 
+require_once(LIB_PATH.'comparetimes.php'); 
 ?>

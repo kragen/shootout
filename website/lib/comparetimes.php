@@ -195,7 +195,7 @@ function Median($a){
 $Page = & new Template(LIB_PATH);
 $Body = & new Template(LIB_PATH);
 $PageId = 'headtohead';
-$TemplateName = 'compare.tpl.php';
+$TemplateName = 'comparetimes.tpl.php';
 
 
 // GET_VARS ////////////////////////////////////////////////
@@ -302,5 +302,5 @@ $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', $MetaKeywords);
 $Page->set('PageId', $PageId);
 
-echo $Page->fetch('page.tpl.php');
+echo $Page->fetch('simplepage.tpl.php');
 ?>
