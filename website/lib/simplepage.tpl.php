@@ -15,7 +15,7 @@
 
 <body id="<?=SITE_NAME;?>">
 
-<h1><a href="<?=$BannerUrl;?>">The Computer Language Benchmarks Game</a></h1>
+<p>The Computer Language Benchmarks Game</p>
 <div id="<?=$PageId;?>">
 <?=$PageBody;?>
 </div>
