@@ -21,39 +21,39 @@
 <p><a href="./which-programming-languages-are-fastest.php">Which programming languages have the fastest benchmark programs?</a></p>
 <p>Compare x86 Ubuntu one-core measurements for 10 tiny tasks:</p>
 <ul>
-<li><a href="./ada.php">Ada 2005 GNAT</a></li>
-<li><a href="./ats.php">ATS</a></li>
-<li><a href="./c.php">C GNU</a></li>
-<li><a href="./clean.php">Clean</a></li>
-<li><a href="./compare.php?lang=clojure">Clojure</a></li>
-<li><a href="./csharp.php">C# Mono</a></li>
-<li><a href="./cpp.php">C++ GNU</a></li>
-<li><a href="./erlang.php">Erlang HiPE</a></li>
-<li><a href="./fsharp.php">F# Mono</a></li>
-<li><a href="./fortran.php">Fortran Intel</a></li>
-<li><a href="./compare.php?lang=go">Go 6g 8g</a></li>
-<li><a href="./haskell.php">Haskell GHC</a></li>
-<li><a href="./java.php">Java 6 -server</a></li>
-<li><a href="./compare.php?lang=javaxint">Java 6 -Xint</a></li>
-<li><a href="./compare.php?lang=v8&amp;lang2=java">JavaScript V8</a></li>
-<li><a href="./compare.php?lang=tracemonkey&amp;lang2=v8">JavaScript TraceMonkey</a></li>
-<li><a href="./lisp.php">Lisp SBCL</a></li>
-<li><a href="./compare.php?lang=lua&amp;lang2=luajit">Lua</a></li>
-<li><a href="./luajit.php">LuaJIT</a></li>
-<li><a href="./oz.php">Mozart/Oz</a></li>
-<li><a href="./ocaml.php">OCaml</a></li>
-<li><a href="./pascal.php">Free Pascal</a></li>
-<li><a href="./compare.php?lang=perl&amp;lang2=yarv">Perl</a></li>
-<li><a href="./compare.php?lang=php&amp;lang2=yarv">PHP</a></li>
-<li><a href="./compare.php?lang=pypy&amp;lang2=python">PyPy</a></li>
-<li><a href="./compare.php?lang=python3&amp;lang2=python">Python 3</a></li>
-<li><a href="./compare.php?lang=python&amp;lang2=java">CPython</a></li>
-<li><a href="./racket.php">Racket</a></li>
-<li><a href="./compare.php?lang=yarv&amp;lang2=python">Ruby 1.9</a></li>
-<li><a href="./compare.php?lang=jruby&amp;lang2=yarv">JRuby</a></li>
-<li><a href="./compare.php?lang=ruby&amp;lang2=yarv">Ruby MRI</a></li>
-<li><a href="./scala.php">Scala</a></li>
-<li><a href="./smalltalk.php">Smalltalk VisualWorks</a></li>
+<li><a href="./ada.php" title="Compare Ada and C++ elapsed times">Ada 2005 GNAT</a></li>
+<li><a href="./ats.php" title="Compare ATS and C++ elapsed times">ATS</a></li>
+<li><a href="./c.php" title="Compare C and C++ elapsed times">C GNU</a></li>
+<li><a href="./clean.php" title="Compare Clean and C++ elapsed times">Clean</a></li>
+<li><a href="./compare.php?lang=clojure" title="Compare Clojure and Java elapsed times">Clojure</a></li>
+<li><a href="./csharp.php" title="Compare C# and Java elapsed times">C# Mono</a></li>
+<li><a href="./cpp.php" title="Compare C++ and C elapsed times">C++ GNU</a></li>
+<li><a href="./erlang.php" title="Compare Erlang HiPe and Java elapsed times">Erlang HiPE</a></li>
+<li><a href="./compare.php?lang=fsharp&amp;lang2=csharp" title="Compare F# and C# elapsed times">F# Mono</a></li>
+<li><a href="./fortran.php" title="Compare Fortran and C++ elapsed times">Fortran Intel</a></li>
+<li><a href="./compare.php?lang=go" title="Compare Go and C elapsed times">Go 8g</a></li>
+<li><a href="./haskell.php" title="Compare Haskell and Java elapsed times">Haskell GHC</a></li>
+<li><a href="./java.php" title="Compare Java and C++ elapsed times">Java 6 -server</a></li>
+<li><a href="./compare.php?lang=javaxint" title="Compare interpretered Java and JIT Java elapsed times">Java 6 -Xint</a></li>
+<li><a href="./compare.php?lang=v8&amp;lang2=java" title="Compare JavaScript and Java elapsed times">JavaScript V8</a></li>
+<li><a href="./compare.php?lang=tracemonkey&amp;lang2=v8" title="Compare JavaScript TraceMonkey and V8 elapsed times">JavaScript TraceMonkey</a></li>
+<li><a href="./lisp.php" title="Compare SBCL Lisp and Java elapsed times">Lisp SBCL</a></li>
+<li><a href="./compare.php?lang=lua&amp;lang2=luajit" title="Compare Lua and LuaJIT elapsed times">Lua</a></li>
+<li><a href="./luajit.php" title="Compare LuaJIT and Java elapsed times">LuaJIT</a></li>
+<li><a href="./oz.php" title="Compare Mozart/Oz and interpretered Java elapsed times">Mozart/Oz</a></li>
+<li><a href="./ocaml.php" title="Compare OCaml and C++ elapsed times">OCaml</a></li>
+<li><a href="./pascal.php" title="Compare Pascal and C++ elapsed times">Free Pascal</a></li>
+<li><a href="./compare.php?lang=perl&amp;lang2=yarv" title="Compare Perl and Ruby 1.9 elapsed times">Perl</a></li>
+<li><a href="./compare.php?lang=php&amp;lang2=yarv" title="Compare PHP and Ruby 1.9 elapsed times">PHP</a></li>
+<li><a href="./compare.php?lang=pypy&amp;lang2=python" title="Compare PyPy and CPython elapsed times">PyPy</a></li>
+<li><a href="./compare.php?lang=python3&amp;lang2=python" title="Compare Python3 and CPython elapsed times">Python 3</a></li>
+<li><a href="./compare.php?lang=python&amp;lang2=java" title="Compare CPython and Java elapsed times">CPython</a></li>
+<li><a href="./racket.php" title="Compare Racket and interpretered Java elapsed times">Racket</a></li>
+<li><a href="./compare.php?lang=yarv&amp;lang2=python" title="Compare Ruby 1.9 and CPython elapsed times">Ruby 1.9</a></li>
+<li><a href="./compare.php?lang=jruby&amp;lang2=yarv" title="Compare JRuby and Ruby 1.9 elapsed times">JRuby</a></li>
+<li><a href="./compare.php?lang=ruby&amp;lang2=yarv" title="Compare Ruby MRI and Ruby 1.9 elapsed times">Ruby MRI</a></li>
+<li><a href="./scala.php" title="Compare Scala and Java elapsed times">Scala</a></li>
+<li><a href="./smalltalk.php" title="Compare Smalltalk and Java elapsed times">Smalltalk VisualWorks</a></li>
 </ul>
 </div>
 
