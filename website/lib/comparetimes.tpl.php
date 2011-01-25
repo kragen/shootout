@@ -49,7 +49,7 @@ foreach($sorted as $k => $rows){
             if ($row[DATA_ELAPSED]>0){ $e = number_format($row[DATA_ELAPSED],2); } else { $e = ''; }
 
             if($row[DATA_STATUS] > PROGRAM_TIMEOUT){
-               printf('%s</dl>', $e);
+               printf('%ss</dl>', $e);
             } else {
                printf('%s</dl>', StatusMessage($row[DATA_STATUS]));
             }
