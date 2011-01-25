@@ -172,19 +172,9 @@ $mark = MarkTime();
 $mark = $mark.' '.SITE_NAME;
 $Title = 'Which programming languages are fastest?';
 
-$bannerUrl = CORE_SITE.'mobile/';
-$faqUrl = CORE_SITE.'help.php';
-
-
 // DATA ////////////////////////////////////////////////
 
 $Data = BoxplotData(DATA_PATH.'data.csv',$Tests,$Langs,$Incl,$Excl,$SLangs);
-
-$timeUsed = 'Elapsed secs';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
-   $timeUsed = 'CPU secs';
-}
-
 
 // ABOUT ////////////////////////////////////////////////
 
@@ -195,27 +185,17 @@ if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-a
 
 // META ////////////////////////////////////////////////
 
-$metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
+$metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
 $MetaKeywords = '<meta name="description" content="Which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') and how your favorite language compares." />';
-
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
-   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-}
-
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
 $Page->set('PageTitle', $Title.BAR.'Computer&nbsp;Language&nbsp;Benchmarks&nbsp;Game');
 $Page->set('BannerTitle', BANNER_TITLE);
-$Page->set('BannerUrl', $bannerUrl);
-$Page->set('FaqTitle', FAQ_TITLE);
-$Page->set('FaqUrl', $faqUrl);
 
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
-$Body->set('Mark', $mark);
-$Body->set('TimeUsed', $timeUsed);
 
 $Body->set('Data', $Data );
 $Body->set('Title', $Title);
