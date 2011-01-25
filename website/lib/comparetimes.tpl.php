@@ -19,7 +19,7 @@ $Family = $Row[LANG_FAMILY];
 ?>
 
 
-<p>x86 Ubuntu elapsed time measurements:</p>
+<p>x86 Ubuntu one-core elapsed time measurements:</p>
 <ul>
 
 <?
