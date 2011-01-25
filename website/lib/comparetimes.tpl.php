@@ -18,6 +18,8 @@ $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 ?>
 
+
+<p>x86 Ubuntu elapsed time measurements:</p>
 <ul>
 
 <?
