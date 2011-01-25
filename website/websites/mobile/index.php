@@ -47,7 +47,7 @@
 <li><a href="./compare.php?lang=php&amp;lang2=yarv">PHP</a></li>
 <li><a href="./compare.php?lang=pypy&amp;lang2=python">PyPy</a></li>
 <li><a href="./compare.php?lang=python3&amp;lang2=python">Python 3</a></li>
-<li><a href="./compare.php?lang=python&amp;lang2=yarv">CPython</a></li>
+<li><a href="./compare.php?lang=python&amp;lang2=java">CPython</a></li>
 <li><a href="./racket.php">Racket</a></li>
 <li><a href="./compare.php?lang=yarv&amp;lang2=python">Ruby 1.9</a></li>
 <li><a href="./compare.php?lang=jruby&amp;lang2=yarv">JRuby</a></li>
