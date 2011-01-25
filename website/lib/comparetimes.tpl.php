@@ -68,7 +68,7 @@ foreach($sorted as $k => $rows){
    $testname = $test[TEST_NAME];
 
    echo '<li>';
-   printf('%s<br/>', $testname);
+   printf('%s - %s', $testname, $test[TEST_TAG]);
 
    echo "</li>\n";
 }
