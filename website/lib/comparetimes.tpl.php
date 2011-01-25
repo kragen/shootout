@@ -23,7 +23,7 @@ foreach($sorted as $k => $rows){
    if ($test[TEST_WEIGHT]<=0){ continue; }
 
    echo '<li>';
-   printf('%s<br/>%s<br/>', $test[TEST_NAME], $test[TEST_TAG]);
+   printf('%s<br/>', $test[TEST_TAG]);
 
    if (!empty($rows)){
 
