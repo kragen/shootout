@@ -18,8 +18,8 @@ $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 ?>
 
-<?=$VersionLang;?>
-<?=$VersionLang2;?>
+<p><?=$V;?></p>
+<p><?=$V2;?></p>
 <p>x86 Ubuntu one-core elapsed time measurements for 10 tiny tasks:</p>
 <ul>
 
