@@ -35,10 +35,10 @@
 <li><a href="./haskell.php">Haskell GHC</a></li>
 <li><a href="./java.php">Java 6 -server</a></li>
 <li><a href="./compare.php?lang=javaxint">Java 6 -Xint</a></li>
-<li><a href="./compare.php?lang=java&amp;lang2=javaxint">-server vs -Xint</a></li>
+<li><a href="./compare.php?lang=java&amp;lang2=javaxint">Java -server :: -Xint</a></li>
 <li><a href="./compare.php?lang=tracemonkey">JavaScript TraceMonkey</a></li>
 <li><a href="./javascript.php">JavaScript V8</a></li>
-<li><a href="./compare.php?lang=v8&amp;lang2=tracemonkey">V8 vs TraceMonkey</a></li>
+<li><a href="./compare.php?lang=v8&amp;lang2=tracemonkey">JavaScript V8 :: TraceMonkey</a></li>
 <li><a href="./lisp.php">Lisp SBCL</a></li>
 <li><a href="./lua.php">Lua</a></li>
 <li><a href="./luajit.php">LuaJIT</a></li>
