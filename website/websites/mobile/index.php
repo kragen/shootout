@@ -35,25 +35,23 @@
 <li><a href="./haskell.php">Haskell GHC</a></li>
 <li><a href="./java.php">Java 6 -server</a></li>
 <li><a href="./compare.php?lang=javaxint">Java 6 -Xint</a></li>
-<li><a href="./compare.php?lang=java&amp;lang2=javaxint">Java -server :: -Xint</a></li>
-<li><a href="./compare.php?lang=tracemonkey">JavaScript TraceMonkey</a></li>
-<li><a href="./javascript.php">JavaScript V8</a></li>
-<li><a href="./compare.php?lang=v8&amp;lang2=tracemonkey">JavaScript V8 :: TraceMonkey</a></li>
+<li><a href="./compare.php?lang=v8&amp;lang2=java">JavaScript V8</a></li>
+<li><a href="./compare.php?lang=tracemonkey&amp;lang2=v8">JavaScript TraceMonkey</a></li>
 <li><a href="./lisp.php">Lisp SBCL</a></li>
-<li><a href="./lua.php">Lua</a></li>
+<li><a href="./compare.php?lang=lua&amp;lang2=luajit">Lua</a></li>
 <li><a href="./luajit.php">LuaJIT</a></li>
 <li><a href="./oz.php">Mozart/Oz</a></li>
 <li><a href="./ocaml.php">OCaml</a></li>
 <li><a href="./pascal.php">Free Pascal</a></li>
-<li><a href="./perl.php">Perl</a></li>
-<li><a href="./php.php">PHP</a></li>
-<li><a href="./compare.php?lang=pypy">PyPy</a></li>
-<li><a href="./python3.php">Python 3</a></li>
-<li><a href="./python.php">CPython</a></li>
+<li><a href="./compare.php?lang=perl&amp;lang2=yarv">Perl</a></li>
+<li><a href="./compare.php?lang=php&amp;lang2=yarv">PHP</a></li>
+<li><a href="./compare.php?lang=pypy&amp;lang2=python">PyPy</a></li>
+<li><a href="./compare.php?lang=python3&amp;lang2=python">Python 3</a></li>
+<li><a href="./compare.php?lang=python&amp;lang2=yarv">CPython</a></li>
 <li><a href="./racket.php">Racket</a></li>
-<li><a href="./compare.php?lang=yarv">Ruby 1.9</a></li>
-<li><a href="./jruby.php">JRuby</a></li>
-<li><a href="./ruby.php">Ruby MRI</a></li>
+<li><a href="./compare.php?lang=yarv&amp;lang2=python">Ruby 1.9</a></li>
+<li><a href="./compare.php?lang=jruby&amp;lang2=yarv">JRuby</a></li>
+<li><a href="./compare.php?lang=ruby&amp;lang2=yarv">Ruby MRI</a></li>
 <li><a href="./scala.php">Scala</a></li>
 <li><a href="./smalltalk.php">Smalltalk VisualWorks</a></li>
 </ul>

@@ -186,7 +186,7 @@ if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-a
 // META ////////////////////////////////////////////////
 
 $metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
-$MetaKeywords = '<meta name="description" content="Which programming languages have the fastest benchmark programs ('.PLATFORM_NAME.') and how your favorite language compares." />';
+$MetaKeywords = '<meta name="description" content="Compare the performance of ~24 programming languages. Contribute faster more elegant programs. And please don'."'".'t jump to conclusions!" />';
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
