@@ -29,7 +29,7 @@ foreach($sorted as $k => $rows){
    echo '<li>';
    if (!empty($rows)){
 
-      printf('<dt>%s</dt>', $testname);
+      printf('%s<br/>', $testname);
 
       $ELAPSED = '';
       if (isset($rows[0]) && isset($rows[1]) && ($rows[0][DATA_TIME] < $rows[1][DATA_TIME])){
@@ -47,29 +47,29 @@ foreach($sorted as $k => $rows){
             $noSpaceName = str_replace(' ','&nbsp;',$name);
             $id = $row[DATA_ID];
    
-            printf('<dl>%s ', $noSpaceName);
+            printf('%s ', $noSpaceName);
 
             $fc = number_format($row[DATA_FULLCPU],2);
 
             if ($row[DATA_ELAPSED]>0){ $e = number_format($row[DATA_ELAPSED],2); } else { $e = ''; }
 
             if($row[DATA_STATUS] > PROGRAM_TIMEOUT){
-               printf('%ss</dl>', $e);
+               printf('%ss<br/>', $e);
             } else {
-               printf('%s</dl>', StatusMessage($row[DATA_STATUS]));
+               printf('%s<br/>', StatusMessage($row[DATA_STATUS]));
             }
             $ELAPSED = '';
 
          } elseif (!isset($row)) {
-            printf('%s</dl>', 'No&nbsp;program');
+            printf('%s<br/>', 'No&nbsp;program');
          }
       }
    }
 
    else { // empty($rows)     
-      printf('<dt>%s</dt>', $testname);
+      printf('%s<br/>', $testname);
 
-      printf('<dl>%s</dl>', 'No&nbsp;programs');
+      printf('%s', 'No&nbsp;programs');
    }
    echo "</li>\n";
 }
