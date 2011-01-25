@@ -238,9 +238,6 @@ if (!isset($L2) || $L2 == $L){
 
 // HEADER ////////////////////////////////////////////////
 
-$mark = MarkTime();
-$mark = $mark.' '.SITE_NAME;
-
 $LangName = $Langs[$L][LANG_FULL];
 $LangName2 = $Langs[$L2][LANG_FULL];
 $Title = $LangName.'&nbsp;speed&nbsp;&#247;&nbsp;'.$LangName2.'&nbsp;speed';
@@ -253,29 +250,18 @@ $faqUrl = CORE_SITE.'help.php';
 
 $Data = HeadToHeadData(DATA_PATH.'ndata.csv',$Tests,$Langs,$Incl,$Excl,$L,$L2);
 
-$timeUsed = 'Elapsed secs';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian'){
-   $timeUsed = 'CPU secs';
-}
-
 
 // ABOUT ////////////////////////////////////////////////
 
-$About = & new Template(ABOUT_PATH);
-$AboutTemplateName = $L.SEPARATOR.'about.tpl.php';
-if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-$About->set('Version', HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php'));
+$V = HtmlFragment(VERSION_PATH.$L.SEPARATOR.'version.php');
+$V2 = HtmlFragment(VERSION_PATH.$L2.SEPARATOR.'version.php');
 
 
 // META ////////////////////////////////////////////////
 
 $MetaKeywords = '<meta name="description" content="Compare the speed of '.$LangName.' programs against the speed of '.$LangName2.' programs ('.PLATFORM_NAME.')." />';
          
-$metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
-   $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
-}
-
+$metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
@@ -290,13 +276,12 @@ $Body->set('Langs', $Langs);
 $Body->set('SelectedLang', $L);
 $Body->set('SelectedLang2', $L2);
 $Body->set('Excl', $Excl);
-$Body->set('Mark', $mark);
 $Body->set('TimeUsed', $timeUsed);
 $Body->set('Data', $Data );
 
-$About->set('SelectedLang', $L);
+$Body->set('VersionLang', $V);
+$Body->set('VersionLang2', $V2);
 
-$Body->set('About', $About->fetch($AboutTemplateName));
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
 $Page->set('MetaKeywords', $MetaKeywords);

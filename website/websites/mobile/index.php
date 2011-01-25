@@ -19,7 +19,7 @@
 <h1>The Computer Language Benchmarks Game</h1>
 
 <p><a href="./which-programming-languages-are-fastest.php">Which programming languages have the fastest benchmark programs?</a></p>
-<p>Compare x86 Ubuntu one-core measurements:</p>
+<p>Compare x86 Ubuntu one-core measurements for 10 tiny tasks:</p>
 <ul>
 <li><a href="./ada.php">Ada 2005 GNAT</a></li>
 <li><a href="./ats.php">ATS</a></li>

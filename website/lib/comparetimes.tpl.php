@@ -18,8 +18,9 @@ $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
 ?>
 
-
-<p>x86 Ubuntu one-core elapsed time measurements:</p>
+<?=$VersionLang;?>
+<?=$VersionLang2;?>
+<p>x86 Ubuntu one-core elapsed time measurements for 10 tiny tasks:</p>
 <ul>
 
 <?
@@ -76,6 +77,7 @@ foreach($sorted as $k => $rows){
    echo "</li>\n";
 }
 ?>
+
 
 </ul>
 
