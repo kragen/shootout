@@ -14,7 +14,7 @@ unset($stats);
 <li><?=$VersionLang2;?></li>
 </ul>
 
-<p>x86 Ubuntu one-core elapsed time measurements for 10 tiny tasks:</p>
+<p>Compare x86 Ubuntu one-core elapsed time measurements for 10 tiny tasks:</p>
 <ul>
 
 <?
