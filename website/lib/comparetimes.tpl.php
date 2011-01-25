@@ -71,7 +71,7 @@ foreach($sorted as $k => $rows){
 
       printf('<dl>%s</dl>', 'No&nbsp;programs');
    }
-   echo '</li>\n';
+   echo "</li>\n";
 }
 ?>
 
