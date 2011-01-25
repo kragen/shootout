@@ -19,5 +19,7 @@
 <div id="<?=$PageId;?>">
 <?=$PageBody;?>
 </div>
+
+<p>And please don't jump to conclusions! "The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."</p>
 </body>
 </html>
