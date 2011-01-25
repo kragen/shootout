@@ -16,12 +16,17 @@ $LangName2 = $Langs[$SelectedLang2][LANG_FULL];
 $LangLink = $Row[LANG_LINK];
 $LangLink2 = $Langs[$SelectedLang2][LANG_LINK];
 $Family = $Row[LANG_FAMILY];
+?>
 
+<ul>
+
+<?
 foreach($sorted as $k => $rows){
    $test = $Tests[$k];
    if ($test[TEST_WEIGHT]<=0){ continue; }
    $testname = $test[TEST_NAME];
 
+   echo '<li>';
    if (!empty($rows)){
 
       printf('<dt>%s</dt>', $testname);
@@ -66,6 +71,9 @@ foreach($sorted as $k => $rows){
 
       printf('<dl>%s</dl>', 'No&nbsp;programs');
    }
+   echo '</li>';
 }
 ?>
+
+</ul>
 
