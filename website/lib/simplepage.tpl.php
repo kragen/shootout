@@ -15,7 +15,7 @@
 
 <body id="<?=SITE_NAME;?>">
 
-<p>The Computer Language Benchmarks Game</p>
+<h1>The Computer Language Benchmarks Game</h1>
 <div id="<?=$PageId;?>">
 <?=$PageBody;?>
 </div>
