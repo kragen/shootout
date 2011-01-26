@@ -168,24 +168,16 @@ $SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
 
 // HEADER ////////////////////////////////////////////////
 
-$mark = MarkTime();
-$mark = $mark.' '.SITE_NAME;
 $Title = 'Which programming languages are fastest?';
 
 // DATA ////////////////////////////////////////////////
 
 $Data = BoxplotData(DATA_PATH.'data.csv',$Tests,$Langs,$Incl,$Excl,$SLangs);
 
-// ABOUT ////////////////////////////////////////////////
-
-$About = & new Template(ABOUT_PATH);
-$AboutTemplateName = 'median-about.tpl.php';
-if (! file_exists(ABOUT_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
-
 
 // META ////////////////////////////////////////////////
 
-$metaRobots = '<meta name="robots" content="index,nofollow,noarchive" />';
+$metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
 $MetaKeywords = '<meta name="description" content="Compare the performance of ~24 programming languages. Contribute faster more elegant programs. And please don'."'".'t jump to conclusions!" />';
 
 // TEMPLATE VARS ////////////////////////////////////////////////
@@ -199,8 +191,6 @@ $Body->set('Excl', $Excl);
 
 $Body->set('Data', $Data );
 $Body->set('Title', $Title);
-
-$Body->set('About', $About->fetch($AboutTemplateName));
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);

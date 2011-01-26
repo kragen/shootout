@@ -6,7 +6,7 @@
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
 
-<meta name="robots" content="noindex,nofollow,noarchive" />
+<meta name="robots" content="index,follow,noarchive" />
 
 <meta name="description" content="How programs were measured." />
 
