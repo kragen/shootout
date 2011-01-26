@@ -24,10 +24,12 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 <title>Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_18aug2010.php" />
+<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/nohint_css_26jan2011.php" media="screen,print"/>
 <link rel="shortcut icon" href="http://shootout.alioth.debian.org/favicon_ico_11dec2009.php" />
 </head>
 
 <body id="core">
+<p id="hint"><a href="http://shootout.alioth.debian.org/mobile/index.php">/mobile Handheld Friendly website</a></p>
 
 <table class="banner"><tr>
 <td><h1><a>The&nbsp;Computer&nbsp;<strong>Language</strong>&nbsp; <br/><strong>Benchmarks</strong>&nbsp;Game</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://shootout.alioth.debian.org/help.php" title="How to compare these programming language measurements. How programs were measured. How to contribute programs. FAQs">[[ Help ]]</a></h1></td>
@@ -190,7 +192,7 @@ foreach($tests as $t){
 
 
 
-<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/mobile/index.php"  title="Handheld Friendly">Mobile</a> &nbsp; <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php">Conclusions</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
+<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/mobile/index.php" title="Handheld Friendly website">Mobile</a> &nbsp; <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php">Conclusions</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
 
 </div>
 
