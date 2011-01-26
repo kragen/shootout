@@ -10,6 +10,10 @@
 
 <meta name="description" content="Software contributed to The Computer Language Benchmarks Game is published under this revised BSD license." />
 
+<meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0"/>
+<meta name="HandheldFriendly" content="true" />
+
+
 <title>Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_simple.css" />
 </head>
