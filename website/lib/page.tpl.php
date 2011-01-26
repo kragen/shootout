@@ -17,6 +17,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 <?=$Robots;?>
 <?=$MetaKeywords;?>
+<meta name="HandheldFriendly" content="false" />
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_18aug2010.php" />
