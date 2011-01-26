@@ -15,7 +15,10 @@
 <meta name="MobileOptimized" content="width" />
 
 <title>Computer Language Benchmarks Game</title>
-<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_simple.css" />
+<style type="text/css">
+body, h1, p { margin: 0; padding: 0; background-color: white; font-family: sans-serif; }
+h1 { font-weight: bold; font-size: smaller; }
+</style>
 </head>
 
 <body>

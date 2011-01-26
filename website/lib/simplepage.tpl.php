@@ -14,7 +14,10 @@
 <meta name="MobileOptimized" content="width" />
 
 <title><?=$PageTitle;?></title>
-<link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_simple.css" />
+<style type="text/css">
+body, h1, p { margin: 0; padding: 0; background-color: white; font-family: sans-serif; }
+h1 { font-weight: bold; font-size: smaller; }
+</style>
 </head>
 
 <body id="<?=SITE_NAME;?>">
