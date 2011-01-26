@@ -18,6 +18,13 @@
 
 <h1>The Computer Language Benchmarks Game</h1>
 
+<ul>
+<li>These pages only provide a tiny amount of data from the 32 bit one-core Ubuntu measurements. Much more data including program source code is available for <a href="http://shootout.alioth.debian.org/">large screen browsing</a>.</li>
+<li>  </li>
+<li>  </li>
+<li>  </li>
+
+</ul>
 
 <p>&nbsp; <a href="http://shootout.alioth.debian.org/mobile/">Home</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/which-programming-languages-are-fastest.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/help.php">Help</a> &nbsp;</p>
 
