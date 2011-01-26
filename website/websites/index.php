@@ -25,6 +25,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 <title>Computer Language Benchmarks Game</title>
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/benchmark_css_18aug2010.php" />
 <link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/nohint_css_26jan2011.php" media="screen,print"/>
+<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/hint_css_26jan2011.php" media="handheld"/>
 <link rel="shortcut icon" href="http://shootout.alioth.debian.org/favicon_ico_11dec2009.php" />
 </head>
 
