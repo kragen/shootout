@@ -21,5 +21,7 @@
 </div>
 
 <p>And please don't jump to conclusions! "The performance of a benchmark, even if it is derived from a real program, may not help to predict the performance of similar programs that have different hot spots."</p>
+
+<p>&nbsp; <a href="http://shootout.alioth.debian.org/mobile/">Home</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/which-programming-languages-are-fastest.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/help.php">Help</a> &nbsp;</p>
 </body>
 </html>

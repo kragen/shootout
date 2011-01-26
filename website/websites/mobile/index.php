@@ -15,7 +15,7 @@
 </head>
 
 <body>
-<div>
+
 <h1>The Computer Language Benchmarks Game</h1>
 
 <p><a href="./which-programming-languages-are-fastest.php" title="Compare median elapsed times for 10 tiny tasks">Which programming languages have the fastest benchmark programs?</a></p>
@@ -55,7 +55,8 @@
 <li><a href="./scala.php" title="Compare Scala and Java elapsed times">Scala</a></li>
 <li><a href="./smalltalk.php" title="Compare Smalltalk and Java elapsed times">Smalltalk VisualWorks</a></li>
 </ul>
-</div>
+
+<p>&nbsp; <a href="http://shootout.alioth.debian.org/mobile/which-programming-languages-are-fastest.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/help.php">Help</a> &nbsp;</p>
 
 </body>
 </html>
