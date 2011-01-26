@@ -20,11 +20,11 @@
 
 <ul>
 <li>These pages only provide a tiny amount of data from the 32 bit one-core Ubuntu measurements. Much more data including program source code is available for <a href="http://shootout.alioth.debian.org/">large screen browsing</a>.</li>
+<li>Contribute faster more elegant programs.</li>
 <li>x86 Ubuntu one-core measurements were made with affinity set on a quad-core 2.4Ghz Intel® Q6600® machine with 4GB of RAM and 250GB SATA II disk drive. Ubuntu™ 10.10 Linux Kernel 2.6.35-24-generic</li>
 <li>Elapsed time measurements less than 120s are the fastest of 6 measurements.</li>
 <li>Elapsed time measurements more than 120s are the sole measurement.</li>
 <li>Each program was run as a child-process of a Python script using Popen. For elapsed time, the time was taken before forking the child-process and after the child-process exits, using time.time()</li>
-<li>  </li>
 </ul>
 
 <p>&nbsp; <a href="http://shootout.alioth.debian.org/mobile/">Home</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/which-programming-languages-are-fastest.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/help.php">Help</a> &nbsp;</p>
