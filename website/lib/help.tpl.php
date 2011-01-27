@@ -516,7 +516,7 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </dd>
 
 
-<dt><a href="#myths" name="myths">&nbsp;Myths and Misunderstandings</a></dt>
+<dt><a href="#myths" name="myths">&nbsp;Misunderstandings and Myths</a></dt>
 <dd>
 <dl>
 
