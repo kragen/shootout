@@ -526,9 +526,9 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 <p>The new tasks also made it easier to write programs in Clean and Haskell that would perform the intended workload.</p>
 </dd>
 
-<dt><a href="#removed" name="removed">Language X was <em>removed</em> !</a></dt>
+<dt><a href="#removed" name="removed">"Language X" was <em>removed</em> !</a></dt>
 <dd><p>When I decided it would be interesting to measure both <em>quad-core</em> and programs forced onto <em>one core</em>; both <em>x86</em> and <em>x64</em>; on new hardware - that dramatically increased the thankless maintenance chore, so I started off with 20 language implementations instead of 60.</p>
-<p>Language X is just one of 30 or so language implementations not measured on Q6600 that were measured on Pentium 4.</p>
+<p>"Language X" is probably just one of 30 or so language implementations not measured on Q6600 that were measured on Pentium 4.</p>
 </dd>
 
 <dt><a href="#namegame" name="namegame">There's a reason they call it a "game"&#8230;</a></dt>
