@@ -532,7 +532,7 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 </dd>
 
 <dt><a href="#namegame" name="namegame">There's a reason they call it a "game"&#8230;</a></dt>
-<dd><p>Sometimes the "game" scare quotes are just an attempt to avoid uncomfortable questions about the measurements by being dismissive, as though the word <em>game</em> could only ever mean a childish distraction or amusement - that's wrong, the word <em>game</em> has more general meanings and metaphorical meanings.</p>
+<dd><p>Sometimes the "game" scare quotes are just an attempt to avoid uncomfortable questions about the measurements by being dismissive, as though the word <em>game</em> could only ever mean a childish distraction or amusement - that's wrong, the word <em>game</em> has more general meanings.</p>
 <p>This project is named the benchmarks game partly because the general allusions to competition and contest are appropriate, but mostly because <a href="http://groups.google.com/group/haskell-cafe/msg/61e427146c8d7ab4?hl=en&amp;pli=1">I didn't want to keep using the old name</a>.</p>
 </dd>
 
