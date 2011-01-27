@@ -7,7 +7,7 @@
    unset($selected);
 ?>
 
-<p>Compare median x86 Ubuntu one-core (normalized) elapsed time measurements for 10 tiny tasks:</p>
+<p>Compare median x86 Ubuntu one-core (normalized) elapsed time ratios for 10 tiny tasks:</p>
 <ul><?
 foreach($score as $k => $v){
    $Name = $Langs[$k][LANG_FULL];

@@ -9,7 +9,7 @@
 
 <p>No. Which programming language implementation has the fastest benchmark programs?</p>
 
-<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#time">Time-used</a> (<?=$TimeUsed;?>).</p>
+<p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#time">Time-used</a> (<?=$TimeUsed;?>) / Fastest.</p>
 
 <p>For this comparison, the <a href="<?=CORE_SITE;?>help.php#compare" title="Measurements for different OS/machine combinations are shown on different color-coded pages">4 sets of up-to-date measurements</a> have been combined. This comparison includes measurements both for Intel&#174;&nbsp;Q6600&#174;&nbsp;<a href="./u64q/which-programming-languages-are-fastest.php" title="Which programming languages have the fastest benchmark programs on quad-core x64 Ubuntu?">quad-core</a> and <a href="./u32/which-programming-languages-are-fastest.php" title="Which programming languages have the fastest benchmark programs on one core x86 Ubuntu?">one-core</a>; both for <a href="./u64/which-programming-languages-are-fastest.php" title="Which programming languages have the fastest benchmark programs on one core x64 Ubuntu?">x64</a>&nbsp;and <a href="./u32q/which-programming-languages-are-fastest.php" title="Which programming languages have the fastest benchmark programs on quad-core x86 Ubuntu?">x86</a>&nbsp;Ubuntu&#8482;. <i>This comparison blurs the differences</i>.</p>
 

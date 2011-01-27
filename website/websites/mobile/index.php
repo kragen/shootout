@@ -25,7 +25,7 @@ h1 { font-weight: bold; font-size: smaller; }
 
 <h1>The Computer Language Benchmarks Game</h1>
 
-<p><a href="./which-programming-languages-are-fastest.php" title="Compare median elapsed times for 10 tiny tasks">Which programming languages have the fastest benchmark programs?</a></p>
+<p><a href="./which-programming-languages-are-fastest.php" title="Compare median (normalized) elapsed time ratios for 10 tiny tasks">Which programming languages have the fastest benchmark programs?</a></p>
 <p>Compare x86 Ubuntu one-core measurements for 10 tiny tasks:</p>
 <ul>
 <li><a href="./ada.php" title="Compare Ada and C++ elapsed times">Ada 2005 GNAT</a></li>
