@@ -521,19 +521,18 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 <dl>
 
 <dt><a href="#hadtobechanged" name="hadtobechanged">The benchmarks had to be changed because lazy Haskell was too fast!</a></dt>
-<dd><p>Some of the lazy Haskell programs from Doug Bagley's project never had performed the intended workload even back in 2001. After the project was revived in 2004 <em>new Haskell programs were contributed</em> that did perform the intended workload.</p>
-<p>But the fastest programs (<em>the usual suspects</em> - C, C++,&#8230;) on the new single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine didn't take long enough given the poor resolution of the measurement script. So new tasks were created that would take <em>the usual suspects</em> longer (without exhausting memory) and would allow workloads to be increased easily in the future.</p>
+<dd><p>Some of the lazy Haskell programs from Doug Bagley's project never had performed the intended workload even back in 2001. When the project was revived in 2004 <em>new Haskell programs were contributed</em> that did perform the intended workload.</p>
+<p>But the fastest programs (<em>the usual suspects</em> - C, C++,&#8230;) on the new single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine didn't take long enough, given the poor resolution of the measurement script. So new tasks were created that would take <em>the usual suspects</em> longer (without exhausting memory) and would allow workloads to be increased easily as-needed in the future.</p>
 <p>The new tasks also made it easier to write programs in Clean and Haskell that would perform the intended workload.</p>
 </dd>
 
 <dt><a href="#removed" name="removed">"Language X" was <em>removed</em> !</a></dt>
-<dd><p>When I decided it would be interesting to measure both <em>quad-core</em> and programs forced onto <em>one core</em>; both <em>x86</em> and <em>x64</em>; on new hardware - that dramatically increased the thankless maintenance chore, so I started off with 20 language implementations instead of 60.</p>
+<dd><p>When I decided it would be interesting to measure both <em>quad-core</em> and programs forced onto <em>one core</em>, both <em>x86</em> and <em>x64</em> (on new hardware); that decision dramatically increased the thankless maintenance chore - so I started off with 20 language implementations instead of 60.</p>
 <p>"Language X" is probably just one of 30 or so language implementations not measured on Q6600 that were measured on Pentium 4.</p>
 </dd>
 
 <dt><a href="#namegame" name="namegame">There's a reason they call it a "game"&#8230;</a></dt>
-<dd><p>You might come across comments like - 'There's a reason they call the Computer Languages Benchmark Game a "game": they even encourage you right on their own page to play around with the benchmarks to make any arbitrary language rise to the top.'</p>
-<p>Sometimes those comments are just an attempt to avoid uncomfortable questions about the measurements by being dismissive, as though the word <em>game</em> could only ever mean a childish distraction or amusement - that's wrong, the word <em>game</em> has more general meanings and metaphorical meanings.</p>
+<dd><p>Sometimes the "game" scare quotes are just an attempt to avoid uncomfortable questions about the measurements by being dismissive, as though the word <em>game</em> could only ever mean a childish distraction or amusement - that's wrong, the word <em>game</em> has more general meanings and metaphorical meanings.</p>
 <p>This project is named the benchmarks game partly because the general allusions to competition and contest are appropriate, but mostly because <a href="http://groups.google.com/group/haskell-cafe/msg/61e427146c8d7ab4?hl=en&amp;pli=1">I didn't want to keep using the old name</a>.</p>
 </dd>
 
