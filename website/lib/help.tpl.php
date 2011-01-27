@@ -522,7 +522,7 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 
 <dt><a href="#hadtobechanged" name="hadtobechanged">The benchmarks had to be changed because lazy Haskell was too fast!</a></dt>
 <dd><p>Some of the lazy Haskell programs from Doug Bagley's project never had performed the intended workload even back in 2001. After the project was revived in 2004 <em>new Haskell programs were contributed</em> that did perform the intended workload.</p>
-<p>But the fastest programs (the usual suspects - C, C++,&#8230;) on the new single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine didn't take long enough given the poor resolution of the measurement script. So new tasks were created that would take <em>the usual suspects</em> longer (without exhausting memory) and would allow workloads to be increased easily in the future.</p>
+<p>But the fastest programs (<em>the usual suspects</em> - C, C++,&#8230;) on the new single-processor 2.2Ghz AMD&#8482; Sempron&#8482; machine didn't take long enough given the poor resolution of the measurement script. So new tasks were created that would take <em>the usual suspects</em> longer (without exhausting memory) and would allow workloads to be increased easily in the future.</p>
 <p>The new tasks also made it easier to write programs in Clean and Haskell that would perform the intended workload.</p>
 </dd>
 
