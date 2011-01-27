@@ -512,7 +512,13 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 
 </dd>
 
+</dl>
+</dd>
 
+
+<dt><a href="#myths" name="myths">&nbsp;Myths</a></dt>
+<dd>
+<dl>
 
 <dt><a href="#namegame" name="namegame">Why name this project the benchmarks game?</a></dt>
 <dd><p>You might come across comments like - 'There's a reason they call the Computer Languages Benchmark Game a "game": they even encourage you right on their own page to play around with the benchmarks to make any arbitrary language rise to the top.'</p>
