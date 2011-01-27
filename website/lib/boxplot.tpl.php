@@ -15,7 +15,7 @@
 
 <p>This chart shows one <em>comparison</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a> (<?=$TimeUsed;?>) / Fastest.</p>
 
-<p>Each chart box shows the middle 50% of (normalized) program time ratios for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> (normalized) program time ratio.</p>
+<p>Each chart box shows the middle 50% of (normalized) program Time-used ratios for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> (normalized) program Time-used ratio.</p>
 
 
 <p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
