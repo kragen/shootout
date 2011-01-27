@@ -21,10 +21,13 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 
 <title><?=$PageTitle;?></title>
 <link rel="stylesheet" type="text/css" href="<?=IMAGE_PATH;?>benchmark_css_18aug2010.php" />
+<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/nohint_css_26jan2011.php" media="screen,print,projection"/>
+<link rel="stylesheet" type="text/css" href="http://shootout.alioth.debian.org/hint_css_26jan2011.php" media="handheld,aural,braille"/>
 <link rel="shortcut icon" href="./favicon_ico_11dec2009.php" />
 </head>
 
 <body id="<?=SITE_NAME;?>">
+<p id="hint"><a href="http://shootout.alioth.debian.org/mobile/index.php">/mobile Handheld Friendly website</a></p>
 <table class="banner"><tr>
 <td><h1><a href="<?=$BannerUrl;?>" title="Go to Computer Language Benchmarks Game Home"><?=$BannerTitle;?></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?=$FaqUrl;?>" title="How to compare these programming language measurements. How programs were measured. How to contribute programs. FAQs"><?=$FaqTitle;?></a></h1></td>
 </tr></table>
