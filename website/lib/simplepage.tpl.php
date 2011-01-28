@@ -9,7 +9,7 @@
 <?=$Robots;?>
 <?=$MetaKeywords;?>
 
-<meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width"/>
 <meta name="HandheldFriendly" content="true" />
 <meta name="MobileOptimized" content="width" />
 

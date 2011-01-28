@@ -10,7 +10,7 @@
 
 <meta name="description" content="Compare the performance of ~24 programming languages. Contribute faster more elegant programs. And please don't jump to conclusions!" />
 
-<meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width"/>
 <meta name="HandheldFriendly" content="true" />
 <meta name="MobileOptimized" content="width" />
 
