@@ -1,0 +1,209 @@
+<span class="hl com">/* The Computer Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * byte processing, C# 3.0 idioms, frame level paralellism by Robert F. Tobler</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">using</span> System<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>IO<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Collections<span class="hl sym">.</span>Generic<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Linq<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Text<span class="hl sym">;</span>
+<span class="hl kwa">using</span> System<span class="hl sym">.</span>Threading<span class="hl sym">;</span>
+
+<span class="hl kwa">public</span> <span class="hl kwb">struct</span> ByteString <span class="hl sym">:</span> IEquatable<span class="hl sym">&lt;</span>ByteString<span class="hl sym">&gt;</span>
+<span class="hl sym">{</span>
+    <span class="hl kwa">public</span> <span class="hl kwb">byte</span><span class="hl sym">[]</span> Array<span class="hl sym">;</span>
+    <span class="hl kwa">public</span> <span class="hl kwb">int</span> Start<span class="hl sym">;</span>
+    <span class="hl kwa">public</span> <span class="hl kwb">int</span> Length<span class="hl sym">;</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span><span class="hl kwb">byte</span><span class="hl sym">[]</span> array<span class="hl sym">,</span> <span class="hl kwb">int</span> start<span class="hl sym">,</span> <span class="hl kwb">int</span> length<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        Array <span class="hl sym">=</span> array<span class="hl sym">;</span> Start <span class="hl sym">=</span> start<span class="hl sym">;</span> Length <span class="hl sym">=</span> length<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span><span class="hl kwb">string</span> text<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        Start <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> Length <span class="hl sym">=</span> text<span class="hl sym">.</span>Length<span class="hl sym">;</span>
+        Array <span class="hl sym">=</span> Encoding<span class="hl sym">.</span>ASCII<span class="hl sym">.</span><span class="hl kwd">GetBytes</span><span class="hl sym">(</span>text<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public override</span> <span class="hl kwb">int</span> <span class="hl kwd">GetHashCode</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> hc <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> Length<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+            hc <span class="hl sym">=</span> hc <span class="hl sym">*</span> <span class="hl num">31</span> <span class="hl sym">+</span> Array<span class="hl sym">[</span>Start <span class="hl sym">+</span> i<span class="hl sym">];</span>
+        <span class="hl kwa">return</span> hc<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">bool</span> <span class="hl kwd">Equals</span><span class="hl sym">(</span>ByteString other<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>Length <span class="hl sym">!=</span> other<span class="hl sym">.</span>Length<span class="hl sym">)</span> <span class="hl kwa">return false</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> Length<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>Array<span class="hl sym">[</span>Start<span class="hl sym">+</span>i<span class="hl sym">] !=</span> other<span class="hl sym">.</span>Array<span class="hl sym">[</span>other<span class="hl sym">.</span>Start<span class="hl sym">+</span>i<span class="hl sym">])</span> <span class="hl kwa">return false</span><span class="hl sym">;</span>
+        <span class="hl kwa">return true</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public override</span> <span class="hl kwb">string</span> <span class="hl kwd">ToString</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">return</span> Encoding<span class="hl sym">.</span>ASCII<span class="hl sym">.</span><span class="hl kwd">GetString</span><span class="hl sym">(</span>Array<span class="hl sym">,</span> Start<span class="hl sym">,</span> Length<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">public static class</span> Extensions
+<span class="hl sym">{</span>
+    <span class="hl kwa">public static</span> <span class="hl kwb">byte</span><span class="hl sym">[]</span> <span class="hl kwd">GetBytes</span><span class="hl sym">(</span><span class="hl kwa">this</span> List<span class="hl sym">&lt;</span><span class="hl kwb">string</span><span class="hl sym">&gt;</span> lines<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> count <span class="hl sym">=</span> lines<span class="hl sym">.</span><span class="hl kwd">Aggregate</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">, (</span>cnt<span class="hl sym">,</span> str<span class="hl sym">) =&gt;</span> cnt <span class="hl sym">+</span> str<span class="hl sym">.</span>Length<span class="hl sym">);</span>
+        var array <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">byte</span><span class="hl sym">[</span>count<span class="hl sym">];</span>
+        lines<span class="hl sym">.</span><span class="hl kwd">Aggregate</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">, (</span>pos<span class="hl sym">,</span> str<span class="hl sym">) =&gt; {</span>
+                Encoding<span class="hl sym">.</span>ASCII<span class="hl sym">.</span><span class="hl kwd">GetBytes</span><span class="hl sym">(</span>str<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> str<span class="hl sym">.</span>Length<span class="hl sym">,</span> array<span class="hl sym">,</span> pos<span class="hl sym">);</span>
+                <span class="hl kwa">return</span> pos <span class="hl sym">+</span> str<span class="hl sym">.</span> Length<span class="hl sym">;</span>
+            <span class="hl sym">});</span>
+        <span class="hl kwa">return</span> array<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwa">public class</span> Program
+<span class="hl sym">{</span>
+    <span class="hl kwa">public static</span> <span class="hl kwb">int</span> TaskCount<span class="hl sym">;</span>
+    <span class="hl kwa">public static</span> <span class="hl kwb">int</span> Current <span class="hl sym">= -</span><span class="hl num">1</span><span class="hl sym">;</span>
+    <span class="hl kwa">public static</span> KNucleotide<span class="hl sym">[]</span> kna<span class="hl sym">;</span>
+
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">Main</span><span class="hl sym">(</span><span class="hl kwb">string</span><span class="hl sym">[]</span> args<span class="hl sym">) {</span>
+        <span class="hl kwb">string</span> line<span class="hl sym">;</span>
+        StreamReader source <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">StreamReader</span><span class="hl sym">(</span>Console<span class="hl sym">.</span><span class="hl kwd">OpenStandardInput</span><span class="hl sym">());</span>
+        var input <span class="hl sym">=</span> <span class="hl kwa">new</span> List<span class="hl sym">&lt;</span><span class="hl kwb">string</span><span class="hl sym">&gt;();</span>
+
+        <span class="hl kwa">while</span> <span class="hl sym">( (</span>line <span class="hl sym">=</span> source<span class="hl sym">.</span><span class="hl kwd">ReadLine</span><span class="hl sym">() ) !=</span> <span class="hl kwa">null</span> <span class="hl sym">)</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>line<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ==</span> <span class="hl str">'&gt;'</span> <span class="hl sym">&amp;&amp;</span> line<span class="hl sym">.</span><span class="hl kwd">Substring</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">5</span><span class="hl sym">) ==</span> <span class="hl str">&quot;THREE&quot;</span><span class="hl sym">)</span>
+                <span class="hl kwa">break</span><span class="hl sym">;</span>
+
+        <span class="hl kwa">while</span> <span class="hl sym">( (</span>line <span class="hl sym">=</span> source<span class="hl sym">.</span><span class="hl kwd">ReadLine</span><span class="hl sym">()) !=</span> <span class="hl kwa">null</span> <span class="hl sym">) {</span>
+            <span class="hl kwb">char</span> c <span class="hl sym">=</span> line<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">==</span> <span class="hl str">'&gt;'</span><span class="hl sym">)</span> <span class="hl kwa">break</span><span class="hl sym">;</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>c <span class="hl sym">!=</span> <span class="hl str">';'</span><span class="hl sym">)</span> input<span class="hl sym">.</span><span class="hl kwd">Add</span><span class="hl sym">(</span>line<span class="hl sym">.</span><span class="hl kwd">ToUpper</span><span class="hl sym">());</span>
+        <span class="hl sym">}</span>
+
+        var lengths <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl sym">[] {</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">,</span> <span class="hl num">4</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">,</span> <span class="hl num">12</span><span class="hl sym">,</span> <span class="hl num">18</span> <span class="hl sym">};</span>
+
+        TaskCount <span class="hl sym">=</span> lengths<span class="hl sym">.</span><span class="hl kwd">Aggregate</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">, (</span>cnt<span class="hl sym">,</span> len<span class="hl sym">) =&gt;</span> cnt <span class="hl sym">+</span> len<span class="hl sym">);</span>
+        kna <span class="hl sym">=</span> <span class="hl kwa">new</span> KNucleotide<span class="hl sym">[</span>TaskCount<span class="hl sym">];</span>
+
+        var bytes <span class="hl sym">=</span> input<span class="hl sym">.</span><span class="hl kwd">GetBytes</span><span class="hl sym">();</span>
+        lengths<span class="hl sym">.</span><span class="hl kwd">Aggregate</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">, (</span>cnt<span class="hl sym">,</span> len<span class="hl sym">) =&gt;</span>
+            <span class="hl sym">{</span>
+                <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> len<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+                    kna<span class="hl sym">[</span>cnt <span class="hl sym">+</span> i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwd">KNucleotide</span><span class="hl sym">(</span>bytes<span class="hl sym">,</span> len<span class="hl sym">,</span> i<span class="hl sym">);</span>
+                <span class="hl kwa">return</span> cnt <span class="hl sym">+</span> len<span class="hl sym">;</span>
+            <span class="hl sym">});</span>
+
+        var threads <span class="hl sym">=</span> <span class="hl kwa">new</span> Thread<span class="hl sym">[</span>Environment<span class="hl sym">.</span>ProcessorCount<span class="hl sym">];</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> threads<span class="hl sym">.</span>Length<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+            <span class="hl sym">(</span>threads<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwd">Thread</span><span class="hl sym">(</span>CountFrequencies<span class="hl sym">)).</span><span class="hl kwd">Start</span><span class="hl sym">();</span>
+
+        <span class="hl kwa">foreach</span> <span class="hl sym">(</span>var t <span class="hl kwa">in</span> threads<span class="hl sym">)</span>
+            t<span class="hl sym">.</span><span class="hl kwd">Join</span><span class="hl sym">();</span>
+
+        var seqs <span class="hl sym">=</span> <span class="hl kwa">new</span><span class="hl sym">[] {</span> <span class="hl kwa">null</span><span class="hl sym">,</span> <span class="hl kwa">null</span><span class="hl sym">,</span>
+                <span class="hl str">&quot;GGT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">,</span>
+                <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">};</span>
+
+        <span class="hl kwb">int</span> index <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        lengths<span class="hl sym">.</span><span class="hl kwd">Aggregate</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">, (</span>cnt<span class="hl sym">,</span> len<span class="hl sym">) =&gt;</span>
+            <span class="hl sym">{</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>len <span class="hl sym">&lt;</span> <span class="hl num">3</span><span class="hl sym">)</span>
+                <span class="hl sym">{</span>
+                    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> len<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+                        kna<span class="hl sym">[</span>cnt<span class="hl sym">].</span><span class="hl kwd">AddFrequencies</span><span class="hl sym">(</span>kna<span class="hl sym">[</span>cnt<span class="hl sym">+</span>i<span class="hl sym">]);</span>
+                    kna<span class="hl sym">[</span>cnt<span class="hl sym">].</span><span class="hl kwd">WriteFrequencies</span><span class="hl sym">();</span>
+                <span class="hl sym">}</span>
+                <span class="hl kwa">else</span>
+                <span class="hl sym">{</span>
+                    var fragment <span class="hl sym">=</span> seqs<span class="hl sym">[</span>index<span class="hl sym">];</span>
+                    <span class="hl kwb">int</span> freq <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+                    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> len<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+                        freq <span class="hl sym">+=</span> kna<span class="hl sym">[</span>cnt <span class="hl sym">+</span> i<span class="hl sym">].</span><span class="hl kwd">GetCount</span><span class="hl sym">(</span>fragment<span class="hl sym">);</span>
+                    Console<span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;{0}</span><span class="hl esc">\t</span><span class="hl str">{1}&quot;</span><span class="hl sym">,</span> freq<span class="hl sym">,</span> fragment<span class="hl sym">);</span>
+                <span class="hl sym">}</span>
+                index<span class="hl sym">++;</span>
+                <span class="hl kwa">return</span> cnt <span class="hl sym">+</span> len<span class="hl sym">;</span>
+            <span class="hl sym">});</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static</span> <span class="hl kwb">void</span> <span class="hl kwd">CountFrequencies</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> index<span class="hl sym">;</span>
+        <span class="hl kwa">while</span> <span class="hl sym">((</span>index <span class="hl sym">=</span> Interlocked<span class="hl sym">.</span><span class="hl kwd">Increment</span><span class="hl sym">(</span><span class="hl kwa">ref</span> Current<span class="hl sym">)) &lt;</span> TaskCount<span class="hl sym">)</span>
+            kna<span class="hl sym">[</span>index<span class="hl sym">].</span><span class="hl kwd">KFrequency</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+<span class="hl sym">}</span>
+
+<span class="hl kwa">public class</span> KNucleotide <span class="hl sym">{</span>
+
+    <span class="hl kwa">private class</span> Count <span class="hl sym">{</span>
+       <span class="hl kwa">public</span> <span class="hl kwb">int</span> V<span class="hl sym">;</span>
+       <span class="hl kwa">public</span> <span class="hl kwd">Count</span><span class="hl sym">(</span><span class="hl kwb">int</span> v<span class="hl sym">) {</span> V <span class="hl sym">=</span> v<span class="hl sym">; }</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private</span> Dictionary<span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> Count<span class="hl sym">&gt;</span> frequencies
+        <span class="hl sym">=</span> <span class="hl kwa">new</span> Dictionary<span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> Count<span class="hl sym">&gt;();</span>
+    <span class="hl kwa">private</span> <span class="hl kwb">byte</span><span class="hl sym">[]</span> sequence<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> length<span class="hl sym">;</span>
+    <span class="hl kwb">int</span> frame<span class="hl sym">;</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwd">KNucleotide</span><span class="hl sym">(</span><span class="hl kwb">byte</span><span class="hl sym">[]</span> s<span class="hl sym">,</span> <span class="hl kwb">int</span> l<span class="hl sym">,</span> <span class="hl kwb">int</span> f<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        sequence <span class="hl sym">=</span> s<span class="hl sym">;</span> length <span class="hl sym">=</span> l<span class="hl sym">;</span> frame <span class="hl sym">=</span> f<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">AddFrequencies</span><span class="hl sym">(</span>KNucleotide other<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">foreach</span><span class="hl sym">(</span>var kvp <span class="hl kwa">in</span> other<span class="hl sym">.</span>frequencies<span class="hl sym">)</span>
+        <span class="hl sym">{</span>
+            Count count<span class="hl sym">;</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>frequencies<span class="hl sym">.</span><span class="hl kwd">TryGetValue</span><span class="hl sym">(</span>kvp<span class="hl sym">.</span>Key<span class="hl sym">,</span> out count<span class="hl sym">))</span>
+                count<span class="hl sym">.</span>V <span class="hl sym">+=</span> kvp<span class="hl sym">.</span>Value<span class="hl sym">.</span>V<span class="hl sym">;</span>
+            <span class="hl kwa">else</span>
+                frequencies<span class="hl sym">[</span>kvp<span class="hl sym">.</span>Key<span class="hl sym">] =</span> kvp<span class="hl sym">.</span>Value<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">WriteFrequencies</span><span class="hl sym">() {</span>
+        var items <span class="hl sym">=</span> <span class="hl kwa">new</span> List<span class="hl sym">&lt;</span>KeyValuePair<span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> Count<span class="hl sym">&gt;&gt;(</span>frequencies<span class="hl sym">);</span>
+        items<span class="hl sym">.</span><span class="hl kwd">Sort</span><span class="hl sym">(</span>SortByFrequencyAndCode<span class="hl sym">);</span>
+        <span class="hl kwb">double</span> percent <span class="hl sym">=</span> <span class="hl num">100.0</span> <span class="hl sym">/ (</span>sequence<span class="hl sym">.</span>Length <span class="hl sym">-</span> length <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl kwa">foreach</span> <span class="hl sym">(</span>var item <span class="hl kwa">in</span> items<span class="hl sym">)</span>
+            Console<span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;{0} {1:f3}&quot;</span><span class="hl sym">,</span>
+                        item<span class="hl sym">.</span>Key<span class="hl sym">.</span><span class="hl kwd">ToString</span><span class="hl sym">(),</span> item<span class="hl sym">.</span>Value<span class="hl sym">.</span>V <span class="hl sym">*</span> percent<span class="hl sym">);</span>
+        Console<span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">int</span> <span class="hl kwd">GetCount</span><span class="hl sym">(</span><span class="hl kwb">string</span> fragment<span class="hl sym">) {</span>
+        Count count<span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(!</span>frequencies<span class="hl sym">.</span><span class="hl kwd">TryGetValue</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span>fragment<span class="hl sym">),</span> out count<span class="hl sym">))</span>
+            count <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Count</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+        <span class="hl kwa">return</span> count<span class="hl sym">.</span>V<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">KFrequency</span><span class="hl sym">() {</span>
+        <span class="hl kwb">int</span> n <span class="hl sym">=</span> sequence<span class="hl sym">.</span>Length <span class="hl sym">-</span> length <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> frame<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i <span class="hl sym">+=</span> length<span class="hl sym">) {</span>
+            var key <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span>sequence<span class="hl sym">,</span> i<span class="hl sym">,</span> length<span class="hl sym">);</span>
+            Count count<span class="hl sym">;</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>frequencies<span class="hl sym">.</span><span class="hl kwd">TryGetValue</span><span class="hl sym">(</span>key<span class="hl sym">,</span> out count<span class="hl sym">))</span>
+                count<span class="hl sym">.</span>V<span class="hl sym">++;</span>
+            <span class="hl kwa">else</span>
+                frequencies<span class="hl sym">[</span>key<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwd">Count</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwb">int</span> <span class="hl kwd">SortByFrequencyAndCode</span><span class="hl sym">(</span>
+            KeyValuePair<span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> Count<span class="hl sym">&gt;</span> i0<span class="hl sym">,</span>
+            KeyValuePair<span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> Count<span class="hl sym">&gt;</span> i1<span class="hl sym">) {</span>
+        <span class="hl kwb">int</span> order <span class="hl sym">=</span> i1<span class="hl sym">.</span>Value<span class="hl sym">.</span>V<span class="hl sym">.</span><span class="hl kwd">CompareTo</span><span class="hl sym">(</span>i0<span class="hl sym">.</span>Value<span class="hl sym">.</span>V<span class="hl sym">);</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>order <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">return</span> order<span class="hl sym">;</span>
+        <span class="hl kwa">return</span> i0<span class="hl sym">.</span>Key<span class="hl sym">.</span><span class="hl kwd">ToString</span><span class="hl sym">().</span><span class="hl kwd">CompareTo</span><span class="hl sym">(</span>i1<span class="hl sym">.</span>Key<span class="hl sym">.</span><span class="hl kwd">ToString</span><span class="hl sym">());</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
