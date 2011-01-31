@@ -1,0 +1,182 @@
+<span class="hl com">/*</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Contributed by Oleg Mazurov, June 2010</span>
+<span class="hl com"> *</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>atomic<span class="hl sym">.</span><span class="hl kwc">AtomicInteger</span><span class="hl sym">;</span>
+
+<span class="hl kwa">public final class</span> fannkuchredux <span class="hl kwa">implements</span> <span class="hl kwc">Runnable</span>
+<span class="hl sym">{</span>
+    <span class="hl kwa">private static final</span> <span class="hl kwb">int</span> NCHUNKS <span class="hl sym">=</span> <span class="hl num">150</span><span class="hl sym">;</span>
+    <span class="hl kwa">private static</span>       <span class="hl kwb">int</span> CHUNKSZ<span class="hl sym">;</span>
+    <span class="hl kwa">private static</span>       <span class="hl kwb">int</span> NTASKS<span class="hl sym">;</span>
+    <span class="hl kwa">private static</span> <span class="hl kwb">int</span> n<span class="hl sym">;</span>
+    <span class="hl kwa">private static</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> Fact<span class="hl sym">;</span>
+    <span class="hl kwa">private static</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> maxFlips<span class="hl sym">;</span>
+    <span class="hl kwa">private static</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> chkSums<span class="hl sym">;</span>
+    <span class="hl kwa">private static</span> <span class="hl kwc">AtomicInteger</span> taskId<span class="hl sym">;</span>
+    
+    <span class="hl kwb">int</span><span class="hl sym">[]</span> p<span class="hl sym">,</span> pp<span class="hl sym">,</span> count<span class="hl sym">;</span>
+
+    <span class="hl kwb">void</span> <span class="hl kwd">print</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> p<span class="hl sym">.</span>length<span class="hl sym">;</span> i<span class="hl sym">++ ) {</span>
+            <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">print</span><span class="hl sym">(</span> p<span class="hl sym">[</span>i<span class="hl sym">] +</span> <span class="hl num">1</span> <span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwb">void</span> <span class="hl kwd">firstPermutation</span><span class="hl sym">(</span> <span class="hl kwb">int</span> idx <span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>p<span class="hl sym">.</span>length<span class="hl sym">; ++</span>i <span class="hl sym">) {</span>
+           p<span class="hl sym">[</span>i<span class="hl sym">] =</span> i<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i<span class="hl sym">=</span>count<span class="hl sym">.</span>length<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">&gt;</span><span class="hl num">0</span><span class="hl sym">; --</span>i <span class="hl sym">) {</span>
+            <span class="hl kwb">int</span> d <span class="hl sym">=</span> idx <span class="hl sym">/</span> Fact<span class="hl sym">[</span>i<span class="hl sym">];</span>
+            count<span class="hl sym">[</span>i<span class="hl sym">] =</span> d<span class="hl sym">;</span>
+            idx <span class="hl sym">=</span> idx <span class="hl sym">%</span> Fact<span class="hl sym">[</span>i<span class="hl sym">];</span>
+
+            <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">arraycopy</span><span class="hl sym">(</span> p<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> pp<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> i<span class="hl sym">+</span><span class="hl num">1</span> <span class="hl sym">);</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> j<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> j<span class="hl sym">&lt;=</span>i<span class="hl sym">; ++</span>j <span class="hl sym">) {</span>
+                p<span class="hl sym">[</span>j<span class="hl sym">] =</span> j<span class="hl sym">+</span>d <span class="hl sym">&lt;=</span> i ? pp<span class="hl sym">[</span>j<span class="hl sym">+</span>d<span class="hl sym">] :</span> pp<span class="hl sym">[</span>j<span class="hl sym">+</span>d<span class="hl sym">-</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">];</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwb">boolean</span> <span class="hl kwd">nextPermutation</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> first <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+        p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">] =</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+        p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> first<span class="hl sym">;</span>
+        
+        <span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> 
+        <span class="hl kwa">while</span> <span class="hl sym">( ++</span>count<span class="hl sym">[</span>i<span class="hl sym">] &gt;</span> i <span class="hl sym">) {</span>
+            count<span class="hl sym">[</span>i<span class="hl sym">++] =</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl kwb">int</span> next <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> p<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">];</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> j<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> j<span class="hl sym">&lt;</span>i<span class="hl sym">; ++</span>j <span class="hl sym">) {</span>
+                p<span class="hl sym">[</span>j<span class="hl sym">] =</span> p<span class="hl sym">[</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
+            <span class="hl sym">}</span>
+            p<span class="hl sym">[</span>i<span class="hl sym">] =</span> first<span class="hl sym">;</span>
+            first <span class="hl sym">=</span> next<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">return</span> true<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwb">int</span> <span class="hl kwd">countFlips</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> flips <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+	<span class="hl kwb">int</span> first <span class="hl sym">=</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span> p<span class="hl sym">[</span>first<span class="hl sym">] !=</span> <span class="hl num">0</span> <span class="hl sym">) {</span>
+            <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">arraycopy</span><span class="hl sym">(</span> p<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> pp<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> pp<span class="hl sym">.</span>length <span class="hl sym">);</span>
+            <span class="hl kwa">do</span> <span class="hl sym">{</span>
+                 <span class="hl sym">++</span>flips<span class="hl sym">;</span>
+                 <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> lo <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> hi <span class="hl sym">=</span> first <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> lo <span class="hl sym">&lt;</span> hi<span class="hl sym">; ++</span>lo<span class="hl sym">, --</span>hi <span class="hl sym">) {</span>
+                    <span class="hl kwb">int</span> t <span class="hl sym">=</span> pp<span class="hl sym">[</span>lo<span class="hl sym">];</span>
+                    pp<span class="hl sym">[</span>lo<span class="hl sym">] =</span> pp<span class="hl sym">[</span>hi<span class="hl sym">];</span>
+                    pp<span class="hl sym">[</span>hi<span class="hl sym">] =</span> t<span class="hl sym">;</span>
+                 <span class="hl sym">}</span>
+                 <span class="hl kwb">int</span> t <span class="hl sym">=</span> pp<span class="hl sym">[</span>first<span class="hl sym">];</span>
+                 pp<span class="hl sym">[</span>first<span class="hl sym">] =</span> first<span class="hl sym">;</span>
+                 first <span class="hl sym">=</span> t<span class="hl sym">;</span>
+            <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(</span> pp<span class="hl sym">[</span>first<span class="hl sym">] !=</span> <span class="hl num">0</span> <span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+	<span class="hl kwa">return</span> flips<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwb">void</span> <span class="hl kwd">runTask</span><span class="hl sym">(</span> <span class="hl kwb">int</span> task <span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> idxMin <span class="hl sym">=</span> task<span class="hl sym">*</span>CHUNKSZ<span class="hl sym">;</span>
+        <span class="hl kwb">int</span> idxMax <span class="hl sym">=</span> <span class="hl kwc">Math</span><span class="hl sym">.</span><span class="hl kwd">min</span><span class="hl sym">(</span> Fact<span class="hl sym">[</span>n<span class="hl sym">],</span> idxMin<span class="hl sym">+</span>CHUNKSZ <span class="hl sym">);</span>
+
+	<span class="hl kwd">firstPermutation</span><span class="hl sym">(</span> idxMin <span class="hl sym">);</span>
+
+        <span class="hl kwb">int</span> maxflips <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwb">int</span> chksum <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i<span class="hl sym">=</span>idxMin<span class="hl sym">;; ) {</span>
+
+            <span class="hl kwa">if</span> <span class="hl sym">(</span> p<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] !=</span> <span class="hl num">0</span> <span class="hl sym">) {</span>
+                <span class="hl kwb">int</span> flips <span class="hl sym">=</span> <span class="hl kwd">countFlips</span><span class="hl sym">();</span>
+                maxflips <span class="hl sym">=</span> <span class="hl kwc">Math</span><span class="hl sym">.</span><span class="hl kwd">max</span><span class="hl sym">(</span> maxflips<span class="hl sym">,</span> flips <span class="hl sym">);</span>
+		chksum <span class="hl sym">+=</span> i<span class="hl sym">%</span><span class="hl num">2</span> <span class="hl sym">==</span><span class="hl num">0</span> ? flips <span class="hl sym">: -</span>flips<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+
+	    <span class="hl kwa">if</span> <span class="hl sym">( ++</span>i <span class="hl sym">==</span> idxMax <span class="hl sym">) {</span>
+	        <span class="hl kwa">break</span><span class="hl sym">;</span>
+	    <span class="hl sym">}</span>
+
+            <span class="hl kwd">nextPermutation</span><span class="hl sym">();</span>
+        <span class="hl sym">}</span>
+	maxFlips<span class="hl sym">[</span>task<span class="hl sym">] =</span> maxflips<span class="hl sym">;</span>
+	chkSums<span class="hl sym">[</span>task<span class="hl sym">]  =</span> chksum<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">()</span>
+    <span class="hl sym">{</span>
+        p     <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>n<span class="hl sym">];</span>
+        pp    <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>n<span class="hl sym">];</span>
+        count <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>n<span class="hl sym">];</span>        
+
+        <span class="hl kwb">int</span> task<span class="hl sym">;</span>
+        <span class="hl kwa">while</span> <span class="hl sym">( (</span> task <span class="hl sym">=</span> taskId<span class="hl sym">.</span><span class="hl kwd">getAndIncrement</span><span class="hl sym">() ) &lt;</span> NTASKS <span class="hl sym">) {</span>
+	    <span class="hl kwd">runTask</span><span class="hl sym">(</span> task <span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static</span> <span class="hl kwb">void</span> <span class="hl kwd">printResult</span><span class="hl sym">(</span> <span class="hl kwb">int</span> n<span class="hl sym">,</span> <span class="hl kwb">int</span> res<span class="hl sym">,</span> <span class="hl kwb">int</span> chk <span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span> chk<span class="hl sym">+</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">Pfannkuchen(&quot;</span><span class="hl sym">+</span>n<span class="hl sym">+</span><span class="hl str">&quot;) = &quot;</span><span class="hl sym">+</span>res <span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span> <span class="hl kwc">String</span><span class="hl sym">[]</span> args <span class="hl sym">)</span>
+    <span class="hl sym">{</span>        
+        n <span class="hl sym">=</span> args<span class="hl sym">.</span>length <span class="hl sym">&gt;</span> <span class="hl num">0</span> ? <span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">parseInt</span><span class="hl sym">(</span> args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ) :</span> <span class="hl num">12</span><span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span> n <span class="hl sym">&lt;</span> <span class="hl num">0</span> <span class="hl sym">||</span> n <span class="hl sym">&gt;</span> <span class="hl num">12</span> <span class="hl sym">) {</span>         <span class="hl slc">// 13! won't fit into int</span>
+            <span class="hl kwd">printResult</span><span class="hl sym">(</span> n<span class="hl sym">, -</span><span class="hl num">1</span><span class="hl sym">, -</span><span class="hl num">1</span> <span class="hl sym">);</span>
+            <span class="hl kwa">return</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span> n <span class="hl sym">&lt;=</span> <span class="hl num">1</span> <span class="hl sym">) {</span>
+            <span class="hl kwd">printResult</span><span class="hl sym">(</span> n<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span> <span class="hl sym">);</span>
+            <span class="hl kwa">return</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        Fact <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
+        Fact<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] =</span> <span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>Fact<span class="hl sym">.</span>length<span class="hl sym">; ++</span>i <span class="hl sym">) {</span>
+            Fact<span class="hl sym">[</span>i<span class="hl sym">] =</span> Fact<span class="hl sym">[</span>i<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">] *</span> i<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        
+        CHUNKSZ <span class="hl sym">= (</span>Fact<span class="hl sym">[</span>n<span class="hl sym">] +</span> NCHUNKS <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) /</span> NCHUNKS<span class="hl sym">;</span>
+	NTASKS <span class="hl sym">= (</span>Fact<span class="hl sym">[</span>n<span class="hl sym">] +</span> CHUNKSZ <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) /</span> CHUNKSZ<span class="hl sym">;</span>
+        maxFlips <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>NTASKS<span class="hl sym">];</span>
+        chkSums  <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>NTASKS<span class="hl sym">];</span>
+        taskId <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">AtomicInteger</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+
+        <span class="hl kwb">int</span> nthreads <span class="hl sym">=</span> <span class="hl kwc">Runtime</span><span class="hl sym">.</span><span class="hl kwd">getRuntime</span><span class="hl sym">().</span><span class="hl kwd">availableProcessors</span><span class="hl sym">();</span>
+        <span class="hl kwc">Thread</span><span class="hl sym">[]</span> threads <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Thread</span><span class="hl sym">[</span>nthreads<span class="hl sym">];</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>nthreads<span class="hl sym">; ++</span>i <span class="hl sym">) {</span>
+            threads<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwc">Thread</span><span class="hl sym">(</span> <span class="hl kwa">new</span> <span class="hl kwd">fannkuchredux</span><span class="hl sym">() );</span>
+            threads<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwc">Thread</span> t <span class="hl sym">:</span> threads <span class="hl sym">) {</span>
+            <span class="hl kwa">try</span> <span class="hl sym">{</span>
+                t<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">();</span>
+            <span class="hl sym">}</span>
+            <span class="hl kwa">catch</span> <span class="hl sym">(</span> <span class="hl kwc">InterruptedException</span> e <span class="hl sym">) {}</span>
+        <span class="hl sym">}</span>
+        
+        <span class="hl kwb">int</span> res <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> v <span class="hl sym">:</span> maxFlips <span class="hl sym">) {</span>
+            res <span class="hl sym">=</span> <span class="hl kwc">Math</span><span class="hl sym">.</span><span class="hl kwd">max</span><span class="hl sym">(</span> res<span class="hl sym">,</span> v <span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwb">int</span> chk <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span> <span class="hl kwb">int</span> v <span class="hl sym">:</span> chkSums <span class="hl sym">) {</span>
+            chk <span class="hl sym">+=</span> v<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+        
+        <span class="hl kwd">printResult</span><span class="hl sym">(</span> n<span class="hl sym">,</span> res<span class="hl sym">,</span> chk <span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
