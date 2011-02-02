@@ -1,1 +1,1 @@
-<p>ruby 1.9.2p0 (2010-08-18 revision 29036) [x86_64-linux]</p>
+<p>ruby 1.9.2p136 (2010-12-25 revision 30365) [x86_64-linux]</p>
