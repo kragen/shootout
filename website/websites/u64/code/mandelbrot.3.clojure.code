@@ -1,0 +1,123 @@
+<span class="hl slc">;;   The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;   http://shootout.alioth.debian.org/</span>
+
+<span class="hl slc">;; contributed by Andy Fingerhut</span>
+
+<span class="hl slc">;; The function 'dot' is based on suggestions and improvements made by</span>
+<span class="hl slc">;; these people posting to the Clojure Google group in April, 2009:</span>
+<span class="hl slc">;; dmitri.sotnikov, William D. Lipe, Paul Stadig, michael.messinides</span>
+<span class="hl slc">;; David Sletten, John Harrop</span>
+
+<span class="hl slc">;; change by Marko Kocic</span>
+<span class="hl slc">;; reduced code size by removing functions already present in Clojure</span>
+
+<span class="hl slc">;; change by Andy Fingerhut</span>
+<span class="hl slc">;; Use Java primitive double arrays instead of Clojure sequences in a</span>
+<span class="hl slc">;; few inner loops.  This is a sequential version using map instead of</span>
+<span class="hl slc">;; pmap, since sequential code tends to use less CPU time on 1-core</span>
+<span class="hl slc">;; machines.</span>
+
+<span class="hl sym">(</span>ns mandelbrot
+  <span class="hl sym">(:</span>gen<span class="hl sym">-</span>class<span class="hl sym">)</span>
+  <span class="hl sym">(:</span>import <span class="hl sym">(</span>java.io BufferedOutputStream<span class="hl sym">)))</span>
+
+<span class="hl sym">(</span>set<span class="hl sym">! *</span>warn<span class="hl sym">-</span>on<span class="hl sym">-</span>reflection<span class="hl sym">*</span> true<span class="hl sym">)</span>
+
+
+<span class="hl sym">(</span>def max<span class="hl sym">-</span>iterations <span class="hl num">50</span><span class="hl sym">)</span>
+<span class="hl sym">(</span>def limit<span class="hl sym">-</span>square <span class="hl sym">(</span>double <span class="hl num">4.0</span><span class="hl sym">))</span>
+
+<span class="hl sym">(</span>defn dot <span class="hl sym">[</span>r i<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>f2 <span class="hl sym">(</span>double <span class="hl num">2.0</span><span class="hl sym">)</span>
+        limit<span class="hl sym">-</span>square <span class="hl sym">(</span>double limit<span class="hl sym">-</span>square<span class="hl sym">)</span>
+        iterations<span class="hl sym">-</span>remaining <span class="hl sym">(</span>int max<span class="hl sym">-</span>iterations<span class="hl sym">)</span>
+        pr <span class="hl sym">(</span>double r<span class="hl sym">)</span>
+        pi <span class="hl sym">(</span>double i<span class="hl sym">)]</span>
+    <span class="hl slc">;; The loop below is similar to the one in the Perl subroutine dot</span>
+    <span class="hl slc">;; in mandelbrot.perl, with these name correspondences:</span>
+    <span class="hl slc">;; pr &lt;-&gt; Cr, pi &lt;-&gt; Ci, zi &lt;-&gt; Zi, zr &lt;-&gt; Zr, zr2 &lt;-&gt; Tr, zi2 &lt;-&gt; Ti</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>zr <span class="hl sym">(</span>double <span class="hl num">0.0</span><span class="hl sym">)</span>
+           zi <span class="hl sym">(</span>double <span class="hl num">0.0</span><span class="hl sym">)</span>
+           i <span class="hl sym">(</span>int <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc iterations<span class="hl sym">-</span>remaining<span class="hl sym">))]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>zr2 <span class="hl sym">(*</span> zr zr<span class="hl sym">)</span>
+            zi2 <span class="hl sym">(*</span> zi zi<span class="hl sym">)]</span>
+        <span class="hl sym">(</span>if <span class="hl sym">(</span>and <span class="hl sym">(</span>not <span class="hl sym">(</span>zero? i<span class="hl sym">))</span>
+                 <span class="hl sym">(&lt; (+</span> zr2 zi2<span class="hl sym">)</span> limit<span class="hl sym">-</span>square<span class="hl sym">))</span>
+          <span class="hl sym">(</span>recur <span class="hl sym">(+ (-</span> zr2 zi2<span class="hl sym">)</span> pr<span class="hl sym">)</span>
+                 <span class="hl sym">(+ (* (*</span> f2 zr<span class="hl sym">)</span> zi<span class="hl sym">)</span> pi<span class="hl sym">)</span>
+                 <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>dec i<span class="hl sym">))</span>
+          <span class="hl sym">(</span>zero? i<span class="hl sym">))))))</span>
+
+
+<span class="hl sym">(</span>defn index<span class="hl sym">-</span>to<span class="hl sym">-</span>val <span class="hl sym">[</span>i scale<span class="hl sym">-</span>fac offset<span class="hl sym">]</span>
+  <span class="hl sym">(+ (*</span> i scale<span class="hl sym">-</span>fac<span class="hl sym">)</span> offset<span class="hl sym">))</span>
+
+
+<span class="hl sym">(</span>defn ubyte <span class="hl sym">[</span>val<span class="hl sym">]</span>
+  <span class="hl sym">(</span>if <span class="hl sym">(&gt;=</span> val <span class="hl num">128</span><span class="hl sym">)</span>
+    <span class="hl sym">(</span>byte <span class="hl sym">(-</span> val <span class="hl num">256</span><span class="hl sym">))</span>
+    <span class="hl sym">(</span>byte val<span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn compute<span class="hl sym">-</span>row <span class="hl sym">[</span>#^doubles x<span class="hl sym">-</span>vals y<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>y <span class="hl sym">(</span>double y<span class="hl sym">)</span>
+        n <span class="hl sym">(</span>int <span class="hl sym">(</span>alength x<span class="hl sym">-</span>vals<span class="hl sym">))</span>
+        num<span class="hl sym">-</span>bytes<span class="hl sym">-</span>out <span class="hl sym">(</span>int <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>divide <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>add n <span class="hl num">7</span><span class="hl sym">)</span> <span class="hl num">8</span><span class="hl sym">))</span>
+        #^bytes result <span class="hl sym">(</span>byte<span class="hl sym">-</span>array num<span class="hl sym">-</span>bytes<span class="hl sym">-</span>out<span class="hl sym">)</span>
+        zero <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)</span>
+        one <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int zero<span class="hl sym">)</span>
+           b <span class="hl sym">(</span>int zero<span class="hl sym">)</span>
+           num<span class="hl sym">-</span>filled<span class="hl sym">-</span>bits zero
+           result<span class="hl sym">-</span>idx <span class="hl sym">(</span>int zero<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(==</span> i n<span class="hl sym">)</span>
+        <span class="hl sym">(</span>do
+          <span class="hl sym">(</span>when <span class="hl sym">(</span>not <span class="hl sym">(</span>zero? num<span class="hl sym">-</span>filled<span class="hl sym">-</span>bits<span class="hl sym">))</span>
+            <span class="hl sym">(</span>let <span class="hl sym">[</span>last<span class="hl sym">-</span>byte<span class="hl sym">-</span>val
+                  <span class="hl sym">(</span>byte <span class="hl sym">(</span>ubyte <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left b <span class="hl sym">(-</span> <span class="hl num">8</span> num<span class="hl sym">-</span>filled<span class="hl sym">-</span>bits<span class="hl sym">))))]</span>
+            <span class="hl sym">(</span>aset result result<span class="hl sym">-</span>idx last<span class="hl sym">-</span>byte<span class="hl sym">-</span>val<span class="hl sym">)))</span>
+          result<span class="hl sym">)</span>
+        <span class="hl slc">;; else</span>
+        <span class="hl sym">(</span>let <span class="hl sym">[</span>new<span class="hl sym">-</span>bit <span class="hl sym">(</span>int <span class="hl sym">(</span>if <span class="hl sym">(</span>dot <span class="hl sym">(</span>aget x<span class="hl sym">-</span>vals i<span class="hl sym">)</span> y<span class="hl sym">)</span> one zero<span class="hl sym">))</span>
+              new<span class="hl sym">-</span>b <span class="hl sym">(</span>int <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>add <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left b one<span class="hl sym">)</span> new<span class="hl sym">-</span>bit<span class="hl sym">))]</span>
+          <span class="hl sym">(</span>if <span class="hl sym">(==</span> num<span class="hl sym">-</span>filled<span class="hl sym">-</span>bits <span class="hl num">7</span><span class="hl sym">)</span>
+            <span class="hl sym">(</span>let <span class="hl sym">[</span>byte<span class="hl sym">-</span>val <span class="hl sym">(</span>byte <span class="hl sym">(</span>ubyte new<span class="hl sym">-</span>b<span class="hl sym">))]</span>
+              <span class="hl sym">(</span>aset result result<span class="hl sym">-</span>idx byte<span class="hl sym">-</span>val<span class="hl sym">)</span>
+              <span class="hl sym">(</span>recur <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc i<span class="hl sym">)</span>
+                     zero
+                     zero
+                     <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc result<span class="hl sym">-</span>idx<span class="hl sym">)))</span>
+            <span class="hl sym">(</span>recur <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc i<span class="hl sym">)</span>
+                   new<span class="hl sym">-</span>b
+                   <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>inc num<span class="hl sym">-</span>filled<span class="hl sym">-</span>bits<span class="hl sym">)</span>
+                   result<span class="hl sym">-</span>idx<span class="hl sym">)))))))</span>
+
+
+<span class="hl sym">(</span>defn compute<span class="hl sym">-</span>rows <span class="hl sym">[</span>size<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>two<span class="hl sym">-</span>over<span class="hl sym">-</span>size <span class="hl sym">(</span>double <span class="hl sym">(/</span> <span class="hl num">2.0</span> size<span class="hl sym">))</span>
+        x<span class="hl sym">-</span>offset <span class="hl sym">(</span>double <span class="hl sym">-</span><span class="hl num">1.5</span><span class="hl sym">)</span>
+        y<span class="hl sym">-</span>offset <span class="hl sym">(</span>double <span class="hl sym">-</span><span class="hl num">1.0</span><span class="hl sym">)</span>
+        x<span class="hl sym">-</span>vals <span class="hl sym">(</span>double<span class="hl sym">-</span>array size <span class="hl sym">(</span>map #<span class="hl sym">(</span>index<span class="hl sym">-</span>to<span class="hl sym">-</span>val % two<span class="hl sym">-</span>over<span class="hl sym">-</span>size x<span class="hl sym">-</span>offset<span class="hl sym">)</span>
+                                       <span class="hl sym">(</span>range size<span class="hl sym">)))</span>
+        y<span class="hl sym">-</span>vals <span class="hl sym">(</span>double<span class="hl sym">-</span>array size <span class="hl sym">(</span>map #<span class="hl sym">(</span>index<span class="hl sym">-</span>to<span class="hl sym">-</span>val % two<span class="hl sym">-</span>over<span class="hl sym">-</span>size y<span class="hl sym">-</span>offset<span class="hl sym">)</span>
+                                       <span class="hl sym">(</span>range size<span class="hl sym">)))]</span>
+    <span class="hl sym">(</span>map #<span class="hl sym">(</span>compute<span class="hl sym">-</span>row x<span class="hl sym">-</span>vals <span class="hl sym">(</span>aget y<span class="hl sym">-</span>vals %<span class="hl sym">))</span>
+         <span class="hl sym">(</span>range size<span class="hl sym">))))</span>
+
+
+<span class="hl sym">(</span>defn do<span class="hl sym">-</span>mandelbrot <span class="hl sym">[</span>size<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>rows <span class="hl sym">(</span>compute<span class="hl sym">-</span>rows size<span class="hl sym">)]</span>
+    <span class="hl sym">(</span>printf <span class="hl str">&quot;P4</span><span class="hl esc">\</span><span class="hl str">n&quot;</span><span class="hl sym">)</span>
+    <span class="hl sym">(</span>printf <span class="hl str">&quot;%d %d</span><span class="hl esc">\</span><span class="hl str">n&quot;</span> size size<span class="hl sym">)</span>
+    <span class="hl sym">(</span>flush<span class="hl sym">)</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>ostream <span class="hl sym">(</span>BufferedOutputStream. System<span class="hl sym">/</span>out<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>doseq <span class="hl sym">[</span>r rows<span class="hl sym">]</span>
+        <span class="hl sym">(</span>. ostream write r <span class="hl num">0</span> <span class="hl sym">(</span>count r<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>. ostream close<span class="hl sym">))</span>
+    <span class="hl sym">(</span>flush<span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn <span class="hl sym">-</span>main <span class="hl sym">[&amp;</span> args<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>size <span class="hl sym">(</span>. Integer valueOf <span class="hl sym">(</span>nth args <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl num">10</span><span class="hl sym">)]</span>
+    <span class="hl sym">(</span>do<span class="hl sym">-</span>mandelbrot size<span class="hl sym">)</span>
+    <span class="hl sym">(</span>shutdown<span class="hl sym">-</span>agents<span class="hl sym">)))</span>
