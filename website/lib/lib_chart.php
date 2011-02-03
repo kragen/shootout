@@ -457,10 +457,9 @@ function axis100(){
       );
 }
 
-function axis250(){
+function axis150(){
    return array(
-      array(1,"1"), array(10,"10"), array(50,"50"),  array(100,"100"),  array(150,"150"),
-      array(200,"200"), array(250,"250") 
+      array(1,"1"), array(10,"10"), array(20,"20"), array(50,"50"),  array(100,"100"),  array(150,"150")
       );
 }
 
