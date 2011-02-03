@@ -460,7 +460,8 @@ function axis100(){
 
 function axis100simple(){
    return array(
-      array(1,"1"), array(10,"10"), array(20,"20"), array(50,"50"),  array(100,"100")
+      array(1,"1"), array(10,"10"), array(20,"20"), array(30,"30"), array(40,"40"), array(50,"50"),
+      array(60,"60"), array(70,"70"), array(80,"80"), array(90,"90"), array(100,"100")
       );
 }
 
