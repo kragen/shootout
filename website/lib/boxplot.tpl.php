@@ -8,7 +8,7 @@
 
    $pageUrl = CORE_SITE.SITE_NAME.'/which-programming-languages-are-fastest.php';
 
-   if ((SITE_NAME == 'u32' || SITE_NAME == 'u32q') && sizeof($selected)>6){
+   if ((SITE_NAME == 'u32' || SITE_NAME == 'u32q') && sizeof($selected)>7){
       $chart = 'chartbox-simple.php';
    } else {
       $chart = 'chartbox.php';
