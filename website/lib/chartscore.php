@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004-2009
+// Copyright (c) Isaac Gouy 2004-2011
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -30,7 +30,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->title('Weighted Geometric Mean   Time-used, Memory-used, Code-used');
+$chart->title('Weighted Geometric - Mean Time-used, Memory-used, Code-used ratios');
 $chart->frame();
 $chart->complete();
 

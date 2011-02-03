@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2004-2009
+// Copyright (c) Isaac Gouy 2004-2011
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -65,7 +65,7 @@ ImageStringUp($chart->im, 3, 5, $h-$y-8, $label, $chart->colour[BLACK]);
 ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+24, $chart->colour[BLACK]);
 
 
-$chart->title('Normalized Time-used Memory-used for each Program');
+$chart->title('Normalized Time-used Memory-used ratios for each Program');
 $chart->frame();
 $chart->complete();
 
