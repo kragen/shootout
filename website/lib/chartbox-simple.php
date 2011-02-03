@@ -32,7 +32,7 @@ define('STATS_N',7);
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($BackText,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
 list ($Stats,$valid) = ValidMatrix($HTTP_GET_VARS,'s',STATS_SIZE,$valid);
-//for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = log10($Stats[$i]);
+for ($i=0;$i<sizeof($Stats);$i++) $Stats[$i] = $Stats[$i] - 1;
 
 // CHART /////////////////////////////////////////////////////
 
