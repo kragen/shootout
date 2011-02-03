@@ -1,5 +1,5 @@
 <?
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2011
 
 // CONSTANTS ///////////////////////////////////////////////////
 
@@ -457,6 +457,13 @@ function axis100(){
       );
 }
 
+function axis250(){
+   return array(
+      array(1,"1"), array(10,"10"), array(50,"50"),  array(100,"100"),  array(150,"150"),
+      array(200,"200"), array(250,"250") 
+      );
+}
+
 function axis1000(){
    $a = axis100();
    $a[] = array(300,"300");
@@ -541,6 +548,7 @@ function axisOneTen(){
       array(10,"10")
       );
 }
+
 
 
 ?>
