@@ -16,7 +16,7 @@
 <p>Each chart box shows the middle 50% of (normalized) program Time-used ratios for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> (normalized) program Time-used ratio.</p>
 
 
-<p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
+<p><img src="chartbox-simple.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
    title=""
    width="480" height="300"
