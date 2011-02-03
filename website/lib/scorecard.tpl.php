@@ -76,7 +76,6 @@ foreach($score as $k => $v){
 <colgroup span="2" class="txt"></colgroup>
 <tr><td colspan="2" class="num">
 <input type="submit" name="calc" value="calculate" />
-<input type="submit" name="calc" value="reset" />
 </td></tr>
 
 <tr><th>measure</th><th>weight</th></tr>
@@ -109,7 +108,6 @@ foreach($Tests as $t){
 
 <tr><td colspan="2" class="num">
 <input type="submit" name="calc" value="calculate" />
-<input type="submit" name="calc" value="reset" />
 </td></tr>
 </table>
 </form>

@@ -8,7 +8,7 @@
 
    $pageUrl = CORE_SITE.SITE_NAME.'/which-programming-languages-are-fastest.php';
 
-   if ((SITE_NAME == 'u32' || SITE_NAME == 'u32q') && sizeof($selected)>7){
+   if ((SITE_NAME == 'u32' || SITE_NAME == 'u32q') && sizeof($selected)>8){
       $chart = 'chartbox-simple.php';
    } else {
       $chart = 'chartbox.php';
@@ -46,7 +46,6 @@
 <tr class="score">
 <td colspan="9" class="num">
 <input type="submit" name="calc" value="chart" />
-<input type="submit" name="calc" value="reset" />
 </td>
 </tr>
 
@@ -91,7 +90,6 @@ foreach($score as $k => $v){
 <tr class="score">
 <td colspan="9" class="num">
 <input type="submit" name="calc" value="chart" />
-<input type="submit" name="calc" value="reset" />
 </td>
 </tr>
 </table>
