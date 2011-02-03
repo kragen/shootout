@@ -1,4 +1,4 @@
-<?   // Copyright (c) Isaac Gouy 2009-2010 ?>
+<?   // Copyright (c) Isaac Gouy 2009-2011 ?>
 
 <?
    MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
@@ -6,7 +6,13 @@
    list($score,$labels,$stats,$selected) = $Data;
    unset($Data);  
 
-   $pageUrl = CORE_SITE.SITE_NAME.'/which-programming-languages-are-fastest.php'; 
+   $pageUrl = CORE_SITE.SITE_NAME.'/which-programming-languages-are-fastest.php';
+
+   if (SITE_NAME == 'u32' || SITE_NAME == 'u32q'){
+      $chart = 'chartbox-simple.php';
+   } else {
+      $chart = 'chartbox.php';
+   }
 ?>
 
 <h2><a href="<?=$pageUrl;?>#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
@@ -18,7 +24,7 @@
 <p>Each chart box shows the middle 50% of (normalized) program Time-used ratios for a programming language implementation, and each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> (normalized) program Time-used ratio.</p>
 
 
-<p><img src="chartbox.php?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
+<p><img src="<?=$chart;?>?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    alt=""
    title=""
    width="480" height="300"

@@ -37,7 +37,7 @@ list ($Stats,$valid) = ValidMatrix($HTTP_GET_VARS,'s',STATS_SIZE,$valid);
 // CHART /////////////////////////////////////////////////////
 
 $chart = new BoxChart();
-$chart->yAxis(axis250());
+$chart->yAxis(axis150());
 
 if ($valid){
    $chart->backgroundText($BackText);
