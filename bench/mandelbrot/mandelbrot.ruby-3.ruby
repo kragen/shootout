@@ -20,18 +20,25 @@ while y < size
 
   x = 0
   while x < size
-    z = Complex(0, 0)
-    c = Complex(2.0*x/size-1.5, ci)
+    zrzr = zr = 0.0
+    zizi = zi = 0.0
+    cr = (2.0*x/size)-1.5
     escape = 0b1
 
-    n = 0
-    while n < 50
-      z = z*z + c
-      if z.abs > 4.0
+    z = 0
+    while z < 50
+      tr = zrzr - zizi + cr
+      ti = 2.0*zr*zi + ci
+      zr = tr
+      zi = ti
+      # preserve recalculation
+      zrzr = zr*zr
+      zizi = zi*zi
+      if zrzr+zizi > 4.0
         escape = 0b0
         break
       end
-      n += 1
+      z += 1
     end
 
     byte_acc = (byte_acc << 1) | escape
