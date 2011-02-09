@@ -1,214 +1,120 @@
-<span class="hl slc">;; The Computer Language Benchmarks Game</span>
+<span class="hl slc">;;   The Computer Language Benchmarks Game</span>
 <span class="hl slc">;;   http://shootout.alioth.debian.org/</span>
-<span class="hl slc">;;</span>
-<span class="hl slc">;;   contributed by Alexey Voznyuk</span>
-<span class="hl slc">;;</span>
+<span class="hl slc">;;;</span>
+<span class="hl slc">;;; resubmitted by Wade Humeniuk (Fix Stream Problem)</span>
+<span class="hl slc">;;; resubmitted by Jon Smith (Remove silly assertion causing it to break on 16000 size)</span>
+<span class="hl slc">;;; re-resubmitted by Jon Smith (with a silly hack to make it parallel).</span>
+<span class="hl slc">;;; Original contributed by Yannick Gingras</span>
+<span class="hl slc">;;;</span>
+<span class="hl slc">;;; To compile</span>
+<span class="hl slc">;;; sbcl --load mandelbrot.lisp --eval &quot;(save-lisp-and-die \&quot;mandelbrot.core\&quot; :purify t :toplevel (lambda () (main) (quit)))&quot;</span>
+<span class="hl slc">;;; To run</span>
+<span class="hl slc">;;; sbcl --noinform --core mandelbrot.core %A</span>
 
-<span class="hl sym">(</span>defpackage #<span class="hl sym">:</span>smp<span class="hl sym">-</span>utils
-  <span class="hl sym">(:</span>use <span class="hl sym">:</span>cl <span class="hl sym">:</span>sb<span class="hl sym">-</span>alien <span class="hl sym">:</span>sb<span class="hl sym">-</span>thread<span class="hl sym">) (:</span>export #<span class="hl sym">:</span>affinity<span class="hl sym">))</span>
+<span class="hl sym">(</span>defun render <span class="hl sym">(</span>size stream<span class="hl sym">)</span>
+  <span class="hl sym">(</span>declare <span class="hl sym">(</span>type fixnum size<span class="hl sym">) (</span>stream stream<span class="hl sym">)</span>
+	   <span class="hl sym">(</span>optimize <span class="hl sym">(</span>speed <span class="hl num">3</span><span class="hl sym">) (</span>safety <span class="hl num">0</span><span class="hl sym">) (</span>debug <span class="hl num">0</span><span class="hl sym">)))</span>
+  <span class="hl sym">(</span>let<span class="hl sym">* ((</span>code <span class="hl num">0</span><span class="hl sym">)</span> 
+	 <span class="hl sym">(</span>bit <span class="hl num">0</span><span class="hl sym">)</span>
+         <span class="hl sym">(</span>zr <span class="hl num">0.0</span>d0<span class="hl sym">)</span>
+	 <span class="hl sym">(</span>zi <span class="hl num">0.0</span>d0<span class="hl sym">)</span>
+	 <span class="hl sym">(</span>tr <span class="hl num">0.0</span>d0<span class="hl sym">)</span>
+	 <span class="hl sym">(</span>delta <span class="hl sym">(/</span> <span class="hl num">2</span>d0 size<span class="hl sym">))</span>
+         <span class="hl sym">(</span>base<span class="hl sym">-</span>real <span class="hl sym">-</span><span class="hl num">1.5</span>d0<span class="hl sym">)</span> 
+	 <span class="hl sym">(</span>base<span class="hl sym">-</span>imag <span class="hl sym">-</span><span class="hl num">1.0</span>d0<span class="hl sym">)</span>
+         <span class="hl sym">(</span>buffer <span class="hl sym">(</span>make<span class="hl sym">-</span>array <span class="hl sym">(*</span> size <span class="hl sym">(</span>ceiling size <span class="hl num">8</span><span class="hl sym">)) :</span>element<span class="hl sym">-</span>type <span class="hl sym">'(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">)))</span>
+         <span class="hl sym">(</span>index <span class="hl num">0</span><span class="hl sym">))</span>
 
-<span class="hl sym">(</span>in<span class="hl sym">-</span>package <span class="hl sym">:</span>smp<span class="hl sym">-</span>utils<span class="hl sym">)</span>
+    <span class="hl sym">(</span>declare <span class="hl sym">(</span>type <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">)</span> code <span class="hl sym">)</span>
+             <span class="hl sym">(</span>type double<span class="hl sym">-</span>float zr zi tr base<span class="hl sym">-</span>real base<span class="hl sym">-</span>imag delta<span class="hl sym">)</span>
+             <span class="hl sym">(</span>type fixnum index bit<span class="hl sym">))</span>
 
-<span class="hl sym">(</span>defun cpuset<span class="hl sym">-&gt;</span>list <span class="hl sym">(</span>cpuset<span class="hl sym">)</span>
-  <span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">128</span>
-     <span class="hl sym">:</span>unless <span class="hl sym">(</span>zerop <span class="hl sym">(</span>ldb <span class="hl sym">(</span>byte <span class="hl num">1</span> <span class="hl sym">(</span>mod i <span class="hl num">8</span><span class="hl sym">)) (</span>elt cpuset <span class="hl sym">(</span>truncate i <span class="hl num">8</span><span class="hl sym">))))</span>
-     <span class="hl sym">:</span>collect i<span class="hl sym">))</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">(</span>y size<span class="hl sym">)</span>
+      <span class="hl sym">(</span>setf base<span class="hl sym">-</span>imag <span class="hl sym">(-</span> <span class="hl num">1.0</span>d0 <span class="hl sym">(*</span> delta y<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>dotimes <span class="hl sym">(</span>x size<span class="hl sym">)</span>
+	<span class="hl sym">(</span>setf base<span class="hl sym">-</span>real <span class="hl sym">(+ -</span><span class="hl num">1.5</span>d0 <span class="hl sym">(*</span> delta x<span class="hl sym">))</span>
+	      zr base<span class="hl sym">-</span>real
+	      zi base<span class="hl sym">-</span>imag<span class="hl sym">)</span>
+        <span class="hl sym">(</span>setf code  
+	      <span class="hl sym">(</span>if <span class="hl sym">(</span>dotimes <span class="hl sym">(</span>n <span class="hl num">50</span><span class="hl sym">)</span>
+		    <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> <span class="hl num">4.0</span>d0 <span class="hl sym">(+ (*</span> zr zr<span class="hl sym">) (*</span> zi zi<span class="hl sym">)))</span>
+		      <span class="hl sym">(</span>return t<span class="hl sym">))</span>
+		    <span class="hl sym">(</span>setf tr <span class="hl sym">(+ (*</span> zr zr<span class="hl sym">) (- (*</span> zi zi<span class="hl sym">))</span> base<span class="hl sym">-</span>real<span class="hl sym">)</span>
+			  zi <span class="hl sym">(+ (*</span> <span class="hl num">2.0</span>d0 zr zi<span class="hl sym">)</span> base<span class="hl sym">-</span>imag<span class="hl sym">)</span>
+			  zr tr<span class="hl sym">))</span>
+		  <span class="hl sym">(</span>ash code <span class="hl num">1</span><span class="hl sym">)</span>
+		  <span class="hl sym">(</span>logior <span class="hl sym">(</span>ash code <span class="hl num">1</span><span class="hl sym">)</span> #x01<span class="hl sym">)))</span>
+	<span class="hl sym">(</span>when <span class="hl sym">(= (</span>incf bit<span class="hl sym">)</span> <span class="hl num">8</span><span class="hl sym">)</span>
+	  <span class="hl sym">(</span>setf <span class="hl sym">(</span>aref buffer index<span class="hl sym">)</span> code
+		bit <span class="hl num">0</span> code <span class="hl num">0</span><span class="hl sym">)</span>
+	  <span class="hl sym">(</span>incf index<span class="hl sym">))))</span>
 
-<span class="hl sym">(</span>defun affinity <span class="hl sym">(</span>thread<span class="hl sym">)</span>
-  <span class="hl sym">(</span>with<span class="hl sym">-</span>alien <span class="hl sym">((</span>alien<span class="hl sym">-</span>cpuset <span class="hl sym">(</span>array unsigned<span class="hl sym">-</span>char <span class="hl num">16</span><span class="hl sym">)))</span>
-    <span class="hl sym">(</span>let <span class="hl sym">((</span>retcode <span class="hl sym">(</span>alien<span class="hl sym">-</span>funcall <span class="hl sym">(</span>extern<span class="hl sym">-</span>alien <span class="hl str">&quot;pthread_getaffinity_np&quot;</span>
-                                                <span class="hl sym">(</span>function int
-                                                          unsigned<span class="hl sym">-</span>long
-                                                          unsigned<span class="hl sym">-</span>long
-                                                          <span class="hl sym">(*</span> unsigned<span class="hl sym">-</span>char<span class="hl sym">)))</span>
-                                  <span class="hl sym">(</span>sb<span class="hl sym">-</span>thread<span class="hl sym">::</span>thread<span class="hl sym">-</span>os<span class="hl sym">-</span>thread thread<span class="hl sym">)</span>
-                                  <span class="hl num">16</span>
-                                  <span class="hl sym">(</span>cast alien<span class="hl sym">-</span>cpuset <span class="hl sym">(*</span> unsigned<span class="hl sym">-</span>char<span class="hl sym">)))))</span>
-      <span class="hl sym">(</span>when <span class="hl sym">(</span>zerop retcode<span class="hl sym">)</span>
-        <span class="hl sym">(</span>loop <span class="hl sym">:</span>with cpuset <span class="hl sym">= (</span>make<span class="hl sym">-</span>array <span class="hl num">16</span> <span class="hl sym">:</span>element<span class="hl sym">-</span>type <span class="hl sym">'(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">))</span>
-           <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">16</span>
-           <span class="hl sym">:</span>do <span class="hl sym">(</span>setf <span class="hl sym">(</span>elt cpuset i<span class="hl sym">) (</span>deref alien<span class="hl sym">-</span>cpuset i<span class="hl sym">))</span>
-           <span class="hl sym">:</span>finally <span class="hl sym">(</span>return <span class="hl sym">(</span>cpuset<span class="hl sym">-&gt;</span>list cpuset<span class="hl sym">)))))))</span>
+    <span class="hl sym">(</span>write<span class="hl sym">-</span>sequence buffer stream<span class="hl sym">)))</span>
 
-<span class="hl sym">(</span>defpackage #<span class="hl sym">:</span>mandelbrot
-  <span class="hl sym">(:</span>use <span class="hl sym">:</span>cl <span class="hl sym">:</span>smp<span class="hl sym">-</span>utils<span class="hl sym">))</span>
+<span class="hl sym">(</span>defun par<span class="hl sym">-</span>render <span class="hl sym">(</span>size stream<span class="hl sym">)</span>
+  <span class="hl sym">(</span>declare <span class="hl sym">(</span>type fixnum size<span class="hl sym">)		(</span>stream stream<span class="hl sym">)</span>
+	   <span class="hl sym">(</span>optimize <span class="hl sym">(</span>speed <span class="hl num">3</span><span class="hl sym">) (</span>safety <span class="hl num">0</span><span class="hl sym">) (</span>debug <span class="hl num">0</span><span class="hl sym">)))</span>
 
-<span class="hl sym">(</span>in<span class="hl sym">-</span>package <span class="hl sym">:</span>mandelbrot<span class="hl sym">)</span>
+  <span class="hl sym">(</span>let<span class="hl sym">* ((</span>buffer <span class="hl sym">(</span>make<span class="hl sym">-</span>array <span class="hl sym">(*</span> size <span class="hl sym">(</span>ceiling size <span class="hl num">8</span><span class="hl sym">)) :</span>element<span class="hl sym">-</span>type <span class="hl sym">'(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">)))</span>
+	 <span class="hl sym">(</span>quarter<span class="hl sym">-</span>size <span class="hl sym">(</span>ceiling size <span class="hl num">4</span><span class="hl sym">))</span>
+	 <span class="hl sym">(</span>quarter<span class="hl sym">-</span>array <span class="hl sym">(</span>ceiling <span class="hl sym">(</span>the <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">32</span><span class="hl sym">) (*</span> size size<span class="hl sym">))</span> <span class="hl num">32</span><span class="hl sym">)))</span>
+    
 
-#<span class="hl sym">+</span>x86 <span class="hl sym">(</span>error <span class="hl str">&quot;Only x86_64 version yet&quot;</span><span class="hl sym">)</span>
-
-<span class="hl sym">(</span>deftype positive<span class="hl sym">-</span>fixnum <span class="hl sym">()</span>
-  <span class="hl sym">`(</span>integer <span class="hl num">0</span> <span class="hl sym">,</span>most<span class="hl sym">-</span>positive<span class="hl sym">-</span>fixnum<span class="hl sym">))</span>
-
-<span class="hl sym">(</span>defstruct atomic <span class="hl sym">(</span>counter <span class="hl num">0</span> <span class="hl sym">:</span>type <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte #<span class="hl sym">+</span>x86 <span class="hl num">32</span> #<span class="hl sym">+</span>x86<span class="hl sym">-</span><span class="hl num">64 64</span><span class="hl sym">)))</span>
-
-<span class="hl sym">(</span>defmacro mandelbrot<span class="hl sym">-</span>creator <span class="hl sym">(</span>size <span class="hl sym">&amp;</span>optional <span class="hl sym">(</span>workers <span class="hl num">1</span><span class="hl sym">))</span>
-  <span class="hl sym">(</span>let<span class="hl sym">* ((</span>header <span class="hl sym">(</span>map <span class="hl sym">'</span>vector #<span class="hl sym">'</span>char<span class="hl sym">-</span>code <span class="hl sym">(</span>format nil <span class="hl str">&quot;P4~%~d ~d~%&quot;</span> size size<span class="hl sym">)))</span>
-         <span class="hl sym">(</span>iter <span class="hl num">50</span><span class="hl sym">)</span>
-         <span class="hl sym">(</span>row<span class="hl sym">-</span>width <span class="hl sym">(</span>ceiling size <span class="hl num">8</span><span class="hl sym">))</span>
-         <span class="hl sym">(</span>image<span class="hl sym">-</span>octets<span class="hl sym">-</span>count <span class="hl sym">(*</span> size row<span class="hl sym">-</span>width<span class="hl sym">))</span>
-         <span class="hl sym">(</span>smp<span class="hl sym">-</span>p <span class="hl sym">(&gt;</span> workers <span class="hl num">1</span><span class="hl sym">)))</span>
-    <span class="hl sym">`(</span>lambda <span class="hl sym">(</span>out<span class="hl sym">-</span>stream<span class="hl sym">)</span>
-       <span class="hl sym">(</span>declare <span class="hl sym">(</span>type stream out<span class="hl sym">-</span>stream<span class="hl sym">)</span>
-                <span class="hl sym">(</span>optimize <span class="hl sym">(</span>speed <span class="hl num">3</span><span class="hl sym">) (</span>safety <span class="hl num">0</span><span class="hl sym">) (</span>debug <span class="hl num">0</span><span class="hl sym">)))</span>
-       <span class="hl sym">(</span>let <span class="hl sym">((</span>header <span class="hl sym">(</span>make<span class="hl sym">-</span>array <span class="hl sym">,(</span>length header<span class="hl sym">) :</span>element<span class="hl sym">-</span>type <span class="hl sym">'(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">) :</span>initial<span class="hl sym">-</span>contents <span class="hl sym">',</span>header<span class="hl sym">))</span>
-             <span class="hl sym">(</span>image <span class="hl sym">(</span>make<span class="hl sym">-</span>array <span class="hl sym">,</span>image<span class="hl sym">-</span>octets<span class="hl sym">-</span>count <span class="hl sym">:</span>element<span class="hl sym">-</span>type <span class="hl sym">'(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">)))</span>
-             <span class="hl sym">(</span>row<span class="hl sym">-</span>idx <span class="hl sym">,(</span>if smp<span class="hl sym">-</span>p <span class="hl sym">'(</span>make<span class="hl sym">-</span>atomic<span class="hl sym">)</span> <span class="hl num">0</span><span class="hl sym">)))</span>
-         <span class="hl sym">(</span>declare <span class="hl sym">(</span>type <span class="hl sym">(</span>simple<span class="hl sym">-</span>array <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">) (,(</span>length header<span class="hl sym">)))</span> header<span class="hl sym">)</span>
-                  <span class="hl sym">(</span>type <span class="hl sym">(</span>simple<span class="hl sym">-</span>array <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">) (,</span>image<span class="hl sym">-</span>octets<span class="hl sym">-</span>count<span class="hl sym">))</span> image<span class="hl sym">)</span>
-                  <span class="hl sym">(</span>type <span class="hl sym">,(</span>if smp<span class="hl sym">-</span>p <span class="hl sym">'</span>atomic <span class="hl sym">`(</span>integer <span class="hl num">0</span> <span class="hl sym">,(</span><span class="hl num">1</span><span class="hl sym">+</span> size<span class="hl sym">)))</span> row<span class="hl sym">-</span>idx<span class="hl sym">))</span>
-         <span class="hl sym">(</span>write<span class="hl sym">-</span>sequence header out<span class="hl sym">-</span>stream<span class="hl sym">)</span>
-         <span class="hl sym">(</span>labels <span class="hl sym">((</span>worker<span class="hl sym">-</span>proc <span class="hl sym">()</span>
-                    <span class="hl sym">(</span>let <span class="hl sym">((</span>v4sf24 <span class="hl sym">(</span>make<span class="hl sym">-</span>array <span class="hl num">24</span> <span class="hl sym">:</span>element<span class="hl sym">-</span>type <span class="hl sym">'</span>single<span class="hl sym">-</span>float<span class="hl sym">)))</span>
-                      <span class="hl sym">(</span>declare <span class="hl sym">(</span>type <span class="hl sym">(</span>simple<span class="hl sym">-</span>array single<span class="hl sym">-</span>float <span class="hl sym">(</span><span class="hl num">24</span><span class="hl sym">))</span> v4sf24<span class="hl sym">))</span>
-                      <span class="hl sym">(</span>setf <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">4</span> <span class="hl sym">:</span>collect <span class="hl sym">`(</span>elt v4sf24 <span class="hl sym">,(+</span> i <span class="hl num">4</span><span class="hl sym">)) :</span>collect <span class="hl sym">(/</span> <span class="hl num">2.0</span> size<span class="hl sym">)))</span>
-                      <span class="hl sym">(</span>setf <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">4</span> <span class="hl sym">:</span>collect <span class="hl sym">`(</span>elt v4sf24 <span class="hl sym">,(+</span> i <span class="hl num">8</span><span class="hl sym">)) :</span>collect <span class="hl sym">-</span><span class="hl num">1.0</span><span class="hl sym">))</span>
-                      <span class="hl sym">(</span>setf <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">4</span> <span class="hl sym">:</span>collect <span class="hl sym">`(</span>elt v4sf24 <span class="hl sym">,(+</span> i <span class="hl num">12</span><span class="hl sym">)) :</span>collect <span class="hl num">4.0</span><span class="hl sym">))</span>
-                      <span class="hl sym">(</span>setf <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">4</span> <span class="hl sym">:</span>collect <span class="hl sym">`(</span>elt v4sf24 <span class="hl sym">,(+</span> i <span class="hl num">16</span><span class="hl sym">)) :</span>collect <span class="hl sym">(- (* (/</span> <span class="hl num">2.0</span> size<span class="hl sym">) (-</span> <span class="hl num">3</span> i<span class="hl sym">))</span> <span class="hl num">1.5</span><span class="hl sym">)))</span>
-                      <span class="hl sym">(</span>setf <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">4</span> <span class="hl sym">:</span>collect <span class="hl sym">`(</span>elt v4sf24 <span class="hl sym">,(+</span> i <span class="hl num">20</span><span class="hl sym">)) :</span>collect <span class="hl sym">(/</span> <span class="hl num">8.0</span> size<span class="hl sym">)))</span>
-                      <span class="hl sym">(</span>loop
-                         <span class="hl sym">:</span>for row <span class="hl sym">:</span>of<span class="hl sym">-</span>type <span class="hl sym">(</span>integer <span class="hl num">0</span> <span class="hl sym">,(+</span> size <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">-</span> workers<span class="hl sym">))) =</span>
-                         <span class="hl sym">,(</span>if smp<span class="hl sym">-</span>p
-                              <span class="hl sym">'(</span>sb<span class="hl sym">-</span>ext<span class="hl sym">:</span>atomic<span class="hl sym">-</span>incf <span class="hl sym">(</span>atomic<span class="hl sym">-</span>counter row<span class="hl sym">-</span>idx<span class="hl sym">))</span>
-                              <span class="hl sym">'(</span>let <span class="hl sym">((</span>old row<span class="hl sym">-</span>idx<span class="hl sym">))</span>
-                                <span class="hl sym">(</span>progn <span class="hl sym">(</span>setf row<span class="hl sym">-</span>idx <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">+</span> old<span class="hl sym">))</span>
-                                       old<span class="hl sym">)))</span>
-                         <span class="hl sym">:</span>while <span class="hl sym">(&lt;</span> row <span class="hl sym">,</span>size<span class="hl sym">)</span>
-                         <span class="hl sym">:</span>for y <span class="hl sym">:</span>of<span class="hl sym">-</span>type single<span class="hl sym">-</span>float <span class="hl sym">= (</span>coerce row <span class="hl sym">'</span>single<span class="hl sym">-</span>float<span class="hl sym">)</span>
-                         <span class="hl sym">:</span>for offset <span class="hl sym">:</span>of<span class="hl sym">-</span>type <span class="hl sym">(</span>integer <span class="hl num">0</span> <span class="hl sym">,</span>image<span class="hl sym">-</span>octets<span class="hl sym">-</span>count<span class="hl sym">) = (*</span> row <span class="hl sym">,</span>row<span class="hl sym">-</span>width<span class="hl sym">)</span>
-                         <span class="hl sym">:</span>do <span class="hl sym">(</span>setf <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>for i <span class="hl sym">:</span>from <span class="hl num">0</span> <span class="hl sym">:</span>below <span class="hl num">4</span> <span class="hl sym">:</span>collect <span class="hl sym">`(</span>elt v4sf24 <span class="hl sym">,</span>i<span class="hl sym">) :</span>collect <span class="hl sym">'</span>y<span class="hl sym">))</span>
-                         <span class="hl sym">:</span>summing <span class="hl sym">(</span>%sse<span class="hl sym">-</span>mandelbrot<span class="hl sym">-</span>row image offset <span class="hl sym">(+</span> offset <span class="hl sym">,</span>row<span class="hl sym">-</span>width<span class="hl sym">)</span> v4sf24 <span class="hl sym">,</span>iter<span class="hl sym">) :</span>into s <span class="hl sym">:</span>of<span class="hl sym">-</span>type positive<span class="hl sym">-</span>fixnum
-                         <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>unless <span class="hl sym">(</span>zerop <span class="hl sym">(</span>mod size <span class="hl num">8</span><span class="hl sym">))</span>
-                                   <span class="hl sym">`(:</span>do <span class="hl sym">(</span>setf <span class="hl sym">(</span>elt image <span class="hl sym">(+</span> offset <span class="hl sym">,(</span><span class="hl num">1</span><span class="hl sym">-</span> row<span class="hl sym">-</span>width<span class="hl sym">)))</span>
-                                               <span class="hl sym">(</span>logand <span class="hl sym">(</span>elt image <span class="hl sym">(+</span> offset <span class="hl sym">,(</span><span class="hl num">1</span><span class="hl sym">-</span> row<span class="hl sym">-</span>width<span class="hl sym">)))</span>
-                                                       <span class="hl sym">,(</span>logxor <span class="hl num">255</span> <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">- (</span>ash <span class="hl num">1</span> <span class="hl sym">(-</span> <span class="hl num">8</span> <span class="hl sym">(</span>mod size <span class="hl num">8</span><span class="hl sym">)))))))))))))</span>
-           <span class="hl sym">,(</span>if smp<span class="hl sym">-</span>p
-                <span class="hl sym">`(</span>mapc #<span class="hl sym">'</span>sb<span class="hl sym">-</span>thread<span class="hl sym">:</span>join<span class="hl sym">-</span>thread
-                       <span class="hl sym">(</span>list <span class="hl sym">,</span>&#64;<span class="hl sym">(</span>loop <span class="hl sym">:</span>repeat workers <span class="hl sym">:</span>collect <span class="hl sym">'(</span>sb<span class="hl sym">-</span>thread<span class="hl sym">:</span>make<span class="hl sym">-</span>thread #<span class="hl sym">'</span>worker<span class="hl sym">-</span>proc<span class="hl sym">))))</span>
-                <span class="hl sym">'(</span>worker<span class="hl sym">-</span>proc<span class="hl sym">))</span>
-           <span class="hl sym">(</span>write<span class="hl sym">-</span>sequence image out<span class="hl sym">-</span>stream<span class="hl sym">)))</span>
-       nil<span class="hl sym">)))</span>
-
-<span class="hl sym">(</span>defmacro ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice <span class="hl sym">(</span>vector <span class="hl sym">&amp;</span>optional <span class="hl sym">(</span>index <span class="hl num">0</span><span class="hl sym">))</span>
-  <span class="hl sym">`(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>make<span class="hl sym">-</span>ea <span class="hl sym">:</span>dword <span class="hl sym">:</span>base <span class="hl sym">,</span>vector
-                   <span class="hl sym">:</span>disp <span class="hl sym">(- (+ (*</span> sb<span class="hl sym">-</span>vm<span class="hl sym">:</span>vector<span class="hl sym">-</span>data<span class="hl sym">-</span>offset sb<span class="hl sym">-</span>vm<span class="hl sym">:</span>n<span class="hl sym">-</span>word<span class="hl sym">-</span>bytes<span class="hl sym">)</span>
-                               <span class="hl sym">,(*</span> index <span class="hl num">16</span><span class="hl sym">))</span>
-                            sb<span class="hl sym">-</span>vm<span class="hl sym">:</span>other<span class="hl sym">-</span>pointer<span class="hl sym">-</span>lowtag<span class="hl sym">)))</span>
-
-<span class="hl sym">(</span>defmacro ea<span class="hl sym">-</span>for<span class="hl sym">-</span>byte <span class="hl sym">(</span>vector <span class="hl sym">&amp;</span>optional <span class="hl sym">(</span>index <span class="hl num">0</span><span class="hl sym">))</span>
-  <span class="hl sym">`(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>make<span class="hl sym">-</span>ea <span class="hl sym">:</span>byte
-                   <span class="hl sym">:</span>base <span class="hl sym">,</span>vector
-                   <span class="hl sym">:</span>index <span class="hl sym">,</span>index
-                   <span class="hl sym">:</span>scale <span class="hl num">1</span>
-                   <span class="hl sym">:</span>disp <span class="hl sym">(- (*</span> sb<span class="hl sym">-</span>vm<span class="hl sym">:</span>vector<span class="hl sym">-</span>data<span class="hl sym">-</span>offset sb<span class="hl sym">-</span>vm<span class="hl sym">:</span>n<span class="hl sym">-</span>word<span class="hl sym">-</span>bytes<span class="hl sym">)</span>
-                            sb<span class="hl sym">-</span>vm<span class="hl sym">:</span>other<span class="hl sym">-</span>pointer<span class="hl sym">-</span>lowtag<span class="hl sym">)))</span>
-
-<span class="hl sym">(</span>sb<span class="hl sym">-</span>c<span class="hl sym">:</span>defknown %sse<span class="hl sym">-</span>mandelbrot<span class="hl sym">-</span>row
-    <span class="hl sym">((</span>simple<span class="hl sym">-</span>array <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">) *)</span>
-     positive<span class="hl sym">-</span>fixnum
-     positive<span class="hl sym">-</span>fixnum
-     <span class="hl sym">(</span>simple<span class="hl sym">-</span>array single<span class="hl sym">-</span>float <span class="hl sym">(</span><span class="hl num">24</span><span class="hl sym">))</span>
-     positive<span class="hl sym">-</span>fixnum<span class="hl sym">)</span>
-    positive<span class="hl sym">-</span>fixnum
-    <span class="hl sym">(</span>sb<span class="hl sym">-</span>c<span class="hl sym">:</span>foldable sb<span class="hl sym">-</span>c<span class="hl sym">:</span>flushable sb<span class="hl sym">-</span>c<span class="hl sym">:</span>movable sb<span class="hl sym">-</span>c<span class="hl sym">:</span>always<span class="hl sym">-</span>translatable<span class="hl sym">))</span>
-
-<span class="hl sym">(</span>sb<span class="hl sym">-</span>c<span class="hl sym">:</span>define<span class="hl sym">-</span>vop <span class="hl sym">(</span>%sse<span class="hl sym">-</span>mandelbrot<span class="hl sym">-</span>row<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>translate %sse<span class="hl sym">-</span>mandelbrot<span class="hl sym">-</span>row<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>policy <span class="hl sym">:</span>fast<span class="hl sym">-</span>safe<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>args <span class="hl sym">(</span>image <span class="hl sym">:</span>scs <span class="hl sym">(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>descriptor<span class="hl sym">-</span>reg<span class="hl sym">) :</span>to <span class="hl sym">:</span>save<span class="hl sym">)</span>
-         <span class="hl sym">(</span>oft<span class="hl sym">-</span>start <span class="hl sym">:</span>scs <span class="hl sym">(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>unsigned<span class="hl sym">-</span>reg<span class="hl sym">) :</span>target oft <span class="hl sym">:</span>to <span class="hl sym">:</span>save<span class="hl sym">)</span>
-         <span class="hl sym">(</span>oft<span class="hl sym">-</span>end <span class="hl sym">:</span>scs <span class="hl sym">(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>unsigned<span class="hl sym">-</span>reg<span class="hl sym">) :</span>to <span class="hl sym">:</span>save<span class="hl sym">)</span>
-         <span class="hl sym">(</span>vec <span class="hl sym">:</span>scs <span class="hl sym">(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>descriptor<span class="hl sym">-</span>reg<span class="hl sym">) :</span>to <span class="hl sym">:</span>save<span class="hl sym">)</span>
-         <span class="hl sym">(</span>count <span class="hl sym">:</span>scs <span class="hl sym">(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>unsigned<span class="hl sym">-</span>reg<span class="hl sym">) :</span>to <span class="hl sym">:</span>save<span class="hl sym">))</span>
-  <span class="hl sym">(:</span>arg<span class="hl sym">-</span>types sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>simple<span class="hl sym">-</span>array<span class="hl sym">-</span>unsigned<span class="hl sym">-</span>byte<span class="hl sym">-</span><span class="hl num">8</span>
-              sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>positive<span class="hl sym">-</span>fixnum
-              sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>positive<span class="hl sym">-</span>fixnum
-              sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>simple<span class="hl sym">-</span>array<span class="hl sym">-</span>single<span class="hl sym">-</span>float
-              sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>positive<span class="hl sym">-</span>fixnum<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>results <span class="hl sym">(</span>oft <span class="hl sym">:</span>scs <span class="hl sym">(</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>unsigned<span class="hl sym">-</span>reg<span class="hl sym">)))</span>
-  <span class="hl sym">(:</span>result<span class="hl sym">-</span>types sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>positive<span class="hl sym">-</span>fixnum<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>unsigned<span class="hl sym">-</span>reg<span class="hl sym">)</span> bits<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>unsigned<span class="hl sym">-</span>reg<span class="hl sym">)</span> octet<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> cr<span class="hl sym">-</span>v<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> ci<span class="hl sym">-</span>v<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> zr<span class="hl sym">-</span>v<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> zi<span class="hl sym">-</span>v<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> zr^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> zi^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> check<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>temporary <span class="hl sym">(:</span>sc sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>complex<span class="hl sym">-</span>single<span class="hl sym">-</span>reg<span class="hl sym">)</span> limit<span class="hl sym">)</span>
-  <span class="hl sym">(:</span>generator <span class="hl num">500</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>c<span class="hl sym">:</span>move oft oft<span class="hl sym">-</span>start<span class="hl sym">)</span>
-              <span class="hl slc">;; (+ (* #(y y y y) s2-vec) vec-row)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movaps ci<span class="hl sym">-</span>v <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice vec <span class="hl num">0</span><span class="hl sym">))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst mulps ci<span class="hl sym">-</span>v <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice vec <span class="hl num">1</span><span class="hl sym">))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst addps ci<span class="hl sym">-</span>v <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice vec <span class="hl num">2</span><span class="hl sym">))</span>
-              <span class="hl slc">;; (setf limit #(4.0 4.0 4.0 4.0))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movaps limit <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice vec <span class="hl num">3</span><span class="hl sym">))</span>
-              <span class="hl slc">;; (setf vec-col #(. . . .))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movaps cr<span class="hl sym">-</span>v <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice vec <span class="hl num">4</span><span class="hl sym">))</span>
-              <span class="hl slc">;; prepare row loop</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst shl count <span class="hl num">9</span><span class="hl sym">)</span>
-              ROWLOOP
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst cmp oft oft<span class="hl sym">-</span>end<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst jmp <span class="hl sym">:</span>ge ROWDONE<span class="hl sym">)</span>
-              <span class="hl slc">;; approx loop</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst xor octet octet<span class="hl sym">)</span>
-              QLOOP
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst or octet count<span class="hl sym">)</span>
-              <span class="hl slc">;; (setf zr-v 0 zi-v 0 zr^2-v 0 zi^2-v 0)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst xorps zr<span class="hl sym">-</span>v zr<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst xorps zi<span class="hl sym">-</span>v zi<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst xorps zr^<span class="hl num">2</span><span class="hl sym">-</span>v zr^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst xorps zi^<span class="hl num">2</span><span class="hl sym">-</span>v zi^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              APLOOP
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst cmp octet <span class="hl num">512</span><span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst jmp <span class="hl sym">:</span>l APDONE<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst sub octet <span class="hl num">512</span><span class="hl sym">)</span>
-              <span class="hl slc">;; (setf zi (+ (* 2.0 zr zi) ci))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst mulps zi<span class="hl sym">-</span>v zr<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst addps zi<span class="hl sym">-</span>v zi<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst addps zi<span class="hl sym">-</span>v ci<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl slc">;; (setf zr (+ (- zr^2 zi^2) cr))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst subps zr^<span class="hl num">2</span><span class="hl sym">-</span>v zi^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst addps zr^<span class="hl num">2</span><span class="hl sym">-</span>v cr<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movaps zr<span class="hl sym">-</span>v zr^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl slc">;; (setf zr^2 (* zr zr))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst mulps zr^<span class="hl num">2</span><span class="hl sym">-</span>v zr^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl slc">;; (setf zi^2 (* zi zi))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movaps zi^<span class="hl num">2</span><span class="hl sym">-</span>v zi<span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst mulps zi^<span class="hl num">2</span><span class="hl sym">-</span>v zi^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl slc">;; (&gt; (+ zr^2 zi^2) limit)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movaps check zr^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst addps check zi^<span class="hl num">2</span><span class="hl sym">-</span>v<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst cmpps <span class="hl sym">:</span>le check limit<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst movmskps bits check<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst jmp <span class="hl sym">:</span>nz APLOOP<span class="hl sym">)</span>
-              APDONE
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst addps cr<span class="hl sym">-</span>v <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>slice vec <span class="hl num">5</span><span class="hl sym">))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst test octet <span class="hl num">256</span><span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst jmp <span class="hl sym">:</span>nz LOWQ<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst shl bits <span class="hl num">4</span><span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst or octet bits<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst or octet <span class="hl num">256</span><span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst jmp QLOOP<span class="hl sym">)</span>
-              LOWQ
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst or octet bits<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst mov <span class="hl sym">(</span>ea<span class="hl sym">-</span>for<span class="hl sym">-</span>byte image oft<span class="hl sym">) (</span>sb<span class="hl sym">-</span>vm<span class="hl sym">::</span>reg<span class="hl sym">-</span>in<span class="hl sym">-</span>size octet <span class="hl sym">:</span>byte<span class="hl sym">))</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst inc oft<span class="hl sym">)</span>
-              <span class="hl sym">(</span>sb<span class="hl sym">-</span>assem<span class="hl sym">:</span>inst jmp ROWLOOP<span class="hl sym">)</span>
-              ROWDONE<span class="hl sym">))</span>
-
-<span class="hl sym">(</span>defun main <span class="hl sym">(&amp;</span>optional force<span class="hl sym">-</span>n<span class="hl sym">)</span>
-  <span class="hl sym">(</span>let<span class="hl sym">* ((</span>args <span class="hl sym">(</span>cdr sb<span class="hl sym">-</span>ext<span class="hl sym">:*</span>posix<span class="hl sym">-</span>argv<span class="hl sym">*))</span>
-         <span class="hl sym">(</span>n <span class="hl sym">(</span>or force<span class="hl sym">-</span>n <span class="hl sym">(</span>if args <span class="hl sym">(</span>parse<span class="hl sym">-</span>integer <span class="hl sym">(</span>car args<span class="hl sym">))</span> <span class="hl num">200</span><span class="hl sym">)))</span>
-         <span class="hl sym">(</span>worker <span class="hl sym">(</span>eval <span class="hl sym">`(</span>mandelbrot<span class="hl sym">-</span>creator <span class="hl sym">,</span>n <span class="hl sym">,(</span>length <span class="hl sym">(</span>affinity sb<span class="hl sym">-</span>thread<span class="hl sym">:*</span>current<span class="hl sym">-</span>thread<span class="hl sym">*))))))</span>
-    <span class="hl sym">(</span>with<span class="hl sym">-</span>open<span class="hl sym">-</span>file <span class="hl sym">(</span>output<span class="hl sym">-</span>s #p<span class="hl str">&quot;/dev/stdout&quot;</span> <span class="hl sym">:</span>direction <span class="hl sym">:</span>output <span class="hl sym">:</span>if<span class="hl sym">-</span>exists <span class="hl sym">:</span>append <span class="hl sym">:</span>element<span class="hl sym">-</span>type <span class="hl sym">'(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">))</span>
-      <span class="hl sym">(</span>funcall worker output<span class="hl sym">-</span>s<span class="hl sym">))))</span>
+    <span class="hl sym">(</span>labels <span class="hl sym">((</span>render<span class="hl sym">-</span>sub <span class="hl sym">(</span>y<span class="hl sym">-</span>start y<span class="hl sym">-</span>end index<span class="hl sym">)</span>
+	       <span class="hl sym">(</span>let <span class="hl sym">((</span>code <span class="hl num">0</span><span class="hl sym">)</span> 
+		     <span class="hl sym">(</span>bit <span class="hl num">0</span><span class="hl sym">)</span>
+		     <span class="hl sym">(</span>zr <span class="hl num">0.0</span>d0<span class="hl sym">) (</span>zi <span class="hl num">0.0</span>d0<span class="hl sym">) (</span>tr <span class="hl num">0.0</span>d0<span class="hl sym">)</span>
+		     <span class="hl sym">(</span>delta <span class="hl sym">(/</span> <span class="hl num">2</span>d0 size<span class="hl sym">))</span>
+		     <span class="hl sym">(</span>base<span class="hl sym">-</span>real <span class="hl sym">-</span><span class="hl num">1.5</span>d0<span class="hl sym">)  (</span>base<span class="hl sym">-</span>imag <span class="hl sym">-</span><span class="hl num">1.0</span>d0<span class="hl sym">))</span>
+		 <span class="hl sym">(</span>declare <span class="hl sym">(</span>type <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">8</span><span class="hl sym">)</span> code<span class="hl sym">)</span>
+			  <span class="hl sym">(</span>type double<span class="hl sym">-</span>float zr zi tr base<span class="hl sym">-</span>real base<span class="hl sym">-</span>imag delta<span class="hl sym">)</span>
+			  <span class="hl sym">(</span>type fixnum index bit<span class="hl sym">))</span>
 
 
-<span class="hl sym">(</span>in<span class="hl sym">-</span>package <span class="hl sym">:</span>cl<span class="hl sym">-</span>user<span class="hl sym">)</span>
+		 <span class="hl sym">(</span>do <span class="hl sym">((</span>y y<span class="hl sym">-</span>start <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">+</span> y<span class="hl sym">)))</span>
+		     <span class="hl sym">((=</span> y y<span class="hl sym">-</span>end<span class="hl sym">))</span>
+		   <span class="hl sym">(</span>declare <span class="hl sym">(</span>type <span class="hl sym">(</span>unsigned<span class="hl sym">-</span>byte <span class="hl num">32</span><span class="hl sym">)</span> y<span class="hl sym">))</span>
+
+		   <span class="hl sym">(</span>setf base<span class="hl sym">-</span>imag <span class="hl sym">(-</span> <span class="hl num">1.0</span>d0 <span class="hl sym">(*</span> delta y<span class="hl sym">)))</span>
+		   <span class="hl sym">(</span>dotimes <span class="hl sym">(</span>x size<span class="hl sym">)</span>
+		     <span class="hl sym">(</span>setf base<span class="hl sym">-</span>real <span class="hl sym">(+ -</span><span class="hl num">1.5</span>d0 <span class="hl sym">(*</span> delta x<span class="hl sym">))</span>
+			   zr base<span class="hl sym">-</span>real
+			   zi base<span class="hl sym">-</span>imag<span class="hl sym">)</span>
+		     <span class="hl sym">(</span>setf code  
+			   <span class="hl sym">(</span>if <span class="hl sym">(</span>dotimes <span class="hl sym">(</span>n <span class="hl num">50</span><span class="hl sym">)</span>
+				 <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> <span class="hl num">4.0</span>d0 <span class="hl sym">(+ (*</span> zr zr<span class="hl sym">) (*</span> zi zi<span class="hl sym">)))</span>
+				   <span class="hl sym">(</span>return t<span class="hl sym">))</span>
+				 <span class="hl sym">(</span>setf tr <span class="hl sym">(+ (*</span> zr zr<span class="hl sym">) (- (*</span> zi zi<span class="hl sym">))</span> base<span class="hl sym">-</span>real<span class="hl sym">)</span>
+				       zi <span class="hl sym">(+ (*</span> <span class="hl num">2.0</span>d0 zr zi<span class="hl sym">)</span> base<span class="hl sym">-</span>imag<span class="hl sym">)</span>
+				       zr tr<span class="hl sym">))</span>
+			       <span class="hl sym">(</span>ash code <span class="hl num">1</span><span class="hl sym">)</span>
+			       <span class="hl sym">(</span>logior <span class="hl sym">(</span>ash code <span class="hl num">1</span><span class="hl sym">)</span> #x01<span class="hl sym">)))</span>
+		     <span class="hl sym">(</span>when <span class="hl sym">(= (</span>incf bit<span class="hl sym">)</span> <span class="hl num">8</span><span class="hl sym">)</span>
+		       <span class="hl sym">(</span>setf <span class="hl sym">(</span>aref buffer index<span class="hl sym">)</span> code
+			     bit <span class="hl num">0</span> 
+			     code <span class="hl num">0</span><span class="hl sym">)</span>
+		       <span class="hl sym">(</span>incf index<span class="hl sym">))</span>
+		     <span class="hl sym">)))))</span>
+      <span class="hl sym">(</span>let <span class="hl sym">(</span>threads<span class="hl sym">)</span>
+	<span class="hl sym">(</span>dotimes <span class="hl sym">(</span>i <span class="hl num">4</span><span class="hl sym">)</span>
+	  <span class="hl sym">(</span>let <span class="hl sym">((</span>start <span class="hl sym">(*</span> i quarter<span class="hl sym">-</span>size<span class="hl sym">))</span>
+		<span class="hl sym">(</span>end <span class="hl sym">(* (+</span> i <span class="hl num">1</span><span class="hl sym">)</span> quarter<span class="hl sym">-</span>size<span class="hl sym">))</span>
+		<span class="hl sym">(</span>idx <span class="hl sym">(*</span> i quarter<span class="hl sym">-</span>array<span class="hl sym">)))</span>
+	    <span class="hl sym">(</span>push <span class="hl sym">(</span>sb<span class="hl sym">-</span>thread<span class="hl sym">:</span>make<span class="hl sym">-</span>thread <span class="hl sym">(</span>lambda <span class="hl sym">() (</span>render<span class="hl sym">-</span>sub start end idx<span class="hl sym">)))</span> threads<span class="hl sym">)))</span>
+	<span class="hl sym">(</span>dolist <span class="hl sym">(</span>thread threads<span class="hl sym">)</span>
+	  <span class="hl sym">(</span>sb<span class="hl sym">-</span>thread<span class="hl sym">:</span>join<span class="hl sym">-</span>thread thread<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>write<span class="hl sym">-</span>sequence buffer stream<span class="hl sym">))))</span>
 
 <span class="hl sym">(</span>defun main <span class="hl sym">()</span>
-  <span class="hl sym">(</span>mandelbrot<span class="hl sym">::</span>main<span class="hl sym">))</span>
+  <span class="hl sym">(</span>declare <span class="hl sym">(</span>optimize <span class="hl sym">(</span>speed <span class="hl num">0</span><span class="hl sym">) (</span>safety <span class="hl num">3</span><span class="hl sym">)))</span>
+  <span class="hl sym">(</span>let<span class="hl sym">* ((</span>args sb<span class="hl sym">-</span>ext<span class="hl sym">:*</span>posix<span class="hl sym">-</span>argv<span class="hl sym">*)</span>
+	 <span class="hl sym">(</span>n <span class="hl sym">(</span>parse<span class="hl sym">-</span>integer <span class="hl sym">(</span>second args<span class="hl sym">))))</span>
+    <span class="hl sym">(</span>with<span class="hl sym">-</span>open<span class="hl sym">-</span>stream <span class="hl sym">(</span>stream <span class="hl sym">(</span>sb<span class="hl sym">-</span>sys<span class="hl sym">:</span>make<span class="hl sym">-</span>fd<span class="hl sym">-</span>stream <span class="hl sym">(</span>sb<span class="hl sym">-</span>sys<span class="hl sym">:</span>fd<span class="hl sym">-</span>stream<span class="hl sym">-</span>fd sb<span class="hl sym">-</span>sys<span class="hl sym">:*</span>stdout<span class="hl sym">*)</span>
+						     <span class="hl sym">:</span>element<span class="hl sym">-</span>type <span class="hl sym">:</span>default
+						     <span class="hl sym">:</span>buffering <span class="hl sym">:</span>full
+						     <span class="hl sym">:</span>output t <span class="hl sym">:</span>input nil<span class="hl sym">))</span>
 
+      <span class="hl sym">(</span>format stream <span class="hl str">&quot;P4~%~d ~d~%&quot;</span> n n<span class="hl sym">)</span>
+      #<span class="hl sym">+</span>sb<span class="hl sym">-</span>thread<span class="hl sym">(</span>par<span class="hl sym">-</span>render n stream<span class="hl sym">)</span>
+      #<span class="hl sym">-</span>sb<span class="hl sym">-</span>thread<span class="hl sym">(</span>render n stream<span class="hl sym">)</span>
+      <span class="hl sym">(</span>force<span class="hl sym">-</span>output stream<span class="hl sym">))))</span>
