@@ -46,7 +46,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->title('Normalized Time-used ratios   Median and Quartiles');
+$chart->title('Time-used'.' ÷ '.'fastest      Median and Quartiles');
 $chart->frame();
 $chart->complete();
 
