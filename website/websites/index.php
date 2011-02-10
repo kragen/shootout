@@ -111,7 +111,7 @@ $langs = array(
    array('racket','Racket','racket',$onecoresites),
    array('yarv','Ruby 1.9','',$allsites),
    array('jruby','JRuby','jruby',$u32sites),
-   array('ruby','Ruby MRI','ruby',$basesite),
+   array('ruby','Ruby 1.8.7','ruby',$basesite),
    array('scala','Scala','scala',$allsites),
    array('vw','Smalltalk VisualWorks','smalltalk',$onecoresites)
    );
