@@ -102,7 +102,7 @@ class Chart {
       } else {
          $x = $this->xo + $inset;
       }
-      ImageFilledRectangle($this->im, $this->xo, 0, $this->w -1, MARGIN-1, $this->colour[WHITE]);
+      ImageFilledRectangle($this->im, $this->xo, 0, $this->w -1, MARGIN-2, $this->colour[WHITE]);
       ImageString($this->im, $textsize, $x, 0, $label, $this->colour[BLACK]);
    }
 
