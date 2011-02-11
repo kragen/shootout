@@ -46,7 +46,8 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->title('program time ÷ fastest program time   Median and Quartiles');
+$chart->yAxisLegend('program time ÷ fastest program time');
+$chart->title('How many times slower than the fastest programs?');
 $chart->frame();
 $chart->complete();
 

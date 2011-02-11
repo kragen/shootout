@@ -47,7 +47,7 @@ if ($valid){
 
 $chart->xAxisLegend('language implementation');
 $chart->yAxisLegend('program time ÷ fastest program time');
-$chart->title('How many times slower than the fastest programs? (10 tiny tasks)');
+$chart->title('How many times slower than the fastest programs?');
 $chart->frame();
 $chart->complete();
 
