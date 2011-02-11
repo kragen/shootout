@@ -19,9 +19,7 @@
 
 <p>No. Which programming language implementations have the fastest benchmark programs?</p>
 
-<p>This chart shows one <em>comparison</em> - program <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a> (<?=$TimeUsed;?>) &#247; <em>fastest</em> program Time-used for 10 tiny tasks.</p>
-
-<p>Each chart box shows the middle 50% program times &#247; <em>fastest</em> program times for 10 tiny tasks. Each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time &#247; <em>fastest</em> program time for 10 tiny tasks.</p>
+<p>This chart shows one <em>comparison</em> - program <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a> (<?=$TimeUsed;?>) &#247; <em>fastest</em> program Time-used. Each chart box shows the middle 50% program times &#247; <em>fastest</em> program times for 10 tiny tasks. Each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time &#247; <em>fastest</em> program time for 10 tiny tasks.</p>
 
 
 <p><img src="<?=$chart;?>?<?='s='.Encode($stats);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"

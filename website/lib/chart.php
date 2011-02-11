@@ -65,7 +65,7 @@ ImageStringUp($chart->im, 3, 5, $h-$y-8, $label, $chart->colour[BLACK]);
 ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+24, $chart->colour[BLACK]);
 
 
-$chart->title('Normalized Time-used Memory-used ratios for each Program');
+$chart->title('How many times slower than the fastest program?');
 $chart->frame();
 $chart->complete();
 
