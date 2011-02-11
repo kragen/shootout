@@ -46,7 +46,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
-$chart->title('Time-used ÷ fastest      Median and Quartiles');
+$chart->title('program time ÷ fastest program time   Median and Quartiles');
 $chart->frame();
 $chart->complete();
 
