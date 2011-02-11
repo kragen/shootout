@@ -46,6 +46,7 @@ if ($valid){
 }
 
 $chart->xAxisLegend('language implementation');
+$chart->yAxisLegend('program time ÷ fastest program time');
 $chart->title('program time ÷ fastest program time for 10 tiny tasks (median)');
 $chart->frame();
 $chart->complete();
