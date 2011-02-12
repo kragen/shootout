@@ -1,0 +1,117 @@
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- contributed by Mike Pall</span>
+
+<span class="hl kwa">local</span> bit <span class="hl sym">=</span> <span class="hl kwd">require</span><span class="hl sym">(</span><span class="hl str">&quot;bit&quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">local</span> ffi <span class="hl sym">=</span> <span class="hl kwd">require</span><span class="hl sym">(</span><span class="hl str">&quot;ffi&quot;</span><span class="hl sym">)</span>
+
+ffi<span class="hl sym">.</span>cdef<span class="hl sym">[[</span>
+typedef struct FILE FILE<span class="hl sym">;</span>
+int <span class="hl kwd">_IO_getline_info</span><span class="hl sym">(</span>FILE <span class="hl sym">*,</span> char <span class="hl sym">*,</span> size_t<span class="hl sym">,</span> int<span class="hl sym">,</span> int<span class="hl sym">,</span> int <span class="hl sym">*);</span>
+int <span class="hl kwd">setvbuf</span><span class="hl sym">(</span>FILE <span class="hl sym">*</span>stream<span class="hl sym">,</span> char <span class="hl sym">*</span>buf<span class="hl sym">,</span> int mode<span class="hl sym">,</span> size_t size<span class="hl sym">);</span>
+extern FILE <span class="hl sym">*</span>stdin<span class="hl sym">, *</span>stdout<span class="hl sym">;</span>
+void <span class="hl sym">*</span><span class="hl kwd">realloc</span><span class="hl sym">(</span>void <span class="hl sym">*</span>ptr<span class="hl sym">,</span> size_t size<span class="hl sym">);</span>
+void <span class="hl kwd">free</span><span class="hl sym">(</span>void <span class="hl sym">*</span>ptr<span class="hl sym">);</span>
+]]
+
+<span class="hl slc">-- Generate a specialized hash for k-nucleotides. k = 1, 2, 3, 4, 6, 12 or 18.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">khash</span><span class="hl sym">(</span>k<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> s
+  <span class="hl kwa">if</span> k <span class="hl sym">==</span> <span class="hl num">1</span> <span class="hl kwa">then</span>
+    s <span class="hl sym">=</span> <span class="hl str">&quot;h = band(b[i],6)&quot;</span>
+  <span class="hl kwa">elseif</span> k <span class="hl sym">&lt;</span> <span class="hl num">4</span> <span class="hl kwa">then</span>
+    s <span class="hl sym">=</span> <span class="hl str">&quot;h = bor(band(b[i],6), shl(band(b[i+1],6),2)) &quot;</span>
+    <span class="hl kwa">if</span> k <span class="hl sym">==</span> <span class="hl num">3</span> <span class="hl kwa">then</span> s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;h = bor(h, shl(band(b[i+2],6),4))&quot;</span> <span class="hl kwa">end</span>
+  <span class="hl kwa">else</span>
+    s <span class="hl sym">=</span> <span class="hl str">&quot;do local w=cast('int32_t *', b+i); h=band(shr(w[0],1),0x03030303) &quot;</span>
+    <span class="hl kwa">if</span> k <span class="hl sym">==</span> <span class="hl num">6</span> <span class="hl kwa">then</span>
+      s <span class="hl sym">=</span> s<span class="hl sym">..[[</span>
+h <span class="hl sym">=</span> <span class="hl kwd">bor</span><span class="hl sym">(</span>h<span class="hl sym">,</span> <span class="hl kwd">shl</span><span class="hl sym">(</span><span class="hl kwd">band</span><span class="hl sym">(</span>b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">4</span><span class="hl sym">],</span><span class="hl num">6</span><span class="hl sym">),</span><span class="hl num">1</span><span class="hl sym">));</span> h <span class="hl sym">=</span> <span class="hl kwd">bor</span><span class="hl sym">(</span>h<span class="hl sym">,</span> <span class="hl kwd">shl</span><span class="hl sym">(</span><span class="hl kwd">band</span><span class="hl sym">(</span>b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">5</span><span class="hl sym">],</span><span class="hl num">6</span><span class="hl sym">),</span><span class="hl num">3</span><span class="hl sym">))</span> ]]
+    <span class="hl kwa">elseif</span> k <span class="hl sym">&gt;=</span> <span class="hl num">12</span> <span class="hl kwa">then</span>
+      s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;h = bor(h, band(shl(w[1],1),0x0c0c0c0c)) &quot;</span>
+      <span class="hl kwa">if</span> k <span class="hl sym">==</span> <span class="hl num">12</span> <span class="hl kwa">then</span>
+	s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;h = bor(h, band(shl(w[2],3),0x30303030))&quot;</span>
+      <span class="hl kwa">else</span>
+	s <span class="hl sym">=</span> s<span class="hl sym">..[[</span>
+<span class="hl kwa">local</span> h2 <span class="hl sym">=</span> <span class="hl kwd">bor</span><span class="hl sym">(</span><span class="hl kwd">band</span><span class="hl sym">(</span><span class="hl kwd">shl</span><span class="hl sym">(</span>w<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">],</span><span class="hl num">3</span><span class="hl sym">),</span><span class="hl num">0x30303030</span><span class="hl sym">),</span> <span class="hl kwd">band</span><span class="hl sym">(</span><span class="hl kwd">shl</span><span class="hl sym">(</span>w<span class="hl sym">[</span><span class="hl num">3</span><span class="hl sym">],</span><span class="hl num">5</span><span class="hl sym">),</span><span class="hl num">0xc0c0c0c0</span><span class="hl sym">))</span>
+h <span class="hl sym">=</span> <span class="hl kwd">bor</span><span class="hl sym">(</span>h<span class="hl sym">,</span> h2<span class="hl sym">) +</span> <span class="hl num">2</span>^<span class="hl num">32</span><span class="hl sym">*</span><span class="hl kwd">bor</span><span class="hl sym">(</span><span class="hl kwd">band</span><span class="hl sym">(</span>b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">16</span><span class="hl sym">],</span><span class="hl num">6</span><span class="hl sym">),</span> <span class="hl kwd">shl</span><span class="hl sym">(</span><span class="hl kwd">band</span><span class="hl sym">(</span>b<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">17</span><span class="hl sym">],</span><span class="hl num">6</span><span class="hl sym">),</span><span class="hl num">2</span><span class="hl sym">))</span>]]
+      <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span>
+    s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot; end&quot;</span>
+  <span class="hl kwa">end</span>
+  <span class="hl kwa">return</span> s
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">local function</span> <span class="hl kwd">freqdefault</span><span class="hl sym">()</span>
+  <span class="hl kwa">return</span> <span class="hl num">0</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Count all k-nucleotide sequences.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">kcount</span><span class="hl sym">(</span>seq<span class="hl sym">,</span> n<span class="hl sym">,</span> k<span class="hl sym">,</span> frag<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> h <span class="hl sym">=</span> <span class="hl kwd">khash</span><span class="hl sym">(</span>k<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> s <span class="hl sym">=</span> <span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwb">format</span><span class="hl sym">([[</span>
+    <span class="hl kwa">local</span> ffi<span class="hl sym">,</span> bit<span class="hl sym">,</span> b<span class="hl sym">,</span> f<span class="hl sym">,</span> frag <span class="hl sym">= ...</span>
+    <span class="hl kwa">local</span> cast <span class="hl sym">=</span> ffi<span class="hl sym">.</span>cast
+    <span class="hl kwa">local</span> bor<span class="hl sym">,</span> band<span class="hl sym">,</span> shl<span class="hl sym">,</span> shr <span class="hl sym">=</span> bit<span class="hl sym">.</span>bor<span class="hl sym">,</span> bit<span class="hl sym">.</span>band<span class="hl sym">,</span> bit<span class="hl sym">.</span>lshift<span class="hl sym">,</span> bit<span class="hl sym">.</span>rshift
+    <span class="hl kwa">for</span> frame<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">,%</span>d <span class="hl kwa">do</span>
+      <span class="hl kwa">for</span> i<span class="hl sym">=</span>frame<span class="hl sym">,%</span>d<span class="hl sym">,%</span>d <span class="hl kwa">do local</span> h<span class="hl sym">; %</span>s f<span class="hl sym">[</span>h<span class="hl sym">] =</span> f<span class="hl sym">[</span>h<span class="hl sym">] +</span> <span class="hl num">1</span> <span class="hl kwa">end</span>
+    <span class="hl kwa">end</span> ]]<span class="hl sym">,</span> k<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">,</span> n<span class="hl sym">-</span>k<span class="hl sym">,</span> k<span class="hl sym">,</span> h<span class="hl sym">)</span>
+  <span class="hl kwa">if</span> frag <span class="hl kwa">then</span>
+    s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;local i = 0; b = ffi.cast('uint8_t *', frag); &quot;</span><span class="hl sym">..</span>h<span class="hl sym">..</span><span class="hl str">&quot; return f[h]&quot;</span>
+  <span class="hl kwa">else</span>
+    s <span class="hl sym">=</span> s<span class="hl sym">..</span><span class="hl str">&quot;return f&quot;</span>
+  <span class="hl kwa">end</span>
+  <span class="hl kwa">local</span> f <span class="hl sym">=</span> <span class="hl kwd">setmetatable</span><span class="hl sym">({}, {</span> __index <span class="hl sym">=</span> freqdefault <span class="hl sym">})</span>
+  <span class="hl kwa">return</span> <span class="hl kwd">loadstring</span><span class="hl sym">(</span>s<span class="hl sym">)(</span>ffi<span class="hl sym">,</span> bit<span class="hl sym">,</span> seq<span class="hl sym">,</span> f<span class="hl sym">,</span> frag<span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Count all k-nucleotide sequences and print the frequency of a fragment.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">kfrag</span><span class="hl sym">(</span>seq<span class="hl sym">,</span> n<span class="hl sym">,</span> frag<span class="hl sym">)</span>
+  io<span class="hl sym">.</span><span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl kwd">kcount</span><span class="hl sym">(</span>seq<span class="hl sym">,</span> n<span class="hl sym">, #</span>frag<span class="hl sym">,</span> frag<span class="hl sym">),</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">&quot;</span><span class="hl sym">,</span> frag<span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Count all k-nucleotide sequences and print them in order of frequency.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">ksort</span><span class="hl sym">(</span>seq<span class="hl sym">,</span> n<span class="hl sym">,</span> k<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> f <span class="hl sym">=</span> <span class="hl kwd">kcount</span><span class="hl sym">(</span>seq<span class="hl sym">,</span> n<span class="hl sym">,</span> k<span class="hl sym">)</span>
+  <span class="hl kwa">local</span> sfreq<span class="hl sym">,</span> sn<span class="hl sym">,</span> sum <span class="hl sym">= {},</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">0</span>
+  <span class="hl kwa">for</span> c<span class="hl sym">,</span>v <span class="hl kwa">in</span> <span class="hl kwd">pairs</span><span class="hl sym">(</span>f<span class="hl sym">)</span> <span class="hl kwa">do</span> sfreq<span class="hl sym">[</span>sn<span class="hl sym">] =</span> c<span class="hl sym">;</span> sn <span class="hl sym">=</span> sn <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> sum <span class="hl sym">=</span> sum <span class="hl sym">+</span> v <span class="hl kwa">end</span>
+  <span class="hl kwb">table</span><span class="hl sym">.</span><span class="hl kwb">sort</span><span class="hl sym">(</span>sfreq<span class="hl sym">,</span> <span class="hl kwa">function</span><span class="hl sym">(</span>a<span class="hl sym">,</span> b<span class="hl sym">)</span> <span class="hl kwa">return</span> f<span class="hl sym">[</span>a<span class="hl sym">]==</span>f<span class="hl sym">[</span>b<span class="hl sym">]</span> <span class="hl kwa">and</span> a<span class="hl sym">&gt;</span>b <span class="hl kwa">or</span> f<span class="hl sym">[</span>a<span class="hl sym">]&gt;</span>f<span class="hl sym">[</span>b<span class="hl sym">]</span> <span class="hl kwa">end</span><span class="hl sym">)</span>
+  <span class="hl kwa">local</span> m <span class="hl sym">= {[</span><span class="hl num">0</span><span class="hl sym">]=</span><span class="hl str">&quot;A&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;C&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;T&quot;</span><span class="hl sym">,</span><span class="hl str">&quot;G&quot;</span><span class="hl sym">}</span>
+  <span class="hl kwa">for</span> _<span class="hl sym">,</span>c <span class="hl kwa">in</span> <span class="hl kwd">ipairs</span><span class="hl sym">(</span>sfreq<span class="hl sym">)</span> <span class="hl kwa">do</span>
+    <span class="hl kwa">local</span> s <span class="hl sym">=</span> <span class="hl str">&quot;&quot;</span><span class="hl sym">;</span> <span class="hl kwa">for</span> i<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">2</span><span class="hl sym">*</span>k<span class="hl sym">,</span><span class="hl num">2</span> <span class="hl kwa">do</span> s <span class="hl sym">=</span> s<span class="hl sym">..</span>m<span class="hl sym">[</span>bit<span class="hl sym">.</span><span class="hl kwd">band</span><span class="hl sym">(</span>bit<span class="hl sym">.</span><span class="hl kwd">rshift</span><span class="hl sym">(</span>c<span class="hl sym">,</span>i<span class="hl sym">),</span><span class="hl num">3</span><span class="hl sym">)]</span> <span class="hl kwa">end</span>
+    io<span class="hl sym">.</span><span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl kwb">string</span><span class="hl sym">.</span><span class="hl kwb">format</span><span class="hl sym">(</span><span class="hl str">&quot;%s %0.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> s<span class="hl sym">, (</span>f<span class="hl sym">[</span>c<span class="hl sym">]*</span><span class="hl num">100</span><span class="hl sym">)/</span>sum<span class="hl sym">))</span>
+  <span class="hl kwa">end</span>
+  io<span class="hl sym">.</span><span class="hl kwb">write</span><span class="hl sym">(</span><span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">)</span>
+<span class="hl kwa">end</span>
+
+<span class="hl slc">-- Read the third FASTA sequence line-by-line into a growable buffer.</span>
+<span class="hl kwa">local function</span> <span class="hl kwd">fasta_read</span><span class="hl sym">()</span>
+  <span class="hl kwa">local</span> C <span class="hl sym">=</span> ffi<span class="hl sym">.</span>C
+  <span class="hl kwa">local</span> stdin<span class="hl sym">,</span> iobuf <span class="hl sym">=</span> C<span class="hl sym">.</span>stdin<span class="hl sym">,</span> ffi<span class="hl sym">.</span><span class="hl kwd">new</span><span class="hl sym">(</span><span class="hl str">&quot;char[?]&quot;</span><span class="hl sym">,</span> <span class="hl num">2</span>^<span class="hl num">20</span><span class="hl sym">)</span>
+  C<span class="hl sym">.</span><span class="hl kwd">setvbuf</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> iobuf<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">2</span>^<span class="hl num">20</span><span class="hl sym">)</span>
+  <span class="hl kwa">local</span> sz <span class="hl sym">=</span> <span class="hl num">2</span>^<span class="hl num">20</span>
+  <span class="hl kwa">local</span> buf <span class="hl sym">=</span> ffi<span class="hl sym">.</span><span class="hl kwd">cast</span><span class="hl sym">(</span><span class="hl str">&quot;uint8_t *&quot;</span><span class="hl sym">,</span> C<span class="hl sym">.</span><span class="hl kwd">realloc</span><span class="hl sym">(</span><span class="hl kwa">nil</span><span class="hl sym">,</span> sz<span class="hl sym">+</span><span class="hl num">256</span><span class="hl sym">));</span> <span class="hl kwb">assert</span><span class="hl sym">(</span>buf <span class="hl sym">~=</span> <span class="hl kwa">nil</span><span class="hl sym">)</span>
+  <span class="hl kwa">while</span> C<span class="hl sym">.</span><span class="hl kwd">_IO_getline_info</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> buf<span class="hl sym">,</span> <span class="hl num">256</span><span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">nil</span><span class="hl sym">) ~=</span> <span class="hl num">0</span> <span class="hl kwa">and</span>
+	<span class="hl kwa">not</span> <span class="hl sym">(</span>buf<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">] ==</span> <span class="hl num">62</span> <span class="hl kwa">and</span> buf<span class="hl sym">[</span><span class="hl num">2</span><span class="hl sym">] ==</span> <span class="hl num">72</span><span class="hl sym">)</span> <span class="hl kwa">do end</span> <span class="hl slc">-- Wait for &quot;&gt;THREE&quot;.</span>
+  <span class="hl kwa">local</span> n <span class="hl sym">=</span> <span class="hl num">0</span>
+  <span class="hl kwa">repeat</span>
+    <span class="hl kwa">local</span> m <span class="hl sym">=</span> C<span class="hl sym">.</span><span class="hl kwd">_IO_getline_info</span><span class="hl sym">(</span>stdin<span class="hl sym">,</span> buf<span class="hl sym">+</span>n<span class="hl sym">,</span> <span class="hl num">256</span><span class="hl sym">,</span> <span class="hl num">10</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> <span class="hl kwa">nil</span><span class="hl sym">)</span>
+    <span class="hl kwa">if</span> m <span class="hl sym">==</span> <span class="hl num">0</span> <span class="hl kwa">or</span> buf<span class="hl sym">[</span>n<span class="hl sym">] ==</span> <span class="hl num">62</span> <span class="hl kwa">then break end</span>
+    n <span class="hl sym">=</span> n <span class="hl sym">+</span> m
+    <span class="hl kwa">if</span> n <span class="hl sym">&gt;=</span> sz <span class="hl kwa">then</span>
+      sz <span class="hl sym">=</span> sz <span class="hl sym">+</span> sz
+      buf <span class="hl sym">=</span> ffi<span class="hl sym">.</span><span class="hl kwd">cast</span><span class="hl sym">(</span><span class="hl str">&quot;uint8_t *&quot;</span><span class="hl sym">,</span> C<span class="hl sym">.</span><span class="hl kwd">realloc</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> sz<span class="hl sym">+</span><span class="hl num">256</span><span class="hl sym">));</span> <span class="hl kwb">assert</span><span class="hl sym">(</span>buf <span class="hl sym">~=</span> <span class="hl kwa">nil</span><span class="hl sym">)</span>
+    <span class="hl kwa">end</span>
+  <span class="hl kwa">until false</span>
+  <span class="hl kwa">return</span> buf<span class="hl sym">,</span> n
+<span class="hl kwa">end</span>
+
+<span class="hl kwa">local</span> buf<span class="hl sym">,</span> n <span class="hl sym">=</span> <span class="hl kwd">fasta_read</span><span class="hl sym">()</span>
+<span class="hl kwd">ksort</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">1</span><span class="hl sym">)</span>
+<span class="hl kwd">ksort</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">)</span>
+<span class="hl kwd">kfrag</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl str">&quot;GGT&quot;</span><span class="hl sym">)</span>
+<span class="hl kwd">kfrag</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl str">&quot;GGTA&quot;</span><span class="hl sym">)</span>
+<span class="hl kwd">kfrag</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl str">&quot;GGTATT&quot;</span><span class="hl sym">)</span>
+<span class="hl kwd">kfrag</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATT&quot;</span><span class="hl sym">)</span>
+<span class="hl kwd">kfrag</span><span class="hl sym">(</span>buf<span class="hl sym">,</span> n<span class="hl sym">,</span> <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span><span class="hl sym">)</span>
+ffi<span class="hl sym">.</span>C<span class="hl sym">.</span><span class="hl kwd">free</span><span class="hl sym">(</span>buf<span class="hl sym">)</span>
