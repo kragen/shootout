@@ -57,10 +57,11 @@ foreach($Data as $d){
 
 <h2><a href="#sourcecode" name="sourcecode">&nbsp;<?=$Title;?> source code</a></h2>
 
-<pre><?=$Code;?></pre>
 
 <h3><a href="#about" name="about">&nbsp;notes</a></h3>
 <?=$About;?>
+
+<pre><?=$Code;?></pre>
 
 <h3><a href="#log" name="log">&nbsp;make, command-line, and program output logs</a></h3>
 <pre><?=$Log;?></pre>
