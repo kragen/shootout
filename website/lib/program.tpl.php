@@ -54,8 +54,14 @@ foreach($Data as $d){
 
 <p>Read <a href="performance.php?test=<?=$SelectedTest;?>#about" title="<?=$TestTag;?>"><?=$TestName;?>&nbsp;benchmark</a> to see what this program should do.</p>
 
-<h3><a href="#about" name="about">&nbsp;notes</a></h3>
-<?=$About;?>
+
+<?
+
+if (strlen($About)>0){
+   printf('<h3><a href="#about" name="about">&nbsp;notes</a></h3>%s',$About);
+}
+
+?>
 
 <h2><a href="#sourcecode" name="sourcecode">&nbsp;<?=$Title;?> source code</a></h2>
 

@@ -148,7 +148,8 @@ $faqUrl = CORE_SITE.'help.php';
 
 $About = & new Template(ABOUT_PROGRAMS_PATH);
 $AboutTemplateName = $T.SEPARATOR.$L.$Id.SEPARATOR.'about.tpl.php';
-if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $AboutTemplateName = 'blank-about.tpl.php'; }
+if (! file_exists(ABOUT_PROGRAMS_PATH.$AboutTemplateName)){ $A = ''; } 
+else { $A = $About->fetch($AboutTemplateName); }
 
 
 // META ////////////////////////////////////////////////
@@ -181,7 +182,7 @@ $Body->set('Title', $Title);
 
 $About->set('SelectedTest', $T);
 $About->set('SelectedLang', $L);
-$Body->set('About', $About->fetch($AboutTemplateName));
+$Body->set('About', $A);
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
 $Page->set('Robots', $metaRobots);
