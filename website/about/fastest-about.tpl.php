@@ -2,4 +2,4 @@
 
 <p>Which programming language is fastest?</p>
 
-<p>No. Which programming language implementation has the fastest benchmark programs?</p>
+<p><strong>No.</strong> Which programming language implementation has the fastest benchmark programs?</p>

@@ -17,7 +17,7 @@
 
 <h2><a href="<?=$pageUrl;?>#chart" name="chart">&nbsp;<strong>Which programming languages are fastest?</strong></a></h2>
 
-<p>No. Which programming language implementations have the fastest benchmark programs?</p>
+<p><strong>No.</strong> Which programming language implementations have the fastest benchmark programs?</p>
 
 <p>This chart shows one <em>comparison</em> - program <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a> (<?=$TimeUsed;?>) &#247; <em>fastest</em> program Time-used. Each chart box shows the middle 50% program times &#247; <em>fastest</em> program times for 10 tiny tasks. Each horizontal black bar shows <a href="#about">&darr;&nbsp;the median</a> program time &#247; <em>fastest</em> program time for 10 tiny tasks.</p>
 
@@ -30,7 +30,7 @@
 
 <h2><a href="<?=$pageUrl;?>#table" name="table">&nbsp;<strong>Which languages are fastest?</strong></a>&nbsp;<i>Le mieux est l'ennemi du bien.</i></h2>
 
-<p>No. Which programming language implementations have the fastest benchmark programs?</p>
+<p><strong>No.</strong> Which programming language implementations have the fastest benchmark programs?</p>
 
 <p>Select the language implementations you want to chart (deselect those you want to remove) then click the <b>chart</b> button.</p>
 
