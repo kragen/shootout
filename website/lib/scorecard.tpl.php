@@ -41,7 +41,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 
 <table class="layout">
-<tr><td colspan="2" class="num">
+<tr class="score"><td colspan="2" class="num">
 <input type="submit" name="calc" value="calculate" />
 </td></tr>
 
