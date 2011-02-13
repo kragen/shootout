@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2009
+// Copyright (c) Isaac Gouy 2009-2011
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -7,16 +7,27 @@ require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
 
-// DATA ///////////////////////////////////////////
+// FUNCTIONS ///////////////////////////////////////////
+
+function SelectedLangs($Langs, $Action, $Vars){
+   $w = array(); $wd = array();
+   foreach($Langs as $lang){
+      $link = $lang[LANG_LINK];
+      if (isset($Vars[$link])){ $w[$link] = 1; }
+      if ($lang[LANG_SELECT]){ $wd[$link] = 1; }
+   }
+   if ($Action=='reset'||sizeof($w)<=0){ $w = $wd; }
+   return $w;
+}
+
+
+// GET_VARS ////////////////////////////////////////////////
 
 list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
 $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 
-
-list ($mark,$mtime)= MarkTime();
-$mark = $mark.' '.SITE_NAME;
-
+$SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
 
 if (isset($HTTP_GET_VARS['calc'])
       && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
@@ -32,6 +43,12 @@ if (isset($HTTP_GET_VARS['d'])
    if (ereg("^[a-z]+$",$X) && ($X == 'ndata')){ $DataSet = $X; }
 }
 if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
+
+
+// HEADER ////////////////////////////////////////////////
+
+list ($mark,$mtime)= MarkTime();
+$mark = $mark.' '.SITE_NAME;
 
 
 // PAGES ///////////////////////////////////////////////////
@@ -83,6 +100,8 @@ $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark );
+
+$Body->set('SLangs', $SLangs );
 
 $Body->set('About', $About->fetch($AboutTemplateName));
 

@@ -42,7 +42,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="2" class="num"></colgroup>
 <tr>
-<th>&nbsp;&nbsp;&#215;&nbsp;&nbsp;</th>
+<th>&nbsp;</th>
 <th>compare&nbsp;2</th>
 <th><a href="#about">GM</a></th>
 <th><a href="#about">missing</a></th>
@@ -52,7 +52,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 foreach($score as $k => $v){
    $HtmlName = $Langs[$k][LANG_HTML];
    printf('<tr>');
-   printf('<td>%s</td>', PFx($v[SCORE_RATIO]));
+   printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', 'z', 'z');
 
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
       printf('<td><a href="%s.php" title="Compare %s speed and size against one other programming language">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Langs[$k][LANG_FULL],$HtmlName); 
