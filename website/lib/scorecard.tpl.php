@@ -50,8 +50,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <table>
 <colgroup span="2" class="txt"></colgroup>
-<colgroup span="1" class="num"></colgroup>
-<colgroup span="1" class="txt"></colgroup>
+<colgroup span="2" class="num"></colgroup>
 <tr>
 <th>&nbsp;</th>
 <th>compare&nbsp;2</th>
@@ -117,7 +116,7 @@ foreach($Tests as $t){
 
 </td></tr>
 <tr class="score">
-<td colspan="9" class="num">
+<td colspan="2" class="num">
 <input type="submit" name="calc" value="chart" />
 </td>
 </tr>
