@@ -42,7 +42,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <table class="layout">
 <tr class="score"><td colspan="2" class="num">
-<input type="submit" name="calc" value="calculate" />
+<input type="submit" name="calc" value="chart" />
 </td></tr>
 
 
@@ -112,13 +112,17 @@ foreach($Tests as $t){
 }
 ?>
 
-<tr><td colspan="2" class="num">
-<input type="submit" name="calc" value="calculate" />
+</table>
+
 </td></tr>
+<tr class="score">
+<td colspan="9" class="num">
+<input type="submit" name="calc" value="chart" />
+</td>
+</tr>
 </table>
 </form>
 
-</td></tr></table>
 
 <h3><a href="#about" name="about">&nbsp;<strong><?=$Title;?></strong> <i>The Weighted Geometric Mean</i></a></h3>
 <?=$About;?>
