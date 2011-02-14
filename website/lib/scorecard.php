@@ -101,7 +101,7 @@ $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark );
 
-$Body->set('SLangs', $SLangs );
+$Body->set('Selected', $SLangs );
 
 $Body->set('About', $About->fetch($AboutTemplateName));
 

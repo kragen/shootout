@@ -61,8 +61,12 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 <?
 foreach($score as $k => $v){
    $HtmlName = $Langs[$k][LANG_HTML];
+
+   $checked = '';
+   if (isset($Selected[$k])){ $checked = 'checked="checked"'; }
+
    printf('<tr>');
-   printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', 'z', 'z');
+   printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', $k, $checked);
 
    if (isset($Langs[$k][LANG_SPECIALURL]) && !empty($Langs[$k][LANG_SPECIALURL])){
       printf('<td><a href="%s.php" title="Compare %s speed and size against one other programming language">%s</a></td>', $Langs[$k][LANG_SPECIALURL],$Langs[$k][LANG_FULL],$HtmlName); 
