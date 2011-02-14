@@ -6,6 +6,7 @@
 require_once(LIB_PATH.'lib_whitelist.php');
 require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
+require_once(LIB_PATH.'lib_scorecard.php');
 
 // FUNCTIONS ///////////////////////////////////////////
 
@@ -19,6 +20,37 @@ function SelectedLangs($Langs, $Action, $Vars){
    if ($Action=='reset'||sizeof($w)<=0){ $w = $wd; }
    return $w;
 }
+
+function FullScores($SLangs,$ratios){
+  $score = array();
+  foreach($ratios as $k => $s){
+     $score[$k] = Percentiles($s);
+  }
+   uasort($score,'CompareMedian');
+
+   $labels = array();
+   $stats = array();
+   $allowed = array();
+   $count = 0; $max = 15;
+   foreach($score as $k => $test){
+      if (isset($SLangs[$k])){
+         $labels[] = $k;
+         $stats[] = $test;
+         $allowed[$k] = 1;
+         $count++;
+      }
+      if ($count == $max){ break; }
+   }
+   return array($score,$labels,$stats,$allowed);
+}
+
+
+// PAGE ////////////////////////////////////////////////
+
+$Page = & new Template(LIB_PATH);
+$Body = & new Template(LIB_PATH);
+$PageId = 'scorecard';
+$TemplateName = 'scorecard.tpl.php';
 
 
 // GET_VARS ////////////////////////////////////////////////
@@ -44,49 +76,41 @@ if (isset($HTTP_GET_VARS['d'])
 }
 if (!isset($DataSet)||isset($Action)&&$Action=='reset'){ $DataSet = 'data'; }
 
+$W = Weights($Tests, $Action, $HTTP_GET_VARS);
+
 
 // HEADER ////////////////////////////////////////////////
 
 list ($mark,$mtime)= MarkTime();
 $mark = $mark.' '.SITE_NAME;
-
-
-// PAGES ///////////////////////////////////////////////////
-
-
-$Page = & new Template(LIB_PATH);
-$Body = & new Template(LIB_PATH);
-
-$PageId = 'scorecard';
-
-require_once(LIB_PATH.'lib_scorecard.php');
-
-$mark = MarkTime();
-
 $Title = 'Which programming language is best?';
-if ($DataSet == 'ndata'){ $Title = $Title.' - Full Data'; $mark = $mark.' n'; }
-$Body->set('Title', $Title);
-$TemplateName = 'scorecard.tpl.php';
-$About = & new Template(ABOUT_PATH);
-$AboutTemplateName = 'scorecard-about.tpl.php';
-$About->set('DataSet', $DataSet);
-$W = Weights($Tests, $Action, $HTTP_GET_VARS);
-$Body->set('DataSet', $DataSet);
-$Body->set('W', $W);
-$Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
-$metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
-$MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks &amp; Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
 
 $faqUrl = CORE_SITE.'help.php';
-$timeUsed = 'Elapsed secs';
 $bannerUrl = CORE_SITE;
+
+// DATA ////////////////////////////////////////////////
+
+$Data = BoxplotData(DATA_PATH.'data.csv',$Tests,$Langs,$Incl,$Excl,$SLangs);
+
+$timeUsed = 'Elapsed secs';
+
+
+// ABOUT ////////////////////////////////////////////////
+
+$About = & new Template(ABOUT_PATH);
+$AboutTemplateName = 'scorecard-about.tpl.php';
+
+
+// META ////////////////////////////////////////////////
+
+$metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
+$MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks &amp; Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
 
 if (!(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q')){
    $metaRobots = '<meta name="robots" content="noindex,nofollow,noarchive" />';
    // Help people choose the up-to-date measurements
    $timeUsed = 'CPU secs';
 }
-
 
 // TEMPLATE VARS ////////////////////////////////////////////////
 
@@ -96,6 +120,11 @@ $Page->set('FaqTitle', FAQ_TITLE);
 $Page->set('BannerUrl', $bannerUrl);
 $Page->set('FaqUrl', $faqUrl);
 
+
+$Body->set('Title', $Title);
+$Body->set('DataSet', $DataSet);
+$Body->set('W', $W);
+$Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
@@ -103,6 +132,7 @@ $Body->set('Mark', $mark );
 
 $Body->set('Selected', $SLangs );
 
+$About->set('DataSet', $DataSet);
 $Body->set('About', $About->fetch($AboutTemplateName));
 
 $Page->set('PageBody', $Body->fetch($TemplateName));
