@@ -4,8 +4,8 @@
 // LIBRARIES ////////////////////////////////////////////////
 
 require_once(LIB_PATH.'lib_whitelist.php');
+require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
-require_once(LIB_PATH.'lib_data.php');
 require_once(LIB_PATH.'lib_scorecard.php');
 
 // FUNCTIONS ///////////////////////////////////////////
@@ -21,6 +21,17 @@ function SelectedLangs($Langs, $Action, $Vars){
    return $w;
 }
 
+function MarkTime($PathRoot=''){
+   if (SITE_NAME == 'debian'){
+      $Mark = 'late 2007';
+   } elseif (SITE_NAME == 'gp4'){
+      $Mark = 'mid 2008';
+   } else {
+      $mtime = filemtime($PathRoot.DATA_PATH.'data.csv');
+      $Mark = gmdate("d M Y", $mtime);
+   }
+   return $Mark;
+}
 
 
 // PAGE ////////////////////////////////////////////////
