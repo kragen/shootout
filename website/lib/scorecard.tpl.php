@@ -46,7 +46,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 <table>
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="1" class="num"></colgroup>
-<colgroup span="1" class="txt"></colgroup>
+<colgroup span="1" class="fun"></colgroup>
 <tr>
 <th>&nbsp;</th>
 <th>compare&nbsp;2</th>
