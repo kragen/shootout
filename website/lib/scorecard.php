@@ -21,18 +21,6 @@ function SelectedLangs($Langs, $Action, $Vars){
    return $w;
 }
 
-function MarkTime($PathRoot=''){
-   if (SITE_NAME == 'debian'){
-      $Mark = 'late 2007';
-   } elseif (SITE_NAME == 'gp4'){
-      $Mark = 'mid 2008';
-   } else {
-      $mtime = filemtime($PathRoot.DATA_PATH.'data.csv');
-      $Mark = gmdate("d M Y", $mtime);
-   }
-   return $Mark;
-}
-
 
 // PAGE ////////////////////////////////////////////////
 
