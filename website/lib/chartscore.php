@@ -18,13 +18,13 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($BackText,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
 list ($Values,$valid) = ValidMatrix($HTTP_GET_VARS,'g',1,$valid);
-for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
+//for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
 
 
 // CHART /////////////////////////////////////////////////////
 
 $chart = new WideBarChart();
-$chart->yAxis(log10axis(axis1000()));
+$chart->yAxis(axis10());
 
 if ($valid){
    $chart->backgroundText($BackText);
