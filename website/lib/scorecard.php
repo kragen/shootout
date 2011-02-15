@@ -36,14 +36,14 @@ list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
 $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 
-$SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
-
 if (isset($HTTP_GET_VARS['calc'])
       && strlen($HTTP_GET_VARS['calc']) && (strlen($HTTP_GET_VARS['calc']) <= 9)){
    $X = $HTTP_GET_VARS['calc'];
    if (ereg("^[a-z]+$",$X) && ($X == 'reset')){ $Action = $X; }
 }
 if (!isset($Action)){ $Action = 'calculate'; }
+
+$SLangs = SelectedLangs($Langs, $Action, $HTTP_GET_VARS);
 
 
 if (isset($HTTP_GET_VARS['d'])

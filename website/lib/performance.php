@@ -10,7 +10,16 @@ require_once(LIB_PATH.'lib_data.php');
 
 // FUNCTIONS ///////////////////////////////////////////
 
-function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE){
+function SelectedLangs($Langs, $Vars){
+   $w = array();
+   foreach($Langs as $lang){
+      $link = $lang[LANG_LINK];
+      if (isset($Vars[$link])){ $w[$link] = 1; }
+   }
+   return $w;
+}
+
+function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$SLangs,$HasHeading=TRUE){
    $lines = @file($FileName) or die ('Cannot open $FileName');
    if ($HasHeading){ unset($lines[0]); } // remove header line
 
@@ -72,6 +81,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
       $assumed_min = 0.0;
       $sort_index = $DATA_TIME_SORT;
       $row_min = $time_min;
+
    } elseif ($Sort=='kb'){
       usort($succeeded, 'CompareMemoryUse');
       usort($special, 'CompareMemoryUse');
@@ -80,12 +90,14 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
       if ($mem_min < 256){ $mem_min = 256; }
       settype($mem_min,'double');
       $row_min = $mem_min;
+
    } elseif ($Sort=='gz'){
       usort($succeeded, 'CompareGz');
       usort($special, 'CompareGz');
       $assumed_min = 128;
       $sort_index = DATA_GZ;
       $row_min = $gz_min;
+
    } elseif ($Sort=='elapsed'){
       usort($succeeded, 'CompareElapsed');
       usort($special, 'CompareElapsed');
@@ -135,6 +147,8 @@ list($Incl,$Excl) = WhiteListInEx();
 $Tests = WhiteListUnique('test.csv',$Incl); // assume test.csv in name order
 $Langs = WhiteListUnique('lang.csv',$Incl); // assume lang.csv in name order
 
+$SLangs = SelectedLangs($Langs, $HTTP_GET_VARS);
+
 if (isset($HTTP_GET_VARS['test'])
       && strlen($HTTP_GET_VARS['test']) && (strlen($HTTP_GET_VARS['test']) <= NAME_LEN)){
    $X = $HTTP_GET_VARS['test'];
@@ -173,7 +187,7 @@ $faqUrl = CORE_SITE.'help.php';
 
 // DATA ////////////////////////////////////////////////
 
-$Data = BenchmarkData(DATA_PATH.'data.csv',$T,$Langs, $Incl,$Excl,$S);
+$Data = BenchmarkData(DATA_PATH.'data.csv',$T,$Langs, $Incl,$Excl,$S,$SLangs);
 
 $timeUsed = 'Elapsed secs';
 if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
