@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2010
+// Copyright (c) Isaac Gouy 2010-2011
 
 // LIBRARIES ////////////////////////////////////////////////
 
@@ -21,6 +21,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
 
    $time_min = 360000.0; // 100 hours
    $mem_min = 1024000000;
+   $gz_min = 1048576;
    $DATA_TIME_SORT = $Sort=='fullcpu' ? DATA_FULLCPU : DATA_TIME;
 
    foreach($lines as $line) {
@@ -54,6 +55,10 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
                   if ($row_mem > 0 && $row_mem < $mem_min){
                      $mem_min = $row_mem;
                   }
+                  $row_gz = $row[DATA_GZ];
+                  if ($row_gz > 0 && $row_gz < $gz_min){
+                     $gz_min = $row_gz;
+                  }
                }
 
             }
@@ -77,6 +82,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
 
    $time_ratios = array();
    $mem_ratios = array();
+   $gz_ratios = array();
    
    if ($mem_min < 200){ $mem_min = 200; }
    settype($mem_min,'double');
@@ -86,6 +92,8 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
       $time_ratios[] = $row_time > 0.0 ? $row_time/$time_min : 1.0;
       $row_mem = $row[DATA_MEMORY];
       $mem_ratios[] = $row_mem > 200 ? $row_mem/$mem_min : 1.0;
+      $row_gz = $row[DATA_GZ];
+      $gz_ratios[] = $row_gz > 128 ? $row_gz/$gz_min : 1.0;
    }
 
    return array($succeeded,$failed,$special,$time_ratios,$mem_ratios);
