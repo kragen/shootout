@@ -277,6 +277,21 @@ class BoxChart extends Chart {
 }
 
 
+// WIDEBARCHART CLASS ///////////////////////////////////////////////////
+
+// assume vertical bar
+
+class WideBarChart extends BoxChart {
+
+   function WideBarChart(){
+      BoxChart::BoxChart();
+   }
+
+
+}
+
+
+
 // BARCHART CLASS ///////////////////////////////////////////////////
 
 // assume vertical bar
@@ -321,6 +336,8 @@ class ComparisonChart extends BarChart {
       return Chart::defaultHeight();
    }
 }
+
+
 
 // LINECHART CLASS ///////////////////////////////////////////////////
 

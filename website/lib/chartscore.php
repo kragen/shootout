@@ -21,11 +21,12 @@ for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
 
 // CHART /////////////////////////////////////////////////////
 
-$chart = new BarChart();
+$chart = new WideBarChart();
 $chart->yAxis(log10axis(axis1000()));
 
 if ($valid){
-   $chart->bars(GRAY,$Values);
+   $chart->backgroundText($BackText);
+   //$chart->bars(GRAY,$Values);
    $chart->notice($Mark);
 }
 
