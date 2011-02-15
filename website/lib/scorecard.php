@@ -90,7 +90,7 @@ $bannerUrl = CORE_SITE;
 
 // DATA ////////////////////////////////////////////////
 
-$Data = BoxplotData(DATA_PATH.'data.csv',$Tests,$Langs,$Incl,$Excl,$SLangs);
+$Data = FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W);
 
 $timeUsed = 'Elapsed secs';
 
@@ -124,7 +124,7 @@ $Page->set('FaqUrl', $faqUrl);
 $Body->set('Title', $Title);
 $Body->set('DataSet', $DataSet);
 $Body->set('W', $W);
-$Body->set('Data', FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W));
+$Body->set('Data', $Data);
 $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
