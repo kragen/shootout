@@ -32,9 +32,9 @@ if ($valid){
    $chart->notice($Mark);
 }
 
-$chart->xAxisLegend('language implementation');
+$chart->xAxisLegend('selected language implementations');
 $chart->yAxisLegend('Weighted Geometric Mean');
-$chart->title('Which programs have the best Weighted Score?');
+$chart->title('Which programs have the lowest Weighted Geometric Mean?');
 $chart->frame();
 $chart->complete();
 

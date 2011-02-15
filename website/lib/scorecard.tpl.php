@@ -17,9 +17,6 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <p>Selected and weighted "<i>how many times more</i> compared to the program that used least <i>scores</i>" are compressed into one number - <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
-<p>Each chart bar shows that weighted geometric mean for one unidentified programming language implementation.</p>
-
-
 <p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    width="480" height="300" alt=""
  /></p>
@@ -29,9 +26,8 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <p>This table shows shows 1 or 2 or 3 <em>comparisons</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Time-used</a> and/or <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory-used</a> and/or <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code-used</a> - speed and size - compressed into <a href="#about">&darr;&nbsp;a weighted geometric mean</a>.</p>
 
-<p>Column &#215; shows <i>how many times more</i> that geometric mean is for a programming language than for the language that used least.</p>
 
-<p>Select the weights you want to give each comparison and each benchmark then click the <b>calculate</b> button.</p>
+<p>Select the weights you want to give each comparison and each benchmark then click the <b>chart</b> button.</p>
 
 <p>Or follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
