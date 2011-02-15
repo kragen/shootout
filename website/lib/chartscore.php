@@ -30,9 +30,9 @@ if ($valid){
    $chart->notice($Mark);
 }
 
-$chart->xAxisLegend('language implementation');
-$chart->yAxisLegend('Weighted Geometric Mean');
-$chart->title('Scores');
+//$chart->xAxisLegend('language implementation');
+//$chart->yAxisLegend('Weighted Geometric Mean');
+//$chart->title('Scores');
 $chart->frame();
 $chart->complete();
 
