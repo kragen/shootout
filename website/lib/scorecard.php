@@ -58,7 +58,7 @@ $W = Weights($Tests, $Action, $HTTP_GET_VARS);
 
 // HEADER ////////////////////////////////////////////////
 
-list ($mark,$mtime)= MarkTime();
+$mark = MarkTime();
 $mark = $mark.' '.SITE_NAME;
 $Title = 'Which programming language is best?';
 
