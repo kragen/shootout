@@ -21,28 +21,6 @@ function SelectedLangs($Langs, $Action, $Vars){
    return $w;
 }
 
-function FullScores($SLangs,$ratios){
-  $score = array();
-  foreach($ratios as $k => $s){
-     $score[$k] = Percentiles($s);
-  }
-   uasort($score,'CompareMedian');
-
-   $labels = array();
-   $stats = array();
-   $allowed = array();
-   $count = 0; $max = 15;
-   foreach($score as $k => $test){
-      if (isset($SLangs[$k])){
-         $labels[] = $k;
-         $stats[] = $test;
-         $allowed[$k] = 1;
-         $count++;
-      }
-      if ($count == $max){ break; }
-   }
-   return array($score,$labels,$stats,$allowed);
-}
 
 
 // PAGE ////////////////////////////////////////////////
@@ -90,7 +68,7 @@ $bannerUrl = CORE_SITE;
 
 // DATA ////////////////////////////////////////////////
 
-$Data = FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W);
+$Data = FullWeightedData(DATA_PATH.$DataSet.'.csv', $Tests, $Langs, $Incl, $Excl, $W, $SLangs);
 
 $timeUsed = 'Elapsed secs';
 
@@ -129,8 +107,6 @@ $Body->set('Tests', $Tests);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark );
-
-$Body->set('Selected', $SLangs );
 
 $About->set('DataSet', $DataSet);
 $Body->set('About', $About->fetch($AboutTemplateName));

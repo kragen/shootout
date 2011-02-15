@@ -1,11 +1,11 @@
-<?   // Copyright (c) Isaac Gouy 2004-2009 ?>
+<?   // Copyright (c) Isaac Gouy 2004-2011 ?>
 
 <?
 MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 ?>
 
 <?
-   list($score,$ratio) = $Data;
+   list($score,$labels,$ratio,$selected) = $Data;
    unset($Data);
 ?>
 
@@ -64,7 +64,7 @@ foreach($score as $k => $v){
    $HtmlName = $Langs[$k][LANG_HTML];
 
    $checked = '';
-   if (isset($Selected[$k])){ $checked = 'checked="checked"'; }
+   if (isset($selected[$k])){ $checked = 'checked="checked"'; }
 
    printf('<tr>');
    printf('<td class="score"><p><input type="checkbox" name="%s" %s /></p></td>', $k, $checked);

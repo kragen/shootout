@@ -1,5 +1,5 @@
 <?php
-// Copyright (c) Isaac Gouy 2005-2010
+// Copyright (c) Isaac Gouy 2005-2011
 
 
 function Weights($Tests, $Action, $Vars){
@@ -117,7 +117,7 @@ function ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading=TRUE){
 
 
 
-function FullWeightedData($FileName,$Tests,$Langs,$Incl,$Excl,$W,$HasHeading=TRUE){
+function FullWeightedData($FileName,$Tests,$Langs,$Incl,$Excl,$W,$SLangs,$HasHeading=TRUE){
    list($data,$mins) = ValidRowsAndMins($FileName,$Tests,$Langs,$Incl,$Excl,$HasHeading);
 
    /*
@@ -175,15 +175,25 @@ function FullWeightedData($FileName,$Tests,$Langs,$Incl,$Excl,$W,$HasHeading=TRU
       }
    }
    uasort($score, 'CompareMeanScore');
+
+   $labels = array();
    $ratio = array();
+   $allowed = array();
+   $count = 0; $max = 15;
    foreach($score as $k => $v){
       if (!isset($first)){ $first = $v[SCORE_MEAN]; }
       if ($first==0){ $r = 0.0; } else { $r = $v[SCORE_MEAN]/$first; }
       $score[$k][SCORE_RATIO] = $r;
-      $ratio[] = $r;   // for chart
-   }
 
-   return array($score,$ratio);
+      if (isset($SLangs[$k])){
+         $labels[] = $k;
+         $ratio[] = $r;  
+         $allowed[$k] = 1;
+         $count++;
+      }
+      if ($count == $max){ break; }
+   }
+   return array($score,$labels,$ratio,$allowed);
 }
 
 function CompareMeanScore($a, $b){
