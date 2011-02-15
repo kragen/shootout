@@ -113,7 +113,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$SLangs,$HasHead
       $k = $row[DATA_LANG];
       if (isset($SLangs[$k])){
          $labels[] = $k;
-         unset($SLangs[$k]);
+         //unset($SLangs[$k]);
          $row_value = $row[$sort_index];
          $ratios[] = $row_value > $assumed_min ? $row_value/$row_min : 1.0;
          $count++;
