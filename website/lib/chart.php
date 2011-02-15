@@ -22,9 +22,6 @@ list ($Test,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
 list ($Time,$valid) = ValidMatrix($HTTP_GET_VARS,'r',1,$valid);
 for ($i=0;$i<sizeof($Time);$i++) $Time[$i] = log10($Time[$i]);
 
-//list ($KB,$valid) = ValidMatrix($HTTP_GET_VARS,'k',1,$valid);
-//for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
-
 // CHART //////////////////////////////////////////////////
 
    $barspace = 3;
@@ -46,13 +43,13 @@ if ($valid){
    $chart->barspace = $chart->barwidth + $chart->barspace;
    $chart->barwidth = 0;
    $chart->notice($Mark);
-   $chart->xAxisLegend($Test[0].' programs');
+   $chart->xAxisLegend('selected'.$Test[0].' programs');
 }
 
 
 // Y AXIS LEGEND
 
-$chart->title('How many times slower than the fastest program?');
+//$chart->title('How many times slower than the fastest program?');
 $chart->frame();
 $chart->complete();
 
