@@ -29,12 +29,12 @@ $chart->yAxis(log10axis(axis1000()));
 if ($valid){
    $chart->backgroundText($BackText);
    $chart->bars($Values);
-   //$chart->notice($Mark);
+   $chart->notice($Mark);
 }
 
 $chart->xAxisLegend('language implementation');
-//$chart->yAxisLegend('Weighted Geometric Mean');
-//$chart->title('Scores');
+$chart->yAxisLegend('Weighted Geometric Mean');
+$chart->title('Which programs have the best mean score?');
 $chart->frame();
 $chart->complete();
 
