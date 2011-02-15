@@ -34,7 +34,7 @@ $TestName = $Row[TEST_NAME];
 $TestTag = $Row[TEST_TAG];
 $TestLink = $Row[TEST_LINK];
 
-list($Succeeded,$Failed,$Special,$Ratios) = $Data;
+list($Succeeded,$Failed,$Special,$Labels,$Ratios) = $Data;
 unset($Data);
 
 $first = 0;

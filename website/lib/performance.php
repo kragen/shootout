@@ -106,13 +106,22 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$SLangs,$HasHead
       $row_min = $time_min;
    }
 
+   $labels = array();
    $ratios = array();
+   $count = 0; $max = 15;
    foreach($succeeded as $row){
-      $row_value = $row[$sort_index];
-      $ratios[] = $row_value > $assumed_min ? $row_value/$row_min : 1.0;
+      $k = $row[DATA_LANG];
+      if (isset($SLangs[$k])){
+         $labels[] = $k;
+         unset($SLangs[$k]);
+         $row_value = $row[$sort_index];
+         $ratios[] = $row_value > $assumed_min ? $row_value/$row_min : 1.0;
+         $count++;
+      }
+      if ($count == $max){ break; }
    }
 
-   return array($succeeded,$failed,$special,$ratios);
+   return array($succeeded,$failed,$special,$labels,$ratios);
 }
 
 
