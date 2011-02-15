@@ -22,8 +22,8 @@ list ($Test,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
 list ($Time,$valid) = ValidMatrix($HTTP_GET_VARS,'t',1,$valid);
 for ($i=0;$i<sizeof($Time);$i++) $Time[$i] = log10($Time[$i]);
 
-list ($KB,$valid) = ValidMatrix($HTTP_GET_VARS,'k',1,$valid);
-for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
+//list ($KB,$valid) = ValidMatrix($HTTP_GET_VARS,'k',1,$valid);
+//for ($i=0;$i<sizeof($KB);$i++) $KB[$i] = log10($KB[$i]);
 
 // CHART //////////////////////////////////////////////////
 
@@ -45,25 +45,12 @@ if ($valid){
    $chart->bars(GRAY,$Time);
    $chart->barspace = $chart->barwidth + $chart->barspace;
    $chart->barwidth = 0;
-   $chart->bars(BLACK,$KB);
    $chart->notice($Mark);
    $chart->xAxisLegend($Test[0].' programs');
 }
 
 
 // Y AXIS LEGEND
-
-$y = 2.5*MARGIN;
-
-$label = 'Time';
-ImageStringUp($chart->im, 3, 5, $h-$y-8, $label, $chart->colour[BLACK]);
-ImageFilledRectangle($chart->im, 11, $h-$y-4, 11+$barw, $h-$y+24, $chart->colour[GRAY]);
-$y = $y + strlen($label)*CHAR_WIDTH_2 + 3*MARGIN;
-
-$label = 'Memory';
-ImageStringUp($chart->im, 3, 5, $h-$y-8, $label, $chart->colour[BLACK]);
-ImageFilledRectangle($chart->im, 12, $h-$y-4, 12+$barmw, $h-$y+24, $chart->colour[BLACK]);
-
 
 $chart->title('How many times slower than the fastest program?');
 $chart->frame();
