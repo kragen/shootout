@@ -19,7 +19,6 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 <p>Each chart bar shows that weighted geometric mean for one unidentified programming language implementation.</p>
 
-<? print_r($ratio); ?>
 
 <p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    width="480" height="300" alt=""
