@@ -181,8 +181,9 @@ function FullWeightedData($FileName,$Tests,$Langs,$Incl,$Excl,$W,$SLangs,$HasHea
    $allowed = array();
    $count = 0; $max = 15;
    foreach($score as $k => $v){
-      if (!isset($first)){ $first = $v[SCORE_MEAN]; }
-      if ($first==0){ $r = 0.0; } else { $r = $v[SCORE_MEAN]/$first; }
+      //if (!isset($first)){ $first = $v[SCORE_MEAN]; }
+      //if ($first==0){ $r = 0.0; } else { $r = $v[SCORE_MEAN]/$first; }
+      $r = $v[SCORE_MEAN]
       $score[$k][SCORE_RATIO] = $r;
 
       if (isset($SLangs[$k])){

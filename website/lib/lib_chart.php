@@ -287,6 +287,21 @@ class WideBarChart extends BoxChart {
       BoxChart::BoxChart();
    }
 
+   function bars($d){
+      $x = $this->xo + 4;
+      $ys = abs($this->yshift) * $this->yscale;
+      $count = 0;
+
+      foreach($d as $v){
+         $y = $this->h - ($this->yo + $v * $this->yscale + $ys);
+
+         ImageFilledRectangle($this->im, $x, $y-1, $x+$this->boxwidth, $y, $this->colour[BLACK]);
+
+         $x = $x + $this->boxwidth + $this->boxspace;
+         if ($count == $this->maxboxes){ break; } else { $count++;  }
+      }
+   }
+
 
 }
 

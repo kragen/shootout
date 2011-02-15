@@ -28,7 +28,7 @@ $chart->yAxis(log10axis(axis1000()));
 
 if ($valid){
    $chart->backgroundText($BackText);
-   //$chart->bars(GRAY,$Values);
+   $chart->bars($Values);
    //$chart->notice($Mark);
 }
 
