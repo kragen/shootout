@@ -15,8 +15,8 @@ SetChartCacheControl();
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($BackText,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
-list ($Values,$valid) = ValidMatrix($HTTP_GET_VARS,'g',1,$valid);
-for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
+//list ($Values,$valid) = ValidMatrix($HTTP_GET_VARS,'g',1,$valid);
+//for ($i=0;$i<sizeof($Values);$i++) $Values[$i] = log10($Values[$i]);
 
 
 // CHART /////////////////////////////////////////////////////
@@ -30,6 +30,7 @@ if ($valid){
    //$chart->notice($Mark);
 }
 
+$chart->xAxisLegend(sizeof($BackText));
 //$chart->xAxisLegend('language implementation');
 //$chart->yAxisLegend('Weighted Geometric Mean');
 //$chart->title('Scores');
