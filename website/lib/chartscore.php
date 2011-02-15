@@ -25,7 +25,7 @@ $chart = new WideBarChart();
 $chart->yAxis(log10axis(axis1000()));
 
 if ($valid){
-   $chart->backgroundText( array("Test") );
+   $chart->backgroundText($BackText);
    //$chart->bars(GRAY,$Values);
    //$chart->notice($Mark);
 }
