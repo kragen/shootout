@@ -21,7 +21,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 
 
-<p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>"
+<p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
    width="480" height="225" alt=""
  /></p>
 
