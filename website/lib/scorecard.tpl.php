@@ -36,7 +36,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 <p>Or follow the links to <b>compare 2</b> language implementations directly - one-against-another for all the benchmarks - on Time-used, Memory-used and Code-used.</p>
 
 
-<form class="score" method="get" action="which-language-is-best.php">
+<form method="get" action="which-language-is-best.php">
 
 
 <table class="layout">
