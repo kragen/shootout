@@ -4,7 +4,6 @@
 // LIBRARIES ////////////////////////////////////////////////
 
 require_once(LIB_PATH.'lib_whitelist.php');
-require_once(LIB_PATH.'lib_common.php');
 require_once(LIB);
 require_once(LIB_PATH.'lib_data.php');
 require_once(LIB_PATH.'lib_scorecard.php');
