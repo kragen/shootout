@@ -43,7 +43,7 @@ if ($valid){
    $chart->barspace = $chart->barwidth + $chart->barspace;
    $chart->barwidth = 0;
    $chart->notice($Mark);
-   $chart->xAxisLegend('selected'.$Test[0].' programs');
+   $chart->xAxisLegend('selected '.$Test[0].' programs');
 }
 
 
