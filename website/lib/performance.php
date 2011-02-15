@@ -69,34 +69,38 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$HasHeading=TRUE
    if ($Sort=='fullcpu'){
       usort($succeeded, 'CompareFullCpuTime');
       usort($special, 'CompareFullCpuTime');
+      $assumed_min = 0.0;
+      $sort_index = $DATA_TIME_SORT;
+      $row_min = $time_min;
    } elseif ($Sort=='kb'){
       usort($succeeded, 'CompareMemoryUse');
       usort($special, 'CompareMemoryUse');
+      $assumed_min = 256;
+      $sort_index = DATA_MEMORY;
+      if ($mem_min < 256){ $mem_min = 256; }
+      settype($mem_min,'double');
+      $row_min = $mem_min;
    } elseif ($Sort=='gz'){
       usort($succeeded, 'CompareGz');
       usort($special, 'CompareGz');
+      $assumed_min = 128;
+      $sort_index = DATA_GZ;
+      $row_min = $gz_min;
    } elseif ($Sort=='elapsed'){
       usort($succeeded, 'CompareElapsed');
       usort($special, 'CompareElapsed');
+      $assumed_min = 0.0;
+      $sort_index = $DATA_TIME_SORT;
+      $row_min = $time_min;
    }
 
-   $time_ratios = array();
-   $mem_ratios = array();
-   $gz_ratios = array();
-   
-   if ($mem_min < 200){ $mem_min = 200; }
-   settype($mem_min,'double');
-
+   $ratios = array();
    foreach($succeeded as $row){
-      $row_time = $row[$DATA_TIME_SORT];
-      $time_ratios[] = $row_time > 0.0 ? $row_time/$time_min : 1.0;
-      $row_mem = $row[DATA_MEMORY];
-      $mem_ratios[] = $row_mem > 200 ? $row_mem/$mem_min : 1.0;
-      $row_gz = $row[DATA_GZ];
-      $gz_ratios[] = $row_gz > 128 ? $row_gz/$gz_min : 1.0;
+      $row_value = $row[$sort_index];
+      $ratios[] = $row_value > $assumed_min ? $row_value/$row_min : 1.0;
    }
 
-   return array($succeeded,$failed,$special,$time_ratios,$mem_ratios);
+   return array($succeeded,$failed,$special,$ratios);
 }
 
 

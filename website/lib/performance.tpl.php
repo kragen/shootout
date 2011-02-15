@@ -34,7 +34,7 @@ $TestName = $Row[TEST_NAME];
 $TestTag = $Row[TEST_TAG];
 $TestLink = $Row[TEST_LINK];
 
-list($Succeeded,$Failed,$Special,$TimeRatios,$MemRatios) = $Data;
+list($Succeeded,$Failed,$Special,$Ratios) = $Data;
 unset($Data);
 
 $first = 0;
@@ -66,7 +66,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <p>Each chart bar shows <i>how many times more</i> Time or <i>how many times more</i> Memory one unidentified <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the benchmark program that used least Time or the program that used least Memory.</p>
 
-<p><img src="chart.php?<?='t='.Encode($TimeRatios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='ww='.Encode($TestLink);?>"
+<p><img src="chart.php?<?='r='.Encode($Ratios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='ww='.Encode($TestLink);?>"
    alt=""
    title=""
    width="480" height="225"

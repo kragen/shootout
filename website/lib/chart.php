@@ -19,7 +19,7 @@ $WhiteListTests = WhiteListUnique('test.csv',$in);
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
 list ($Test,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
 
-list ($Time,$valid) = ValidMatrix($HTTP_GET_VARS,'t',1,$valid);
+list ($Time,$valid) = ValidMatrix($HTTP_GET_VARS,'r',1,$valid);
 for ($i=0;$i<sizeof($Time);$i++) $Time[$i] = log10($Time[$i]);
 
 //list ($KB,$valid) = ValidMatrix($HTTP_GET_VARS,'k',1,$valid);
