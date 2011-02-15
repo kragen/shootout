@@ -10,6 +10,8 @@ require_once(LIB_PATH.'lib_chart.php');
 
 SetChartCacheControl();
 
+$in = WhiteListIn();
+$WhiteListLangs = WhiteListUnique('lang.csv',$in);
 
 // DATA ////////////////////////////////////////////////////
 
