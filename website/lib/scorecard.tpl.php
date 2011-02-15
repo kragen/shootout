@@ -21,7 +21,7 @@ MkMenuForm($Tests,$SelectedTest,$Langs,$SelectedLang);
 
 
 
-<p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($labels);?>"
+<p><img src="chartscore.php?<?='g='.Encode($ratio);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w=eNoFwdENgDAIBcCh%2FHGLNwMSUlSiL7TFdHvvGolLStBcod0liX5ooHak6G0DftJQH2IKuIa%2Fz4YlWaBlgM4fl%2Bca0w%3D%3D'?>"
    width="480" height="300" alt=""
  /></p>
 
