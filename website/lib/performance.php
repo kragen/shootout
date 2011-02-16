@@ -15,7 +15,9 @@ function SelectedLangs($Langs, $Vars){
    foreach($Langs as $lang){
       $link = $lang[LANG_LINK];
       if (isset($Vars[$link])){ $w[$link] = 1; }
+      if ($lang[LANG_SELECT]){ $wd[$link] = 1; }
    }
+   if (sizeof($w)<=0){ $w = $wd; }
    return $w;
 }
 
@@ -113,7 +115,7 @@ function BenchmarkData($FileName,$Test,$Langs,$Incl,$Excl,$Sort,$SLangs,$HasHead
       $k = $row[DATA_LANG];
       if (isset($SLangs[$k])){
          $labels[] = $k;
-         //unset($SLangs[$k]);
+         unset($SLangs[$k]);
          $row_value = $row[$sort_index];
          $ratios[] = $row_value > $assumed_min ? $row_value/$row_min : 1.0;
          $count++;
