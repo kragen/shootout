@@ -85,8 +85,8 @@ if ($TestName=='startup'){ $NString = ''; }
 <colgroup span="2" class="txt"></colgroup>
 <colgroup span="3" class="num"></colgroup>
 <tr>
-<th>&nbsp;</th>
-<th>&nbsp;</th>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <th>
    <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=fullcpu" title="Sort by CPU Time secs">sort</a>
 </th>
