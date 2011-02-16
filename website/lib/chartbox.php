@@ -1,7 +1,7 @@
 <?
 header("Content-type: image/png");
 
-// Copyright (c) Isaac Gouy 2009-2010
+// Copyright (c) Isaac Gouy 2009-2011
 
 // LIBRARIES ////////////////////////////////////////////////
 
