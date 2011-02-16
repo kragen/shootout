@@ -15,75 +15,51 @@
 ;;; To run
 ;;; sbcl --noinform --core fannkuch.core %A
 
-(declaim (optimize (speed 3) (safety 0) (space 0) (debug 0)))
-
-(defun flip (n array)
-  (declare (type fixnum n)
-	   (type (simple-array fixnum (16)) array))
-  (loop for i from 0 to (ash n -1)
-	do (let ((temp (aref array i))
-		 (k (- n i)))
-	     (setf (aref array i) (aref array k))
-	     (setf (aref array k) temp))))
-
-(defun fcount (c array)
-  (declare (type fixnum c)
-	   (type (simple-array fixnum (16)) array)
-	    (inline flip))
-  (let ((z (aref array 0)))
-    (if (not (= z 0))
-	(progn
-	  (flip z array)
-	  (fcount (1+ c) array))
-      c)))
-
-(defun rotate (n array)
-  (declare (type fixnum n)
-	   (type (simple-array fixnum (16)) array))
-  (let ((temp (aref array 0))
-	(m (- n 1)))
-    (loop for i from 1 to m do
-	  (setf (aref array (- i 1)) (aref array i)))
-    (setf (aref array m) temp)))
-
-(defun iter-perms (n f)
-  (declare (type fixnum n))
-  (let ((perm (make-array n :element-type 'fixnum))
-	(copy (make-array n :element-type 'fixnum))
-	(num 0))
-    (declare (type fixnum num))
-    (loop for i from 0 to (- n 1) do (setf (aref perm i) i))
-    (labels ((do-iter (f ht)
-		      (declare (type fixnum ht)
-			       (type (function (fixnum (simple-array fixnum (16))) fixnum) f)
-			       (inline rotate))
-
-		      (if (= ht 1)
-			  (progn
-			    (loop for i from 0 to (- n 1) do
-				  (setf (aref copy i) (aref perm i)))
-			    (funcall f num copy)
-			    (incf num))
-			(loop for i from 1 to ht do
-			      (progn (do-iter f (- ht 1))
-				     (rotate ht perm))))))
-
-      (do-iter f n))))
+(declaim (optimize (speed 3) (safety 0) (space 1) (debug 0)))
 
 (defun fannkuch (n)
   (declare (type fixnum n))
   (let ((csum 0)
 	(fmax 0))
-    (declare (type fixnum fmax)
-	     (type fixnum csum))
-    (iter-perms n (lambda (num array)
-		    (declare (type fixnum num)
-			     (inline fcount))
-		    (let ((c (fcount 0 array)))
-		      (declare (type fixnum c))
-		      (setf csum (+ csum  (if (evenp num) c (- c))))
-		      (when (> c fmax)
-			(setf fmax c)))))
+    (declare (type fixnum fmax))
+    (let ((perm (make-array n :element-type 'fixnum))
+	  (copy (make-array n :element-type 'fixnum))
+	  (num 0)) 
+
+      (loop for i from 0 to (- n 1) do (setf (aref perm i) i))
+
+      (labels ((do-iter (ht)
+		 
+		 (declare (type fixnum ht))
+		 
+		 (if (= ht 1)
+		     (progn
+		       (loop for i from 0 to (- n 1) do (setf (aref copy i) (aref perm i)))
+		       (let ((c 0))
+			 (declare (type fixnum c))
+			 (let ((z (aref copy 0)))
+			   (loop until (= z 0) do
+				(progn
+				  (loop for i from 0 to (ash z -1)
+				     do (let ((temp (aref copy i))
+					      (k (- z i)))
+					  (setf (aref copy i) (aref copy k))
+					  (setf (aref copy k) temp)))
+				  (incf c)
+				  (setf z (aref copy 0)))))
+			 (setf csum (+ csum  (if (evenp num) c (- c))))
+			 (when (> c fmax)
+			   (setf fmax c)))
+		       (incf num))
+		     (loop for i from 1 to ht do
+			  (progn (do-iter (- ht 1))
+				 (let ((temp (aref perm 0))
+				       (m (- ht 1)))
+				   (loop for i from 1 to m do
+					(setf (aref perm (- i 1)) (aref perm i)))
+				   (setf (aref perm m) temp)))))))
+
+	(do-iter n)))
     (format t "~s~%Pfannkuchen(~s) = ~s~%" csum n fmax)))
 
 
