@@ -64,7 +64,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <h2><a href="#chart" name="chart">&nbsp;How big is the <strong>measured performance difference</strong>?</a></h2>
 
-<p>Each chart bar shows <i>how many times more</i> Time or <i>how many times more</i> Memory one or <i>how many times more</i> Code <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the benchmark program that used least Time or the program that used least Memory or the program that used least Code.</p>
+<p>Each chart bar shows <i>how many times more</i> Time, or <i>how many times more</i> Memory or <i>how many times more</i> Code, one <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the benchmark program that used least Time or the program that used least Memory or the program that used least Code.</p>
 
 <p><img src="chart.php?<?='r='.Encode($Ratios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($Labels);?>&amp;<?='ww='.Encode($TestLink);?>"
    alt=""
