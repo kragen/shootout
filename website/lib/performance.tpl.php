@@ -69,7 +69,7 @@ if ($TestName=='startup'){ $NString = ''; }
 <p><img src="chart.php?<?='r='.Encode($Ratios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='ww='.Encode($TestLink);?>"
    alt=""
    title=""
-   width="480" height="225"
+   width="480" height="300"
  /></p>
  
 
