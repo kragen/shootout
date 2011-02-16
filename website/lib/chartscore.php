@@ -33,8 +33,8 @@ if ($valid){
 }
 
 $chart->xAxisLegend('selected language implementations');
-$chart->yAxisLegend('Weighted Geometric Mean - smaller is better');
-$chart->title('Ten tiny tasks - How many times more time/memory/code used?');
+$chart->yAxisLegend('Weighted Geometric Mean - lowest is best');
+$chart->title('Ten tiny tasks - How many times better?');
 $chart->frame();
 $chart->complete();
 
