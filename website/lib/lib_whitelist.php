@@ -125,10 +125,11 @@ function ValidMark($H,$valid=FALSE){
 }
 
 function ValidSort($H,$valid=FALSE){
-   $bounds = 7;
+   $bounds = 12;
    $sort = '';
    if ($valid){
-      $valid = TRUE;
+      $valid = FALSE;
+      if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
 //      if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
          $X = base64_decode( rawurldecode($H['so']) );
          $X = @gzuncompress($X,$bounds); // returns FALSE on error
@@ -137,7 +138,7 @@ function ValidSort($H,$valid=FALSE){
                $sort = $X; 
                $valid = TRUE; 
 //         }
-//      }
+      }
    }
    return array($sort,$valid);
 }

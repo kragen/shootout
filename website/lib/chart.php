@@ -41,6 +41,7 @@ if ($valid){
 // Y AXIS LEGEND
 
 //$chart->title('How many times slower than the fastest program?');
+$chart->title($Sort);
 $chart->frame();
 $chart->complete();
 
