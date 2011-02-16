@@ -129,7 +129,7 @@ function ValidSort($H,$valid=FALSE){
    $sort = '';
    if ($valid){
       $valid = FALSE;
-      if (isset($H['so']) && strlen($H['so']){
+      if (isset($H['so']) && strlen($H['so']) ){
 //      if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
          $X = base64_decode( rawurldecode($H['so']) );
          $X = @gzuncompress($X,$bounds); // returns FALSE on error
