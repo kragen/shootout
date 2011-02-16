@@ -125,7 +125,7 @@ function ValidMark($H,$valid=FALSE){
 }
 
 function ValidSort($H,$valid=FALSE){
-   $bounds = 32;
+   $bounds = 32; // base64_encoded size
    $sort = '';
    if ($valid){
       $valid = FALSE;
