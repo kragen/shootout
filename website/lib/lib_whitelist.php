@@ -125,19 +125,18 @@ function ValidMark($H,$valid=FALSE){
 }
 
 function ValidSort($H,$valid=FALSE){
-   $bounds = 7;
+   $bounds = 32;
    $sort = '';
    if ($valid){
       $valid = FALSE;
       if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
-//      if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
          $X = base64_decode( rawurldecode($H['so']) );
          $X = @gzuncompress($X,$bounds); // returns FALSE on error
-//         if ($X && ereg("^[a-z]+$",$X) ){
-//            && (($X == 'elapsed') || ($X == 'gz') || ($X == 'kb') || ($X == 'fullcpu')) ){ 
+         if ($X && ereg("^[a-z]+$",$X) ){
+           && (($X == 'elapsed') || ($X == 'gz') || ($X == 'kb') || ($X == 'fullcpu')) ){ 
                $sort = $X; 
                $valid = TRUE; 
-//         }
+         }
       }
    }
    return array($sort,$valid);
