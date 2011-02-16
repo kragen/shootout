@@ -490,7 +490,7 @@ function axis100(){
       );
 }
 
-function axis100simple(){
+function axis10x(){
    return array(
       array(0,"0"), array(10,"10x"), array(20,"20x"), array(30,"30x"), array(40,"40x"), array(50,"50x"),
       array(60,"60x"), array(70,"70x"), array(80,"80x"), array(90,"90x"), array(100,"100x")

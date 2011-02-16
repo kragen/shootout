@@ -37,7 +37,7 @@ list ($Stats,$valid) = ValidMatrix($HTTP_GET_VARS,'s',STATS_SIZE,$valid);
 // CHART /////////////////////////////////////////////////////
 
 $chart = new BoxChart();
-$chart->yAxis(axis100simple());
+$chart->yAxis(axis10());
 
 if ($valid){
    $chart->backgroundText($BackText);
@@ -47,7 +47,7 @@ if ($valid){
 
 $chart->xAxisLegend('selected language implementations');
 $chart->yAxisLegend('program time ÷ fastest program time');
-$chart->title('How many times slower than the fastest programs?');
+$chart->title('For 10 tiny tasks - How many times slower?');
 $chart->frame();
 $chart->complete();
 
