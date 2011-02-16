@@ -66,7 +66,7 @@ if ($TestName=='startup'){ $NString = ''; }
 
 <p>Each chart bar shows <i>how many times more</i> Time, or <i>how many times more</i> Memory or <i>how many times more</i> Code, one <a href="#about" title="Read about the <?=$TestName;?> benchmark">&darr;&nbsp;<b><?=$TestName;?></b></a> program used, compared to the benchmark program that used least Time or the program that used least Memory or the program that used least Code.</p>
 
-<p><img src="chart.php?<?='r='.Encode($Ratios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($Labels);?>&amp;<?='ww='.Encode($TestLink);?>"
+<p><img src="chart.php?<?='r='.Encode($Ratios);?>&amp;<?='m='.Encode($Mark);?>&amp;<?='w='.Encode($Labels);?>&amp;<?='ww='.Encode($TestLink);?>&amp;<?='s='.Encode($Sort);?>"
    alt=""
    title=""
    width="480" height="300"
