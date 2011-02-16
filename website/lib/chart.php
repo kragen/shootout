@@ -46,7 +46,7 @@ if ($valid){
       $titletext = $Test[0].' - How many times slower? (Elapsed secs)';
       $yaxistext = 'program time ÷ fastest program time';
    } elseif ($Sort=='gz'){ 
-      $titletext = $Test[0].' - How many times more source code?';
+      $titletext = $Test[0].' - How many times more code?';
       $yaxistext = 'program code-used ÷ least code-used';
    }
    $chart->yAxisLegend($yaxistext);
