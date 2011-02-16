@@ -200,9 +200,8 @@ $faqUrl = CORE_SITE.'help.php';
 
 $Data = BenchmarkData(DATA_PATH.'data.csv',$T,$Langs, $Incl,$Excl,$S,$SLangs);
 
-$timeUsed = 'Elapsed secs';
-if (SITE_NAME == 'gp4' || SITE_NAME == 'debian' || SITE_NAME == 'demo'){
-   $timeUsed = 'CPU secs';
+if (!(SITE_NAME == 'gp4' || SITE_NAME == 'debian')){
+   $Body->set('SortElapsedSecs', 1);
 }
 
 
@@ -236,7 +235,7 @@ $Body->set('SelectedTest', $T);
 $Body->set('Langs', $Langs);
 $Body->set('Excl', $Excl);
 $Body->set('Mark', $mark);
-$Body->set('TimeUsed', $timeUsed);
+
 $Body->set('Sort', $S);
 $Body->set('Data', $Data );
 $Body->set('Title', $Title);
