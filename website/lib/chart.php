@@ -43,7 +43,7 @@ if ($valid){
    } elseif ($Sort=='elapsed'){
       $titletext = 'How many times slower than the fastest program? (Elapsed secs)';
    } elseif ($Sort=='gz'){ 
-      $titletext = 'How many times more code than the smallest program source code?';
+      $titletext = 'How many times more source code than the smallest program?';
    }
    $chart->yAxisLegend('');
    $chart->title($titletext);
