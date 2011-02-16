@@ -58,7 +58,7 @@ if ($TestName=='fasta'||$TestName=='k-nucleotide'||
    elseif ($d[DATA_TESTVALUE] == 500000) { $NString = '&asymp;5MB '.$NString; }
    }
 
-if ($TestName=='startup'){ $NString = ''; } print_r( $Sort );
+if ($TestName=='startup'){ $NString = ''; }
 ?>
 
 
