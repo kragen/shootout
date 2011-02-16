@@ -1,5 +1,5 @@
 <?
-// Copyright (c) Isaac Gouy 2009-2010
+// Copyright (c) Isaac Gouy 2009-2011
 
 // DATA LAYOUT ///////////////////////////////////////////////////
 
@@ -122,6 +122,24 @@ function ValidMark($H,$valid=FALSE){
       }
    }
    return array($mark,$valid);
+}
+
+function ValidSort($H,$valid=FALSE){
+   $bounds = 7;
+   $sort = '';
+   if ($valid){
+      $valid = FALSE;
+      if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
+         $X = base64_decode( rawurldecode($H['so']) );
+         $X = @gzuncompress($X,$bounds); // returns FALSE on error
+         if ($X && ereg("^[ a-z ]+$",$X){
+            //&& (($X == 'elapsed') || ($X == 'gz') || ($X == 'kb') || ($X == 'fullcpu')) ){ 
+               $sort = $X; 
+               $valid = TRUE; 
+         }
+      }
+   }
+   return array($sort,$valid);
 }
 
 

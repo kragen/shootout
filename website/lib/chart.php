@@ -18,6 +18,7 @@ $WhiteListLangs = WhiteListUnique('lang.csv',$in);
 // DATA ////////////////////////////////////////////////////
 
 list ($Mark,$valid) = ValidMark($HTTP_GET_VARS,TRUE);
+list ($Sort,$valid) = ValidSort($HTTP_GET_VARS,TRUE);
 list ($Test,$valid) = ValidTests($HTTP_GET_VARS,$WhiteListTests,$valid);
 list ($BackText,$valid) = ValidLangs($HTTP_GET_VARS,$WhiteListLangs,$valid);
 
