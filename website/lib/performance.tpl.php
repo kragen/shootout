@@ -91,7 +91,13 @@ if ($TestName=='startup'){ $NString = ''; }
    <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=fullcpu" title="Sort by CPU Time secs">sort</a>
 </th>
 <th>
-   <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a>
+<?
+if (isset($SortElapsedSecs)){
+   printf('<a href="performance.php?test=%s&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a>',$SelectedTest); 
+} else {
+   echo '&nbsp;'
+}
+?>
 </th>
 <th>
    <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=kb" title="Sort by Memory-used KB">sort</a>
@@ -142,7 +148,7 @@ foreach($Succeeded as $d){
       if ($first[DATA_FULLCPU]==0){ $ratio = 0; }
       else { $ratio = $d[DATA_FULLCPU]/$first[DATA_FULLCPU]; }
    } elseif ($Sort=='kb'){ 
-      if (($TestName=='startup')||($first[DATA_MEMORY]==0)){ $ratio = 0; }
+      if (($TestName=='startup')||($first[DAT&nbsp;A_MEMORY]==0)){ $ratio = 0; }
       else { $ratio = $d[DATA_MEMORY]/$first[DATA_MEMORY]; }
    } elseif ($Sort=='elapsed'){
       if ($first[DATA_ELAPSED]==0){ $ratio = 0; }
