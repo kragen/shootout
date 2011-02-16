@@ -132,7 +132,7 @@ function ValidSort($H,$valid=FALSE){
       if (isset($H['so']) && strlen($H['so']) && strlen($H['so']) <= $bounds){
          $X = base64_decode( rawurldecode($H['so']) );
          $X = @gzuncompress($X,$bounds); // returns FALSE on error
-         if ($X && ereg("^[a-z]+$",$X) ){
+         if ($X /*&& ereg("^[a-z]+$",$X)*/ ){
             //&& (($X == 'elapsed') || ($X == 'gz') || ($X == 'kb') || ($X == 'fullcpu')) ){ 
                $sort = $X; 
                $valid = TRUE; 
