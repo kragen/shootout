@@ -37,15 +37,19 @@ if ($valid){
    $chart->xAxisLegend('selected '.$Test[0].' programs');
 
    if ($Sort=='fullcpu'){
-      $titletext = 'How many times slower than the fastest program? (CPU secs)';
+      $titletext = $Test[0].' - How many times slower? (CPU secs)';
+      $yaxistext = 'program time ÷ fastest CPU secs';
    } elseif ($Sort=='kb'){
-      $titletext = 'How many times more memory than the smallest memory use?';
+      $titletext = $Test[0].' - How many times more memory?';
+      $yaxistext = 'program memory-used ÷ smallest memory-used';
    } elseif ($Sort=='elapsed'){
-      $titletext = 'How many times slower than the fastest program? (Elapsed secs)';
+      $titletext = $Test[0].' - How many times slower? (Elapsed secs)';
+      $yaxistext = 'program time ÷ fastest elapsed secs';
    } elseif ($Sort=='gz'){ 
-      $titletext = 'How many times more source code than the smallest program?';
+      $titletext = $Test[0].' - How many times more source code?';
+      $yaxistext = 'program source code ÷ smallest source code';
    }
-   $chart->yAxisLegend('');
+   $chart->yAxisLegend($yaxistext);
    $chart->title($titletext);
 }
 
