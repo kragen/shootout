@@ -58,19 +58,28 @@ function PrintHeaders(){
 
 PrintHeaders();
 
-$page = array(
-    array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
-   ,array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
-   ,array('summarydata.php','Summary Data', 'Take the summary data and do your own analysis')
-   ,array('which-language-is-best.php','Which programming language is best?','Which programming languages have benchmark programs that use less memory or less source code?')
+$tests = array(
+   array('nbody','n-body','Perform an N-body simulation of the Jovian planets')
+   ,array('fannkuchredux','fannkuch-redux','Repeatedly access a tiny integer-sequence')
+   ,array('meteor','meteor-contest','Search for solutions to shape packing puzzle')
+   ,array('fasta','fasta','Generate and write random DNA sequences')
+   ,array('spectralnorm','spectral-norm','Calculate an eigenvalue using the power method')
+   ,array('revcomp','reverse-complement','Read DNA sequences and write their reverse-complement')
+   ,array('mandelbrot','mandelbrot','Generate a Mandelbrot set and write a portable bitmap')
+   ,array('knucleotide','k-nucleotide','Repeatedly update hashtables and k-nucleotide strings')
+   ,array('regexdna','regex-dna','Match DNA 8-mers and substitute nucleotides for IUB code')
+   ,array('pidigits','pidigits','Calculate the digits of Pi with streaming arbitrary-precision arithmetic')
+   ,array('chameneosredux','chameneos-redux','Repeatedly perform symmetrical thread rendezvous requests')
+   ,array('threadring','thread-ring','Repeatedly switch from thread to thread passing one token')
+   ,array('binarytrees','binary-trees','Allocate and deallocate many many binary trees')
    );
 
-foreach($page as $p){
+foreach($tests as $t){
    printf('<tr>');
    foreach($sites as $s){
-      printf('<td><a href="http://shootout.alioth.debian.org/%s/%s" title="%s">%s</a></td>', $s, $p[0], $p[2], $p[1] );
+      printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s" title="%s">%s</a></td>', $s, $t[0], $t[2], $t[1] );
    }
-   echo "</tr>";
+   printf('</tr>');
 }
 
 PrintHeaders();
@@ -161,28 +170,19 @@ function PrintIncludedLanguages($site,$lang){
 
 PrintHeaders();
 
-$tests = array(
-   array('binarytrees','binary-trees','Allocate and deallocate many many binary trees')
-   ,array('chameneosredux','chameneos-redux','Repeatedly perform symmetrical thread rendezvous requests')
-   ,array('fannkuchredux','fannkuch-redux','Repeatedly access a tiny integer-sequence')
-   ,array('fasta','fasta','Generate and write random DNA sequences')
-   ,array('knucleotide','k-nucleotide','Repeatedly update hashtables and k-nucleotide strings')
-   ,array('mandelbrot','mandelbrot','Generate a Mandelbrot set and write a portable bitmap')
-   ,array('meteor','meteor-contest','Search for solutions to shape packing puzzle')
-   ,array('nbody','n-body','Perform an N-body simulation of the Jovian planets')
-   ,array('pidigits','pidigits','Calculate the digits of Pi with streaming arbitrary-precision arithmetic')
-   ,array('regexdna','regex-dna','Match DNA 8-mers and substitute nucleotides for IUB code')
-   ,array('revcomp','reverse-complement','Read DNA sequences and write their reverse-complement')
-   ,array('spectralnorm','spectral-norm','Calculate an eigenvalue using the power method')
-   ,array('threadring','thread-ring','Repeatedly switch from thread to thread passing one token')
+$page = array(
+    array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
+   ,array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
+   ,array('summarydata.php','Summary Data', 'Take the summary data and do your own analysis')
+   ,array('which-language-is-best.php','Which programming language is best?','Which programming languages have benchmark programs that use less memory or less source code?')
    );
 
-foreach($tests as $t){
+foreach($page as $p){
    printf('<tr>');
    foreach($sites as $s){
-      printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s" title="%s">%s</a></td>', $s, $t[0], $t[2], $t[1] );
+      printf('<td><a href="http://shootout.alioth.debian.org/%s/%s" title="%s">%s</a></td>', $s, $p[0], $p[2], $p[1] );
    }
-   printf('</tr>');
+   echo "</tr>";
 }
 
 ?>
