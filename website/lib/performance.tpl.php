@@ -59,6 +59,23 @@ if ($TestName=='fasta'||$TestName=='k-nucleotide'||
    }
 
 if ($TestName=='startup'){ $NString = ''; }
+
+
+// Use the table column headers to emphasize the row sort order
+$CPU_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=fullcpu" title="Sort by CPU Time secs">sort</a></td>';
+$MEM_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=kb" title="Sort by Memory-used KB">sort</a></td>';
+$ELAPSED_sort_td = '<td><a href="performance.php?test=%s&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a></td>';
+$GZBYTES_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=gz" title="Sort by Code-used Bytes">sort</a></td>';
+if ($Sort=='fullcpu'){
+   $CPU_sort_td = '<td>&nbsp;</td>';
+} elseif ($Sort=='kb'){
+   $MEM_sort_td = '<td>&nbsp;</td>';
+} elseif ($Sort=='elapsed' || !(isset($SortElapsedSecs))){
+   $ELAPSED_sort_td = '<td>&nbsp;</td>';
+} elseif ($Sort=='gz'){ 
+   $GZBYTES_sort_td = '<td>&nbsp;</td>';
+}
+
 ?>
 
 
@@ -87,24 +104,12 @@ if ($TestName=='startup'){ $NString = ''; }
 <tr>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
-<th>
-   <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=fullcpu" title="Sort by CPU Time secs">sort</a>
-</th>
-<th>
 <?
-if (isset($SortElapsedSecs)){
-   printf('<a href="performance.php?test=%s&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a>',$SelectedTest); 
-} else {
-   echo '&nbsp;';
-}
+echo $CPU_sort_td;
+echo $ELAPSED_sort_td;
+echo $MEM_sort_td;
+echo $GZBYTES_sort_td;
 ?>
-</th>
-<th>
-   <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=kb" title="Sort by Memory-used KB">sort</a>
-</th>
-<th>
-   <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=gz" title="Sort by Code-used Bytes">sort</a>
-</th>
 </tr>
 
 <tr>
