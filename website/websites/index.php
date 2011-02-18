@@ -193,7 +193,7 @@ foreach($page as $p){
 
 
 
-<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/mobile/index.php" title="Handheld Friendly website">Mobile</a> &nbsp; <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php">Conclusions</a> &nbsp; <a href="http://shootout.alioth.debian.org/fastest-programming-language.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
+<p class="imgfooter">&nbsp; <a href="http://shootout.alioth.debian.org/mobile/index.php" title="Handheld Friendly website">Mobile</a> &nbsp; <a href="http://shootout.alioth.debian.org/dont-jump-to-conclusions.php">Conclusions</a> &nbsp; <a href="http://shootout.alioth.debian.org/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/help.php">Help</a> &nbsp;</p>
 
 </div>
 
