@@ -66,14 +66,19 @@ $CPU_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=f
 $MEM_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=kb" title="Sort by Memory-used KB">sort</a></td>';
 $ELAPSED_sort_td = '<td><a href="performance.php?test=%s&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a></td>';
 $GZBYTES_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=gz" title="Sort by Code-used Bytes">sort</a></td>';
+
 if ($Sort=='fullcpu'){
    $CPU_sort_td = '<td>&nbsp;</td>';
 } elseif ($Sort=='kb'){
    $MEM_sort_td = '<td>&nbsp;</td>';
-} elseif ($Sort=='elapsed' || !(isset($SortElapsedSecs))){
+} elseif ($Sort=='elapsed'){
    $ELAPSED_sort_td = '<td>&nbsp;</td>';
 } elseif ($Sort=='gz'){ 
    $GZBYTES_sort_td = '<td>&nbsp;</td>';
+}
+// debian and gentoo data don't include Elapsed secs
+if (isset($SortElapsedSecs)){
+   $ELAPSED_sort_td = '<td>&nbsp;</td>';
 }
 
 ?>
@@ -94,7 +99,6 @@ if ($Sort=='fullcpu'){
 
 <p>This table shows 5 <em>measurements</em> - <a href="<?=CORE_SITE;?>help.php#time" title="? Help">CPU&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#time" title="? Help">Elapsed&nbsp;Time</a>, <a href="<?=CORE_SITE;?>help.php#memory" title="? Help">Memory</a>, <a href="<?=CORE_SITE;?>help.php#gzbytes" title="? Help">Code</a> and <a href="<?=CORE_SITE;?>help.php#cpuloadpercent" title="? Help">&asymp;&nbsp;CPU&nbsp;Load</a>.</p>
 
-<p>Compare how much Memory the <?=$TestName;?> programs used - <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=kb">sort Memory&nbsp;KB</a>. Compare how much Code the benchmark programs used - <a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=gz">sort Code&nbsp;B</a></p>
 
 <p>Column &#215; shows <i>how many times more</i> each program used compared to the benchmark program that used least.</p>
 
