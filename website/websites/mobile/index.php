@@ -63,7 +63,7 @@ h1 { font-weight: bold; font-size: smaller; }
 <li><a href="./smalltalk.php" title="Compare Smalltalk and Java elapsed times">Smalltalk VisualWorks</a></li>
 </ul>
 
-<p>&nbsp; <a href="http://shootout.alioth.debian.org/mobile/which-programming-languages-are-fastest.php">Fastest</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/help.php">Help</a> &nbsp;</p>
+<p>&nbsp; <a href="http://shootout.alioth.debian.org/mobile/license.php">License</a> &nbsp; <a href="http://shootout.alioth.debian.org/mobile/help.php">Help</a> &nbsp;</p>
 
 </body>
 </html>
