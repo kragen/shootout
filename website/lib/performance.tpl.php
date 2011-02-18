@@ -77,7 +77,7 @@ if ($Sort=='fullcpu'){
    $GZBYTES_sort_td = '<td>&nbsp;</td>';
 }
 // debian and gentoo data don't include Elapsed secs
-if (isset($SortElapsedSecs)){
+if (!isset($SortElapsedSecs)){
    $ELAPSED_sort_td = '<td>&nbsp;</td>';
 }
 
