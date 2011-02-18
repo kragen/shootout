@@ -80,7 +80,7 @@ $AboutTemplateName = 'scorecard-about.tpl.php';
 
 // META ////////////////////////////////////////////////
 
-$metaRobots = '<meta name="robots" content="noindex,follow,noarchive" />';
+$metaRobots = '<meta name="robots" content="index,follow,noarchive" />';
 $MetaKeywords = '<meta name="description" content="Compare programming language performance using your choice of benchmarks &amp; Time-used Memory-used Code-used weights ('.PLATFORM_NAME.')." />';
 
 if (!(SITE_NAME == 'u32' || SITE_NAME == 'u32q' || SITE_NAME == 'u64' || SITE_NAME == 'u64q')){
