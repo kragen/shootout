@@ -55,6 +55,9 @@ foreach($Data as $d){
 <p>Read <a href="performance.php?test=<?=$SelectedTest;?>#about" title="<?=$TestTag;?>"><?=$TestName;?>&nbsp;benchmark</a> to see what this program should do.</p>
 
 
+<p class="imgfooter"><a href="http://twitter.com/share" class="twitter-share-button" data-count="vertical">Tweet</a></p>
+<script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+
 <?
 
 if (strlen($About)>0){
