@@ -43,15 +43,15 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 <table>
 
 <?
-$sites = array('u32','u32q','u64','u64q');
+$sites = array('u64q', 'u32','u32q','u64');
 
 function PrintHeaders(){
    echo '<tr><th>&nbsp;</th><th></th><th></th><th></th></tr>';
    echo '<tr>';
+   echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '<th class="u32">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
    echo '<th class="u32q">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '<th class="u64">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
-   echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '</tr>';
    echo '<tr><th>&nbsp;</th><th></th><th></th><th></th></tr>';
 }
