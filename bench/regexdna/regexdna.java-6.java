@@ -149,14 +149,13 @@ public final class regexdna
       tg.enumerate(threads);
       for (final Thread thread : threads)
       {
-         try
+         if (thread != null)
          {
-            if (thread != null)
+            while (thread.isAlive())
             {
-               thread.join();
+               try { thread.join(); } catch (InterruptedException ie){}
             }
          }
-         catch (InterruptedException e){}
       }
       tg.destroy();
    }
