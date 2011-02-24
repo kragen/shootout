@@ -62,10 +62,10 @@ if ($TestName=='startup'){ $NString = ''; }
 
 
 // Use the table column headers to emphasize the row sort order
-$CPU_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=fullcpu" title="Sort by CPU Time secs">sort</a></td>';
-$MEM_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=kb" title="Sort by Memory-used KB">sort</a></td>';
-$ELAPSED_sort_td = '<td><a href="performance.php?test=%s&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a></td>';
-$GZBYTES_sort_td = '<td><a href="performance.php?test=<?=$SelectedTest;?>&amp;sort=gz" title="Sort by Code-used Bytes">sort</a></td>';
+$CPU_sort_td = '<td><a href="performance.php?test='.$SelectedTest.'&amp;sort=fullcpu" title="Sort by CPU Time secs">sort</a></td>';
+$MEM_sort_td = '<td><a href="performance.php?test='.$SelectedTest.'&amp;sort=kb" title="Sort by Memory-used KB">sort</a></td>';
+$ELAPSED_sort_td = '<td><a href="performance.php?test='.$SelectedTest.'&amp;sort=elapsed" title="Sort by Elapsed Time secs">sort</a></td>';
+$GZBYTES_sort_td = '<td><a href="performance.php?test='.$SelectedTest.'&amp;sort=gz" title="Sort by Code-used Bytes">sort</a></td>';
 
 if ($Sort=='fullcpu'){
    $CPU_sort_td = '<td>&nbsp;</td>';
