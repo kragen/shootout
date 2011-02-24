@@ -82,6 +82,25 @@ foreach($tests as $t){
    printf('</tr>');
 }
 
+
+PrintHeaders();
+
+$page = array(
+    array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
+   ,array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
+   ,array('summarydata.php','Summary Data', 'Take the summary data and do your own analysis')
+   ,array('which-language-is-best.php','Which programming language is best?','Which programming languages have benchmark programs that use less memory or less source code?')
+   );
+
+foreach($page as $p){
+   printf('<tr>');
+   foreach($sites as $s){
+      printf('<td><a href="http://shootout.alioth.debian.org/%s/%s" title="%s">%s</a></td>', $s, $p[0], $p[2], $p[1] );
+   }
+   echo "</tr>";
+}
+
+
 PrintHeaders();
 
 $basesite = array('u32');
@@ -152,38 +171,6 @@ foreach($langs as $lang){
    printf('</tr>');
 }
 
-
-
-function PrintIncludedLanguages($site,$lang){
-   $name = $lang[1];
-   $tag = $lang[2];
-   if (!empty($lang[3])){ // special_url
-       printf('<p><a href="http://shootout.alioth.debian.org/%s/%s.php" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
-          $site, $lang[3], $name, $name, $tag);
-   } else {
-       printf('<p><a href="http://shootout.alioth.debian.org/%s/compare.php?lang=%s" title="Compare %s performance against one other programming language">%s</a> <span class="smaller">%s</span></p>',
-          $site, $lang[0], $name, $name, $tag);
-   }
-}
-
-
-
-PrintHeaders();
-
-$page = array(
-    array('which-programming-languages-are-fastest.php','Which programming languages are fastest?','Which programming languages have the fastest benchmark programs?')
-   ,array('code-used-time-used-shapes.php','Code-used Time-used Shapes','Look for patterns in Code-used Time-used Shapes')
-   ,array('summarydata.php','Summary Data', 'Take the summary data and do your own analysis')
-   ,array('which-language-is-best.php','Which programming language is best?','Which programming languages have benchmark programs that use less memory or less source code?')
-   );
-
-foreach($page as $p){
-   printf('<tr>');
-   foreach($sites as $s){
-      printf('<td><a href="http://shootout.alioth.debian.org/%s/%s" title="%s">%s</a></td>', $s, $p[0], $p[2], $p[1] );
-   }
-   echo "</tr>";
-}
 
 ?>
 
