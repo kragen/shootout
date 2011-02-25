@@ -4,6 +4,7 @@
 
    contributed by Damien Bonvillain
    modified by anon
+   fixed by Isaac Gouy
  */
 
 ob_implicit_flush(1);
@@ -52,19 +53,19 @@ function read_sequence($id) {
       // must get rid of the CR/LF or whatever if present
       $sequence .= $line;
    }
-   return strtoupper(&$sequence);
+   return strtoupper($sequence);
 }
 
-function write_freq(&$sequence, $key_length) {
+function write_freq($sequence, $key_length) {
    $map = generate_frequencies($sequence, $key_length);
-   sort_by_freq_and_name($map);
+   uasort($map, 'freq_name_comparator');
    foreach($map as $key => $val) {
       printf ("%s %.3f\n", $key, $val);
    }
    echo "\n";
 }
 
-function write_count(&$sequence, $key) {
+function write_count($sequence, $key) {
    $map = generate_frequencies($sequence, strlen($key), false);
    if (isset($map[$key])) $value = $map[$key];
    else $value = 0;
@@ -74,9 +75,9 @@ function write_count(&$sequence, $key) {
 /**
  * Returns a map (key, count or freq(default))
  */
-function generate_frequencies(&$sequence, $key_length, $compute_freq = true) {
+function generate_frequencies($sequence, $key_length, $compute_freq = true) {
    $result = array();
-   $total = strlen(&$sequence) - $key_length;
+   $total = strlen($sequence) - $key_length;
    $i = $total;
    if ($key_length === 1) { 
       do {
@@ -86,43 +87,23 @@ function generate_frequencies(&$sequence, $key_length, $compute_freq = true) {
       } while ($i);
    } else {
       do {
-         $key = substr(&$sequence, $i--, $key_length);
+         $key = substr($sequence, $i--, $key_length);
          if(isset($result[$key])) ++$result[$key];
          else $result[$key] = 1;
       } while ($i);
    }
    if($compute_freq) {
-      foreach($result as &$v) {
-         $v = $v * 100 / $total;
+      foreach($result as $k => $v) {
+         $result[$k] = $v * 100 / $total;
       }
    }
    return $result;
 }
 
-function compute_freq(&$count_freq, $key, $total) {
-   $count_freq = ($count_freq* 100) / $total;
+
+function freq_name_comparator($a, $b) {
+   if ($a == $b) return 0;
+   return  ($a < $b) ? 1 : -1;
 }
 
-function sort_by_freq_and_name(&$map) {
-   // since PHP 4.1.0, sorting is not stable => dirty kludge
-   array_walk($map, 'append_key');
-   uasort($map, 'freq_name_comparator');
-   array_walk($map, 'remove_key');
-}
-
-function append_key(&$val, $key) {
-   $val = array($val, $key);
-}
-
-function freq_name_comparator($val1, $val2) {
-   $delta = $val2[0] - $val1[0];
-   // the comparator must return something close to an int
-   $result = ($delta == 0)?strcmp($val1[1],$val2[1]):
-      ($delta < 0)?-1:1;
-   return $result;
-}
-
-function remove_key(&$val, $key) {
-   $val = $val[0];
-}
 
