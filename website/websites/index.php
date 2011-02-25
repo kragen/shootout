@@ -77,7 +77,7 @@ $tests = array(
 foreach($tests as $t){
    printf('<tr>');
    foreach($sites as $s){
-      if ($s=='u64q')){
+      if ($s=='u64q'){
          printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s">%s</a></td>', $s, $t[0], $t[2] );
       } else {
          printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s" title="%s">%s</a></td>', $s, $t[0], $t[2], $t[1] );
