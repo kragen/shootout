@@ -1,0 +1,163 @@
+<span class="hl slc">! -*- mode: f90 -*-</span>
+<span class="hl slc">!</span>
+<span class="hl slc">! The Computer Language Benchmarks Game</span>
+<span class="hl slc">!   http://shootout.alioth.debian.org/</span>
+<span class="hl slc">!</span>
+<span class="hl slc">!   Translated from Mark C. Lewis nbody.java by Simon Geard</span>
+<span class="hl slc">!   Revised by Mike Garrahan</span>
+<span class="hl slc">!</span>
+<span class="hl slc">! ifort -O3 -xHost -o nbody nbody.f90</span>
+<span class="hl slc">!</span>
+
+<span class="hl kwa">program</span> nbody
+  <span class="hl kwa">implicit none</span>
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> sp <span class="hl sym">=</span> <span class="hl kwd">selected_real_kind</span><span class="hl sym">(</span><span class="hl num">6</span><span class="hl sym">,</span> <span class="hl num">37</span><span class="hl sym">)</span>
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> dp <span class="hl sym">=</span> <span class="hl kwd">selected_real_kind</span><span class="hl sym">(</span><span class="hl num">15</span><span class="hl sym">,</span> <span class="hl num">307</span><span class="hl sym">)</span>
+
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> TSTEP <span class="hl sym">=</span> <span class="hl num">0.01d0</span>
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> PI <span class="hl sym">=</span> <span class="hl num">3.141592653589793d0</span>
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> SOLAR_MASS <span class="hl sym">=</span> <span class="hl num">4</span> <span class="hl sym">*</span> PI <span class="hl sym">*</span> PI
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> DAYS_PER_YEAR <span class="hl sym">=</span> <span class="hl num">365.24d0</span>
+
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> NB <span class="hl sym">=</span> <span class="hl num">5</span>
+  <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> NPAIR <span class="hl sym">=</span> NB <span class="hl sym">* (</span>NB <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span>
+
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> <span class="hl kwd">x</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">v</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>NB<span class="hl sym">)</span>
+  <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> e
+
+  <span class="hl kwb">integer</span> <span class="hl sym">::</span> nstep<span class="hl sym">,</span> i
+  <span class="hl kwb">character</span><span class="hl sym">(</span>len<span class="hl sym">=</span><span class="hl num">8</span><span class="hl sym">) ::</span> argv
+
+  <span class="hl kwa">call</span> <span class="hl kwd">getarg</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span> argv<span class="hl sym">)</span>
+  <span class="hl kwa">read</span> <span class="hl sym">(</span>argv<span class="hl sym">,*)</span> nstep
+
+  <span class="hl kwa">call</span> <span class="hl kwd">init</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+
+  e <span class="hl sym">=</span> <span class="hl kwd">energy</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+  <span class="hl kwa">write</span> <span class="hl sym">(*,</span><span class="hl str">'(f12.9)'</span><span class="hl sym">)</span> e
+
+  <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> nstep
+     <span class="hl kwa">call</span> <span class="hl kwd">advance</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+  <span class="hl kwa">end do</span>
+
+  e <span class="hl sym">=</span> <span class="hl kwd">energy</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+  <span class="hl kwa">write</span> <span class="hl sym">(*,</span><span class="hl str">'(f12.9)'</span><span class="hl sym">)</span> e
+
+<span class="hl kwa">contains</span>
+
+  <span class="hl kwa">subroutine</span> <span class="hl kwd">advance</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>inout<span class="hl sym">) ::</span> <span class="hl kwd">x</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">v</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">)</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>NB<span class="hl sym">)</span>
+
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> <span class="hl kwd">r</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NPAIR<span class="hl sym">),</span> <span class="hl kwd">rmag</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">)</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> <span class="hl kwd">inv_dist</span><span class="hl sym">(</span>NPAIR<span class="hl sym">),</span> <span class="hl kwd">mag</span><span class="hl sym">(</span>NPAIR<span class="hl sym">)</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>sp<span class="hl sym">) ::</span> <span class="hl kwd">r2sum</span><span class="hl sym">(</span>NPAIR<span class="hl sym">)</span>
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> k
+
+    k <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> NB <span class="hl sym">-</span> <span class="hl num">1</span>
+       <span class="hl kwa">do</span> j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> NB
+          <span class="hl kwd">r</span><span class="hl sym">(:,</span>k<span class="hl sym">) =</span> <span class="hl kwd">x</span><span class="hl sym">(:,</span>i<span class="hl sym">) -</span> <span class="hl kwd">x</span><span class="hl sym">(:,</span>j<span class="hl sym">)</span>
+          k <span class="hl sym">=</span> k <span class="hl sym">+</span> <span class="hl num">1</span>
+       <span class="hl kwa">end do</span>
+    <span class="hl kwa">end do</span>
+
+    r2sum <span class="hl sym">=</span> <span class="hl kwd">sum</span><span class="hl sym">(</span>r<span class="hl sym">**</span><span class="hl num">2</span><span class="hl sym">,</span> dim<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl slc">! compiler may use rsqrtps</span>
+    inv_dist <span class="hl sym">=</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> <span class="hl kwd">sqrt</span><span class="hl sym">(</span>r2sum<span class="hl sym">)</span>
+    mag <span class="hl sym">=</span> TSTEP <span class="hl sym">*</span> inv_dist<span class="hl sym">**</span><span class="hl num">3</span>
+
+    k <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> NB <span class="hl sym">-</span> <span class="hl num">1</span>
+       <span class="hl kwa">do</span> j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> NB
+          rmag <span class="hl sym">=</span> <span class="hl kwd">mag</span><span class="hl sym">(</span>k<span class="hl sym">) *</span> <span class="hl kwd">r</span><span class="hl sym">(:,</span>k<span class="hl sym">)</span>
+          <span class="hl kwd">v</span><span class="hl sym">(:,</span>i<span class="hl sym">) =</span> <span class="hl kwd">v</span><span class="hl sym">(:,</span>i<span class="hl sym">) -</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>j<span class="hl sym">) *</span> rmag
+          <span class="hl kwd">v</span><span class="hl sym">(:,</span>j<span class="hl sym">) =</span> <span class="hl kwd">v</span><span class="hl sym">(:,</span>j<span class="hl sym">) +</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>i<span class="hl sym">) *</span> rmag
+          k <span class="hl sym">=</span> k <span class="hl sym">+</span> <span class="hl num">1</span>
+       <span class="hl kwa">end do</span>
+    <span class="hl kwa">end do</span>
+
+    x <span class="hl sym">=</span> x <span class="hl sym">+</span> TSTEP <span class="hl sym">*</span> v
+  <span class="hl kwa">end subroutine</span> advance
+
+  <span class="hl kwa">function</span> <span class="hl kwd">energy</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> energy
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>in<span class="hl sym">) ::</span> <span class="hl kwd">x</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">v</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>NB<span class="hl sym">)</span>
+
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> <span class="hl kwd">r</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">),</span> distance<span class="hl sym">,</span> ke<span class="hl sym">,</span> pe
+    <span class="hl kwb">integer</span> <span class="hl sym">::</span> i<span class="hl sym">,</span> j
+
+    ke <span class="hl sym">=</span> <span class="hl num">0.5d0</span> <span class="hl sym">*</span> <span class="hl kwd">dot_product</span><span class="hl sym">(</span>mass<span class="hl sym">,</span> <span class="hl kwd">sum</span><span class="hl sym">(</span>v<span class="hl sym">**</span><span class="hl num">2</span><span class="hl sym">,</span> dim<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">))</span>
+    pe <span class="hl sym">=</span> <span class="hl num">0.0d0</span>
+    <span class="hl kwa">do</span> i <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> NB <span class="hl sym">-</span> <span class="hl num">1</span>
+       <span class="hl kwa">do</span> j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">,</span> NB
+          r <span class="hl sym">=</span> <span class="hl kwd">x</span><span class="hl sym">(:,</span>i<span class="hl sym">) -</span> <span class="hl kwd">x</span><span class="hl sym">(:,</span>j<span class="hl sym">)</span>
+          distance <span class="hl sym">=</span> <span class="hl kwd">sqrt</span><span class="hl sym">(</span><span class="hl kwd">sum</span><span class="hl sym">(</span>r<span class="hl sym">**</span><span class="hl num">2</span><span class="hl sym">))</span>
+          pe <span class="hl sym">=</span> pe <span class="hl sym">-</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>i<span class="hl sym">) *</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>j<span class="hl sym">) /</span> distance
+       <span class="hl kwa">end do</span>
+    <span class="hl kwa">end do</span>
+    energy <span class="hl sym">=</span> ke <span class="hl sym">+</span> pe
+  <span class="hl kwa">end function</span> energy
+
+  <span class="hl kwa">subroutine</span> <span class="hl kwd">init</span><span class="hl sym">(</span>x<span class="hl sym">,</span> v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">),</span> <span class="hl kwd">intent</span><span class="hl sym">(</span>out<span class="hl sym">) ::</span> <span class="hl kwd">x</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">v</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">,</span>NB<span class="hl sym">),</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>NB<span class="hl sym">)</span>
+    <span class="hl kwb">integer</span><span class="hl sym">,</span> <span class="hl kwa">parameter</span> <span class="hl sym">::</span> SUN <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">,</span> JUPITER <span class="hl sym">=</span> <span class="hl num">2</span><span class="hl sym">,</span> SATURN <span class="hl sym">=</span> <span class="hl num">3</span><span class="hl sym">, &amp;</span>
+         URANUS <span class="hl sym">=</span> <span class="hl num">4</span><span class="hl sym">,</span> NEPTUNE <span class="hl sym">=</span> <span class="hl num">5</span>
+    <span class="hl kwb">real</span><span class="hl sym">(</span>dp<span class="hl sym">) ::</span> <span class="hl kwd">momentum</span><span class="hl sym">(</span><span class="hl num">3</span><span class="hl sym">)</span>
+
+    <span class="hl kwd">x</span><span class="hl sym">(:,</span>SUN<span class="hl sym">) =</span> <span class="hl num">0.0d0</span>
+    <span class="hl kwd">v</span><span class="hl sym">(:,</span>SUN<span class="hl sym">) =</span> <span class="hl num">0.0d0</span>
+    <span class="hl kwd">mass</span><span class="hl sym">(</span>SUN<span class="hl sym">) =</span> <span class="hl num">1.0d0</span>
+
+    <span class="hl kwd">x</span><span class="hl sym">(:,</span>JUPITER<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">4.84143144246472090d</span><span class="hl sym">+</span><span class="hl num">00</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">1.16032004402742839d</span><span class="hl sym">+</span><span class="hl num">00</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">1.03622044471123109d</span><span class="hl sym">-</span><span class="hl num">01</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">v</span><span class="hl sym">(:,</span>JUPITER<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">1.66007664274403694d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">7.69901118419740425d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">6.90460016972063023d</span><span class="hl sym">-</span><span class="hl num">05</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">mass</span><span class="hl sym">(</span>JUPITER<span class="hl sym">) = &amp;</span>
+         <span class="hl num">9.54791938424326609d</span><span class="hl sym">-</span><span class="hl num">04</span>
+
+    <span class="hl kwd">x</span><span class="hl sym">(:,</span>SATURN<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">8.34336671824457987d</span><span class="hl sym">+</span><span class="hl num">00</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">4.12479856412430479d</span><span class="hl sym">+</span><span class="hl num">00</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">4.03523417114321381d</span><span class="hl sym">-</span><span class="hl num">01</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">v</span><span class="hl sym">(:,</span>SATURN<span class="hl sym">) = (/ &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">2.76742510726862411d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">4.99852801234917238d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">2.30417297573763929d</span><span class="hl sym">-</span><span class="hl num">05</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">mass</span><span class="hl sym">(</span>SATURN<span class="hl sym">) = &amp;</span>
+         <span class="hl num">2.85885980666130812d</span><span class="hl sym">-</span><span class="hl num">04</span>
+
+    <span class="hl kwd">x</span><span class="hl sym">(:,</span>URANUS<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">1.28943695621391310d</span><span class="hl sym">+</span><span class="hl num">01</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">1.51111514016986312d</span><span class="hl sym">+</span><span class="hl num">01</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">2.23307578892655734d</span><span class="hl sym">-</span><span class="hl num">01</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">v</span><span class="hl sym">(:,</span>URANUS<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">2.96460137564761618d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">2.37847173959480950d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">2.96589568540237556d</span><span class="hl sym">-</span><span class="hl num">05</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">mass</span><span class="hl sym">(</span>URANUS<span class="hl sym">) = &amp;</span>
+         <span class="hl num">4.36624404335156298d</span><span class="hl sym">-</span><span class="hl num">05</span>
+
+    <span class="hl kwd">x</span><span class="hl sym">(:,</span>NEPTUNE<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">1.53796971148509165d</span><span class="hl sym">+</span><span class="hl num">01</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">2.59193146099879641d</span><span class="hl sym">+</span><span class="hl num">01</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">1.79258772950371181d</span><span class="hl sym">-</span><span class="hl num">01</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">v</span><span class="hl sym">(:,</span>NEPTUNE<span class="hl sym">) = (/ &amp;</span>
+         <span class="hl num">2.68067772490389322d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+         <span class="hl num">1.62824170038242295d</span><span class="hl sym">-</span><span class="hl num">03</span><span class="hl sym">, &amp;</span>
+        <span class="hl sym">-</span><span class="hl num">9.51592254519715870d</span><span class="hl sym">-</span><span class="hl num">05</span> <span class="hl sym">/)</span>
+    <span class="hl kwd">mass</span><span class="hl sym">(</span>NEPTUNE<span class="hl sym">) = &amp;</span>
+         <span class="hl num">5.15138902046611451d</span><span class="hl sym">-</span><span class="hl num">05</span>
+
+    v <span class="hl sym">=</span> v <span class="hl sym">*</span> DAYS_PER_YEAR
+    mass <span class="hl sym">=</span> mass <span class="hl sym">*</span> SOLAR_MASS
+
+    momentum <span class="hl sym">=</span> <span class="hl kwd">matmul</span><span class="hl sym">(</span>v<span class="hl sym">,</span> mass<span class="hl sym">)</span>
+    <span class="hl kwd">v</span><span class="hl sym">(:,</span>SUN<span class="hl sym">) =</span> <span class="hl kwd">v</span><span class="hl sym">(:,</span>SUN<span class="hl sym">) -</span> momentum <span class="hl sym">/</span> <span class="hl kwd">mass</span><span class="hl sym">(</span>SUN<span class="hl sym">)</span>
+  <span class="hl kwa">end subroutine</span> init
+
+<span class="hl kwa">end program</span> nbody
