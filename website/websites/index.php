@@ -43,13 +43,13 @@ header("Expires: " . gmdate("D, d M Y H:i:s", $s + (31*3600)) . " GMT");
 <table>
 
 <?
-$sites = array('u64q', 'u32','u32q','u64');
+$sites = array('u32','u64q','u32q','u64');
 
 function PrintHeaders(){
    echo '<tr><th>&nbsp;</th><th></th><th></th><th></th></tr>';
    echo '<tr>';
-   echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '<th class="u32">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
+   echo '<th class="u64q">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '<th class="u32q">&nbsp;x86&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; quad-core&nbsp;</th>';
    echo '<th class="u64">&nbsp;x64&nbsp;Ubuntu&#8482; Intel&#174;&nbsp;Q6600&#174; one&nbsp;core&nbsp;</th>';
    echo '</tr>';
@@ -96,7 +96,7 @@ $tests = array(
 foreach($tests as $t){
    printf('<tr>');
    foreach($sites as $s){
-      if ($s=='u32'){
+      if ($s=='u64q'){
          printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s">%s</a></td>', $s, $t[0], $t[2] );
       } else {
          printf('<td><a href="http://shootout.alioth.debian.org/%s/performance.php?test=%s" title="%s">%s</a></td>', $s, $t[0], $t[2], $t[1] );
