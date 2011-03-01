@@ -1,0 +1,104 @@
+<span class="hl slc"># The Computer Language Benchmarks Game</span>
+<span class="hl slc"># http://shootout.alioth.debian.org/</span>
+<span class="hl slc">#</span>
+<span class="hl slc"># modified by Ian Osgood</span>
+<span class="hl slc"># modified again by Heinrich Acker</span>
+<span class="hl slc"># modified by Justin Peel</span>
+<span class="hl slc"># modified by Mariano Chouza</span>
+<span class="hl slc"># modified by Ashley Hewson</span>
+
+<span class="hl kwa">import</span> sys<span class="hl sym">,</span> bisect<span class="hl sym">,</span> array
+
+alu <span class="hl sym">= (</span>
+   <span class="hl str">'GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG'</span>
+   <span class="hl str">'GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA'</span>
+   <span class="hl str">'CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT'</span>
+   <span class="hl str">'ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA'</span>
+   <span class="hl str">'GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG'</span>
+   <span class="hl str">'AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC'</span>
+   <span class="hl str">'AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA'</span><span class="hl sym">)</span>
+
+iub <span class="hl sym">=</span> <span class="hl kwb">zip</span><span class="hl sym">(</span><span class="hl str">'acgtBDHKMNRSVWY'</span><span class="hl sym">, [</span><span class="hl num">0.27</span><span class="hl sym">,</span> <span class="hl num">0.12</span><span class="hl sym">,</span> <span class="hl num">0.12</span><span class="hl sym">,</span> <span class="hl num">0.27</span><span class="hl sym">] + [</span><span class="hl num">0.02</span><span class="hl sym">]*</span><span class="hl num">11</span><span class="hl sym">)</span>
+
+homosapiens <span class="hl sym">= [</span>
+    <span class="hl sym">(</span><span class="hl str">'a'</span><span class="hl sym">,</span> <span class="hl num">0.3029549426680</span><span class="hl sym">),</span>
+    <span class="hl sym">(</span><span class="hl str">'c'</span><span class="hl sym">,</span> <span class="hl num">0.1979883004921</span><span class="hl sym">),</span>
+    <span class="hl sym">(</span><span class="hl str">'g'</span><span class="hl sym">,</span> <span class="hl num">0.1975473066391</span><span class="hl sym">),</span>
+    <span class="hl sym">(</span><span class="hl str">'t'</span><span class="hl sym">,</span> <span class="hl num">0.3015094502008</span><span class="hl sym">),</span>
+<span class="hl sym">]</span>
+
+IM <span class="hl sym">=</span> <span class="hl num">139968</span>
+INITIAL_STATE <span class="hl sym">=</span> <span class="hl num">42</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">makeCumulative</span><span class="hl sym">(</span>table<span class="hl sym">):</span>
+    P <span class="hl sym">= []</span>
+    C <span class="hl sym">= []</span>
+    prob <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">.</span>
+    <span class="hl kwa">for</span> char<span class="hl sym">,</span> p <span class="hl kwa">in</span> table<span class="hl sym">:</span>
+        prob <span class="hl sym">+=</span> p
+        P <span class="hl sym">+= [</span>prob<span class="hl sym">]</span>
+        C <span class="hl sym">+= [</span>char<span class="hl sym">]</span>
+    <span class="hl kwa">return</span> <span class="hl sym">(</span>P<span class="hl sym">,</span> C<span class="hl sym">)</span>
+
+randomGenState <span class="hl sym">=</span> INITIAL_STATE
+randomLUT <span class="hl sym">=</span> <span class="hl kwa">None</span>
+<span class="hl kwa">def</span> <span class="hl kwd">makeRandomLUT</span><span class="hl sym">():</span>
+    <span class="hl kwa">global</span> randomLUT
+    ia <span class="hl sym">=</span> <span class="hl num">3877</span><span class="hl sym">;</span> ic <span class="hl sym">=</span> <span class="hl num">29573</span>
+    randomLUT <span class="hl sym">=</span> array<span class="hl sym">.</span><span class="hl kwd">array</span><span class="hl sym">(</span><span class="hl str">&quot;i&quot;</span><span class="hl sym">, [(</span>s <span class="hl sym">*</span> ia <span class="hl sym">+</span> ic<span class="hl sym">) %</span> IM <span class="hl kwa">for</span> s <span class="hl kwa">in</span> <span class="hl kwb">xrange</span><span class="hl sym">(</span>IM<span class="hl sym">)])</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">makeLookupTable</span><span class="hl sym">(</span>table<span class="hl sym">):</span>
+    bb <span class="hl sym">=</span> bisect<span class="hl sym">.</span>bisect
+    probs<span class="hl sym">,</span> chars <span class="hl sym">=</span> <span class="hl kwd">makeCumulative</span><span class="hl sym">(</span>table<span class="hl sym">)</span>
+    imf <span class="hl sym">=</span> <span class="hl kwb">float</span><span class="hl sym">(</span>IM<span class="hl sym">)</span>
+    <span class="hl kwa">return</span> array<span class="hl sym">.</span><span class="hl kwd">array</span><span class="hl sym">(</span><span class="hl str">&quot;c&quot;</span><span class="hl sym">, [</span>chars<span class="hl sym">[</span><span class="hl kwd">bb</span><span class="hl sym">(</span>probs<span class="hl sym">,</span> i <span class="hl sym">/</span> imf<span class="hl sym">)]</span> <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">xrange</span><span class="hl sym">(</span>IM<span class="hl sym">)])</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">repeatFasta</span><span class="hl sym">(</span>src<span class="hl sym">,</span> n<span class="hl sym">):</span>
+    width <span class="hl sym">=</span> <span class="hl num">60</span>
+    r <span class="hl sym">=</span> <span class="hl kwb">len</span><span class="hl sym">(</span>src<span class="hl sym">)</span>
+    s <span class="hl sym">=</span> src <span class="hl sym">+</span> src <span class="hl sym">+</span> src<span class="hl sym">[:</span>n <span class="hl sym">%</span> r<span class="hl sym">]</span>
+    <span class="hl kwa">for</span> j <span class="hl kwa">in</span> <span class="hl kwb">xrange</span><span class="hl sym">(</span>n <span class="hl sym">//</span> width<span class="hl sym">):</span>
+        i <span class="hl sym">=</span> j<span class="hl sym">*</span>width <span class="hl sym">%</span> r
+        <span class="hl kwa">print</span> s<span class="hl sym">[</span>i<span class="hl sym">:</span>i<span class="hl sym">+</span>width<span class="hl sym">]</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">%</span> width<span class="hl sym">:</span>
+        <span class="hl kwa">print</span> s<span class="hl sym">[-(</span>n <span class="hl sym">%</span> width<span class="hl sym">):]</span>
+
+<span class="hl kwa">def</span> <span class="hl kwd">randomFasta</span><span class="hl sym">(</span>table<span class="hl sym">,</span> n<span class="hl sym">):</span>
+    <span class="hl kwa">global</span> randomLUT<span class="hl sym">,</span> randomGenState
+    width <span class="hl sym">=</span> <span class="hl num">60</span>
+    rgs <span class="hl sym">=</span> randomGenState
+    rlut <span class="hl sym">=</span> randomLUT
+    
+    lut <span class="hl sym">=</span> <span class="hl kwd">makeLookupTable</span><span class="hl sym">(</span>table<span class="hl sym">)</span>
+    line_buffer <span class="hl sym">= []</span>
+    la <span class="hl sym">=</span> line_buffer<span class="hl sym">.</span>append
+    
+    <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">xrange</span><span class="hl sym">(</span>n <span class="hl sym">//</span> width<span class="hl sym">):</span>
+        <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">xrange</span><span class="hl sym">(</span>width<span class="hl sym">):</span>
+            rgs <span class="hl sym">=</span> rlut<span class="hl sym">[</span>rgs<span class="hl sym">]</span>
+            <span class="hl kwd">la</span><span class="hl sym">(</span>lut<span class="hl sym">[</span>rgs<span class="hl sym">])</span>
+        <span class="hl kwa">print</span> <span class="hl str">''</span><span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">(</span>line_buffer<span class="hl sym">)</span>
+        line_buffer<span class="hl sym">[:] = []</span>
+    <span class="hl kwa">if</span> n <span class="hl sym">%</span> width<span class="hl sym">:</span>
+        <span class="hl kwa">for</span> i <span class="hl kwa">in</span> <span class="hl kwb">xrange</span><span class="hl sym">(</span>n <span class="hl sym">%</span> width<span class="hl sym">):</span>
+            rgs <span class="hl sym">=</span> rlut<span class="hl sym">[</span>rgs<span class="hl sym">]</span>
+            <span class="hl kwd">la</span><span class="hl sym">(</span>lut<span class="hl sym">[</span>rgs<span class="hl sym">])</span>
+        <span class="hl kwa">print</span> <span class="hl str">''</span><span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">(</span>line_buffer<span class="hl sym">)</span>
+    
+    randomGenState <span class="hl sym">=</span> rgs
+
+<span class="hl kwa">def</span> <span class="hl kwd">main</span><span class="hl sym">():</span>
+    n <span class="hl sym">=</span> <span class="hl kwb">int</span><span class="hl sym">(</span>sys<span class="hl sym">.</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">])</span>
+
+    <span class="hl kwd">makeRandomLUT</span><span class="hl sym">()</span>
+
+    <span class="hl kwa">print</span> <span class="hl str">'&gt;ONE Homo sapiens alu'</span>
+    <span class="hl kwd">repeatFasta</span><span class="hl sym">(</span>alu<span class="hl sym">,</span> n<span class="hl sym">*</span><span class="hl num">2</span><span class="hl sym">)</span>
+
+    <span class="hl kwa">print</span> <span class="hl str">'&gt;TWO IUB ambiguity codes'</span>
+    <span class="hl kwd">randomFasta</span><span class="hl sym">(</span>iub<span class="hl sym">,</span> n<span class="hl sym">*</span><span class="hl num">3</span><span class="hl sym">)</span>
+
+    <span class="hl kwa">print</span> <span class="hl str">'&gt;THREE Homo sapiens frequency'</span>
+    <span class="hl kwd">randomFasta</span><span class="hl sym">(</span>homosapiens<span class="hl sym">,</span> n<span class="hl sym">*</span><span class="hl num">5</span><span class="hl sym">)</span>
+    
+<span class="hl kwd">main</span><span class="hl sym">()</span>
