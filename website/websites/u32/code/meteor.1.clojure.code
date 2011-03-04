@@ -1,0 +1,701 @@
+<span class="hl slc">;; The Computer Language Benchmarks Game</span>
+<span class="hl slc">;; http://shootout.alioth.debian.org/</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;; contributed by Andy Fingerhut</span>
+<span class="hl slc">;; Based upon ideas from GCC version by Christian Vosteen (good comments!)</span>
+
+<span class="hl sym">(</span>ns meteor
+  <span class="hl sym">(:</span>gen<span class="hl sym">-</span>class<span class="hl sym">)</span>
+  <span class="hl sym">(:</span>require <span class="hl sym">[</span>clojure.string <span class="hl sym">:</span>as str<span class="hl sym">])</span>
+  <span class="hl sym">(:</span>require <span class="hl sym">[</span>clojure.pprint <span class="hl sym">:</span>as pprint<span class="hl sym">]))</span>
+
+<span class="hl sym">(</span>set<span class="hl sym">! *</span>warn<span class="hl sym">-</span>on<span class="hl sym">-</span>reflection<span class="hl sym">*</span> true<span class="hl sym">)</span>
+
+
+<span class="hl slc">;; The board is a 50 cell hexagonal pattern.  For    . . . . .</span>
+<span class="hl slc">;; maximum speed the board will be implemented as     . . . . .</span>
+<span class="hl slc">;; 50 bits, which will fit into 2 32-bit ints.       . . . . .</span>
+<span class="hl slc">;; I originally tried 1 64-bit long, but the bit-*    . . . . .</span>
+<span class="hl slc">;; operators in Clojure 1.2 are not as optimized     . . . . .</span>
+<span class="hl slc">;; as they will be in the next version of Clojure.    . . . . .</span>
+<span class="hl slc">;;                                                   . . . . .</span>
+<span class="hl slc">;;                                                    . . . . .</span>
+<span class="hl slc">;; I will represent 0's as empty cells and 1's       . . . . .</span>
+<span class="hl slc">;; as full cells.                                     . . . . .</span>
+
+<span class="hl slc">;; Here are the numerical indices for each position on the board, also</span>
+<span class="hl slc">;; later called board indices.</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;;  0   1   2   3   4</span>
+<span class="hl slc">;;    5   6   7   8   9</span>
+<span class="hl slc">;; 10  11  12  13  14</span>
+<span class="hl slc">;;   15  16  17  18  19</span>
+<span class="hl slc">;; 20  21  22  23  24</span>
+<span class="hl slc">;;   25  26  27  28  29</span>
+<span class="hl slc">;; 30  31  32  33  34</span>
+<span class="hl slc">;;   35  36  37  38  39</span>
+<span class="hl slc">;; 40  41  42  43  44</span>
+<span class="hl slc">;;   45  46  47  48  49</span>
+
+
+<span class="hl slc">;; Numerical encodings of directions:</span>
+<span class="hl slc">;; 0 East, 1 Southeast, 2 Southwest, 3 West, 4 Northwest, 5 Northeast</span>
+
+<span class="hl slc">;; Each puzzle piece is specified as a tree.  Every piece consists of</span>
+<span class="hl slc">;; 5 'nodes', each of which occupies one board index.  Each piece has</span>
+<span class="hl slc">;; a root node numbered 0, and every other node (numbered 1 through 4)</span>
+<span class="hl slc">;; specifies its parent node, and the direction to take to get from</span>
+<span class="hl slc">;; the parent to the child (in a default orientation).</span>
+
+<span class="hl slc">;; In the pictures below, pieces are shown graphically in their</span>
+<span class="hl slc">;; default orientation, with nodes numbered 0 through 4.</span>
+
+<span class="hl slc">;;   Piece 0   Piece 1   Piece 2   Piece 3   Piece 4</span>
+<span class="hl slc">;;                   </span>
+<span class="hl slc">;;  0 1 2 3    0   3 4   0 1 2     0 1 2     0   3</span>
+<span class="hl slc">;;         4    1 2           3       3       1 2</span>
+<span class="hl slc">;;                           4         4         4</span>
+<span class="hl slc">;;</span>
+<span class="hl sym">(</span>def piece<span class="hl sym">-</span>defs <span class="hl sym">[ [[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 0</span><span class="hl sym">] [</span><span class="hl num">3 1</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 0</span>
+<span class="hl slc">;;                 ^^^^^ node 1 is East (direction 0) of its parent node 0</span>
+<span class="hl slc">;;                       ^^^^^ node 2 is East of its parent node 1</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 1</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 5</span><span class="hl sym">] [</span><span class="hl num">3 0</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 1</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 1</span><span class="hl sym">] [</span><span class="hl num">3 2</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 2</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 2</span><span class="hl sym">] [</span><span class="hl num">3 1</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 3</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 1</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 5</span><span class="hl sym">] [</span><span class="hl num">2 1</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 4</span>
+<span class="hl slc">;;                                    ^ node 4's parent is 2, not 3</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;;   Piece 5   Piece 6   Piece 7   Piece 8   Piece 9</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;;    0 1 2     0 1       0 1     0 1        0 1 2 3</span>
+<span class="hl slc">;;       3 4       2 4       2       2 3 4        4</span>
+<span class="hl slc">;;                  3       4 3</span>
+<span class="hl slc">;;</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 2</span><span class="hl sym">] [</span><span class="hl num">3 0</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 5</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 1</span><span class="hl sym">] [</span><span class="hl num">2 1</span><span class="hl sym">] [</span><span class="hl num">3 5</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 6</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 1</span><span class="hl sym">] [</span><span class="hl num">2 1</span><span class="hl sym">] [</span><span class="hl num">3 3</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 7</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 1</span><span class="hl sym">] [</span><span class="hl num">2 0</span><span class="hl sym">] [</span><span class="hl num">3 0</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 8</span>
+                  <span class="hl sym">[[</span><span class="hl num">0 0</span><span class="hl sym">] [</span><span class="hl num">1 0</span><span class="hl sym">] [</span><span class="hl num">2 0</span><span class="hl sym">] [</span><span class="hl num">3 2</span><span class="hl sym">]]</span>  <span class="hl slc">; piece 9</span>
+                  <span class="hl sym">])</span>
+
+<span class="hl slc">;; Unlike Christian Vosteen's C program, I will only use 6 directions:</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;; E SE SW W NW NE</span>
+<span class="hl slc">;;</span>
+<span class="hl slc">;; I will use a different representation for piece shapes so that I</span>
+<span class="hl slc">;; won't need 12 directions for the reason that he introduced them</span>
+<span class="hl slc">;; (i.e. pieces whose shapes are like a tree, and cannot be</span>
+<span class="hl slc">;; represented only with a sequence of directions from one starting</span>
+<span class="hl slc">;; point).</span>
+
+
+<span class="hl slc">;; To minimize the amount of work done in the recursive solve function</span>
+<span class="hl slc">;; below, I'm going to precalculate all legal rotations of each piece</span>
+<span class="hl slc">;; at each position on the board. That's 10 pieces x 50 board</span>
+<span class="hl slc">;; positions x 6 rotations x 2 'flip positions' ('top side up' or 'top</span>
+<span class="hl slc">;; side down').  However, not all 6x2=12 orientations will fit on</span>
+<span class="hl slc">;; every cell.  Only keep the ones that do.  The pieces are going to</span>
+<span class="hl slc">;; be pairs of 32-bit ints just like the board so they can be</span>
+<span class="hl slc">;; bitwise-anded with the board to determine if they fit.  I'm also</span>
+<span class="hl slc">;; going to record the next possible open cell for each piece and</span>
+<span class="hl slc">;; location to reduce the burden on the solve function.</span>
+
+
+<span class="hl slc">;; Returns the direction rotated 60 degrees clockwise</span>
+<span class="hl sym">(</span>defn rotate <span class="hl sym">[</span>dir<span class="hl sym">]</span>
+  <span class="hl sym">(</span>case dir
+        <span class="hl num">0 1</span>
+        <span class="hl num">1 2</span>
+        <span class="hl num">2 3</span>
+        <span class="hl num">3 4</span>
+        <span class="hl num">4 5</span>
+        <span class="hl num">5 0</span><span class="hl sym">))</span>
+
+<span class="hl slc">;; Returns the direction flipped on the horizontal axis</span>
+<span class="hl sym">(</span>defn flip <span class="hl sym">[</span>dir<span class="hl sym">]</span>
+  <span class="hl sym">(</span>case dir
+        <span class="hl num">0 0</span>
+        <span class="hl num">1 5</span>
+        <span class="hl num">2 4</span>
+        <span class="hl num">3 3</span>
+        <span class="hl num">4 2</span>
+        <span class="hl num">5 1</span><span class="hl sym">))</span>
+
+
+<span class="hl slc">;; Returns the new cell index from the specified cell in the specified</span>
+<span class="hl slc">;; direction.  The index is only valid if the starting cell and</span>
+<span class="hl slc">;; direction have been checked by the out-of-bounds function first.</span>
+
+<span class="hl sym">(</span>defn shift <span class="hl sym">[</span>cell dir<span class="hl sym">]</span>
+  <span class="hl sym">(</span>case dir
+        <span class="hl num">0</span> <span class="hl sym">(</span>inc cell<span class="hl sym">)</span>
+        <span class="hl num">1</span> <span class="hl sym">(</span>if <span class="hl sym">(</span>odd? <span class="hl sym">(</span>quot cell <span class="hl num">5</span><span class="hl sym">))</span>
+              <span class="hl sym">(+</span> cell <span class="hl num">6</span><span class="hl sym">)</span>
+              <span class="hl sym">(+</span> cell <span class="hl num">5</span><span class="hl sym">))</span>
+        <span class="hl num">2</span> <span class="hl sym">(</span>if <span class="hl sym">(</span>odd? <span class="hl sym">(</span>quot cell <span class="hl num">5</span><span class="hl sym">))</span>
+              <span class="hl sym">(+</span> cell <span class="hl num">5</span><span class="hl sym">)</span>
+              <span class="hl sym">(+</span> cell <span class="hl num">4</span><span class="hl sym">))</span>
+        <span class="hl num">3</span>  <span class="hl sym">(</span>dec cell<span class="hl sym">)</span>
+        <span class="hl num">4</span> <span class="hl sym">(</span>if <span class="hl sym">(</span>odd? <span class="hl sym">(</span>quot cell <span class="hl num">5</span><span class="hl sym">))</span>
+              <span class="hl sym">(-</span> cell <span class="hl num">5</span><span class="hl sym">)</span>
+              <span class="hl sym">(-</span> cell <span class="hl num">6</span><span class="hl sym">))</span>
+        <span class="hl num">5</span> <span class="hl sym">(</span>if <span class="hl sym">(</span>odd? <span class="hl sym">(</span>quot cell <span class="hl num">5</span><span class="hl sym">))</span>
+              <span class="hl sym">(-</span> cell <span class="hl num">4</span><span class="hl sym">)</span>
+              <span class="hl sym">(-</span> cell <span class="hl num">5</span><span class="hl sym">))))</span>
+
+
+<span class="hl sym">(</span>defn make<span class="hl sym">-</span>shift<span class="hl sym">-</span>table <span class="hl sym">[]</span>
+  <span class="hl sym">(</span>object<span class="hl sym">-</span>array <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>cell<span class="hl sym">-</span>idx<span class="hl sym">]</span>
+                       <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>dir<span class="hl sym">] (</span>shift cell<span class="hl sym">-</span>idx dir<span class="hl sym">))</span>
+                                       <span class="hl sym">(</span>range <span class="hl num">6</span><span class="hl sym">))))</span>
+                     <span class="hl sym">(</span>range <span class="hl num">50</span><span class="hl sym">))))</span>
+
+
+<span class="hl slc">;; Returns wether the specified cell and direction will land outside</span>
+<span class="hl slc">;; of the board.  Used to determine if a piece is at a legal board</span>
+<span class="hl slc">;; location or not.</span>
+
+<span class="hl sym">(</span>defn out<span class="hl sym">-</span>of<span class="hl sym">-</span>bounds <span class="hl sym">[</span>cell dir<span class="hl sym">]</span>
+  <span class="hl sym">(</span>case dir
+        <span class="hl num">0</span> <span class="hl sym">(== (</span>rem cell <span class="hl num">5</span><span class="hl sym">)</span> <span class="hl num">4</span><span class="hl sym">)</span>       <span class="hl slc">; cell is on the right side</span>
+        <span class="hl num">1</span> <span class="hl sym">(</span>or <span class="hl sym">(== (</span>rem cell <span class="hl num">10</span><span class="hl sym">)</span> <span class="hl num">9</span><span class="hl sym">)</span>  <span class="hl slc">; cell is on &quot;extreme&quot; right side</span>
+              <span class="hl sym">(&gt;=</span> cell <span class="hl num">45</span><span class="hl sym">))</span>         <span class="hl slc">; or the bottom row</span>
+        <span class="hl num">2</span> <span class="hl sym">(</span>or <span class="hl sym">(== (</span>rem cell <span class="hl num">10</span><span class="hl sym">)</span> <span class="hl num">0</span><span class="hl sym">)</span>  <span class="hl slc">; cell is on &quot;extreme&quot; left side</span>
+              <span class="hl sym">(&gt;=</span> cell <span class="hl num">45</span><span class="hl sym">))</span>         <span class="hl slc">; or the bottom row</span>
+        <span class="hl num">3</span> <span class="hl sym">(== (</span>rem cell <span class="hl num">5</span><span class="hl sym">)</span> <span class="hl num">0</span><span class="hl sym">)</span>       <span class="hl slc">; cell is on the left side</span>
+        <span class="hl num">4</span> <span class="hl sym">(</span>or <span class="hl sym">(== (</span>rem cell <span class="hl num">10</span><span class="hl sym">)</span> <span class="hl num">0</span><span class="hl sym">)</span>  <span class="hl slc">; cell is on &quot;extreme&quot; left side</span>
+              <span class="hl sym">(&lt;</span> cell <span class="hl num">5</span><span class="hl sym">))</span>           <span class="hl slc">; or the top row</span>
+        <span class="hl num">5</span> <span class="hl sym">(</span>or <span class="hl sym">(== (</span>rem cell <span class="hl num">10</span><span class="hl sym">)</span> <span class="hl num">9</span><span class="hl sym">)</span>  <span class="hl slc">; cell is on &quot;extreme&quot; right side</span>
+              <span class="hl sym">(&lt;</span> cell <span class="hl num">5</span><span class="hl sym">))))</span>         <span class="hl slc">; or the top row</span>
+
+
+<span class="hl sym">(</span>defn make<span class="hl sym">-</span>oob<span class="hl sym">-</span>table <span class="hl sym">[]</span>
+  <span class="hl sym">(</span>object<span class="hl sym">-</span>array <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>cell<span class="hl sym">-</span>idx<span class="hl sym">]</span>
+                       <span class="hl sym">(</span>boolean<span class="hl sym">-</span>array <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>dir<span class="hl sym">] (</span>out<span class="hl sym">-</span>of<span class="hl sym">-</span>bounds cell<span class="hl sym">-</span>idx dir<span class="hl sym">))</span>
+                                           <span class="hl sym">(</span>range <span class="hl num">6</span><span class="hl sym">))))</span>
+                     <span class="hl sym">(</span>range <span class="hl num">50</span><span class="hl sym">))))</span>
+
+
+<span class="hl slc">;; Return a piece that is the the same as the one given as argument,</span>
+<span class="hl slc">;; except rotated 60 degrees clockwise.</span>
+
+<span class="hl sym">(</span>defn rotate<span class="hl sym">-</span>piece <span class="hl sym">[</span>piece<span class="hl sym">]</span>
+  <span class="hl sym">(</span>vec <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[[</span>parent dir<span class="hl sym">]] [</span>parent <span class="hl sym">(</span>rotate dir<span class="hl sym">)])</span> piece<span class="hl sym">)))</span>
+
+
+<span class="hl slc">;; Return a piece that is the the same as the one given as argument,</span>
+<span class="hl slc">;; except flipped along the horizontal axis.</span>
+
+<span class="hl sym">(</span>defn flip<span class="hl sym">-</span>piece <span class="hl sym">[</span>piece<span class="hl sym">]</span>
+  <span class="hl sym">(</span>vec <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[[</span>parent dir<span class="hl sym">]] [</span>parent <span class="hl sym">(</span>flip dir<span class="hl sym">)])</span> piece<span class="hl sym">)))</span>
+
+
+<span class="hl slc">;; Convenience function to calculate and return a vector of all of the</span>
+<span class="hl slc">;; board indices that a piece's nodes will be in, if that piece's root</span>
+<span class="hl slc">;; node is at root-index.</span>
+
+<span class="hl slc">;; Note that no check is made to see whether the piece actually fits</span>
+<span class="hl slc">;; on the board or not, so some of the returned index values may be</span>
+<span class="hl slc">;; nonsense.  See cells-fit-on-board for a way to check this.</span>
+
+<span class="hl sym">(</span>defn calc<span class="hl sym">-</span>cell<span class="hl sym">-</span>indices <span class="hl sym">[</span>piece root<span class="hl sym">-</span>index ^objects shift<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>loop <span class="hl sym">[</span>indices <span class="hl sym">(</span>transient <span class="hl sym">[</span>root<span class="hl sym">-</span>index<span class="hl sym">])</span>
+         node <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+    <span class="hl sym">(</span>if <span class="hl sym">(==</span> node <span class="hl num">4</span><span class="hl sym">)</span>
+      <span class="hl sym">(</span>persistent<span class="hl sym">!</span> indices<span class="hl sym">)</span>
+      <span class="hl slc">;; else</span>
+      <span class="hl slc">;; Note that information about node n of a piece is in (piece</span>
+      <span class="hl slc">;; (dec n)) We're intentionally iterating the value 'node' 0</span>
+      <span class="hl slc">;; through 3 rather than 1 through 4 here just to avoid</span>
+      <span class="hl slc">;; calculating (dec node) here.</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>pair <span class="hl sym">(</span>piece node<span class="hl sym">)</span>
+            parent <span class="hl sym">(</span>int <span class="hl sym">(</span>pair <span class="hl num">0</span><span class="hl sym">))</span>
+            dir <span class="hl sym">(</span>int <span class="hl sym">(</span>pair <span class="hl num">1</span><span class="hl sym">))</span>
+            <span class="hl slc">;[parent dir] (piece node)</span>
+            parent<span class="hl sym">-</span>loc <span class="hl sym">(</span>int <span class="hl sym">(</span>indices parent<span class="hl sym">))]</span>
+        <span class="hl sym">(</span>recur <span class="hl sym">(</span>conj<span class="hl sym">!</span> indices
+                      <span class="hl sym">(</span>if <span class="hl sym">(</span>and <span class="hl sym">(&lt;</span> parent<span class="hl sym">-</span>loc <span class="hl num">50</span><span class="hl sym">) (</span>not <span class="hl sym">(</span>neg? parent<span class="hl sym">-</span>loc<span class="hl sym">)))</span>
+                        <span class="hl sym">(</span>let <span class="hl sym">[</span>^ints shift<span class="hl sym">-</span>table<span class="hl sym">-</span>for<span class="hl sym">-</span>parent<span class="hl sym">-</span>loc
+                              <span class="hl sym">(</span>aget shift<span class="hl sym">-</span>table parent<span class="hl sym">-</span>loc<span class="hl sym">)]</span>
+                          <span class="hl sym">(</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>for<span class="hl sym">-</span>parent<span class="hl sym">-</span>loc dir<span class="hl sym">))</span>
+                        <span class="hl num">0</span><span class="hl sym">))</span>  <span class="hl slc">;; dummy value</span>
+               <span class="hl sym">(</span>inc node<span class="hl sym">))))))</span>
+
+
+<span class="hl slc">;; Convenience function to calculate if a piece fits on the board.</span>
+<span class="hl slc">;; Node 0 of the piece, at board index (indices 0), is assumed to be</span>
+<span class="hl slc">;; on the board, but the other nodes may be off.</span>
+
+<span class="hl sym">(</span>defmacro node<span class="hl sym">-</span>fits <span class="hl sym">[</span>node<span class="hl sym">-</span>info indices ^objects oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>let <span class="hl sym">[</span>pair# ~node<span class="hl sym">-</span>info
+         parent<span class="hl sym">-</span>node<span class="hl sym">-</span>num# <span class="hl sym">(</span>int <span class="hl sym">(</span>pair# <span class="hl num">0</span><span class="hl sym">))</span>
+         dir# <span class="hl sym">(</span>int <span class="hl sym">(</span>pair# <span class="hl num">1</span><span class="hl sym">))</span>
+         parent<span class="hl sym">-</span>idx# <span class="hl sym">(</span>int <span class="hl sym">(</span>~indices parent<span class="hl sym">-</span>node<span class="hl sym">-</span>num#<span class="hl sym">))</span>
+         <span class="hl slc">;^booleans oob-for-parent-idx# (aget ~oob-table parent-idx#)]</span>
+         ^<span class="hl str">&quot;[Z&quot;</span> oob<span class="hl sym">-</span>for<span class="hl sym">-</span>parent<span class="hl sym">-</span>idx# <span class="hl sym">(</span>aget ~oob<span class="hl sym">-</span>table parent<span class="hl sym">-</span>idx#<span class="hl sym">)]</span>
+     <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>for<span class="hl sym">-</span>parent<span class="hl sym">-</span>idx# dir#<span class="hl sym">))))</span>
+
+
+<span class="hl sym">(</span>defn cells<span class="hl sym">-</span>fit<span class="hl sym">-</span>on<span class="hl sym">-</span>board <span class="hl sym">[</span>piece indices ^objects oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>and
+   <span class="hl sym">(</span>node<span class="hl sym">-</span>fits <span class="hl sym">(</span>piece <span class="hl num">0</span><span class="hl sym">)</span> indices oob<span class="hl sym">-</span>table<span class="hl sym">)</span>  <span class="hl slc">;; check node 1 of the piece</span>
+   <span class="hl sym">(</span>node<span class="hl sym">-</span>fits <span class="hl sym">(</span>piece <span class="hl num">1</span><span class="hl sym">)</span> indices oob<span class="hl sym">-</span>table<span class="hl sym">)</span>  <span class="hl slc">;; node 2, etc.</span>
+   <span class="hl sym">(</span>node<span class="hl sym">-</span>fits <span class="hl sym">(</span>piece <span class="hl num">2</span><span class="hl sym">)</span> indices oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+   <span class="hl sym">(</span>node<span class="hl sym">-</span>fits <span class="hl sym">(</span>piece <span class="hl num">3</span><span class="hl sym">)</span> indices oob<span class="hl sym">-</span>table<span class="hl sym">)))</span>
+
+
+<span class="hl slc">;; Fill the entire board going cell by cell, starting from index i.</span>
+<span class="hl slc">;; If any cells are &quot;trapped&quot; they will be left alone.</span>
+
+<span class="hl sym">(</span>defn fill<span class="hl sym">-</span>contiguous<span class="hl sym">-</span>space<span class="hl sym">! [</span>^ints board i
+                              ^objects shift<span class="hl sym">-</span>table ^objects oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>letfn
+      <span class="hl sym">[(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! [</span>i<span class="hl sym">]</span>
+         <span class="hl sym">(</span>let <span class="hl sym">[</span>i <span class="hl sym">(</span>int i<span class="hl sym">)</span>
+               ^booleans oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table i<span class="hl sym">)</span>
+               ^ints shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>aget shift<span class="hl sym">-</span>table i<span class="hl sym">)]</span>
+           <span class="hl sym">(</span>when <span class="hl sym">(</span>zero? <span class="hl sym">(</span>aget board i<span class="hl sym">))</span>
+             <span class="hl sym">(</span>aset board i <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">))</span>
+             <span class="hl sym">(</span>if <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)))</span>
+               <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! (</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">))))</span>
+             <span class="hl sym">(</span>if <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+               <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! (</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">))))</span>
+             <span class="hl sym">(</span>if <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">)))</span>
+               <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! (</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">))))</span>
+             <span class="hl sym">(</span>if <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">3</span><span class="hl sym">)))</span>
+               <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! (</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">3</span><span class="hl sym">))))</span>
+             <span class="hl sym">(</span>if <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">4</span><span class="hl sym">)))</span>
+               <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! (</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">4</span><span class="hl sym">))))</span>
+             <span class="hl sym">(</span>if <span class="hl sym">(</span>not <span class="hl sym">(</span>aget oob<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">5</span><span class="hl sym">)))</span>
+               <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">! (</span>aget shift<span class="hl sym">-</span>table<span class="hl sym">-</span>row <span class="hl sym">(</span>int <span class="hl num">5</span><span class="hl sym">)))))))]</span>
+    <span class="hl sym">(</span>fill<span class="hl sym">-</span>helper<span class="hl sym">!</span> i<span class="hl sym">)))</span>
+
+
+<span class="hl sym">(</span>defn empty<span class="hl sym">-</span>cells <span class="hl sym">[</span>^ints board<span class="hl sym">-</span>arr<span class="hl sym">]</span>
+  <span class="hl sym">(-</span> <span class="hl num">50</span>
+     <span class="hl sym">(</span>let <span class="hl sym">[</span>^ints a board<span class="hl sym">-</span>arr<span class="hl sym">]</span>
+       <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int <span class="hl num">49</span><span class="hl sym">)</span>
+              ret <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+         <span class="hl sym">(</span>if <span class="hl sym">(</span>neg? i<span class="hl sym">)</span>
+           ret
+           <span class="hl sym">(</span>recur <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>dec i<span class="hl sym">) (</span>unchecked<span class="hl sym">-</span>add ret <span class="hl sym">(</span>aget a i<span class="hl sym">))))))))</span>
+
+
+<span class="hl slc">;; Warning: Modifies its argument board-arr</span>
+
+<span class="hl sym">(</span>defn board<span class="hl sym">-</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">! [</span>^ints board<span class="hl sym">-</span>arr
+                                 ^objects shift<span class="hl sym">-</span>table ^objects oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>loop <span class="hl sym">[</span>sizes <span class="hl sym">(</span>transient <span class="hl sym">[])</span>
+         num<span class="hl sym">-</span>empty <span class="hl sym">(</span>empty<span class="hl sym">-</span>cells board<span class="hl sym">-</span>arr<span class="hl sym">)</span>
+         last<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell <span class="hl num">50</span><span class="hl sym">]</span>
+    <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? num<span class="hl sym">-</span>empty<span class="hl sym">)</span>
+      <span class="hl sym">(</span>persistent<span class="hl sym">!</span> sizes<span class="hl sym">)</span>
+      <span class="hl slc">;; else</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>next<span class="hl sym">-</span>last<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int <span class="hl sym">(</span>dec last<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell<span class="hl sym">))]</span>
+                                   <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? <span class="hl sym">(</span>aget board<span class="hl sym">-</span>arr i<span class="hl sym">))</span>
+                                     i
+                                     <span class="hl sym">(</span>recur <span class="hl sym">(</span>dec i<span class="hl sym">))))]</span>
+        <span class="hl sym">(</span>fill<span class="hl sym">-</span>contiguous<span class="hl sym">-</span>space<span class="hl sym">!</span> board<span class="hl sym">-</span>arr next<span class="hl sym">-</span>last<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell shift<span class="hl sym">-</span>table
+                                oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+        <span class="hl sym">(</span>let <span class="hl sym">[</span>next<span class="hl sym">-</span>num<span class="hl sym">-</span>empty <span class="hl sym">(</span>empty<span class="hl sym">-</span>cells board<span class="hl sym">-</span>arr<span class="hl sym">)]</span>
+          <span class="hl sym">(</span>recur <span class="hl sym">(</span>conj<span class="hl sym">!</span> sizes <span class="hl sym">(-</span> num<span class="hl sym">-</span>empty next<span class="hl sym">-</span>num<span class="hl sym">-</span>empty<span class="hl sym">))</span>
+                 next<span class="hl sym">-</span>num<span class="hl sym">-</span>empty
+                 next<span class="hl sym">-</span>last<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell<span class="hl sym">))))))</span>
+
+
+<span class="hl slc">;; Generate the pair of 32-bit ints that will later be anded with the</span>
+<span class="hl slc">;; board to determine if it fits.</span>
+
+<span class="hl sym">(</span>defn bitmask<span class="hl sym">-</span>from<span class="hl sym">-</span>indices <span class="hl sym">[</span>indices<span class="hl sym">]</span>
+  <span class="hl sym">[(</span>reduce bit<span class="hl sym">-</span>or <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>i<span class="hl sym">] (</span>if <span class="hl sym">(&lt;</span> i <span class="hl num">25</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl num">1</span> i<span class="hl sym">)</span> <span class="hl num">0</span><span class="hl sym">))</span>
+                       indices<span class="hl sym">))</span>
+   <span class="hl sym">(</span>reduce bit<span class="hl sym">-</span>or <span class="hl sym">(</span>map <span class="hl sym">(</span>fn <span class="hl sym">[</span>i<span class="hl sym">] (</span>if <span class="hl sym">(&lt;</span> i <span class="hl num">25</span><span class="hl sym">)</span> <span class="hl num">0</span> <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl num">1</span> <span class="hl sym">(-</span> i <span class="hl num">25</span><span class="hl sym">))))</span>
+                       indices<span class="hl sym">))])</span>
+
+
+<span class="hl sym">(</span>defn print<span class="hl sym">-</span>board <span class="hl sym">[</span>^ints soln<span class="hl sym">]</span>
+  <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">50</span><span class="hl sym">]</span>
+    <span class="hl sym">(</span>when <span class="hl sym">(</span>zero? <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>remainder i <span class="hl num">5</span><span class="hl sym">))</span>
+      <span class="hl sym">(</span>println <span class="hl str">&quot;&quot;</span><span class="hl sym">))</span>
+    <span class="hl sym">(</span>when <span class="hl sym">(== (</span>unchecked<span class="hl sym">-</span>remainder i <span class="hl num">10</span><span class="hl sym">) (</span>int <span class="hl num">5</span><span class="hl sym">))</span>
+      <span class="hl sym">(</span>print <span class="hl str">&quot; &quot;</span><span class="hl sym">))</span>
+    <span class="hl sym">(</span>printf <span class="hl str">&quot;%d &quot;</span> <span class="hl sym">(</span>aget soln i<span class="hl sym">))))</span>
+
+
+<span class="hl slc">;; Solutions are encoded as vectors of 50 integers, one for each board</span>
+<span class="hl slc">;; index, where each integer is in the range [0,9], representing one</span>
+<span class="hl slc">;; of the 5 parts of a piece that is in that board index.</span>
+
+<span class="hl sym">(</span>defn encode<span class="hl sym">-</span>solution <span class="hl sym">[</span>^ints piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr ^ints mask<span class="hl sym">-</span>arr0 ^ints mask<span class="hl sym">-</span>arr1<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>soln <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl num">50</span> <span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)]</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">25</span><span class="hl sym">]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>idx<span class="hl sym">-</span>mask <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)</span> i<span class="hl sym">))]</span>
+        <span class="hl sym">(</span>loop <span class="hl sym">[</span>p <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+          <span class="hl sym">(</span>if <span class="hl sym">(&lt;</span> p <span class="hl sym">(</span>int <span class="hl num">10</span><span class="hl sym">))</span>
+            <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>aget mask<span class="hl sym">-</span>arr0 p<span class="hl sym">)</span> idx<span class="hl sym">-</span>mask<span class="hl sym">))</span>
+              <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc p<span class="hl sym">))</span>
+              <span class="hl sym">(</span>aset soln i <span class="hl sym">(</span>aget piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr p<span class="hl sym">)))))</span>
+        <span class="hl sym">(</span>loop <span class="hl sym">[</span>p <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+          <span class="hl sym">(</span>if <span class="hl sym">(&lt;</span> p <span class="hl sym">(</span>int <span class="hl num">10</span><span class="hl sym">))</span>
+            <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>aget mask<span class="hl sym">-</span>arr1 p<span class="hl sym">)</span> idx<span class="hl sym">-</span>mask<span class="hl sym">))</span>
+              <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc p<span class="hl sym">))</span>
+              <span class="hl sym">(</span>aset soln <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>add <span class="hl sym">(</span>int <span class="hl num">25</span><span class="hl sym">)</span> i<span class="hl sym">) (</span>aget piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr p<span class="hl sym">)))))))</span>
+    soln<span class="hl sym">))</span>
+
+
+<span class="hl slc">;; To thin the number of pieces, I calculate if any of them trap any</span>
+<span class="hl slc">;; empty cells at the edges, such that the number of trapped empty</span>
+<span class="hl slc">;; cells is not a multiple of 5.  All pieces have 5 cells, so any such</span>
+<span class="hl slc">;; trapped regions cannot possibly be filled with any pieces.</span>
+
+<span class="hl sym">(</span>defn one<span class="hl sym">-</span>piece<span class="hl sym">-</span>has<span class="hl sym">-</span>island <span class="hl sym">[</span>indices shift<span class="hl sym">-</span>table oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>temp<span class="hl sym">-</span>board <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl num">50</span><span class="hl sym">)]</span>
+    <span class="hl slc">;; Mark the piece board positions as filled</span>
+    <span class="hl sym">(</span>doseq <span class="hl sym">[</span>idx indices<span class="hl sym">]</span>
+      <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>board idx <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes <span class="hl sym">(</span>board<span class="hl sym">-</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">!</span> temp<span class="hl sym">-</span>board shift<span class="hl sym">-</span>table
+                                                        oob<span class="hl sym">-</span>table<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>not <span class="hl sym">(</span>every? #<span class="hl sym">(</span>zero? <span class="hl sym">(</span>rem % <span class="hl num">5</span><span class="hl sym">))</span> empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">)))))</span>
+
+
+<span class="hl slc">;; Calculate the lowest possible open cell if the piece is placed on</span>
+<span class="hl slc">;; the board.  Used to later reduce the amount of time searching for</span>
+<span class="hl slc">;; open cells in the solve function.</span>
+
+<span class="hl sym">(</span>defn first<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell<span class="hl sym">-</span>after <span class="hl sym">[</span>minimum indices<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>idx<span class="hl sym">-</span>set <span class="hl sym">(</span>set indices<span class="hl sym">)]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int minimum<span class="hl sym">)]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(</span>idx<span class="hl sym">-</span>set i<span class="hl sym">)</span>
+        <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc i<span class="hl sym">))</span>
+        i<span class="hl sym">))))</span>
+
+
+<span class="hl slc">;; We calculate only half of piece 3's rotations.  This is because any</span>
+<span class="hl slc">;; solution found has an identical solution rotated 180 degrees.  Thus</span>
+<span class="hl slc">;; we can reduce the number of attempted pieces in the solve algorithm</span>
+<span class="hl slc">;; by not including the 180- degree-rotated pieces of ONE of the</span>
+<span class="hl slc">;; pieces.  I chose piece 3 because it gave me the best time ;)</span>
+
+<span class="hl sym">(</span>def <span class="hl sym">*</span>piece<span class="hl sym">-</span>num<span class="hl sym">-</span>to<span class="hl sym">-</span>do<span class="hl sym">-</span>only<span class="hl sym">-</span><span class="hl num">3</span><span class="hl sym">-</span>rotations<span class="hl sym">*</span> <span class="hl num">3</span><span class="hl sym">)</span>
+
+<span class="hl slc">;; Calculate every legal rotation for each piece at each board</span>
+<span class="hl slc">;; location.</span>
+
+<span class="hl sym">(</span>defn calc<span class="hl sym">-</span>pieces <span class="hl sym">[</span>pieces shift<span class="hl sym">-</span>table oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>npieces <span class="hl sym">(</span>int <span class="hl sym">(</span>count pieces<span class="hl sym">))</span>
+        ^objects tbl <span class="hl sym">(</span>object<span class="hl sym">-</span>array npieces<span class="hl sym">)]</span> <span class="hl slc">; first index is piece-num</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>piece<span class="hl sym">-</span>num npieces<span class="hl sym">]</span>
+      <span class="hl sym">(</span>aset tbl piece<span class="hl sym">-</span>num <span class="hl sym">(</span>object<span class="hl sym">-</span>array <span class="hl num">50</span><span class="hl sym">))</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>^objects piece<span class="hl sym">-</span>arr <span class="hl sym">(</span>aget tbl piece<span class="hl sym">-</span>num<span class="hl sym">)]</span>
+        <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>cell <span class="hl num">50</span><span class="hl sym">]</span>  <span class="hl slc">; second index is board index</span>
+          <span class="hl slc">;; Start with transient vectors.  Later we will change them to</span>
+          <span class="hl slc">;; Java arrays after we know how long to make them.</span>
+          <span class="hl sym">(</span>aset piece<span class="hl sym">-</span>arr cell <span class="hl sym">(</span>transient <span class="hl sym">[])))))</span>
+    <span class="hl slc">;; Find all possible good piece placements</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>p npieces<span class="hl sym">]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>unrotated<span class="hl sym">-</span>piece <span class="hl sym">(</span>pieces p<span class="hl sym">)</span>
+            num<span class="hl sym">-</span>rots <span class="hl sym">(</span>if <span class="hl sym">(=</span> p <span class="hl sym">*</span>piece<span class="hl sym">-</span>num<span class="hl sym">-</span>to<span class="hl sym">-</span>do<span class="hl sym">-</span>only<span class="hl sym">-</span><span class="hl num">3</span><span class="hl sym">-</span>rotations<span class="hl sym">*)</span> <span class="hl num">3 6</span><span class="hl sym">)]</span>
+        <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>flip <span class="hl num">2</span><span class="hl sym">]</span>
+          <span class="hl sym">(</span>loop <span class="hl sym">[</span>rot <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)</span>
+                 piece <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? flip<span class="hl sym">)</span>
+                         unrotated<span class="hl sym">-</span>piece
+                         <span class="hl sym">(</span>flip<span class="hl sym">-</span>piece unrotated<span class="hl sym">-</span>piece<span class="hl sym">))]</span>
+            <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> rot num<span class="hl sym">-</span>rots<span class="hl sym">)</span>
+              <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>cell <span class="hl num">50</span><span class="hl sym">]</span>
+                <span class="hl sym">(</span>let <span class="hl sym">[</span>indices <span class="hl sym">(</span>calc<span class="hl sym">-</span>cell<span class="hl sym">-</span>indices piece cell shift<span class="hl sym">-</span>table<span class="hl sym">)]</span>
+                  <span class="hl sym">(</span>when <span class="hl sym">(</span>and <span class="hl sym">(</span>cells<span class="hl sym">-</span>fit<span class="hl sym">-</span>on<span class="hl sym">-</span>board piece indices oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>not <span class="hl sym">(</span>one<span class="hl sym">-</span>piece<span class="hl sym">-</span>has<span class="hl sym">-</span>island indices shift<span class="hl sym">-</span>table
+                                                        oob<span class="hl sym">-</span>table<span class="hl sym">)))</span>
+                    <span class="hl sym">(</span>let <span class="hl sym">[</span>minimum <span class="hl sym">(</span>apply min indices<span class="hl sym">)</span>
+                          <span class="hl sym">[</span>piece<span class="hl sym">-</span>mask0 piece<span class="hl sym">-</span>mask1<span class="hl sym">] (</span>bitmask<span class="hl sym">-</span>from<span class="hl sym">-</span>indices
+                                                     indices<span class="hl sym">)</span>
+                          next<span class="hl sym">-</span>index <span class="hl sym">(</span>int <span class="hl sym">(</span>first<span class="hl sym">-</span>empty<span class="hl sym">-</span>cell<span class="hl sym">-</span>after minimum
+                                                                  indices<span class="hl sym">))]</span>
+
+                      <span class="hl sym">(</span>let <span class="hl sym">[</span>^ints good<span class="hl sym">-</span>placement <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl num">3</span><span class="hl sym">)</span>
+                            ^objects piece<span class="hl sym">-</span>arr <span class="hl sym">(</span>aget tbl p<span class="hl sym">)]</span>
+                        <span class="hl sym">(</span>aset good<span class="hl sym">-</span>placement <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">) (</span>int piece<span class="hl sym">-</span>mask0<span class="hl sym">))</span>
+                        <span class="hl sym">(</span>aset good<span class="hl sym">-</span>placement <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">) (</span>int piece<span class="hl sym">-</span>mask1<span class="hl sym">))</span>
+                        <span class="hl sym">(</span>aset good<span class="hl sym">-</span>placement <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">)</span> next<span class="hl sym">-</span>index<span class="hl sym">)</span>
+                        <span class="hl slc">;; Put it in the table</span>
+                        <span class="hl sym">(</span>aset piece<span class="hl sym">-</span>arr minimum
+                              <span class="hl sym">(</span>conj<span class="hl sym">! (</span>aget piece<span class="hl sym">-</span>arr minimum<span class="hl sym">)</span> good<span class="hl sym">-</span>placement<span class="hl sym">))</span>
+                        <span class="hl sym">)))))</span>
+              <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc rot<span class="hl sym">) (</span>rotate<span class="hl sym">-</span>piece piece<span class="hl sym">)))))))</span>
+    <span class="hl slc">;; Make all transient vectors into Java object arrays</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>piece<span class="hl sym">-</span>num npieces<span class="hl sym">]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>^objects piece<span class="hl sym">-</span>arr <span class="hl sym">(</span>aget tbl piece<span class="hl sym">-</span>num<span class="hl sym">)]</span>
+        <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>cell <span class="hl num">50</span><span class="hl sym">]</span>
+          <span class="hl sym">(</span>let <span class="hl sym">[</span>cur<span class="hl sym">-</span>vec <span class="hl sym">(</span>persistent<span class="hl sym">! (</span>aget piece<span class="hl sym">-</span>arr cell<span class="hl sym">))]</span>
+            <span class="hl sym">(</span>aset piece<span class="hl sym">-</span>arr cell <span class="hl sym">(</span>object<span class="hl sym">-</span>array cur<span class="hl sym">-</span>vec<span class="hl sym">))))))</span>
+    tbl<span class="hl sym">))</span>
+
+
+
+<span class="hl slc">;; first-empty-index-aux assumptions: idx is in the range [0,24].</span>
+<span class="hl slc">;; half-board is an integer that has bits 25 and higher equal to 0, so</span>
+<span class="hl slc">;; the loop is guaranteed to terminate, and the return value will be</span>
+<span class="hl slc">;; in the range [0,25].</span>
+
+<span class="hl sym">(</span>defmacro first<span class="hl sym">-</span>empty<span class="hl sym">-</span>index<span class="hl sym">-</span>aux <span class="hl sym">[</span>idx half<span class="hl sym">-</span>board<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>loop <span class="hl sym">[</span>i# <span class="hl sym">(</span>int ~idx<span class="hl sym">)</span>
+          hb# <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~half<span class="hl sym">-</span>board ~idx<span class="hl sym">))]</span>
+     <span class="hl sym">(</span>if <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and hb# <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+       i#
+       <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc i#<span class="hl sym">) (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right hb# <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">))))))</span>
+
+
+<span class="hl sym">(</span>defmacro first<span class="hl sym">-</span>empty<span class="hl sym">-</span>index <span class="hl sym">[</span>idx board0 board1<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>if <span class="hl sym">(&lt;</span> ~idx <span class="hl sym">(</span>int <span class="hl num">25</span><span class="hl sym">))</span>
+     <span class="hl sym">(</span>let <span class="hl sym">[</span>i# <span class="hl sym">(</span>int <span class="hl sym">(</span>first<span class="hl sym">-</span>empty<span class="hl sym">-</span>index<span class="hl sym">-</span>aux ~idx ~board0<span class="hl sym">))]</span>
+       <span class="hl sym">(</span>if <span class="hl sym">(==</span> i# <span class="hl sym">(</span>int <span class="hl num">25</span><span class="hl sym">))</span>
+         <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>add <span class="hl sym">(</span>int <span class="hl num">25</span><span class="hl sym">) (</span>int <span class="hl sym">(</span>first<span class="hl sym">-</span>empty<span class="hl sym">-</span>index<span class="hl sym">-</span>aux <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)</span> ~board1<span class="hl sym">)))</span>
+         i#<span class="hl sym">))</span>
+     <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>add <span class="hl sym">(</span>int <span class="hl num">25</span><span class="hl sym">)</span>
+                    <span class="hl sym">(</span>int <span class="hl sym">(</span>first<span class="hl sym">-</span>empty<span class="hl sym">-</span>index<span class="hl sym">-</span>aux <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>subtract ~idx
+                                                                    <span class="hl sym">(</span>int <span class="hl num">25</span><span class="hl sym">))</span>
+                                                ~board1<span class="hl sym">)))))</span>
+
+
+<span class="hl slc">;; Note: board-empty-region-sizes! runs faster if there are fewer</span>
+<span class="hl slc">;; empty cells to fill.  So fill as much of the board as we can before</span>
+<span class="hl slc">;; putting in the 3 partially filled rows.  There must be at least one</span>
+<span class="hl slc">;; completely empty row at the bottom in order to correctly determine</span>
+<span class="hl slc">;; whether these 3 rows are a bad triple.</span>
+
+<span class="hl sym">(</span>defn create<span class="hl sym">-</span>triples <span class="hl sym">[</span>shift<span class="hl sym">-</span>table oob<span class="hl sym">-</span>table<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl sym">(/ (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl num">1 15</span><span class="hl sym">)</span> <span class="hl num">32</span><span class="hl sym">))</span>
+        bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl sym">(/ (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl num">1 15</span><span class="hl sym">)</span> <span class="hl num">32</span><span class="hl sym">))</span>
+        temp<span class="hl sym">-</span>arr <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl num">50</span><span class="hl sym">)]</span>
+    <span class="hl slc">;; Fill rows 0..5 completely.</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">30</span><span class="hl sym">]</span>
+      <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>arr i <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>row6 <span class="hl num">32</span><span class="hl sym">]</span>
+      <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>row7 <span class="hl num">32</span><span class="hl sym">]</span>
+        <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>row8 <span class="hl num">32</span><span class="hl sym">]</span>
+          <span class="hl sym">(</span>let <span class="hl sym">[</span>board <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>or <span class="hl sym">(</span>bit<span class="hl sym">-</span>or row6 <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left row7 <span class="hl num">5</span><span class="hl sym">))</span>
+                                   <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left row8 <span class="hl num">10</span><span class="hl sym">)))]</span>
+            <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">15</span><span class="hl sym">]</span>
+              <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>arr <span class="hl sym">(+ (</span>int <span class="hl num">30</span><span class="hl sym">)</span> i<span class="hl sym">)</span>
+                    <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right board i<span class="hl sym">)))))</span>
+            <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">5</span><span class="hl sym">]</span>   <span class="hl slc">;; Row 9 is completely empty to start with</span>
+              <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>arr <span class="hl sym">(+ (</span>int <span class="hl num">45</span><span class="hl sym">)</span> i<span class="hl sym">) (</span>int <span class="hl num">0</span><span class="hl sym">)))</span>
+            <span class="hl sym">(</span>let <span class="hl sym">[</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes <span class="hl sym">(</span>board<span class="hl sym">-</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">!</span>
+                                      temp<span class="hl sym">-</span>arr shift<span class="hl sym">-</span>table oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+                  <span class="hl slc">;; Note that we assume board-empty-region-sizes!</span>
+                  <span class="hl slc">;; returns a sequence, where the first element is</span>
+                  <span class="hl slc">;; the size of the empty region that includes the</span>
+                  <span class="hl slc">;; last cell, number 49.  Thus we can eliminate the</span>
+                  <span class="hl slc">;; number of empty cells in that region simply by</span>
+                  <span class="hl slc">;; removing the first element.</span>
+                  empty<span class="hl sym">-</span>sizes<span class="hl sym">-</span>except<span class="hl sym">-</span>bottom <span class="hl sym">(</span>rest empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">)</span>
+                  j <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right board <span class="hl num">5</span><span class="hl sym">))</span>
+                  i <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>and board <span class="hl sym">(</span>int <span class="hl num">0x1F</span><span class="hl sym">)))]</span>
+              <span class="hl sym">(</span>when<span class="hl sym">-</span>not <span class="hl sym">(</span>every? #<span class="hl sym">(</span>zero? <span class="hl sym">(</span>rem % <span class="hl num">5</span><span class="hl sym">))</span> empty<span class="hl sym">-</span>sizes<span class="hl sym">-</span>except<span class="hl sym">-</span>bottom<span class="hl sym">)</span>
+                <span class="hl slc">;; then it is possible for pieces to fill the empty</span>
+                <span class="hl slc">;; regions</span>
+                <span class="hl sym">(</span>aset bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples j
+                      <span class="hl sym">(</span>bit<span class="hl sym">-</span>or <span class="hl sym">(</span>aget bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples j<span class="hl sym">)</span>
+                              <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)</span> i<span class="hl sym">)))))))))</span>
+    <span class="hl slc">;; Fill rows 0..4 completely.</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">25</span><span class="hl sym">]</span>
+      <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>arr i <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>row5 <span class="hl num">32</span><span class="hl sym">]</span>
+      <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>row6 <span class="hl num">32</span><span class="hl sym">]</span>
+        <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>row7 <span class="hl num">32</span><span class="hl sym">]</span>
+          <span class="hl sym">(</span>let <span class="hl sym">[</span>board<span class="hl sym">-</span>rows<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span><span class="hl num">3</span> <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>or <span class="hl sym">(</span>bit<span class="hl sym">-</span>or row5 <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left row6 <span class="hl num">5</span><span class="hl sym">))</span>
+                                            <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left row7 <span class="hl num">10</span><span class="hl sym">)))]</span>
+            <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">15</span><span class="hl sym">]</span>
+              <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>arr <span class="hl sym">(+ (</span>int <span class="hl num">25</span><span class="hl sym">)</span> i<span class="hl sym">)</span>
+                    <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right board<span class="hl sym">-</span>rows<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span><span class="hl num">3</span> i<span class="hl sym">)))))</span>
+            <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl num">10</span><span class="hl sym">]</span>  <span class="hl slc">;; Rows 8 and 9 are completely empty to start with</span>
+              <span class="hl sym">(</span>aset temp<span class="hl sym">-</span>arr <span class="hl sym">(+ (</span>int <span class="hl num">40</span><span class="hl sym">)</span> i<span class="hl sym">) (</span>int <span class="hl num">0</span><span class="hl sym">)))</span>
+            <span class="hl sym">(</span>let <span class="hl sym">[</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes <span class="hl sym">(</span>board<span class="hl sym">-</span>empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">!</span>
+                                      temp<span class="hl sym">-</span>arr shift<span class="hl sym">-</span>table oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+                  empty<span class="hl sym">-</span>sizes<span class="hl sym">-</span>except<span class="hl sym">-</span>bottom <span class="hl sym">(</span>rest empty<span class="hl sym">-</span>region<span class="hl sym">-</span>sizes<span class="hl sym">)</span>
+                  j <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right board<span class="hl sym">-</span>rows<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span><span class="hl num">3 5</span><span class="hl sym">))</span>
+                  i <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>and board<span class="hl sym">-</span>rows<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">-</span><span class="hl num">3</span> <span class="hl sym">(</span>int <span class="hl num">0x1F</span><span class="hl sym">)))]</span>
+              <span class="hl sym">(</span>when<span class="hl sym">-</span>not <span class="hl sym">(</span>every? #<span class="hl sym">(</span>zero? <span class="hl sym">(</span>rem % <span class="hl num">5</span><span class="hl sym">))</span> empty<span class="hl sym">-</span>sizes<span class="hl sym">-</span>except<span class="hl sym">-</span>bottom<span class="hl sym">)</span>
+                <span class="hl sym">(</span>aset bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples j
+                      <span class="hl sym">(</span>bit<span class="hl sym">-</span>or <span class="hl sym">(</span>aget bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples j<span class="hl sym">)</span>
+                              <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl num">1</span> i<span class="hl sym">)))</span>
+                <span class="hl sym">))))))</span>
+    <span class="hl sym">[</span>bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples<span class="hl sym">]))</span>
+
+
+<span class="hl sym">(</span>def num<span class="hl sym">-</span>solutions <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl num">1</span><span class="hl sym">))</span>
+<span class="hl sym">(</span>def all<span class="hl sym">-</span>solutions <span class="hl sym">(</span>object<span class="hl sym">-</span>array <span class="hl num">2200</span><span class="hl sym">))</span>
+
+<span class="hl slc">;; See comments above *piece-num-to-do-only-3-rotations*.  Each</span>
+<span class="hl slc">;; solution is thus recorded twice.  Reversing the solution has the</span>
+<span class="hl slc">;; effect of rotating it 180 degrees.</span>
+
+<span class="hl sym">(</span>defn record<span class="hl sym">-</span>solution<span class="hl sym">! [</span>^ints soln<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>^ints num<span class="hl sym">-</span>solutions num<span class="hl sym">-</span>solutions
+        ^objects all<span class="hl sym">-</span>solutions all<span class="hl sym">-</span>solutions
+        n <span class="hl sym">(</span>int <span class="hl sym">(</span>aget num<span class="hl sym">-</span>solutions <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)))</span>
+        ^ints rotated<span class="hl sym">-</span>soln <span class="hl sym">(</span>aclone soln<span class="hl sym">)</span>
+        len <span class="hl sym">(</span>int <span class="hl sym">(</span>alength soln<span class="hl sym">))</span>
+        len<span class="hl sym">-</span><span class="hl num">1</span> <span class="hl sym">(</span>int <span class="hl sym">(</span>dec len<span class="hl sym">))]</span>
+    <span class="hl sym">(</span>aset all<span class="hl sym">-</span>solutions n soln<span class="hl sym">)</span>
+    <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>divide len <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">))]</span>
+      <span class="hl sym">(</span>let <span class="hl sym">[</span>tmp <span class="hl sym">(</span>int <span class="hl sym">(</span>aget rotated<span class="hl sym">-</span>soln i<span class="hl sym">))</span>
+            other<span class="hl sym">-</span>idx <span class="hl sym">(</span>int <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>subtract len<span class="hl sym">-</span><span class="hl num">1</span> i<span class="hl sym">))]</span>
+        <span class="hl sym">(</span>aset rotated<span class="hl sym">-</span>soln i <span class="hl sym">(</span>aget rotated<span class="hl sym">-</span>soln other<span class="hl sym">-</span>idx<span class="hl sym">))</span>
+        <span class="hl sym">(</span>aset rotated<span class="hl sym">-</span>soln other<span class="hl sym">-</span>idx tmp<span class="hl sym">)))</span>
+    <span class="hl sym">(</span>aset all<span class="hl sym">-</span>solutions <span class="hl sym">(</span>inc n<span class="hl sym">)</span> rotated<span class="hl sym">-</span>soln<span class="hl sym">)</span>
+    <span class="hl sym">(</span>aset num<span class="hl sym">-</span>solutions <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">) (+</span> n <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">)))))</span>
+
+
+<span class="hl slc">;; Assume all args have been type-hinted to int in the environment</span>
+<span class="hl slc">;; where the macro board-has-no-islands is called.</span>
+
+<span class="hl sym">(</span>defmacro board<span class="hl sym">-</span>has<span class="hl sym">-</span>no<span class="hl sym">-</span>islands <span class="hl sym">[</span>board0 board1 index
+                                ^ints bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples
+                                ^ints bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples<span class="hl sym">]</span>
+  <span class="hl sym">`(</span>if <span class="hl sym">(&gt;=</span> ~index <span class="hl sym">(</span>int <span class="hl num">40</span><span class="hl sym">))</span>
+     true
+     <span class="hl sym">(</span>let <span class="hl sym">[</span>row<span class="hl sym">-</span>num# <span class="hl sym">(</span>int <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>divide ~index <span class="hl sym">(</span>int <span class="hl num">5</span><span class="hl sym">)))</span>
+           current<span class="hl sym">-</span><span class="hl num">3</span><span class="hl sym">-</span>rows#
+           <span class="hl sym">(</span>int <span class="hl sym">(</span>case row<span class="hl sym">-</span>num#
+                      <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x7FFF</span><span class="hl sym">)</span> ~board0<span class="hl sym">)</span>
+                      <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x7FFF</span><span class="hl sym">)</span>
+                                       <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~board0 <span class="hl sym">(</span>int  <span class="hl num">5</span><span class="hl sym">)))</span>
+                      <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x7FFF</span><span class="hl sym">)</span>
+                                       <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~board0 <span class="hl sym">(</span>int <span class="hl num">10</span><span class="hl sym">)))</span>
+                      <span class="hl sym">(</span>int <span class="hl num">3</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>or <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~board0 <span class="hl sym">(</span>int <span class="hl num">15</span><span class="hl sym">))</span>
+                                      <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x1F</span><span class="hl sym">)</span>
+                                                               ~board1<span class="hl sym">)</span>
+                                                      <span class="hl sym">(</span>int <span class="hl num">10</span><span class="hl sym">)))</span>
+                      <span class="hl sym">(</span>int <span class="hl num">4</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>or <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~board0 <span class="hl sym">(</span>int <span class="hl num">20</span><span class="hl sym">))</span>
+                                      <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x3FF</span><span class="hl sym">)</span>
+                                                               ~board1<span class="hl sym">)</span>
+                                                      <span class="hl sym">(</span>int <span class="hl num">5</span><span class="hl sym">)))</span>
+                      <span class="hl sym">(</span>int <span class="hl num">5</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x7FFF</span><span class="hl sym">)</span> ~board1<span class="hl sym">)</span>
+                      <span class="hl sym">(</span>int <span class="hl num">6</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x7FFF</span><span class="hl sym">)</span>
+                                       <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~board1 <span class="hl sym">(</span>int  <span class="hl num">5</span><span class="hl sym">)))</span>
+                      <span class="hl sym">(</span>int <span class="hl num">7</span><span class="hl sym">) (</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">0x7FFF</span><span class="hl sym">)</span>
+                                       <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right ~board1 <span class="hl sym">(</span>int <span class="hl num">10</span><span class="hl sym">)))))</span>
+           int<span class="hl sym">-</span>num# <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right current<span class="hl sym">-</span><span class="hl num">3</span><span class="hl sym">-</span>rows# <span class="hl sym">(</span>int <span class="hl num">5</span><span class="hl sym">)))</span>
+           bit<span class="hl sym">-</span>num# <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>and current<span class="hl sym">-</span><span class="hl num">3</span><span class="hl sym">-</span>rows# <span class="hl sym">(</span>int <span class="hl num">0x1F</span><span class="hl sym">)))</span>
+           even<span class="hl sym">-</span>row# <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and row<span class="hl sym">-</span>num# <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))]</span>
+       <span class="hl sym">(</span>if even<span class="hl sym">-</span>row#
+         <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)</span>
+                         <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right <span class="hl sym">(</span>aget ~bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples int<span class="hl sym">-</span>num#<span class="hl sym">)</span>
+                                          bit<span class="hl sym">-</span>num#<span class="hl sym">)))</span>
+         <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)</span>
+                         <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>right <span class="hl sym">(</span>aget ~bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples int<span class="hl sym">-</span>num#<span class="hl sym">)</span>
+                                          bit<span class="hl sym">-</span>num#<span class="hl sym">)))))))</span>
+
+
+<span class="hl slc">;; Arguments to solve-helper:</span>
+
+<span class="hl slc">;; depth is 0 on the first call, and is 1 more for each level of</span>
+<span class="hl slc">;; nested recursive call.  It is equal to the number of pieces placed</span>
+<span class="hl slc">;; on the board in the partial solution so far.</span>
+
+<span class="hl slc">;; board is a pair of 32-bit ints representing which board cells are</span>
+<span class="hl slc">;; occupied (bit value 1) or empty (bit value 0), based upon the</span>
+<span class="hl slc">;; pieces placed so far.  Bits positions 0..24 of board0 represent</span>
+<span class="hl slc">;; board indices 0..24, and bit positions 0..24 of board1 represent</span>
+<span class="hl slc">;; board indices 25..49.</span>
+
+<span class="hl slc">;; cell is the board index in [0,49] that should be checked first to</span>
+<span class="hl slc">;; see if it is empty.</span>
+
+<span class="hl slc">;; placed-piece-bit-vec is an int where its 10 least significant bits</span>
+<span class="hl slc">;; represent the set of the piece numbers, each in the range [0,9],</span>
+<span class="hl slc">;; that have been placed so far in the current configuration.  If bit</span>
+<span class="hl slc">;; i is 1, i in [0,9], then piece i has already been placed.</span>
+
+<span class="hl slc">;; piece-num-arr is an array of the piece-nums placed so far, in the</span>
+<span class="hl slc">;; order they were placed, i.e. depth order.  (aget piece-num-arr 0)</span>
+<span class="hl slc">;; was placed at depth 0, etc.  (named sol_nums in GCC program)</span>
+
+<span class="hl slc">;; mask-arr is an array of the bitmasks of the pieces placed so far,</span>
+<span class="hl slc">;; in the order they were placed.  (named sol_masks in GCC program)</span>
+
+<span class="hl sym">(</span>defn solve<span class="hl sym">! [</span>^objects tbl ^ints bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples ^ints bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples<span class="hl sym">]</span>
+  <span class="hl sym">(</span>letfn
+      <span class="hl sym">[(</span>solve<span class="hl sym">-</span>helper <span class="hl sym">[</span>depth board0 board1 orig<span class="hl sym">-</span>cell placed<span class="hl sym">-</span>piece<span class="hl sym">-</span>bit<span class="hl sym">-</span>vec
+                      ^ints piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr ^ints mask<span class="hl sym">-</span>arr0 ^ints mask<span class="hl sym">-</span>arr1<span class="hl sym">]</span>
+         <span class="hl sym">(</span>let <span class="hl sym">[</span>depth <span class="hl sym">(</span>int depth<span class="hl sym">)</span>
+               board0 <span class="hl sym">(</span>int board0<span class="hl sym">)</span>
+               board1 <span class="hl sym">(</span>int board1<span class="hl sym">)</span>
+               orig<span class="hl sym">-</span>cell <span class="hl sym">(</span>int orig<span class="hl sym">-</span>cell<span class="hl sym">)</span>
+               cell <span class="hl sym">(</span>int <span class="hl sym">(</span>first<span class="hl sym">-</span>empty<span class="hl sym">-</span>index orig<span class="hl sym">-</span>cell board0 board1<span class="hl sym">))</span>
+               placed<span class="hl sym">-</span>piece<span class="hl sym">-</span>bit<span class="hl sym">-</span>vec<span class="hl sym">-</span>int <span class="hl sym">(</span>int placed<span class="hl sym">-</span>piece<span class="hl sym">-</span>bit<span class="hl sym">-</span>vec<span class="hl sym">)]</span>
+           <span class="hl sym">(</span>loop <span class="hl sym">[</span>piece<span class="hl sym">-</span>num <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)</span>
+                  piece<span class="hl sym">-</span>num<span class="hl sym">-</span>mask <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)]</span>
+             <span class="hl sym">(</span>when <span class="hl sym">(&lt;</span> piece<span class="hl sym">-</span>num <span class="hl sym">(</span>int <span class="hl num">10</span><span class="hl sym">))</span>
+               <span class="hl sym">(</span>when <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and placed<span class="hl sym">-</span>piece<span class="hl sym">-</span>bit<span class="hl sym">-</span>vec<span class="hl sym">-</span>int piece<span class="hl sym">-</span>num<span class="hl sym">-</span>mask<span class="hl sym">))</span>
+                 <span class="hl sym">(</span>let <span class="hl sym">[</span>^objects piece<span class="hl sym">-</span>arr <span class="hl sym">(</span>aget tbl piece<span class="hl sym">-</span>num<span class="hl sym">)</span>
+                       ^objects placements <span class="hl sym">(</span>aget piece<span class="hl sym">-</span>arr cell<span class="hl sym">)]</span>
+                   <span class="hl sym">(</span>dotimes <span class="hl sym">[</span>i <span class="hl sym">(</span>alength placements<span class="hl sym">)]</span>
+                     <span class="hl sym">(</span>let <span class="hl sym">[</span>^ints placement <span class="hl sym">(</span>aget placements i<span class="hl sym">)</span>
+                           piece<span class="hl sym">-</span>mask0 <span class="hl sym">(</span>int <span class="hl sym">(</span>aget placement <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)))</span>
+                           piece<span class="hl sym">-</span>mask1 <span class="hl sym">(</span>int <span class="hl sym">(</span>aget placement <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+                           next<span class="hl sym">-</span>index <span class="hl sym">(</span>int <span class="hl sym">(</span>aget placement <span class="hl sym">(</span>int <span class="hl num">2</span><span class="hl sym">)))</span>
+                           piece<span class="hl sym">-</span>num<span class="hl sym">-</span>int <span class="hl sym">(</span>int piece<span class="hl sym">-</span>num<span class="hl sym">)]</span>
+                       <span class="hl sym">(</span>when <span class="hl sym">(</span>and <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and board0 piece<span class="hl sym">-</span>mask0<span class="hl sym">))</span>
+                                  <span class="hl sym">(</span>zero? <span class="hl sym">(</span>bit<span class="hl sym">-</span>and board1 piece<span class="hl sym">-</span>mask1<span class="hl sym">)))</span>
+                         <span class="hl sym">(</span>if <span class="hl sym">(==</span> depth <span class="hl num">9</span><span class="hl sym">)</span>
+                           <span class="hl slc">;; Solution found!</span>
+                           <span class="hl sym">(</span>do
+                             <span class="hl sym">(</span>aset piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr depth piece<span class="hl sym">-</span>num<span class="hl sym">-</span>int<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>aset mask<span class="hl sym">-</span>arr0 depth piece<span class="hl sym">-</span>mask0<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>aset mask<span class="hl sym">-</span>arr1 depth piece<span class="hl sym">-</span>mask1<span class="hl sym">)</span>
+                             <span class="hl sym">(</span>let <span class="hl sym">[</span>sol1 <span class="hl sym">(</span>encode<span class="hl sym">-</span>solution piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr
+                                                         mask<span class="hl sym">-</span>arr0 mask<span class="hl sym">-</span>arr1<span class="hl sym">)]</span>
+                               <span class="hl sym">(</span>record<span class="hl sym">-</span>solution<span class="hl sym">!</span> sol1<span class="hl sym">)))</span>
+                           <span class="hl slc">;; else</span>
+                           <span class="hl sym">(</span>let <span class="hl sym">[</span>next<span class="hl sym">-</span>board0 <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>or board0 piece<span class="hl sym">-</span>mask0<span class="hl sym">))</span>
+                                 next<span class="hl sym">-</span>board1 <span class="hl sym">(</span>int <span class="hl sym">(</span>bit<span class="hl sym">-</span>or board1 piece<span class="hl sym">-</span>mask1<span class="hl sym">))]</span>
+                             <span class="hl sym">(</span>when <span class="hl sym">(</span>board<span class="hl sym">-</span>has<span class="hl sym">-</span>no<span class="hl sym">-</span>islands next<span class="hl sym">-</span>board0 next<span class="hl sym">-</span>board1
+                                                         next<span class="hl sym">-</span>index
+                                                         bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples
+                                                         bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples<span class="hl sym">)</span>
+                               <span class="hl sym">(</span>aset piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr depth piece<span class="hl sym">-</span>num<span class="hl sym">-</span>int<span class="hl sym">)</span>
+                               <span class="hl sym">(</span>aset mask<span class="hl sym">-</span>arr0 depth piece<span class="hl sym">-</span>mask0<span class="hl sym">)</span>
+                               <span class="hl sym">(</span>aset mask<span class="hl sym">-</span>arr1 depth piece<span class="hl sym">-</span>mask1<span class="hl sym">)</span>
+                               <span class="hl sym">(</span>solve<span class="hl sym">-</span>helper
+                                <span class="hl sym">(</span>inc depth<span class="hl sym">)</span>
+                                next<span class="hl sym">-</span>board0 next<span class="hl sym">-</span>board1
+                                next<span class="hl sym">-</span>index
+                                <span class="hl sym">(</span>bit<span class="hl sym">-</span>or placed<span class="hl sym">-</span>piece<span class="hl sym">-</span>bit<span class="hl sym">-</span>vec<span class="hl sym">-</span>int
+                                        <span class="hl sym">(</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)</span> piece<span class="hl sym">-</span>num<span class="hl sym">-</span>int<span class="hl sym">))</span>
+                                piece<span class="hl sym">-</span>num<span class="hl sym">-</span>arr
+                                mask<span class="hl sym">-</span>arr0 mask<span class="hl sym">-</span>arr1<span class="hl sym">)))))))))</span>
+               <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc piece<span class="hl sym">-</span>num<span class="hl sym">) (</span>bit<span class="hl sym">-</span>shift<span class="hl sym">-</span>left piece<span class="hl sym">-</span>num<span class="hl sym">-</span>mask <span class="hl sym">(</span>int <span class="hl num">1</span><span class="hl sym">)))</span>
+               <span class="hl sym">))))]</span>
+    <span class="hl sym">(</span>solve<span class="hl sym">-</span>helper <span class="hl num">0 0 0 0 0</span> <span class="hl sym">(</span>int<span class="hl sym">-</span>array <span class="hl num">10</span><span class="hl sym">) (</span>int<span class="hl sym">-</span>array <span class="hl num">10</span><span class="hl sym">) (</span>int<span class="hl sym">-</span>array <span class="hl num">10</span><span class="hl sym">))))</span>
+
+
+<span class="hl sym">(</span>defn compare<span class="hl sym">-</span>int<span class="hl sym">-</span>arrays <span class="hl sym">[</span>^ints a ^ints b<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>len <span class="hl sym">(</span>int <span class="hl sym">(</span>min <span class="hl sym">(</span>alength a<span class="hl sym">) (</span>alength b<span class="hl sym">)))]</span>
+    <span class="hl sym">(</span>loop <span class="hl sym">[</span>i <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)]</span>
+      <span class="hl sym">(</span>if <span class="hl sym">(&lt;</span> i len<span class="hl sym">)</span>
+        <span class="hl sym">(</span>let <span class="hl sym">[</span>elem<span class="hl sym">-</span>a <span class="hl sym">(</span>int <span class="hl sym">(</span>aget a i<span class="hl sym">))</span>
+              elem<span class="hl sym">-</span>b <span class="hl sym">(</span>int <span class="hl sym">(</span>aget b i<span class="hl sym">))]</span>
+          <span class="hl sym">(</span>if <span class="hl sym">(==</span> elem<span class="hl sym">-</span>a elem<span class="hl sym">-</span>b<span class="hl sym">)</span>
+            <span class="hl sym">(</span>recur <span class="hl sym">(</span>inc i<span class="hl sym">))</span>
+            <span class="hl sym">(</span>unchecked<span class="hl sym">-</span>subtract elem<span class="hl sym">-</span>a elem<span class="hl sym">-</span>b<span class="hl sym">)))</span>
+        <span class="hl num">0</span><span class="hl sym">))))</span>
+
+
+<span class="hl sym">(</span>defn <span class="hl sym">-</span>main <span class="hl sym">[&amp;</span> args<span class="hl sym">]</span>
+  <span class="hl sym">(</span>let <span class="hl sym">[</span>shift<span class="hl sym">-</span>table <span class="hl sym">(</span>make<span class="hl sym">-</span>shift<span class="hl sym">-</span>table<span class="hl sym">)</span>
+        oob<span class="hl sym">-</span>table <span class="hl sym">(</span>make<span class="hl sym">-</span>oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+        tbl <span class="hl sym">(</span>calc<span class="hl sym">-</span>pieces piece<span class="hl sym">-</span>defs shift<span class="hl sym">-</span>table oob<span class="hl sym">-</span>table<span class="hl sym">)</span>
+        <span class="hl sym">[</span>bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples<span class="hl sym">] (</span>create<span class="hl sym">-</span>triples shift<span class="hl sym">-</span>table
+                                                           oob<span class="hl sym">-</span>table<span class="hl sym">)]</span>
+    <span class="hl sym">(</span>solve<span class="hl sym">!</span> tbl bad<span class="hl sym">-</span>even<span class="hl sym">-</span>triples bad<span class="hl sym">-</span>odd<span class="hl sym">-</span>triples<span class="hl sym">)</span>
+    <span class="hl sym">(</span>let <span class="hl sym">[</span>^ints num<span class="hl sym">-</span>solutions num<span class="hl sym">-</span>solutions
+          n <span class="hl sym">(</span>int <span class="hl sym">(</span>aget num<span class="hl sym">-</span>solutions <span class="hl sym">(</span>int <span class="hl num">0</span><span class="hl sym">)))</span>
+          sorted<span class="hl sym">-</span>solns <span class="hl sym">(</span>sort compare<span class="hl sym">-</span>int<span class="hl sym">-</span>arrays <span class="hl sym">(</span>take n <span class="hl sym">(</span>seq all<span class="hl sym">-</span>solutions<span class="hl sym">)))]</span>
+      <span class="hl sym">(</span>println <span class="hl sym">(</span>format <span class="hl str">&quot;%d solutions found&quot;</span> n<span class="hl sym">))</span>
+      <span class="hl sym">(</span>print<span class="hl sym">-</span>board <span class="hl sym">(</span>first sorted<span class="hl sym">-</span>solns<span class="hl sym">))</span>
+      <span class="hl sym">(</span>println<span class="hl sym">)</span>
+      <span class="hl sym">(</span>print<span class="hl sym">-</span>board <span class="hl sym">(</span>nth sorted<span class="hl sym">-</span>solns <span class="hl sym">(</span>dec n<span class="hl sym">)))</span>
+      <span class="hl sym">(</span>println<span class="hl sym">)</span>
+      <span class="hl sym">(</span>println<span class="hl sym">))))</span>  <span class="hl slc">; Just to match the output of the other programs exactly</span>
