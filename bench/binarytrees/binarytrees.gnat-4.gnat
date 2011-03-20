@@ -1,209 +1,9 @@
 --  The Computer Language Benchmarks Game
 --  http://shootout.alioth.debian.org/
 --
---  Contributed by Brad Moore
-
-with System;
-
---  The Computer Language Benchmarks Game
---  http://shootout.alioth.debian.org/
---
---  Contributed by Brad Moore
-
-package Apache_Runtime is
-   pragma Pure;
-
-   type Apr_Status is new Integer;
-
-   type Apr_Size is new Integer;
-
-end Apache_Runtime;
-
-package Apache_Runtime.Pools is
-
-   subtype Pool_Type is System.Address;
-   subtype Pool_Access is System.Address;
-
-   function Initialize return Apr_Status;
-
-   function Create
-     (New_Pool : Pool_Access;
-      Parent : Pool_Type) return Apr_Status;
-
-   procedure Destroy (Pool : Pool_Type);
-
-   function Allocate (Pool : Pool_Type; Size : Apr_Size) return System.Address;
-
-private
-
-   pragma Import (C, Initialize, "apr_initialize");
-   pragma Import (C, Destroy, "apr_pool_destroy");
-   pragma Import (C, Allocate, "apr_palloc");
-
-end Apache_Runtime.Pools;
-
---  The Computer Language Benchmarks Game
---  http://shootout.alioth.debian.org/
---
---  Contributed by Brad Moore
-
-package body Apache_Runtime.Pools is
-
-   function Create_Ex
-     (New_Pool : Pool_Access;
-      Parent : Pool_Type;
-      Reserved_1, Reserved_2 : System.Address) return Apr_Status;
-   pragma Import (C, Create_Ex, "apr_pool_create_ex");
-
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (New_Pool : Pool_Access;
-      Parent : Pool_Type)
-      return Apr_Status
-   is
-   begin
-      return Create_Ex
-        (New_Pool,
-         Parent,
-         System.Null_Address,
-         System.Null_Address);
-   end Create;
-
-end Apache_Runtime.Pools;
-
---  The Computer Language Benchmarks Game
---  http://shootout.alioth.debian.org/
---
 --  Based on Ada versions created by
---    Jim Rogers and Brian Drummond as well as
---    C++ version by Francesco Abbate
---
---  Contributed by Brad Moore
-
-private with Ada.Finalization;
-private with Apache_Runtime.Pools;
-
-package Trees is
-
-   type Tree_Node is private;
-   function Item_Check (Item : Tree_Node) return Integer;
-
-   type Node_Pool is limited private;
-
-   function Create
-     (Pool : Node_Pool;
-      Item : Integer;
-      Depth : Integer) return Tree_Node;
-
-private
-
-   use Apache_Runtime;
-
-   type Node;
-   type Tree_Node is access all Node;
-
-   type Node is record
-      Left  : Tree_Node;
-      Right : Tree_Node;
-      Value  : Integer;
-   end record;
-
-   type Node_Pool is
-     new Ada.Finalization.Limited_Controlled with
-      record
-         Pool : aliased Pools.Pool_Type;
-      end record;
-
-   overriding procedure Initialize (Item : in out Node_Pool);
-   overriding procedure Finalize   (Item : in out Node_Pool);
-
-end Trees;
-
---  The Computer Language Benchmarks Game
---  http://shootout.alioth.debian.org/
---
---  Based on Ada versions created by
---    Jim Rogers and Brian Drummond as well as
---    C++ version by Francesco Abbate
---
---  Contributed by Brad Moore
-
-with Ada.Unchecked_Conversion;
-with Interfaces;
-with System;
-
-package body Trees is
-
-   Pools_Status : constant Apache_Runtime.Apr_Status :=
-     Apache_Runtime.Pools.Initialize;
-   pragma Unreferenced (Pools_Status);
-
-   function New_Node (Pool : Node_Pool) return Tree_Node;
-
-   function Create
-     (Pool : Node_Pool;
-      Item : Integer;
-      Depth : Integer) return Tree_Node
-   is
-      Result : constant Tree_Node := New_Node (Pool);
-   begin
-      if Depth > 0 then
-         Result.all := (Left => Create (Pool, 2 * Item - 1, Depth - 1),
-                        Right => Create (Pool, 2 * Item, Depth - 1),
-                        Value => Item);
-      else
-         Result.all := (Left | Right => null, Value => Item);
-      end if;
-
-      return Result;
-
-   end Create;
-
-   overriding procedure Finalize   (Item : in out Node_Pool) is
-   begin
-      Pools.Destroy (Item.Pool);
-   end Finalize;
-
-   overriding procedure Initialize (Item : in out Node_Pool) is
-      Status : constant Apr_Status :=
-        Pools.Create
-          (New_Pool => Item.Pool'Address,
-           Parent   => System.Null_Address);
-      pragma Unreferenced (Status);
-   begin
-      null;
-   end Initialize;
-
-   function Item_Check (Item : Tree_Node) return Integer is
-   begin
-      if Item.Left = null then
-         return Item.Value;
-      else
-         return Item.Value + Item_Check (Item.Left) - Item_Check (Item.Right);
-      end if;
-   end Item_Check;
-
-   function New_Node (Pool : Node_Pool) return Tree_Node
-   is
-      function Node_Convert is new Ada.Unchecked_Conversion
-        (Source => System.Address,
-         Target => Tree_Node);
-   begin
-      return Node_Convert
-        (Pools.Allocate (Pool => Pool.Pool,
-                         Size => Node'Size / Interfaces.Unsigned_8'Size));
-   end New_Node;
-end Trees;
-
---  The Computer Language Benchmarks Game
---  http://shootout.alioth.debian.org/
---
---  Based on Ada versions created by
---    Jim Rogers and Brian Drummond as well as
---    C++ version by Francesco Abbate
+--    Jim Rogers and Brian Drummons as well as the
+--    C version by Francesco Abbate
 --
 --  Contributed by Brad Moore
 
@@ -331,33 +131,33 @@ procedure Binarytrees is
 begin
 
    declare
-   task Stretch_Depth_Task is
-   end Stretch_Depth_Task;
+      task Stretch_Depth_Task is
+      end Stretch_Depth_Task;
 
-   task body Stretch_Depth_Task is
-      Stretch_Depth : constant Positive := Max_Depth + 1;
+      task body Stretch_Depth_Task is
+         Stretch_Depth : constant Positive := Max_Depth + 1;
 
-      Pool : Trees.Node_Pool;
-      Stretch_Tree : constant Tree_Node :=
-        Trees.Create (Pool  => Pool,
-                      Item  => 0,
-                      Depth => Stretch_Depth);
-   begin
-      Check        := Item_Check (Stretch_Tree);
-      Put ("stretch tree of depth ");
-      Put (Item => Stretch_Depth, Width => 1);
-      Put (HT & " check: ");
-      Put (Item => Check, Width => 1);
-      New_Line;
-   end Stretch_Depth_Task;
+         Pool : Trees.Node_Pool;
+         Stretch_Tree : constant Tree_Node :=
+           Trees.Create (Pool  => Pool,
+                         Item  => 0,
+                         Depth => Stretch_Depth);
+      begin
+         Check        := Item_Check (Stretch_Tree);
+         Put ("stretch tree of depth ");
+         Put (Item => Stretch_Depth, Width => 1);
+         Put (HT & " check: ");
+         Put (Item => Check, Width => 1);
+         New_Line;
+      end Stretch_Depth_Task;
 
-   task Create_Long_Lived_Tree_Task is
-   end Create_Long_Lived_Tree_Task;
+      task Create_Long_Lived_Tree_Task is
+      end Create_Long_Lived_Tree_Task;
 
-   task body Create_Long_Lived_Tree_Task is
-   begin
-      Long_Lived_Tree := Create (Long_Lived_Node_Pool, 0, Max_Depth);
-   end Create_Long_Lived_Tree_Task;
+      task body Create_Long_Lived_Tree_Task is
+      begin
+         Long_Lived_Tree := Create (Long_Lived_Node_Pool, 0, Max_Depth);
+      end Create_Long_Lived_Tree_Task;
    begin
       null;
    end;
@@ -387,3 +187,203 @@ begin
    New_Line;
 
 end Binarytrees;
+
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org/
+--
+--  Based on Ada versions created by
+--    Jim Rogers and Brian Drummond as well as
+--    C version by Francesco Abbate
+--
+--  Contributed by Brad Moore
+
+private with Ada.Finalization;
+private with Apache_Runtime.Pools;
+
+package Trees is
+
+   type Tree_Node is private;
+   function Item_Check (Item : Tree_Node) return Integer;
+
+   type Node_Pool is limited private;
+
+   function Create
+     (Pool : Node_Pool;
+      Item : Integer;
+      Depth : Integer) return Tree_Node;
+
+private
+
+   use Apache_Runtime;
+
+   type Node;
+   type Tree_Node is access all Node;
+
+   type Node is record
+      Left  : Tree_Node;
+      Right : Tree_Node;
+      Value  : Integer;
+   end record;
+
+   type Node_Pool is
+     new Ada.Finalization.Limited_Controlled with
+      record
+         Pool : aliased Pools.Pool_Type;
+      end record;
+
+   overriding procedure Initialize (Item : in out Node_Pool);
+   overriding procedure Finalize   (Item : in out Node_Pool);
+
+end Trees;
+
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org/
+--
+--  Based on Ada versions created by
+--    Jim Rogers and Brian Drummond as well as the
+--    C version by Francesco Abbate
+--
+--  Contributed by Brad Moore
+
+with Ada.Unchecked_Conversion;
+with Interfaces;
+with System;
+
+package body Trees is
+
+   Pools_Status : constant Apache_Runtime.Apr_Status :=
+     Apache_Runtime.Pools.Initialize;
+   pragma Unreferenced (Pools_Status);
+
+   function New_Node (Pool : Node_Pool) return Tree_Node;
+
+   function Create
+     (Pool : Node_Pool;
+      Item : Integer;
+      Depth : Integer) return Tree_Node
+   is
+      Result : constant Tree_Node := New_Node (Pool);
+   begin
+      if Depth > 0 then
+         Result.all := (Left => Create (Pool, 2 * Item - 1, Depth - 1),
+                        Right => Create (Pool, 2 * Item, Depth - 1),
+                        Value => Item);
+      else
+         Result.all := (Left | Right => null, Value => Item);
+      end if;
+
+      return Result;
+
+   end Create;
+
+   overriding procedure Finalize   (Item : in out Node_Pool) is
+   begin
+      Pools.Destroy (Item.Pool);
+   end Finalize;
+
+   overriding procedure Initialize (Item : in out Node_Pool) is
+      Status : constant Apr_Status :=
+        Pools.Create
+          (New_Pool => Item.Pool'Address,
+           Parent   => System.Null_Address);
+      pragma Unreferenced (Status);
+   begin
+      null;
+   end Initialize;
+
+   function Item_Check (Item : Tree_Node) return Integer is
+   begin
+      if Item.Left = null then
+         return Item.Value;
+      else
+         return Item.Value + Item_Check (Item.Left) - Item_Check (Item.Right);
+      end if;
+   end Item_Check;
+
+   function New_Node (Pool : Node_Pool) return Tree_Node
+   is
+      function Node_Convert is new Ada.Unchecked_Conversion
+        (Source => System.Address,
+         Target => Tree_Node);
+   begin
+      return Node_Convert
+        (Pools.Allocate (Pool => Pool.Pool,
+                         Size => Node'Size / Interfaces.Unsigned_8'Size));
+   end New_Node;
+end Trees;
+
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org/
+--
+--  Contributed by Brad Moore
+
+package Apache_Runtime is
+   pragma Pure;
+
+   type Apr_Status is new Integer;
+
+   type Apr_Size is new Integer;
+
+end Apache_Runtime;
+
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org/
+--
+--  Contributed by Brad Moore
+
+with System;
+
+package Apache_Runtime.Pools is
+
+   subtype Pool_Type is System.Address;
+   subtype Pool_Access is System.Address;
+
+   function Initialize return Apr_Status;
+
+   function Create
+     (New_Pool : Pool_Access;
+      Parent : Pool_Type) return Apr_Status;
+
+   procedure Destroy (Pool : Pool_Type);
+
+   function Allocate (Pool : Pool_Type; Size : Apr_Size) return System.Address;
+
+private
+
+   pragma Import (C, Initialize, "apr_initialize");
+   pragma Import (C, Destroy, "apr_pool_destroy");
+   pragma Import (C, Allocate, "apr_palloc");
+
+end Apache_Runtime.Pools;
+
+--  The Computer Language Benchmarks Game
+--  http://shootout.alioth.debian.org/
+--
+--  Contributed by Brad Moore
+
+package body Apache_Runtime.Pools is
+
+   function Create_Ex
+     (New_Pool : Pool_Access;
+      Parent : Pool_Type;
+      Reserved_1, Reserved_2 : System.Address) return Apr_Status;
+   pragma Import (C, Create_Ex, "apr_pool_create_ex");
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (New_Pool : Pool_Access;
+      Parent : Pool_Type)
+      return Apr_Status
+   is
+   begin
+      return Create_Ex
+        (New_Pool,
+         Parent,
+         System.Null_Address,
+         System.Null_Address);
+   end Create;
+
+end Apache_Runtime.Pools;
