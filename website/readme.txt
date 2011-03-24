@@ -1,7 +1,7 @@
 
 	The Computer Language Benchmarks Game - Website
 
- July 2010 Isaac Gouy
+ July 2010 Isaac Gouy 
 
 
  AUDIENCE
@@ -31,7 +31,7 @@
  - over 5 years this website has changed in small and large ways, and
     the configuration files and script files provide some functionality 
     that is no longer required. Occasionally obsolete functionality is
-    removed but usually while other changes are being made. 
+    removed but usually not until other changes are being made. 
 
    Be aware, there are cobwebs.
 
