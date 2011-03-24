@@ -29,7 +29,7 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 define('SITE_NAME', 'demo');
 define('SITE_TITLE','demo1 : Intel&#174; Q6600&#174; quad-core');
-define('BANNER_TITLE','Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core<br/>demo&nbsp;:&nbsp;win32&nbsp;port&nbsp;of&nbsp;bencher.py&nbsp;measurement&nbsp;script');
+define('BANNER_TITLE','Windows&nbsp;Vista&#174;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core<br/>demo&nbsp;:&nbsp;Win32&#174;&nbsp;port&nbsp;of&nbsp;bencher.py&nbsp;measurement&nbsp;script');
 define('PLATFORM_NAME', 'demo : Intel Q6600 quad-core');
 define('FAQ_TITLE','');
 define('BAR',' | ');
