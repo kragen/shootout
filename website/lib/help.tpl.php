@@ -310,7 +310,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#languagex" name="languagex"><b>Why don't you include language X?</b></a></dt>
 <dd>
-<p>Why don't <i>you</i> use our measurement scripts and publish measurements for language X?</p>
+<p><i>Why don't you</i> use our measurement scripts and publish measurements for language X?</p>
 
 
 <p>For example</p>
@@ -326,9 +326,16 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#win32" name="win32">Why don't you include Microsoft&#174; Windows&#174;?</a></dt>
 <dd>
-<p>Why don't <i>you</i> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
+<p><i>Why don't you</i> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your c:\ directory, check the  <a href="http://sourceforge.net/projects/pywin32/" title="Python Win32 Extensions">requirements</a> and <a href="http://gnuwin32.sourceforge.net/packages/make.htm" title="GNU Make for Windows, GNU DiffUtils for Windows">recommendations</a>, and read the license before use.</p>
-<p>(Here are some measurements made <i>just as a demo</i> of what you could do with <a href="http://shootout.alioth.debian.org/demo/compare.php?lang=csc&lang2=csharp">bencher.py on Windows Vista</a>.)</p></dd>
+<p>(Here are some measurements made <i>just as a demo</i> of what you could do with <a href="http://shootout.alioth.debian.org/demo/compare.php?lang=csc&lang2=csharp">bencher.py on <b>Windows Vista</b></a>.)</p></dd>
+
+
+<dt><a href="#llvm" name="llvm">Why don't you include LLVM?</a></dt>
+<dd>
+<p><i>Why don't you</i> use our measurement scripts and publish measurements for LLVM?</p>
+<p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p>
+<p>(Here are some measurements made <i>just as a demo</i> of what you could do <a href="http://shootout.alioth.debian.org/demo2/which-programming-languages-are-fastest.php?llvmgcc=on&gcc=on&clang=on&java=on&ghc=on&csharp=on&fsharp=on">building language implementations on the <b>LLVM toolchain</b></a>.)</p></dd>
 
 <dt><a href="#java" name="java">What about Java&#174;?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
