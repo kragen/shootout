@@ -1,0 +1,117 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"> </span>
+<span class="hl com">   contributed by Stefan Krause</span>
+<span class="hl com">   slightly modified by Chad Whipkey</span>
+<span class="hl com">   parallelized by Colin D Bennett 2008-10-04</span>
+<span class="hl com">   reduce synchronization cost by The Anh Tran</span>
+<span class="hl com">  */</span>
+
+<span class="hl slc">//package mandelbrot;</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>io<span class="hl sym">.*;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>io<span class="hl sym">.</span><span class="hl kwc">IOException</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>atomic<span class="hl sym">.</span><span class="hl kwc">AtomicInteger</span><span class="hl sym">;</span>
+
+<span class="hl kwa">public final class</span> mandelbrot
+<span class="hl sym">{</span>
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwc">String</span><span class="hl sym">[]</span> args<span class="hl sym">)</span> <span class="hl kwa">throws</span> <span class="hl kwc">Exception</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwb">int</span> size <span class="hl sym">=</span> <span class="hl num">200</span><span class="hl sym">;</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>args<span class="hl sym">.</span>length <span class="hl sym">&gt;=</span> <span class="hl num">1</span><span class="hl sym">)</span>
+            size <span class="hl sym">=</span> <span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">parseInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+        
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;P4</span><span class="hl esc">\n</span><span class="hl str">%d %d</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> size<span class="hl sym">,</span> size<span class="hl sym">);</span>
+        
+        <span class="hl kwb">int</span> width_bytes <span class="hl sym">=</span> size <span class="hl sym">/</span><span class="hl num">8</span> <span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwb">byte</span><span class="hl sym">[][]</span> output_data <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">byte</span><span class="hl sym">[</span>size<span class="hl sym">][</span>width_bytes<span class="hl sym">];</span>
+        <span class="hl kwb">int</span><span class="hl sym">[]</span> bytes_per_line <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">int</span><span class="hl sym">[</span>size<span class="hl sym">];</span>
+        
+        <span class="hl kwd">Compute</span><span class="hl sym">(</span>size<span class="hl sym">,</span> output_data<span class="hl sym">,</span> bytes_per_line<span class="hl sym">);</span>
+        
+        <span class="hl kwc">BufferedOutputStream</span> ostream <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">BufferedOutputStream</span><span class="hl sym">(</span><span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">);</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> size<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+            ostream<span class="hl sym">.</span><span class="hl kwd">write</span><span class="hl sym">(</span>output_data<span class="hl sym">[</span>i<span class="hl sym">],</span> <span class="hl num">0</span><span class="hl sym">,</span> bytes_per_line<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+        ostream<span class="hl sym">.</span><span class="hl kwd">close</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+    
+    <span class="hl kwa">private static final</span> <span class="hl kwb">void</span> <span class="hl kwd">Compute</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">int</span> N<span class="hl sym">,</span> <span class="hl kwa">final</span> <span class="hl kwb">byte</span><span class="hl sym">[][]</span> output<span class="hl sym">,</span> <span class="hl kwa">final</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> bytes_per_line<span class="hl sym">)</span>
+    <span class="hl sym">{</span>
+        <span class="hl kwa">final</span> <span class="hl kwb">double</span> inverse_N <span class="hl sym">=</span> <span class="hl num">2.0</span> <span class="hl sym">/</span> N<span class="hl sym">;</span>
+        <span class="hl kwa">final</span> <span class="hl kwc">AtomicInteger</span> current_line <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">AtomicInteger</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+        
+        <span class="hl kwa">final</span> <span class="hl kwc">Thread</span><span class="hl sym">[]</span> pool <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Thread</span><span class="hl sym">[</span><span class="hl kwc">Runtime</span><span class="hl sym">.</span><span class="hl kwd">getRuntime</span><span class="hl sym">().</span><span class="hl kwd">availableProcessors</span><span class="hl sym">()];</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> pool<span class="hl sym">.</span>length<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+        <span class="hl sym">{</span>
+            pool<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwc">Thread</span><span class="hl sym">()</span>
+            <span class="hl sym">{</span>
+                <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">()</span>
+                <span class="hl sym">{</span>
+                    <span class="hl kwb">int</span> y<span class="hl sym">;</span>
+                    <span class="hl kwa">while</span> <span class="hl sym">((</span>y <span class="hl sym">=</span> current_line<span class="hl sym">.</span><span class="hl kwd">getAndIncrement</span><span class="hl sym">()) &lt;</span> N<span class="hl sym">)</span>
+                    <span class="hl sym">{</span>
+                        <span class="hl kwb">byte</span><span class="hl sym">[]</span> pdata <span class="hl sym">=</span> output<span class="hl sym">[</span>y<span class="hl sym">];</span>
+                        
+                        <span class="hl kwb">int</span> bit_num <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+                        <span class="hl kwb">int</span> byte_count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+                        <span class="hl kwb">int</span> byte_accumulate <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+                        
+                        <span class="hl kwb">double</span> Civ <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">)</span>y <span class="hl sym">*</span> inverse_N <span class="hl sym">-</span> <span class="hl num">1.0</span><span class="hl sym">;</span>
+                        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> x <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> x <span class="hl sym">&lt;</span> N<span class="hl sym">;</span> x<span class="hl sym">++)</span>
+                        <span class="hl sym">{</span>
+                            <span class="hl kwb">double</span> Crv <span class="hl sym">= (</span><span class="hl kwb">double</span><span class="hl sym">)</span>x <span class="hl sym">*</span> inverse_N <span class="hl sym">-</span> <span class="hl num">1.5</span><span class="hl sym">;</span>
+                            
+                            <span class="hl kwb">double</span> Zrv <span class="hl sym">=</span> Crv<span class="hl sym">;</span>
+                            <span class="hl kwb">double</span> Ziv <span class="hl sym">=</span> Civ<span class="hl sym">;</span>
+                            
+                            <span class="hl kwb">double</span> Trv <span class="hl sym">=</span> Crv <span class="hl sym">*</span> Crv<span class="hl sym">;</span>
+                            <span class="hl kwb">double</span> Tiv <span class="hl sym">=</span> Civ <span class="hl sym">*</span> Civ<span class="hl sym">;</span>
+                            
+                            <span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">49</span><span class="hl sym">;</span>
+                            <span class="hl kwa">do</span>
+                            <span class="hl sym">{</span>
+                                Ziv <span class="hl sym">= (</span>Zrv <span class="hl sym">*</span> Ziv<span class="hl sym">) + (</span>Zrv <span class="hl sym">*</span> Ziv<span class="hl sym">) +</span> Civ<span class="hl sym">;</span>
+                                Zrv <span class="hl sym">=</span> Trv <span class="hl sym">-</span> Tiv <span class="hl sym">+</span> Crv<span class="hl sym">;</span>
+                                
+                                Trv <span class="hl sym">=</span> Zrv <span class="hl sym">*</span> Zrv<span class="hl sym">;</span>
+                                Tiv <span class="hl sym">=</span> Ziv <span class="hl sym">*</span> Ziv<span class="hl sym">;</span>
+                            <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">( ((</span>Trv <span class="hl sym">+</span> Tiv<span class="hl sym">) &lt;=</span> <span class="hl num">4.0</span><span class="hl sym">) &amp;&amp; (--</span>i <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">));</span>
+
+                            byte_accumulate <span class="hl sym">&lt;&lt;=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                            <span class="hl kwa">if</span> <span class="hl sym">(</span>i <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">)</span>
+                                byte_accumulate<span class="hl sym">++;</span>
+                            
+                            <span class="hl kwa">if</span> <span class="hl sym">(++</span>bit_num <span class="hl sym">==</span> <span class="hl num">8</span><span class="hl sym">)</span>
+                            <span class="hl sym">{</span>
+                                pdata<span class="hl sym">[</span> byte_count<span class="hl sym">++ ] = (</span><span class="hl kwb">byte</span><span class="hl sym">)</span>byte_accumulate<span class="hl sym">;</span>
+                                bit_num <span class="hl sym">=</span> byte_accumulate <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+                            <span class="hl sym">}</span>
+                        <span class="hl sym">}</span> <span class="hl slc">// end foreach column</span>
+                        
+                        <span class="hl kwa">if</span> <span class="hl sym">(</span>bit_num <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">)</span>
+                        <span class="hl sym">{</span>
+                            byte_accumulate <span class="hl sym">&lt;&lt;= (</span><span class="hl num">8</span> <span class="hl sym">- (</span>N <span class="hl sym">&amp;</span> <span class="hl num">7</span><span class="hl sym">));</span>
+                            pdata<span class="hl sym">[</span> byte_count<span class="hl sym">++ ] = (</span><span class="hl kwb">byte</span><span class="hl sym">)</span>byte_accumulate<span class="hl sym">;</span>
+                        <span class="hl sym">}</span>
+                        
+                        bytes_per_line<span class="hl sym">[</span>y<span class="hl sym">] =</span> byte_count<span class="hl sym">;</span>
+                    <span class="hl sym">}</span> <span class="hl slc">// end while (y &lt; N)</span>
+                <span class="hl sym">}</span> <span class="hl slc">// end void run()</span>
+            <span class="hl sym">};</span> <span class="hl slc">// end inner class definition</span>
+            
+            pool<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+        <span class="hl sym">}</span>
+        
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwc">Thread</span> t <span class="hl sym">:</span> pool<span class="hl sym">)</span>
+        <span class="hl sym">{</span>
+            <span class="hl kwa">try</span>
+            <span class="hl sym">{</span>
+                t<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">();</span>
+            <span class="hl sym">}</span>
+            <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwc">InterruptedException</span> e<span class="hl sym">)</span>
+            <span class="hl sym">{</span>
+                e<span class="hl sym">.</span><span class="hl kwd">printStackTrace</span><span class="hl sym">();</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>

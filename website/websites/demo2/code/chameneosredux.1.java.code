@@ -1,0 +1,261 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   contributed by Michael Barker</span>
+<span class="hl com">*/</span>
+
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">ArrayBlockingQueue</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">BlockingQueue</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">CountDownLatch</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>atomic<span class="hl sym">.</span><span class="hl kwc">AtomicInteger</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span>atomic<span class="hl sym">.</span><span class="hl kwc">AtomicReference</span><span class="hl sym">;</span>
+
+
+<span class="hl com">/**</span>
+<span class="hl com"> * This implementation uses the java.util.concurrent.atomic library</span>
+<span class="hl com"> * i.e. (compare and set) to avoid locking.  Real threads are used, but</span>
+<span class="hl com"> * are set up as a thread pool and meeting requests are pushed onto a</span>
+<span class="hl com"> * queue that feeds the thread pool.</span>
+<span class="hl com"> */</span>
+<span class="hl kwa">public final class</span> chameneosredux <span class="hl sym">{</span>
+
+    enum Colour <span class="hl sym">{</span>
+        blue<span class="hl sym">,</span>
+        red<span class="hl sym">,</span>
+        yellow
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private static</span> Colour <span class="hl kwd">doCompliment</span><span class="hl sym">(</span><span class="hl kwa">final</span> Colour c1<span class="hl sym">,</span> <span class="hl kwa">final</span> Colour c2<span class="hl sym">) {</span>
+        <span class="hl kwa">switch</span> <span class="hl sym">(</span>c1<span class="hl sym">) {</span>
+        <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+            <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">) {</span>
+            <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>red<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+        <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+            <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">) {</span>
+            <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>red<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+        <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+            <span class="hl kwa">switch</span> <span class="hl sym">(</span>c2<span class="hl sym">) {</span>
+            <span class="hl kwa">case</span> blue<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>red<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> red<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">;</span>
+            <span class="hl kwa">case</span> yellow<span class="hl sym">:</span>
+                <span class="hl kwa">return</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">throw new</span> <span class="hl kwc">RuntimeException</span><span class="hl sym">(</span><span class="hl str">&quot;Error&quot;</span><span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static final class</span> MeetingPlace <span class="hl sym">{</span>
+
+        <span class="hl kwa">private final</span> <span class="hl kwc">AtomicInteger</span> meetingsLeft<span class="hl sym">;</span>
+        <span class="hl kwa">private final</span> <span class="hl kwc">AtomicReference</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;</span> creatureRef <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">AtomicReference</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;();</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwd">MeetingPlace</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">int</span> meetings<span class="hl sym">) {</span>
+            meetingsLeft <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">AtomicInteger</span><span class="hl sym">(</span>meetings<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">meet</span><span class="hl sym">(</span><span class="hl kwa">final</span> Creature incoming<span class="hl sym">) {</span>
+            Colour newColour <span class="hl sym">=</span> null<span class="hl sym">;</span>
+            Creature first <span class="hl sym">=</span> null<span class="hl sym">;</span>
+            Creature next <span class="hl sym">=</span> null<span class="hl sym">;</span>
+            <span class="hl kwa">do</span> <span class="hl sym">{</span>
+                first <span class="hl sym">=</span> creatureRef<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">();</span>
+                next <span class="hl sym">=</span> incoming<span class="hl sym">;</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>first <span class="hl sym">!=</span> null<span class="hl sym">) {</span>
+                    newColour <span class="hl sym">=</span> <span class="hl kwd">doCompliment</span><span class="hl sym">(</span>incoming<span class="hl sym">.</span>colour<span class="hl sym">,</span> first<span class="hl sym">.</span>colour<span class="hl sym">);</span>
+                    next <span class="hl sym">=</span> null<span class="hl sym">;</span>
+                <span class="hl sym">}</span>
+            <span class="hl sym">}</span> <span class="hl kwa">while</span> <span class="hl sym">(!</span>creatureRef<span class="hl sym">.</span><span class="hl kwd">compareAndSet</span><span class="hl sym">(</span>first<span class="hl sym">,</span> next<span class="hl sym">));</span>
+
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>first <span class="hl sym">!=</span> null<span class="hl sym">) {</span>
+                <span class="hl kwa">final</span> <span class="hl kwb">int</span> meetings <span class="hl sym">=</span> meetingsLeft<span class="hl sym">.</span><span class="hl kwd">decrementAndGet</span><span class="hl sym">();</span>
+                <span class="hl kwa">if</span> <span class="hl sym">(</span>meetings <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+                    first<span class="hl sym">.</span><span class="hl kwd">setColour</span><span class="hl sym">(</span>incoming<span class="hl sym">.</span>id<span class="hl sym">,</span> newColour<span class="hl sym">);</span>
+                    incoming<span class="hl sym">.</span><span class="hl kwd">setColour</span><span class="hl sym">(</span>first<span class="hl sym">.</span>id<span class="hl sym">,</span> newColour<span class="hl sym">);</span>
+                <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                    first<span class="hl sym">.</span><span class="hl kwd">complete</span><span class="hl sym">();</span>
+                    incoming<span class="hl sym">.</span><span class="hl kwd">complete</span><span class="hl sym">();</span>
+                <span class="hl sym">}</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static final class</span> Dispatcher <span class="hl kwa">implements</span> <span class="hl kwc">Runnable</span> <span class="hl sym">{</span>
+        <span class="hl kwa">private final</span> <span class="hl kwc">BlockingQueue</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;</span> q<span class="hl sym">;</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwd">Dispatcher</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">BlockingQueue</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;</span> q<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>q <span class="hl sym">=</span> q<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">() {</span>
+            <span class="hl kwa">try</span> <span class="hl sym">{</span>
+                <span class="hl kwa">while</span> <span class="hl sym">(</span>true<span class="hl sym">) {</span>
+                    q<span class="hl sym">.</span><span class="hl kwd">take</span><span class="hl sym">().</span><span class="hl kwd">run</span><span class="hl sym">();</span>
+                <span class="hl sym">}</span>
+            <span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">InterruptedException</span> e<span class="hl sym">) {</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static final class</span> Creature <span class="hl sym">{</span>
+
+        <span class="hl kwa">private final</span> <span class="hl kwb">int</span> id<span class="hl sym">;</span>
+        <span class="hl kwa">private final</span> MeetingPlace place<span class="hl sym">;</span>
+        <span class="hl kwa">private final</span> <span class="hl kwc">BlockingQueue</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;</span> q<span class="hl sym">;</span>
+        <span class="hl kwa">private final</span> <span class="hl kwc">CountDownLatch</span> latch<span class="hl sym">;</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">int</span> sameCount <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">private</span> Colour colour<span class="hl sym">;</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwd">Creature</span><span class="hl sym">(</span><span class="hl kwa">final</span> MeetingPlace place<span class="hl sym">,</span> <span class="hl kwa">final</span> Colour colour<span class="hl sym">,</span>
+                        <span class="hl kwa">final</span> <span class="hl kwc">BlockingQueue</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;</span> q<span class="hl sym">,</span> <span class="hl kwa">final</span> <span class="hl kwc">CountDownLatch</span> latch<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>id <span class="hl sym">=</span> <span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwd">identityHashCode</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>place <span class="hl sym">=</span> place<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>latch <span class="hl sym">=</span> latch<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>colour <span class="hl sym">=</span> colour<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>q <span class="hl sym">=</span> q<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">complete</span><span class="hl sym">() {</span>
+            latch<span class="hl sym">.</span><span class="hl kwd">countDown</span><span class="hl sym">();</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">setColour</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">int</span> id<span class="hl sym">,</span> <span class="hl kwa">final</span> Colour newColour<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>colour <span class="hl sym">=</span> newColour<span class="hl sym">;</span>
+            count<span class="hl sym">++;</span>
+            sameCount <span class="hl sym">+=</span> <span class="hl num">1</span> ^ <span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">signum</span><span class="hl sym">(</span><span class="hl kwd">abs</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">.</span>id <span class="hl sym">-</span> id<span class="hl sym">));</span>
+            q<span class="hl sym">.</span><span class="hl kwd">add</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">private</span> <span class="hl kwb">int</span> <span class="hl kwd">abs</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">int</span> x<span class="hl sym">) {</span>
+            <span class="hl kwa">final</span> <span class="hl kwb">int</span> y <span class="hl sym">=</span> x <span class="hl sym">&gt;&gt;</span> <span class="hl num">31</span><span class="hl sym">;</span>
+            <span class="hl kwa">return</span> <span class="hl sym">(</span>x ^ y<span class="hl sym">) -</span> y<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">() {</span>
+            place<span class="hl sym">.</span><span class="hl kwd">meet</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">int</span> <span class="hl kwd">getCount</span><span class="hl sym">() {</span>
+            <span class="hl kwa">return</span> count<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        &#64;Override
+        <span class="hl kwa">public</span> <span class="hl kwc">String</span> <span class="hl kwd">toString</span><span class="hl sym">() {</span>
+            <span class="hl kwa">return</span> <span class="hl kwc">String</span><span class="hl sym">.</span><span class="hl kwd">valueOf</span><span class="hl sym">(</span>count<span class="hl sym">) +</span> <span class="hl kwd">getNumber</span><span class="hl sym">(</span>sameCount<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private static</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">int</span> n<span class="hl sym">,</span> <span class="hl kwa">final</span> Colour<span class="hl sym">...</span>colours<span class="hl sym">) {</span>
+        <span class="hl kwa">final</span> <span class="hl kwb">int</span> len <span class="hl sym">=</span> colours<span class="hl sym">.</span>length<span class="hl sym">;</span>
+        <span class="hl kwa">final</span> MeetingPlace place <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">MeetingPlace</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
+        <span class="hl kwa">final</span> Creature<span class="hl sym">[]</span> creatures <span class="hl sym">=</span> <span class="hl kwa">new</span> Creature<span class="hl sym">[</span>len<span class="hl sym">];</span>
+        <span class="hl kwa">final</span> <span class="hl kwc">BlockingQueue</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;</span> q <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">ArrayBlockingQueue</span><span class="hl sym">&lt;</span>Creature<span class="hl sym">&gt;(</span>len<span class="hl sym">);</span>
+        <span class="hl kwa">final</span> <span class="hl kwc">CountDownLatch</span> latch <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">CountDownLatch</span><span class="hl sym">(</span>len <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> len<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+            <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">print</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span> <span class="hl sym">+</span> colours<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+            creatures<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwd">Creature</span><span class="hl sym">(</span>place<span class="hl sym">,</span> colours<span class="hl sym">[</span>i<span class="hl sym">],</span> q<span class="hl sym">,</span> latch<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">();</span>
+        <span class="hl kwa">final</span> <span class="hl kwc">Thread</span><span class="hl sym">[]</span> ts <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Thread</span><span class="hl sym">[</span>len<span class="hl sym">];</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">,</span> h <span class="hl sym">=</span> ts<span class="hl sym">.</span>length<span class="hl sym">;</span> i <span class="hl sym">&lt;</span> h<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+            ts<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwc">Thread</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwd">Dispatcher</span><span class="hl sym">(</span>q<span class="hl sym">));</span>
+            ts<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">setDaemon</span><span class="hl sym">(</span>true<span class="hl sym">);</span>
+            ts<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">start</span><span class="hl sym">();</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwa">final</span> Creature creature <span class="hl sym">:</span> creatures<span class="hl sym">) {</span>
+            q<span class="hl sym">.</span><span class="hl kwd">add</span><span class="hl sym">(</span>creature<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">try</span> <span class="hl sym">{</span>
+            latch<span class="hl sym">.</span><span class="hl kwd">await</span><span class="hl sym">();</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">Thread</span> t <span class="hl sym">:</span> ts<span class="hl sym">) {</span>
+                t<span class="hl sym">.</span><span class="hl kwd">interrupt</span><span class="hl sym">();</span>
+            <span class="hl sym">}</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">Thread</span> t <span class="hl sym">:</span> ts<span class="hl sym">) {</span>
+                t<span class="hl sym">.</span><span class="hl kwd">join</span><span class="hl sym">();</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">InterruptedException</span> e1<span class="hl sym">) {</span>
+            <span class="hl kwc">System</span><span class="hl sym">.</span>err<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span><span class="hl str">&quot;Existing with error: &quot;</span> <span class="hl sym">+</span> e1<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwb">int</span> total <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwa">final</span> Creature creature <span class="hl sym">:</span> creatures<span class="hl sym">) {</span>
+            <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span>creature<span class="hl sym">);</span>
+            total <span class="hl sym">+=</span> creature<span class="hl sym">.</span><span class="hl kwd">getCount</span><span class="hl sym">();</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span><span class="hl kwd">getNumber</span><span class="hl sym">(</span>total<span class="hl sym">));</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">String</span><span class="hl sym">[]</span> args<span class="hl sym">){</span>
+        chameneosredux<span class="hl sym">.</span><span class="hl kwd">program_main</span><span class="hl sym">(</span>args<span class="hl sym">,</span>true<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">program_main</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">String</span><span class="hl sym">[]</span> args<span class="hl sym">,</span> <span class="hl kwa">final</span> <span class="hl kwb">boolean</span> isWarm<span class="hl sym">) {</span>
+
+        <span class="hl kwb">int</span> n <span class="hl sym">=</span> <span class="hl num">600</span><span class="hl sym">;</span>
+        <span class="hl kwa">try</span> <span class="hl sym">{</span>
+            n <span class="hl sym">=</span> <span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">parseInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]);</span>
+        <span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwc">Exception</span> e<span class="hl sym">) {</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwd">printColours</span><span class="hl sym">();</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">();</span>
+        <span class="hl kwd">run</span><span class="hl sym">(</span>n<span class="hl sym">,</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">);</span>
+        <span class="hl kwd">run</span><span class="hl sym">(</span>n<span class="hl sym">,</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">,</span>
+               Colour<span class="hl sym">.</span>blue<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private static final</span> <span class="hl kwc">String</span><span class="hl sym">[]</span> NUMBERS <span class="hl sym">= {</span>
+        <span class="hl str">&quot;zero&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;one&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;two&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;three&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;four&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;five&quot;</span><span class="hl sym">,</span>
+        <span class="hl str">&quot;six&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;seven&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;eight&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;nine&quot;</span>
+    <span class="hl sym">};</span>
+
+    <span class="hl kwa">private static</span> <span class="hl kwc">String</span> <span class="hl kwd">getNumber</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">int</span> n<span class="hl sym">) {</span>
+        <span class="hl kwa">final</span> <span class="hl kwc">StringBuilder</span> sb <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">StringBuilder</span><span class="hl sym">();</span>
+        <span class="hl kwa">final</span> <span class="hl kwc">String</span> nStr <span class="hl sym">=</span> <span class="hl kwc">String</span><span class="hl sym">.</span><span class="hl kwd">valueOf</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> nStr<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">();</span> i<span class="hl sym">++) {</span>
+            sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl str">&quot; &quot;</span><span class="hl sym">);</span>
+            sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span>NUMBERS<span class="hl sym">[</span><span class="hl kwc">Character</span><span class="hl sym">.</span><span class="hl kwd">getNumericValue</span><span class="hl sym">(</span>nStr<span class="hl sym">.</span><span class="hl kwd">charAt</span><span class="hl sym">(</span>i<span class="hl sym">))]);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">return</span> sb<span class="hl sym">.</span><span class="hl kwd">toString</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private static</span> <span class="hl kwb">void</span> <span class="hl kwd">printColours</span><span class="hl sym">() {</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>blue<span class="hl sym">,</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>blue<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>blue<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>red<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>yellow<span class="hl sym">,</span> Colour<span class="hl sym">.</span>blue<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>yellow<span class="hl sym">,</span> Colour<span class="hl sym">.</span>red<span class="hl sym">);</span>
+        <span class="hl kwd">printColours</span><span class="hl sym">(</span>Colour<span class="hl sym">.</span>yellow<span class="hl sym">,</span> Colour<span class="hl sym">.</span>yellow<span class="hl sym">);</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private static</span> <span class="hl kwb">void</span> <span class="hl kwd">printColours</span><span class="hl sym">(</span><span class="hl kwa">final</span> Colour c1<span class="hl sym">,</span> <span class="hl kwa">final</span> Colour c2<span class="hl sym">) {</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span>c1 <span class="hl sym">+</span> <span class="hl str">&quot; + &quot;</span> <span class="hl sym">+</span> c2 <span class="hl sym">+</span> <span class="hl str">&quot; -&gt; &quot;</span> <span class="hl sym">+</span> <span class="hl kwd">doCompliment</span><span class="hl sym">(</span>c1<span class="hl sym">,</span> c2<span class="hl sym">));</span>
+    <span class="hl sym">}</span>
+
+
+<span class="hl sym">}</span>

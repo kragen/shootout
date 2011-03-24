@@ -1,0 +1,165 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com"> http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com"> contributed by James McIlree</span>
+<span class="hl com"> ByteString code thanks to Matthieu Bentot and The Anh Tran</span>
+<span class="hl com"> modified by Andy Fingerhut </span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.*;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>io<span class="hl sym">.*;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.*;</span>
+
+<span class="hl kwa">public class</span> knucleotide <span class="hl sym">{</span>
+    <span class="hl kwa">static</span> <span class="hl kwc">ArrayList</span><span class="hl sym">&lt;</span><span class="hl kwc">Callable</span><span class="hl sym">&lt;</span> <span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt; &gt; &gt;</span> <span class="hl kwd">createFragmentTasks</span><span class="hl sym">(</span><span class="hl kwa">final</span> <span class="hl kwb">byte</span><span class="hl sym">[]</span> sequence<span class="hl sym">,</span> <span class="hl kwb">int</span><span class="hl sym">[]</span> fragmentLengths<span class="hl sym">) {</span>
+	<span class="hl kwc">ArrayList</span><span class="hl sym">&lt;</span><span class="hl kwc">Callable</span><span class="hl sym">&lt;</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;&gt;&gt;</span> tasks <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">ArrayList</span><span class="hl sym">&lt;</span><span class="hl kwc">Callable</span><span class="hl sym">&lt;</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;&gt;&gt;();</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> fragmentLength <span class="hl sym">:</span> fragmentLengths<span class="hl sym">) {</span>
+	    <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> index<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> index<span class="hl sym">&lt;</span>fragmentLength<span class="hl sym">;</span> index<span class="hl sym">++) {</span>
+		<span class="hl kwa">final</span> <span class="hl kwb">int</span> offset <span class="hl sym">=</span> index<span class="hl sym">;</span>
+		<span class="hl kwa">final</span> <span class="hl kwb">int</span> finalFragmentLength <span class="hl sym">=</span> fragmentLength<span class="hl sym">;</span>
+		tasks<span class="hl sym">.</span><span class="hl kwd">add</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwc">Callable</span><span class="hl sym">&lt;</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;&gt;() {</span>
+		    <span class="hl kwa">public</span> <span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> <span class="hl kwd">call</span><span class="hl sym">() {</span>
+			<span class="hl kwa">return</span> <span class="hl kwd">createFragmentMap</span><span class="hl sym">(</span>sequence<span class="hl sym">,</span> offset<span class="hl sym">,</span> finalFragmentLength<span class="hl sym">);</span>
+		    <span class="hl sym">}</span>
+		<span class="hl sym">});</span>
+	    <span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">return</span> tasks<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static</span> <span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> <span class="hl kwd">createFragmentMap</span><span class="hl sym">(</span><span class="hl kwb">byte</span><span class="hl sym">[]</span> sequence<span class="hl sym">,</span> <span class="hl kwb">int</span> offset<span class="hl sym">,</span> <span class="hl kwb">int</span> fragmentLength<span class="hl sym">) {</span>
+	<span class="hl kwc">HashMap</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> map <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">HashMap</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;();</span>
+	<span class="hl kwb">int</span> lastIndex <span class="hl sym">=</span> sequence<span class="hl sym">.</span>length <span class="hl sym">-</span> fragmentLength <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+	ByteString key <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span>fragmentLength<span class="hl sym">);</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> index<span class="hl sym">=</span>offset<span class="hl sym">;</span> index<span class="hl sym">&lt;</span>lastIndex<span class="hl sym">;</span> index<span class="hl sym">+=</span>fragmentLength<span class="hl sym">) {</span>
+	    key<span class="hl sym">.</span><span class="hl kwd">calculateHash</span><span class="hl sym">(</span>sequence<span class="hl sym">,</span> index<span class="hl sym">);</span>
+	    ByteString fragment <span class="hl sym">=</span> map<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">(</span>key<span class="hl sym">);</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>fragment <span class="hl sym">!=</span> null<span class="hl sym">) {</span>
+		fragment<span class="hl sym">.</span>count<span class="hl sym">++;</span>
+	    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+		map<span class="hl sym">.</span><span class="hl kwd">put</span><span class="hl sym">(</span>key<span class="hl sym">,</span> key<span class="hl sym">);</span>
+		key <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span>fragmentLength<span class="hl sym">);</span>
+	    <span class="hl sym">}</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">return</span> map<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl slc">// Destructive!</span>
+    <span class="hl kwa">static</span> <span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> <span class="hl kwd">sumTwoMaps</span><span class="hl sym">(</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> map1<span class="hl sym">,</span> <span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> map2<span class="hl sym">) {</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwc">Map</span><span class="hl sym">.</span>Entry<span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> entry <span class="hl sym">:</span> map2<span class="hl sym">.</span><span class="hl kwd">entrySet</span><span class="hl sym">()) {</span>
+	    ByteString sum <span class="hl sym">=</span> map1<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">(</span>entry<span class="hl sym">.</span><span class="hl kwd">getKey</span><span class="hl sym">());</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>sum <span class="hl sym">!=</span> null<span class="hl sym">)</span>
+		sum<span class="hl sym">.</span>count <span class="hl sym">+=</span> entry<span class="hl sym">.</span><span class="hl kwd">getValue</span><span class="hl sym">().</span>count<span class="hl sym">;</span>
+	    <span class="hl kwa">else</span>
+		map1<span class="hl sym">.</span><span class="hl kwd">put</span><span class="hl sym">(</span>entry<span class="hl sym">.</span><span class="hl kwd">getKey</span><span class="hl sym">(),</span> entry<span class="hl sym">.</span><span class="hl kwd">getValue</span><span class="hl sym">());</span>
+	<span class="hl sym">}</span>
+	<span class="hl kwa">return</span> map1<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static</span> <span class="hl kwc">String</span> <span class="hl kwd">writeFrequencies</span><span class="hl sym">(</span><span class="hl kwb">float</span> totalCount<span class="hl sym">,</span> <span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;</span> frequencies<span class="hl sym">) {</span>
+	<span class="hl kwc">SortedSet</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">&gt;</span> list <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">TreeSet</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">&gt;(</span>frequencies<span class="hl sym">.</span><span class="hl kwd">values</span><span class="hl sym">());</span>
+	<span class="hl kwc">StringBuilder</span> sb <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">StringBuilder</span><span class="hl sym">();</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span>ByteString k <span class="hl sym">:</span> list<span class="hl sym">)</span>
+	    sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwc">String</span><span class="hl sym">.</span><span class="hl kwd">format</span><span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> k<span class="hl sym">.</span><span class="hl kwd">toString</span><span class="hl sym">().</span><span class="hl kwd">toUpperCase</span><span class="hl sym">(), (</span><span class="hl kwb">float</span><span class="hl sym">)(</span>k<span class="hl sym">.</span>count<span class="hl sym">) *</span> <span class="hl num">100.0</span>f <span class="hl sym">/</span> totalCount<span class="hl sym">));</span>
+
+	<span class="hl kwa">return</span> sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">).</span><span class="hl kwd">toString</span><span class="hl sym">();</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static</span> <span class="hl kwc">String</span> <span class="hl kwd">writeCount</span><span class="hl sym">(</span><span class="hl kwc">List</span><span class="hl sym">&lt;</span><span class="hl kwc">Future</span><span class="hl sym">&lt;</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;&gt;&gt;</span> futures<span class="hl sym">,</span> <span class="hl kwc">String</span> nucleotideFragment<span class="hl sym">)</span> <span class="hl kwa">throws</span> <span class="hl kwc">Exception</span> <span class="hl sym">{</span>
+	ByteString key <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span>nucleotideFragment<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">());</span>
+	key<span class="hl sym">.</span><span class="hl kwd">calculateHash</span><span class="hl sym">(</span>nucleotideFragment<span class="hl sym">.</span><span class="hl kwd">getBytes</span><span class="hl sym">(),</span> <span class="hl num">0</span><span class="hl sym">);</span>
+
+	<span class="hl kwb">int</span> count <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwc">Future</span><span class="hl sym">&lt;</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;&gt;</span> future <span class="hl sym">:</span> futures<span class="hl sym">) {</span>
+	    ByteString temp <span class="hl sym">=</span> future<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">().</span><span class="hl kwd">get</span><span class="hl sym">(</span>key<span class="hl sym">);</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>temp <span class="hl sym">!=</span> null<span class="hl sym">)</span> count <span class="hl sym">+=</span> temp<span class="hl sym">.</span>count<span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwa">return</span> count <span class="hl sym">+</span> <span class="hl str">&quot;</span><span class="hl esc">\t</span><span class="hl str">&quot;</span> <span class="hl sym">+</span> nucleotideFragment<span class="hl sym">.</span><span class="hl kwd">toUpperCase</span><span class="hl sym">() +</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span> <span class="hl sym">(</span><span class="hl kwc">String</span><span class="hl sym">[]</span> args<span class="hl sym">)</span> <span class="hl kwa">throws</span> <span class="hl kwc">Exception</span> <span class="hl sym">{</span>
+	<span class="hl kwc">String</span> line<span class="hl sym">;</span>
+	<span class="hl kwc">BufferedReader</span> <span class="hl kwa">in</span> <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">BufferedReader</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwc">InputStreamReader</span><span class="hl sym">(</span><span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwa">in</span><span class="hl sym">));</span>
+	<span class="hl kwa">while</span> <span class="hl sym">((</span>line <span class="hl sym">=</span> <span class="hl kwa">in</span><span class="hl sym">.</span><span class="hl kwd">readLine</span><span class="hl sym">()) !=</span> null<span class="hl sym">) {</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>line<span class="hl sym">.</span><span class="hl kwd">startsWith</span><span class="hl sym">(</span><span class="hl str">&quot;&gt;THREE&quot;</span><span class="hl sym">))</span> <span class="hl kwa">break</span><span class="hl sym">;</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwc">ByteArrayOutputStream</span> baos <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">ByteArrayOutputStream</span><span class="hl sym">();</span>
+        <span class="hl kwb">byte</span> bytes<span class="hl sym">[] =</span> <span class="hl kwa">new</span> <span class="hl kwb">byte</span><span class="hl sym">[</span><span class="hl num">100</span><span class="hl sym">];</span>
+        <span class="hl kwa">while</span><span class="hl sym">((</span>line <span class="hl sym">=</span> <span class="hl kwa">in</span><span class="hl sym">.</span><span class="hl kwd">readLine</span><span class="hl sym">()) !=</span> null<span class="hl sym">) {</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>line<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">() &gt;</span> bytes<span class="hl sym">.</span>length<span class="hl sym">)</span>
+		bytes <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">byte</span><span class="hl sym">[</span>line<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">()];</span>
+
+	    <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+	    <span class="hl kwa">for</span><span class="hl sym">(</span>i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>line<span class="hl sym">.</span><span class="hl kwd">length</span><span class="hl sym">();</span> i<span class="hl sym">++)</span>
+		bytes<span class="hl sym">[</span>i<span class="hl sym">] = (</span><span class="hl kwb">byte</span><span class="hl sym">)</span>line<span class="hl sym">.</span><span class="hl kwd">charAt</span><span class="hl sym">(</span>i<span class="hl sym">);</span>
+	    baos<span class="hl sym">.</span><span class="hl kwd">write</span><span class="hl sym">(</span>bytes<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> i<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+	<span class="hl kwb">byte</span><span class="hl sym">[]</span> sequence <span class="hl sym">=</span> baos<span class="hl sym">.</span><span class="hl kwd">toByteArray</span><span class="hl sym">();</span>
+
+	<span class="hl kwc">ExecutorService</span> pool <span class="hl sym">=</span> <span class="hl kwc">Executors</span><span class="hl sym">.</span><span class="hl kwd">newFixedThreadPool</span><span class="hl sym">(</span><span class="hl kwc">Runtime</span><span class="hl sym">.</span><span class="hl kwd">getRuntime</span><span class="hl sym">().</span><span class="hl kwd">availableProcessors</span><span class="hl sym">());</span>
+	<span class="hl kwb">int</span><span class="hl sym">[]</span> fragmentLengths <span class="hl sym">= {</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl num">2</span><span class="hl sym">,</span> <span class="hl num">3</span><span class="hl sym">,</span> <span class="hl num">4</span><span class="hl sym">,</span> <span class="hl num">6</span><span class="hl sym">,</span> <span class="hl num">12</span><span class="hl sym">,</span> <span class="hl num">18</span> <span class="hl sym">};</span>
+	<span class="hl kwc">List</span><span class="hl sym">&lt;</span><span class="hl kwc">Future</span><span class="hl sym">&lt;</span><span class="hl kwc">Map</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">,</span> ByteString<span class="hl sym">&gt;&gt;&gt;</span> futures <span class="hl sym">=</span> pool<span class="hl sym">.</span><span class="hl kwd">invokeAll</span><span class="hl sym">(</span><span class="hl kwd">createFragmentTasks</span><span class="hl sym">(</span>sequence<span class="hl sym">,</span> fragmentLengths<span class="hl sym">));</span>
+	pool<span class="hl sym">.</span><span class="hl kwd">shutdown</span><span class="hl sym">();</span>
+
+	<span class="hl kwc">StringBuilder</span> sb <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">StringBuilder</span><span class="hl sym">();</span>
+
+	sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwd">writeFrequencies</span><span class="hl sym">(</span>sequence<span class="hl sym">.</span>length<span class="hl sym">,</span> futures<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">).</span><span class="hl kwd">get</span><span class="hl sym">()));</span>
+	sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwd">writeFrequencies</span><span class="hl sym">(</span>sequence<span class="hl sym">.</span>length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">,</span> <span class="hl kwd">sumTwoMaps</span><span class="hl sym">(</span>futures<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">).</span><span class="hl kwd">get</span><span class="hl sym">(),</span> futures<span class="hl sym">.</span><span class="hl kwd">get</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">).</span><span class="hl kwd">get</span><span class="hl sym">())));</span>
+
+	<span class="hl kwc">String</span><span class="hl sym">[]</span> nucleotideFragments <span class="hl sym">= {</span> <span class="hl str">&quot;ggt&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;ggta&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;ggtatt&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;ggtattttaatt&quot;</span><span class="hl sym">,</span> <span class="hl str">&quot;ggtattttaatttatagt&quot;</span> <span class="hl sym">};</span>
+	<span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwc">String</span> nucleotideFragment <span class="hl sym">:</span> nucleotideFragments<span class="hl sym">) {</span>
+	    sb<span class="hl sym">.</span><span class="hl kwd">append</span><span class="hl sym">(</span><span class="hl kwd">writeCount</span><span class="hl sym">(</span>futures<span class="hl sym">,</span> nucleotideFragment<span class="hl sym">));</span>
+	<span class="hl sym">}</span>
+
+	<span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">print</span><span class="hl sym">(</span>sb<span class="hl sym">.</span><span class="hl kwd">toString</span><span class="hl sym">());</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">static final class</span> ByteString <span class="hl kwa">implements</span> <span class="hl kwc">Comparable</span><span class="hl sym">&lt;</span>ByteString<span class="hl sym">&gt; {</span>
+        <span class="hl kwa">public</span> <span class="hl kwb">int</span> hash<span class="hl sym">,</span> count<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span>
+        <span class="hl kwa">public final</span> <span class="hl kwb">byte</span> bytes<span class="hl sym">[];</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwd">ByteString</span><span class="hl sym">(</span><span class="hl kwb">int</span> size<span class="hl sym">) {</span>
+            bytes <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwb">byte</span><span class="hl sym">[</span>size<span class="hl sym">];</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">calculateHash</span><span class="hl sym">(</span><span class="hl kwb">byte</span> k<span class="hl sym">[],</span> <span class="hl kwb">int</span> offset<span class="hl sym">) {</span>
+	    <span class="hl kwb">int</span> temp <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>bytes<span class="hl sym">.</span>length<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+		<span class="hl kwb">byte</span> b <span class="hl sym">=</span> k<span class="hl sym">[</span>offset<span class="hl sym">+</span>i<span class="hl sym">];</span>
+                bytes<span class="hl sym">[</span>i<span class="hl sym">] =</span> b<span class="hl sym">;</span>
+                temp <span class="hl sym">=</span> temp <span class="hl sym">*</span> <span class="hl num">31</span> <span class="hl sym">+</span> b<span class="hl sym">;</span>
+            <span class="hl sym">}</span>
+	    hash <span class="hl sym">=</span> temp<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">int</span> <span class="hl kwd">hashCode</span><span class="hl sym">() {</span>
+            <span class="hl kwa">return</span> hash<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">boolean</span> <span class="hl kwd">equals</span><span class="hl sym">(</span><span class="hl kwc">Object</span> obj<span class="hl sym">) {</span>
+	    <span class="hl kwa">return</span> <span class="hl kwc">Arrays</span><span class="hl sym">.</span><span class="hl kwd">equals</span><span class="hl sym">(</span>bytes<span class="hl sym">, ((</span>ByteString<span class="hl sym">)</span>obj<span class="hl sym">).</span>bytes<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">int</span> <span class="hl kwd">compareTo</span><span class="hl sym">(</span>ByteString other<span class="hl sym">) {</span>
+	    <span class="hl kwa">if</span> <span class="hl sym">(</span>other<span class="hl sym">.</span>count <span class="hl sym">!=</span> count<span class="hl sym">) {</span>
+		<span class="hl kwa">return</span> other<span class="hl sym">.</span>count <span class="hl sym">-</span> count<span class="hl sym">;</span>
+	    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+		<span class="hl slc">// Without this case, if there are two or more strings</span>
+		<span class="hl slc">// with exactly the same count in a Map, then the</span>
+		<span class="hl slc">// TreeSet constructor called in writeFrequencies will</span>
+		<span class="hl slc">// only add the first one, and the rest will not</span>
+		<span class="hl slc">// appear in the output.  Also this is required to</span>
+		<span class="hl slc">// satisfy the rules of the k-nucleotide problem.</span>
+		<span class="hl kwa">return</span> <span class="hl kwd">toString</span><span class="hl sym">().</span><span class="hl kwd">compareTo</span><span class="hl sym">(</span>other<span class="hl sym">.</span><span class="hl kwd">toString</span><span class="hl sym">());</span>
+	    <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+
+	<span class="hl kwa">public</span> <span class="hl kwc">String</span> <span class="hl kwd">toString</span><span class="hl sym">() {</span>
+	    <span class="hl kwa">return new</span> <span class="hl kwc">String</span><span class="hl sym">(</span>bytes<span class="hl sym">);</span>
+	<span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
