@@ -1,0 +1,157 @@
+<span class="hl com">/*</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by Christoph Bauer</span>
+<span class="hl com"> * slightly improved by Mark Hinds</span>
+<span class="hl com"> * SIMDified by Stefan Krause</span>
+<span class="hl com"> * translated in ANSI C by Francesco Massei</span>
+<span class="hl com"> */</span>
+
+<span class="hl dir">#include &lt;math.h&gt;</span>
+<span class="hl dir">#include &lt;stdio.h&gt;</span>
+<span class="hl dir">#include &lt;stdlib.h&gt;</span>
+
+<span class="hl dir">#define pi 3.141592653589793</span>
+<span class="hl dir">#define solar_mass (4 * pi * pi)</span>
+<span class="hl dir">#define days_per_year 365.24</span>
+
+<span class="hl kwc">typedef</span> <span class="hl kwb">double</span> v2df <span class="hl kwd">__attribute__</span> <span class="hl sym">((</span> <span class="hl kwd">vector_size</span><span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">*</span><span class="hl kwa">sizeof</span><span class="hl sym">(</span><span class="hl kwb">double</span><span class="hl sym">)) ));</span>
+
+<span class="hl dir">#define lower(_V) (((double*)&amp;_V)[0])</span>
+
+<span class="hl kwb">struct</span> planet <span class="hl sym">{</span>
+    v2df xy<span class="hl sym">;</span>
+    v2df z0<span class="hl sym">;</span> <span class="hl com">/* z and zero */</span>
+    v2df vxvy<span class="hl sym">;</span>
+    v2df vz00<span class="hl sym">;</span>	<span class="hl com">/* vz and zero */</span>
+    v2df massmass<span class="hl sym">;</span> <span class="hl com">/* the mass in both components */</span>
+<span class="hl sym">};</span>
+
+<span class="hl dir">#define NBODIES 5</span>
+<span class="hl kwb">static struct</span> planet bodies<span class="hl sym">[</span>NBODIES<span class="hl sym">] = {</span>
+  <span class="hl sym">{</span>                               <span class="hl com">/* sun */</span>
+      <span class="hl sym">{</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">}, {</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">}, {</span><span class="hl num">0</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">}, {</span><span class="hl num">0</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">}, {</span>solar_mass<span class="hl sym">,</span>solar_mass<span class="hl sym">}</span>
+  <span class="hl sym">},</span>
+  <span class="hl sym">{</span>                               <span class="hl com">/* jupiter */</span>
+      <span class="hl sym">{</span><span class="hl num">4.84143144246472090e+00</span><span class="hl sym">,</span>
+    <span class="hl sym">-</span><span class="hl num">1.16032004402742839e+00</span><span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">1.03622044471123109e-01</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">1.66007664274403694e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span>
+    <span class="hl num">7.69901118419740425e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">6.90460016972063023e-05</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">9.54791938424326609e-04</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span><span class="hl num">9.54791938424326609e-04</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">}</span>
+  <span class="hl sym">},</span>
+  <span class="hl sym">{</span>                               <span class="hl com">/* saturn */</span>
+      <span class="hl sym">{</span><span class="hl num">8.34336671824457987e+00</span><span class="hl sym">,</span>
+    <span class="hl num">4.12479856412430479e+00</span><span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">4.03523417114321381e-01</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">2.76742510726862411e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span>
+    <span class="hl num">4.99852801234917238e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">2.30417297573763929e-05</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">2.85885980666130812e-04</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span><span class="hl num">2.85885980666130812e-04</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">}</span>
+  <span class="hl sym">},</span>
+  <span class="hl sym">{</span>                               <span class="hl com">/* uranus */</span>
+      <span class="hl sym">{</span><span class="hl num">1.28943695621391310e+01</span><span class="hl sym">,</span>
+    <span class="hl sym">-</span><span class="hl num">1.51111514016986312e+01</span><span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">2.23307578892655734e-01</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">2.96460137564761618e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span>
+    <span class="hl num">2.37847173959480950e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">2.96589568540237556e-05</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">4.36624404335156298e-05</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span><span class="hl num">4.36624404335156298e-05</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">}</span>
+  <span class="hl sym">},</span>
+  <span class="hl sym">{</span>                               <span class="hl com">/* neptune */</span>
+      <span class="hl sym">{</span><span class="hl num">1.53796971148509165e+01</span><span class="hl sym">,</span>
+    <span class="hl sym">-</span><span class="hl num">2.59193146099879641e+01</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">1.79258772950371181e-01</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">2.68067772490389322e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span>
+    <span class="hl num">1.62824170038242295e-03</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">},</span>
+    <span class="hl sym">{-</span><span class="hl num">9.51592254519715870e-05</span> <span class="hl sym">*</span> days_per_year<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">},</span>
+    <span class="hl sym">{</span><span class="hl num">5.15138902046611451e-05</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">,</span><span class="hl num">5.15138902046611451e-05</span> <span class="hl sym">*</span> solar_mass<span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">};</span>
+
+<span class="hl kwb">static</span> v2df dtdt <span class="hl sym">= {</span><span class="hl num">0.01</span><span class="hl sym">,</span> <span class="hl num">0.01</span><span class="hl sym">};</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">advance</span><span class="hl sym">(</span><span class="hl kwb">int</span> q<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwb">struct</span> planet <span class="hl sym">*</span>b<span class="hl sym">, *</span>b2<span class="hl sym">;</span>
+  v2df dxdy<span class="hl sym">,</span> dz00<span class="hl sym">,</span> tsquare<span class="hl sym">,</span> distance2<span class="hl sym">,</span> magmag<span class="hl sym">;</span>
+  <span class="hl kwb">int</span> i<span class="hl sym">,</span> j<span class="hl sym">,</span> k<span class="hl sym">;</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>k<span class="hl sym">=</span><span class="hl num">1</span><span class="hl sym">;</span> k<span class="hl sym">&lt;=</span>q<span class="hl sym">; ++</span>k<span class="hl sym">) {</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NBODIES<span class="hl sym">; ++</span>i<span class="hl sym">) {</span>
+        b <span class="hl sym">= &amp;(</span>bodies<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> NBODIES<span class="hl sym">;</span> j<span class="hl sym">++) {</span>
+          b2 <span class="hl sym">= &amp;(</span>bodies<span class="hl sym">[</span>j<span class="hl sym">]);</span>
+          dxdy <span class="hl sym">=</span> b<span class="hl sym">-&gt;</span>xy <span class="hl sym">-</span> b2<span class="hl sym">-&gt;</span>xy<span class="hl sym">;</span>
+          dz00 <span class="hl sym">=</span> b<span class="hl sym">-&gt;</span>z0 <span class="hl sym">-</span> b2<span class="hl sym">-&gt;</span>z0<span class="hl sym">;</span>
+          <span class="hl com">/* dx*dx+dy*dy | dz*dz */</span>
+          tsquare <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_haddpd</span><span class="hl sym">(</span>dxdy<span class="hl sym">*</span>dxdy<span class="hl sym">,</span>dz00<span class="hl sym">*</span>dz00<span class="hl sym">);</span>
+          <span class="hl com">/* dx*dx+dy*dy+dz*dz | dx*dx+dy*dy+dz*dz */</span>
+          distance2 <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_haddpd</span><span class="hl sym">(</span>tsquare<span class="hl sym">,</span>tsquare<span class="hl sym">);</span>
+          magmag <span class="hl sym">=</span> dtdt <span class="hl sym">/ (</span><span class="hl kwd">__builtin_ia32_sqrtpd</span><span class="hl sym">(</span>distance2<span class="hl sym">)*</span>distance2<span class="hl sym">);</span>
+          dxdy <span class="hl sym">*=</span> magmag<span class="hl sym">;</span>
+          dz00 <span class="hl sym">*=</span> magmag<span class="hl sym">;</span>
+          b<span class="hl sym">-&gt;</span>vxvy <span class="hl sym">-=</span> dxdy <span class="hl sym">*</span> b2<span class="hl sym">-&gt;</span>massmass<span class="hl sym">;</span>
+          b<span class="hl sym">-&gt;</span>vz00 <span class="hl sym">-=</span> dz00 <span class="hl sym">*</span> b2<span class="hl sym">-&gt;</span>massmass<span class="hl sym">;</span>
+          b2<span class="hl sym">-&gt;</span>vxvy <span class="hl sym">+=</span> dxdy <span class="hl sym">*</span> b<span class="hl sym">-&gt;</span>massmass<span class="hl sym">;</span>
+          b2<span class="hl sym">-&gt;</span>vz00 <span class="hl sym">+=</span> dz00 <span class="hl sym">*</span> b<span class="hl sym">-&gt;</span>massmass<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NBODIES<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+        bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>xy <span class="hl sym">+=</span> dtdt <span class="hl sym">*</span> bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>vxvy<span class="hl sym">;</span>
+        bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>z0 <span class="hl sym">+=</span> dtdt <span class="hl sym">*</span> bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>vz00<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static double</span> <span class="hl kwd">energy</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+  v2df e <span class="hl sym">= {</span><span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">};</span>
+  v2df half <span class="hl sym">= {</span><span class="hl num">0.5</span><span class="hl sym">,</span> <span class="hl num">0.5</span><span class="hl sym">};</span>
+  v2df sq<span class="hl sym">,</span> dxdy<span class="hl sym">,</span> dz00<span class="hl sym">,</span> distance<span class="hl sym">;</span>
+  <span class="hl kwb">struct</span> planet <span class="hl sym">*</span>b<span class="hl sym">, *</span>b2<span class="hl sym">;</span>
+  <span class="hl kwb">int</span> i<span class="hl sym">,</span> j<span class="hl sym">;</span>
+
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NBODIES<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+    b <span class="hl sym">= &amp;(</span>bodies<span class="hl sym">[</span>i<span class="hl sym">]);</span>
+    <span class="hl com">/* b-&gt;mass*(vx*vx + vy*vy) | b-&gt;mass*(vz*vz + 0*0) */</span>
+    sq <span class="hl sym">=</span> b<span class="hl sym">-&gt;</span>massmass <span class="hl sym">*</span> <span class="hl kwd">__builtin_ia32_haddpd</span><span class="hl sym">(</span>b<span class="hl sym">-&gt;</span>vxvy<span class="hl sym">*</span>b<span class="hl sym">-&gt;</span>vxvy<span class="hl sym">,</span> b<span class="hl sym">-&gt;</span>vz00<span class="hl sym">*</span>b<span class="hl sym">-&gt;</span>vz00<span class="hl sym">);</span>
+    sq <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_haddpd</span><span class="hl sym">(</span>sq<span class="hl sym">,</span> sq<span class="hl sym">);</span>
+    e <span class="hl sym">+=</span> half <span class="hl sym">*</span> sq<span class="hl sym">;</span>
+    <span class="hl kwa">for</span> <span class="hl sym">(</span>j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> NBODIES<span class="hl sym">;</span> j<span class="hl sym">++) {</span>
+      b2 <span class="hl sym">= &amp;(</span>bodies<span class="hl sym">[</span>j<span class="hl sym">]);</span>
+      dxdy <span class="hl sym">=</span> b<span class="hl sym">-&gt;</span>xy <span class="hl sym">-</span> b2<span class="hl sym">-&gt;</span>xy<span class="hl sym">;</span>
+      dz00 <span class="hl sym">=</span> b<span class="hl sym">-&gt;</span>z0 <span class="hl sym">-</span> b2<span class="hl sym">-&gt;</span>z0<span class="hl sym">;</span>
+      <span class="hl com">/* b-&gt;mass*(vx*vx + vy*vy) | b-&gt;mass*(vz*vz + 0*0) */</span>
+      distance <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_haddpd</span><span class="hl sym">(</span>dxdy<span class="hl sym">*</span>dxdy<span class="hl sym">,</span> dz00<span class="hl sym">*</span>dz00<span class="hl sym">);</span>
+      distance <span class="hl sym">=</span> <span class="hl kwd">__builtin_ia32_sqrtpd</span><span class="hl sym">(</span><span class="hl kwd">__builtin_ia32_haddpd</span><span class="hl sym">(</span>distance<span class="hl sym">,</span>distance<span class="hl sym">));</span>
+      e <span class="hl sym">-= (</span>b<span class="hl sym">-&gt;</span>massmass <span class="hl sym">*</span> b2<span class="hl sym">-&gt;</span>massmass<span class="hl sym">) /</span> distance<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+  <span class="hl kwa">return</span> <span class="hl kwd">lower</span><span class="hl sym">(</span>e<span class="hl sym">);</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">static void</span> <span class="hl kwd">offset_momentum</span><span class="hl sym">()</span>
+<span class="hl sym">{</span>
+  v2df pxpy <span class="hl sym">= {</span><span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">};</span>
+  v2df pz00 <span class="hl sym">= {</span><span class="hl num">0.0</span><span class="hl sym">,</span> <span class="hl num">0.0</span><span class="hl sym">};</span>
+  v2df solar_mass_inv <span class="hl sym">= {</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> solar_mass<span class="hl sym">,</span> <span class="hl num">1.0</span> <span class="hl sym">/</span> solar_mass<span class="hl sym">};</span>
+  <span class="hl kwb">int</span> i<span class="hl sym">;</span>
+  <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> NBODIES<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+    pxpy <span class="hl sym">+=</span> bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>vxvy <span class="hl sym">*</span> bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>massmass<span class="hl sym">;</span>
+    pz00 <span class="hl sym">+=</span> bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>vz00 <span class="hl sym">*</span> bodies<span class="hl sym">[</span>i<span class="hl sym">].</span>massmass<span class="hl sym">;</span>
+  <span class="hl sym">}</span>
+  bodies<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>vxvy <span class="hl sym">= -</span> pxpy <span class="hl sym">*</span> solar_mass_inv<span class="hl sym">;</span>
+  bodies<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">].</span>vz00 <span class="hl sym">= -</span> pz00 <span class="hl sym">*</span> solar_mass_inv<span class="hl sym">;</span>
+<span class="hl sym">}</span>
+
+<span class="hl kwb">int</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwb">int</span> argc<span class="hl sym">,</span> <span class="hl kwb">char</span> <span class="hl sym">**</span> argv<span class="hl sym">)</span>
+<span class="hl sym">{</span>
+  <span class="hl kwd">offset_momentum</span><span class="hl sym">();</span>
+  <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%.9f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">energy</span><span class="hl sym">());</span>
+  <span class="hl kwd">advance</span><span class="hl sym">(</span><span class="hl kwd">atoi</span><span class="hl sym">(</span>argv<span class="hl sym">[</span><span class="hl num">1</span><span class="hl sym">]));</span>
+  <span class="hl kwd">printf</span> <span class="hl sym">(</span><span class="hl str">&quot;%.9f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span> <span class="hl kwd">energy</span><span class="hl sym">());</span>
+  <span class="hl kwa">return</span> <span class="hl num">0</span><span class="hl sym">;</span>
+<span class="hl sym">}</span>
+

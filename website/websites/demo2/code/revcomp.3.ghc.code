@@ -1,0 +1,92 @@
+<span class="hl com">{-# LANGUAGE BangPatterns #-}</span>
+<span class="hl com">{-# OPTIONS_GHC -funbox-strict-fields #-}</span>
+
+<span class="hl com">{-</span>
+<span class="hl com">The Computer Language Benchmarks Game</span>
+<span class="hl com"> http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">contributed by Louis Wasserman</span>
+<span class="hl com">-}</span>
+
+import Monad
+import Foreign
+import Data.ByteString.Internal
+import System.IO
+
+data Buf <span class="hl sym">=</span> Buf <span class="hl sym">!</span>Int <span class="hl sym">!</span>Int <span class="hl sym">!(</span>Ptr Word8<span class="hl sym">)</span> 
+
+withBuf run <span class="hl sym">=</span> run . Buf <span class="hl num">0</span> ini <span class="hl sym">=&lt;&lt;</span> mallocBytes ini
+  where ini <span class="hl sym">=</span> <span class="hl num">1024</span>
+
+newSize len sz
+  <span class="hl sym">|</span> len <span class="hl sym">&lt;=</span> sz  <span class="hl sym">=</span> sz
+  <span class="hl sym">|</span> otherwise  <span class="hl sym">=</span> newSize len <span class="hl sym">(</span><span class="hl num">2</span> <span class="hl sym">*</span> sz<span class="hl sym">)</span>
+
+<span class="hl com">{-# INLINE putBuf #-}</span>
+putBuf pS lS <span class="hl sym">(</span>Buf lD szD pD<span class="hl sym">)</span> run
+  <span class="hl sym">|</span> lD' <span class="hl sym">&gt;</span> szD  <span class="hl sym">=</span> do
+    let szD' <span class="hl sym">=</span> newSize lD' szD
+    pD' <span class="hl sym">&lt;-</span> reallocBytes pD szD'
+    copyArray <span class="hl sym">(</span>pD' <span class="hl sym">+*</span> lD<span class="hl sym">)</span> pS lS
+    run <span class="hl sym">(</span>Buf lD' szD' pD'<span class="hl sym">)</span>
+  <span class="hl sym">|</span> otherwise  <span class="hl sym">=</span> do
+    copyArray <span class="hl sym">(</span>pD <span class="hl sym">+*</span> lD<span class="hl sym">)</span> pS lS
+    run <span class="hl sym">(</span>Buf lD' szD pD<span class="hl sym">)</span>
+  where lD' <span class="hl sym">=</span> lD <span class="hl sym">+</span> lS
+
+findChar p n c zero one <span class="hl sym">=</span> do
+    q <span class="hl sym">&lt;-</span> memchr p c <span class="hl sym">(</span>fromIntegral <span class="hl sym">(</span>n <span class="hl sym">::</span> Int<span class="hl sym">))</span>
+    if q <span class="hl sym">==</span> nullPtr then zero else one $<span class="hl sym">!</span> q `minusPtr` p
+
+clearBuf <span class="hl sym">(</span>Buf _ lB pB<span class="hl sym">) =</span> Buf <span class="hl num">0</span> lB pB
+
+main <span class="hl sym">=</span> allocaArray <span class="hl num">82</span> $ \ line <span class="hl sym">-&gt;</span>
+  let go <span class="hl sym">!</span>buf <span class="hl sym">=</span> do
+      <span class="hl sym">!</span>m <span class="hl sym">&lt;-</span> hGetBuf stdin line <span class="hl num">82</span>
+      if m <span class="hl sym">==</span> <span class="hl num">0</span> then revcomp buf else do
+        findChar line m <span class="hl sym">(</span>c2w '<span class="hl sym">&gt;</span>'<span class="hl sym">)</span> 
+          <span class="hl sym">(</span>putBuf line m buf go<span class="hl sym">)</span>
+          <span class="hl sym">(</span>\ end <span class="hl sym">-&gt;</span> do
+            putBuf line end buf revcomp
+            putBuf <span class="hl sym">(</span>line <span class="hl sym">+*</span> end<span class="hl sym">) (</span>m <span class="hl sym">-</span> end<span class="hl sym">) (</span>clearBuf buf<span class="hl sym">)</span>
+              go<span class="hl sym">)</span>
+    in withBuf go
+
+<span class="hl sym">(+*) =</span> advancePtr
+
+<span class="hl com">{-# INLINE comps #-}</span>
+comps <span class="hl sym">=</span> Prelude.zipWith <span class="hl sym">(</span>\ a b <span class="hl sym">-&gt; (</span>fromEnum a<span class="hl sym">,</span> c2w b<span class="hl sym">))</span> <span class="hl str">&quot;AaCcGgTtUuMmRrYyKkVvHhDdBb&quot;</span> 
+  <span class="hl str">&quot;TTGGCCAAAAKKYYRRMMBBDDHHVV&quot;</span>
+
+ca <span class="hl sym">::</span> Ptr Word8
+ca <span class="hl sym">=</span> inlinePerformIO $ do
+       <span class="hl sym">!</span>a <span class="hl sym">&lt;-</span> mallocArray <span class="hl num">200</span>
+       mapM_ <span class="hl sym">(</span>\ i <span class="hl sym">-&gt;</span> pokeByteOff a <span class="hl sym">(</span>fromIntegral i<span class="hl sym">)</span> i <span class="hl sym">) [</span><span class="hl num">0</span>.<span class="hl num">.199</span><span class="hl sym">::</span>Word8<span class="hl sym">]</span>
+       mapM_ <span class="hl sym">(</span>uncurry <span class="hl sym">(</span>pokeByteOff a<span class="hl sym">))</span> comps
+       return a
+
+revcomp <span class="hl sym">(</span>Buf lBuf _ pBuf<span class="hl sym">) =</span> when <span class="hl sym">(</span>lBuf <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> $ ca `seq`
+  findChar pBuf lBuf <span class="hl sym">(</span>c2w '\n'<span class="hl sym">)</span> undefined $ \ begin <span class="hl sym">-&gt;</span> let
+    begin' <span class="hl sym">=</span> begin <span class="hl sym">+</span> <span class="hl num">1</span>
+    rc <span class="hl sym">::</span> Ptr Word8 <span class="hl sym">-&gt;</span> Ptr Word8 <span class="hl sym">-&gt;</span> IO <span class="hl sym">()</span>
+    rc <span class="hl sym">!</span>i <span class="hl sym">!</span>j <span class="hl sym">|</span> i <span class="hl sym">&lt;</span> j <span class="hl sym">=</span> do
+      x <span class="hl sym">&lt;-</span> peek i
+      if x <span class="hl sym">==</span> c2w '\n' then let <span class="hl sym">!</span>i' <span class="hl sym">=</span> i <span class="hl sym">+*</span> <span class="hl num">1</span> in rc1 j i' <span class="hl sym">=&lt;&lt;</span> peek i'
+        else rc1 j i x
+    rc i j <span class="hl sym">=</span> when <span class="hl sym">(</span>i <span class="hl sym">==</span> j<span class="hl sym">) (</span>poke i <span class="hl sym">=&lt;&lt;</span> comp <span class="hl sym">=&lt;&lt;</span> peek i<span class="hl sym">)</span>
+    
+    rc1 <span class="hl sym">!</span>j <span class="hl sym">!</span>i <span class="hl sym">!</span>xi <span class="hl sym">=</span> do
+      y <span class="hl sym">&lt;-</span> peek j
+      if y <span class="hl sym">==</span> c2w '\n' then let <span class="hl sym">!</span>j' <span class="hl sym">=</span> j <span class="hl sym">+* (-</span><span class="hl num">1</span><span class="hl sym">)</span> in rc2 i xi j' <span class="hl sym">=&lt;&lt;</span> peek j'
+        else rc2 i xi j y
+    
+    comp <span class="hl sym">=</span> peekElemOff ca . fromIntegral
+    
+    rc2 <span class="hl sym">!</span>i <span class="hl sym">!</span>xi <span class="hl sym">!</span>j <span class="hl sym">!</span>xj <span class="hl sym">=</span> do
+      poke j <span class="hl sym">=&lt;&lt;</span> comp xi
+      poke i <span class="hl sym">=&lt;&lt;</span> comp xj
+      rc <span class="hl sym">(</span>i <span class="hl sym">+*</span> <span class="hl num">1</span><span class="hl sym">) (</span>j <span class="hl sym">+* (-</span><span class="hl num">1</span><span class="hl sym">))</span>
+    in do
+      hPutBuf stdout pBuf begin'
+      rc <span class="hl sym">(</span>pBuf <span class="hl sym">+*</span> begin'<span class="hl sym">) (</span>pBuf <span class="hl sym">+* (</span>lBuf <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">))</span>
+      hPutBuf stdout <span class="hl sym">(</span>pBuf <span class="hl sym">+*</span> begin'<span class="hl sym">) (</span>lBuf <span class="hl sym">-</span> begin <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>

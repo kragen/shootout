@@ -1,0 +1,128 @@
+<span class="hl com">/**</span>
+<span class="hl com"> * The Computer Language Benchmarks Game</span>
+<span class="hl com"> * http://shootout.alioth.debian.org/</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * contributed by Fabien Le Floc'h</span>
+<span class="hl com"> *</span>
+<span class="hl com"> * Java implementation of thread-ring benchmark. Best performance is achieved with </span>
+<span class="hl com"> * MAX_THREAD=1 as the thread-ring test is bested with only 1 os thread.</span>
+<span class="hl com"> * This implementation shows using a simple thread pool solves the thread context</span>
+<span class="hl com"> * switch issue.</span>
+<span class="hl com"> */</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">BlockingQueue</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">ExecutorService</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">Executors</span><span class="hl sym">;</span>
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>util<span class="hl sym">.</span>concurrent<span class="hl sym">.</span><span class="hl kwc">LinkedBlockingQueue</span><span class="hl sym">;</span>
+
+<span class="hl kwa">public class</span> threadring <span class="hl sym">{</span>
+    <span class="hl kwa">private static final</span> <span class="hl kwb">int</span> MAX_NODES <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+    <span class="hl kwa">private static final</span> <span class="hl kwb">int</span> MAX_THREADS <span class="hl sym">=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+
+    <span class="hl kwa">private</span> <span class="hl kwc">ExecutorService</span> executor<span class="hl sym">;</span>
+    <span class="hl kwa">private final</span> <span class="hl kwb">int</span> N<span class="hl sym">;</span>
+
+    <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">main</span><span class="hl sym">(</span><span class="hl kwc">String</span><span class="hl sym">[]</span> args<span class="hl sym">) {</span>
+        threadring ring <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">threadring</span><span class="hl sym">(</span><span class="hl kwc">Integer</span><span class="hl sym">.</span><span class="hl kwd">parseInt</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]));</span>
+        <span class="hl kwc">Node</span> node <span class="hl sym">=</span> ring<span class="hl sym">.</span><span class="hl kwd">start</span><span class="hl sym">(</span>MAX_NODES<span class="hl sym">);</span>
+        node<span class="hl sym">.</span><span class="hl kwd">sendMessage</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwd">TokenMessage</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">));</span>
+    <span class="hl sym">}</span>
+    
+    <span class="hl kwa">public</span> <span class="hl kwd">threadring</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">) {</span>
+        N <span class="hl sym">=</span> n<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">public</span> <span class="hl kwc">Node</span> <span class="hl kwd">start</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">) {</span>
+        <span class="hl kwc">Node</span><span class="hl sym">[]</span> nodes <span class="hl sym">=</span> <span class="hl kwd">spawnNodes</span><span class="hl sym">(</span>n<span class="hl sym">);</span>
+        <span class="hl kwd">connectNodes</span><span class="hl sym">(</span>n<span class="hl sym">,</span> nodes<span class="hl sym">);</span>
+        <span class="hl kwa">return</span> nodes<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private</span> <span class="hl kwc">Node</span><span class="hl sym">[]</span> <span class="hl kwd">spawnNodes</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">) {</span>
+        executor <span class="hl sym">=</span> <span class="hl kwc">Executors</span><span class="hl sym">.</span><span class="hl kwd">newFixedThreadPool</span><span class="hl sym">(</span>MAX_THREADS<span class="hl sym">);</span>
+        <span class="hl kwc">Node</span><span class="hl sym">[]</span> nodes <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Node</span><span class="hl sym">[</span>n<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">];</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n <span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+            nodes<span class="hl sym">[</span>i<span class="hl sym">] =</span> <span class="hl kwa">new</span> <span class="hl kwc">Node</span><span class="hl sym">(</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">,</span> null<span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">return</span> nodes<span class="hl sym">;</span>
+    <span class="hl sym">}</span>
+    
+    <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">connectNodes</span><span class="hl sym">(</span><span class="hl kwb">int</span> n<span class="hl sym">,</span> <span class="hl kwc">Node</span><span class="hl sym">[]</span> nodes<span class="hl sym">) {</span>
+        nodes<span class="hl sym">[</span>n<span class="hl sym">] =</span> nodes<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+        <span class="hl kwa">for</span> <span class="hl sym">(</span><span class="hl kwb">int</span> i<span class="hl sym">=</span><span class="hl num">0</span><span class="hl sym">;</span> i<span class="hl sym">&lt;</span>n<span class="hl sym">;</span> i<span class="hl sym">++) {</span>
+            nodes<span class="hl sym">[</span>i<span class="hl sym">].</span><span class="hl kwd">connect</span><span class="hl sym">(</span>nodes<span class="hl sym">[</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">]);</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private static class</span> TokenMessage <span class="hl sym">{</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">int</span> nodeId<span class="hl sym">;</span>
+        <span class="hl kwa">private volatile</span> <span class="hl kwb">int</span> value<span class="hl sym">;</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">boolean</span> isStop<span class="hl sym">;</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwd">TokenMessage</span><span class="hl sym">(</span><span class="hl kwb">int</span> nodeId<span class="hl sym">,</span> <span class="hl kwb">int</span> value<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>nodeId <span class="hl sym">=</span> nodeId<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>value <span class="hl sym">=</span> value<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwd">TokenMessage</span><span class="hl sym">(</span><span class="hl kwb">int</span> nodeId<span class="hl sym">,</span> <span class="hl kwb">int</span> value<span class="hl sym">,</span> <span class="hl kwb">boolean</span> isStop<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>nodeId <span class="hl sym">=</span> nodeId<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>value <span class="hl sym">=</span> value<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>isStop <span class="hl sym">=</span> isStop<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+
+    <span class="hl kwa">private class</span> <span class="hl kwc">Node</span> <span class="hl kwa">implements</span> <span class="hl kwc">Runnable</span> <span class="hl sym">{</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">int</span> nodeId<span class="hl sym">;</span>
+        <span class="hl kwa">private</span> <span class="hl kwc">Node</span> nextNode<span class="hl sym">;</span>
+        <span class="hl kwa">private</span> <span class="hl kwc">BlockingQueue</span><span class="hl sym">&lt;</span>TokenMessage<span class="hl sym">&gt;</span> queue <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">LinkedBlockingQueue</span><span class="hl sym">&lt;</span>TokenMessage<span class="hl sym">&gt;();</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">boolean</span> isActive <span class="hl sym">=</span> false<span class="hl sym">;</span>
+        <span class="hl kwa">private</span> <span class="hl kwb">int</span> counter<span class="hl sym">;</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwc">Node</span><span class="hl sym">(</span><span class="hl kwb">int</span> id<span class="hl sym">,</span> <span class="hl kwc">Node</span> nextNode<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>nodeId <span class="hl sym">=</span> id<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>nextNode <span class="hl sym">=</span> nextNode<span class="hl sym">;</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>counter <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">connect</span><span class="hl sym">(</span><span class="hl kwc">Node</span> node<span class="hl sym">) {</span>
+            <span class="hl kwa">this</span><span class="hl sym">.</span>nextNode <span class="hl sym">=</span> node<span class="hl sym">;</span>
+            isActive <span class="hl sym">=</span> true<span class="hl sym">;</span>
+        <span class="hl sym">}</span>
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">sendMessage</span><span class="hl sym">(</span>TokenMessage m<span class="hl sym">) {</span>
+            queue<span class="hl sym">.</span><span class="hl kwd">add</span><span class="hl sym">(</span>m<span class="hl sym">);</span>
+            executor<span class="hl sym">.</span><span class="hl kwd">execute</span><span class="hl sym">(</span><span class="hl kwa">this</span><span class="hl sym">);</span>
+        <span class="hl sym">}</span>
+
+
+        <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">run</span><span class="hl sym">() {</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>isActive<span class="hl sym">) {</span>
+                <span class="hl kwa">try</span> <span class="hl sym">{</span>
+                    TokenMessage m <span class="hl sym">=</span> queue<span class="hl sym">.</span><span class="hl kwd">take</span><span class="hl sym">();</span>
+                    <span class="hl kwa">if</span> <span class="hl sym">(</span>m<span class="hl sym">.</span>isStop<span class="hl sym">) {</span>
+                        <span class="hl kwb">int</span> nextValue <span class="hl sym">=</span> m<span class="hl sym">.</span>value<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">;</span>
+                        <span class="hl kwa">if</span> <span class="hl sym">(</span>nextValue <span class="hl sym">==</span> MAX_NODES<span class="hl sym">) {</span>
+<span class="hl slc">//                            System.out.println(&quot;last one&quot;);</span>
+                            executor<span class="hl sym">.</span><span class="hl kwd">shutdown</span><span class="hl sym">();</span>                            
+                        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                            m<span class="hl sym">.</span>value <span class="hl sym">=</span> nextValue<span class="hl sym">;</span>
+                            nextNode<span class="hl sym">.</span><span class="hl kwd">sendMessage</span><span class="hl sym">(</span>m<span class="hl sym">);</span>
+                        <span class="hl sym">}</span>
+                        isActive <span class="hl sym">=</span> false<span class="hl sym">;</span>
+<span class="hl slc">//                        System.out.println(&quot;ending node &quot;+nodeId);</span>
+                    <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                        <span class="hl kwa">if</span> <span class="hl sym">(</span>m<span class="hl sym">.</span>value <span class="hl sym">==</span> N<span class="hl sym">) {</span>
+                            <span class="hl kwc">System</span><span class="hl sym">.</span>out<span class="hl sym">.</span><span class="hl kwd">println</span><span class="hl sym">(</span>nodeId<span class="hl sym">);</span>
+                            nextNode<span class="hl sym">.</span><span class="hl kwd">sendMessage</span><span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwd">TokenMessage</span><span class="hl sym">(</span>nodeId<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">,</span> true<span class="hl sym">));</span>
+                        <span class="hl sym">}</span> <span class="hl kwa">else</span> <span class="hl sym">{</span>
+                            m<span class="hl sym">.</span>value <span class="hl sym">=</span> m<span class="hl sym">.</span>value <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+                            nextNode<span class="hl sym">.</span><span class="hl kwd">sendMessage</span><span class="hl sym">(</span>m<span class="hl sym">);</span>
+                        <span class="hl sym">}</span>
+                    <span class="hl sym">}</span>
+                <span class="hl sym">}</span> <span class="hl kwa">catch</span> <span class="hl sym">(</span><span class="hl kwc">InterruptedException</span> ie<span class="hl sym">) {</span>
+                    ie<span class="hl sym">.</span><span class="hl kwd">printStackTrace</span><span class="hl sym">();</span>
+                <span class="hl sym">}</span>
+            <span class="hl sym">}</span>
+        <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+<span class="hl sym">}</span>
