@@ -29,7 +29,7 @@ define('HOMEPAGE_ROWS',0);         // show N rows of languages on the homepage
 
 define('SITE_NAME', 'demo');
 define('SITE_TITLE','demo2 : Intel&#174; Q6600&#174; quad-core');
-define('BANNER_TITLE','demo2&nbsp;:&nbsp;x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core<br/>LLVM');
+define('BANNER_TITLE','x64&nbsp;Ubuntu&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;quad-core<br/>demo2&nbsp;:&nbsp;LLVM');
 define('PLATFORM_NAME', 'demo2 : x64 Ubuntu : Intel Q6600 quad-core');
 define('FAQ_TITLE','');
 define('BAR',' | ');
