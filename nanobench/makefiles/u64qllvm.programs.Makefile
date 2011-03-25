@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.56 2011-03-25 02:16:34 igouy-guest Exp $
+# $Id: u64qllvm.programs.Makefile,v 1.1 2011-03-25 02:16:43 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -101,6 +101,23 @@ STD_COPTS := -O3 -fomit-frame-pointer -march=native
 	-$(ICPC) -c -O3 -ipo -static $(ICPCOPTS) $< -o $<.o &&  \
         $(ICPC) $<.o -o $@ -O3 -ipo -static $(ICPCOPTS) 
 
+
+########################################
+# llvm
+########################################
+
+%.c: %.clang $(CLANG)
+	-@mv $< $@
+
+%.clang_run: %.c $(CLANG)
+	-$(CLANG) -pipe -Wall $(STD_COPTS) $(GCCOPTS) $< -o $@
+
+
+%.c: %.llvmgcc $(LLVMGCC)
+	-@mv $< $@
+
+%.llvmgcc_run: %.c $(LLVMGCC)
+	-$(LLVMGCC) -pipe -Wall $(STD_COPTS) $(GCCOPTS) $< -o $@
 
 ########################################
 # go
@@ -319,7 +336,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-mv $< $@
 
 %.ghc_run: %.hs $(GHC)
-	-$(GHC) --make -O2 -XBangPatterns -threaded -rtsopts $(GHCOPTS) $< -o $@
+	-$(GHC) --make -O2 -fglasgow-exts -XBangPatterns -threaded -fllvm -rtsopts $(GHCOPTS) $< -o $@
 
 
 ########################################
@@ -370,7 +387,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 
 ########################################
 # gcj
-#######################################--make -O2 -fglasgow-exts $(GHCOPTS)#
+#######################################
 
 %.javagcj: %.gcj $(GCJ)
 	-@mv $< $@
