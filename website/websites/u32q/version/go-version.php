@@ -1,1 +1,1 @@
-<p>8g version release.r56 7666</p>
+<p>8g weekly.2011-03-28 7901:b84e614e2516</p>
