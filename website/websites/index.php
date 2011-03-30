@@ -176,6 +176,7 @@ foreach($langs as $lang){
    printf('</tr>');
 }
 
+PrintHeaders();
 
 ?>
 
