@@ -40,6 +40,10 @@ April 2011 Isaac Gouy
     webserver on the hour every hour. Instead ssh is used to explicitly
     update htdocs when needed.
 
+ - most of the configurability in the config.php files is no longer used
+    (for example shootout/website/websites/u64/config.php) 
+
+
 
  OBSOLETE directories
 
