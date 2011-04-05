@@ -232,7 +232,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <p>The Tracker</p>
 <ul>
-<li>After login, go to the <a href="https://alioth.debian.org/tracker/?atid=413100&group_id=30402&func=browse"><b>"Play the Benchmarks Game" Tracker</b></a></li>
+<li>After login, go to the <a href="https://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"><b>"Play the Benchmarks Game" Tracker</b></a></li>
 <li>Find and click the "Play the Benchmarks Game: <b>Submit New</b>" link</li>
 <li>Now start from the bottom of the form and work your way up</li>
 </ul>
