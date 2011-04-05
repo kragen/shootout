@@ -233,13 +233,13 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <p>The Tracker</p>
 <ul>
 <li>After login, go to the <a href="https://alioth.debian.org/tracker/?atid=413100&group_id=30402&func=browse"><b>"Play the Benchmarks Game" Tracker</b></a></li>
-<li></li>
-<li></li>
+<li>Find and click the "Play the Benchmarks Game: <b>Submit New</b>" link</li>
+<li>Now start from the bottom of the form and work your way up</li>
 </ul>
 
-<p>Follow these instructions <b>step-by-step</b></p>
+<p>Start from the bottom</p>
 <ol>
-<li>Start from the bottom. <b>Attach</b> the program source-code file - do this first because it's easy to forget.</li>
+<li><b>Attach</b> the program source-code file - do this first because it's easy to forget.</li>
 <li>Say in the <b>Description</b> how this program fixes an error or is faster or was missing or &#8230; Give us reasons to accept your program.</li>
 <li>Each <b>Summary</b> text <em><b>must</b></em> be unique! Follow this convention:<br />
 language, benchmark, your-name, date, (version)<br />
@@ -250,10 +250,6 @@ language, benchmark, your-name, date, (version)<br />
 <li>click the Submit button</li>
 </ol>
 
-<p>Now <b>start from the bottom</b> of the
-   <a href="https://alioth.debian.org/tracker/?atid=413100&amp;group_id=30402&amp;func=browse"  title="Play the Benchmarks Game - Submit New">
-   <b>"Play the Benchmarks Game" Submit-New</b></a> form and work your way up.
-</p>
 </dd>
 
 <dt><a href="#track" name="track">How can I track what happens to the program I contributed?</a></dt>
