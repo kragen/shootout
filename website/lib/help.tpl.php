@@ -220,7 +220,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <dd><p>Don't manually unroll loops!</p></dd>
 
 
-<dt><a href="#stepbystep" name="stepbystep">Finally! <b>How to contribute programs</b></a></dt>
+<dt><a href="#stepbystep" name="stepbystep">Finally! <b>Use the Tracker to contribute programs</b></a></dt>
 
 <dd><p>Attach the full source-code file of a tested program. Please don't paste source-code into the description field. Please don't contribute patch-files.</p>
 <p>Before contributing programs</p>
@@ -228,6 +228,13 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <li><b>debian issue their own security certificate</b> - your web browser will complain.</li>
 <li>read and accept the <a href="license.php" title="Read the revised BSD license"><b>Revised&nbsp;BSD&nbsp;license</b></a> - all contributed programs are published under this revised BSD license.</li>
 <li><a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a> and login.</li>
+</ul>
+
+<p>The Tracker</p>
+<ul>
+<li>After login, go to the <a href="https://alioth.debian.org/tracker/?atid=413100&group_id=30402&func=browse"><b>"Play the Benchmarks Game" Tracker</b></a></li>
+<li></li>
+<li></li>
 </ul>
 
 <p>Follow these instructions <b>step-by-step</b></p>
