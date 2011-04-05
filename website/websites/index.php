@@ -128,7 +128,7 @@ $langs = array(
    array('ghc','Haskell GHC','haskell',$allsites),
    array('java','Java 6 -server','java',$allsites),
    array('javaxint','Java 6 -Xint','',$allsites),
-   array('tracemonkey','JavaScript TraceMonkey','',$onecoresites),
+//   array('tracemonkey','JavaScript TraceMonkey','',$onecoresites),
    array('v8','JavaScript V8','javascript',$onecoresites),
    array('sbcl','Lisp SBCL','lisp',$allsites),
    array('lua','Lua','lua',$onecoresites),
@@ -140,11 +140,11 @@ $langs = array(
    array('php','PHP','php',$u32sites),
    array('pypy','PyPy','',$onecoresites),
    array('python3','Python 3','python3',$allsites),
-   array('python','CPython','python',$u32sites),
+//   array('python','CPython','python',$u32sites),
    array('racket','Racket','racket',$onecoresites),
    array('yarv','Ruby 1.9','',$allsites),
-   array('jruby','JRuby','jruby',$u32sites),
-   array('ruby','Ruby 1.8.7','ruby',$basesite),
+//   array('jruby','JRuby','jruby',$u32sites),
+//   array('ruby','Ruby 1.8.7','ruby',$basesite),
    array('scala','Scala','scala',$allsites),
    array('vw','Smalltalk VisualWorks','smalltalk',$onecoresites)
    );
