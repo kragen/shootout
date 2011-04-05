@@ -127,7 +127,7 @@ $langs = array(
    array('go','Go 6g 8g','',$allsites),
    array('ghc','Haskell GHC','haskell',$allsites),
    array('java','Java 6 -server','java',$allsites),
-   array('javaxint','Java 6 -Xint','',$allsites),
+//   array('javaxint','Java 6 -Xint','',$allsites),
 //   array('tracemonkey','JavaScript TraceMonkey','',$onecoresites),
    array('v8','JavaScript V8','javascript',$onecoresites),
    array('sbcl','Lisp SBCL','lisp',$allsites),
