@@ -1,0 +1,194 @@
+;;   The Computer Language Benchmarks Game
+;;   http://shootout.alioth.debian.org/
+;;;
+;;; By Jon Smith (rev 1)
+;;; Fixed a bug in my use of write-sequence, which wasn't apparent on my machine, for whatever reason.
+;;; Based off of java implementation. 
+;;;
+;;; To compile
+;;; sbcl --load fastab.lisp --eval "(save-lisp-and-die \"fastab.core\" :purify t :toplevel (lambda () (main) (quit)))"
+;;; To run
+;;; sbcl --noinform --core fastab.core %A
+;(setf *efficiency-note-cost-threshold* 1)
+
+(declaim (optimize (speed 3) (safety 0) (debug 0)))
+
+(defconstant line-length 60)
+(defconstant out-buffer-size (* 256 1024))
+(defconstant lookup-size (* 4 1024))
+(defconstant lookup-scale (the double-float (* 1.0d0 (- lookup-size 1))))
+(defconstant lim (- out-buffer-size (* 2 line-length) 1))
+
+(eval-when (:load-toplevel :compile-toplevel :execute)
+
+  (defstruct freq 
+    (c #\z :type character)
+    (m 0.0d0 :type double-float))
+
+  (defmacro frequify (&rest freq-pairs)
+    `(frequify-fn ',(mapcar (lambda (s)
+			      (destructuring-bind (b f) s
+				(list b f)))
+			    freq-pairs)))
+
+  (defun frequify-fn (parsed-freq-pairs)
+    (declare (type list parsed-freq-pairs))
+    (let ((i 0)
+	  (array (make-array (length parsed-freq-pairs))))
+      (dolist (pair parsed-freq-pairs)
+	(destructuring-bind (byte double) pair
+	  (let ((fr (make-freq :c byte :m double)))
+	    (setf (aref array i) fr)))
+	(incf i))
+      array))
+
+  (defun sum-and-scale (a)
+    (declare (type (simple-array freq (*)) a)) 
+    (let ((p 0.0d0))
+      (loop for i from 0 below (length a)
+	 do (setf (freq-m (aref a i))
+		  (* (incf p (freq-m (aref a i))) lookup-scale)))
+      (setf (freq-m (aref a (- (length a) 1))) lookup-scale))
+    a)
+  
+  (defmacro ub (a)
+    `(the (unsigned-byte 32) ,a))
+  (defmacro fx (a)
+    `(the fixnum ,a))
+  
+  (defsetf out-ct set-out-ct))
+
+(declaim (inline random-next))
+
+(defparameter *last* 42)
+(declaim (type fixnum *last*))
+
+(defconstant IM 139968)
+(defconstant IA 3877)
+(defconstant IC 29573)
+(defconstant scale (/ lookup-scale IM))
+
+(defconstant im-minus-1500 (- IM 1500))
+
+(defun random-next ()
+  (declare (values (unsigned-byte 32)))
+  ;;fixnums are nice, but being able to use them is a pain in the ass
+  (let ((last *last*))
+    (cond ((>= last im-minus-1500)
+	   (setf *last* (mod (ub (+ (ub (* last IA)) IC)) IM)))
+	  (t (setf *last* (mod (fx (+ (fx (* last IA)) IC)) IM))))))
+
+(let ((out-buf (make-array out-buffer-size :element-type 'character))
+      (ct 0))
+  (declare (type (simple-array character (*)) out-buf)
+	   (type fixnum ct))
+
+  (let ((stream *standard-output*))
+    (defun out-check-flush ()
+      (when (>= ct lim) 
+	(write-sequence out-buf stream :start 0 :end ct) (setf ct 0)))
+
+    (defun out-close ()
+      (write-sequence out-buf stream :start 0 :end ct)
+      (setf ct 0)))
+
+  (let ((lookup (make-array lookup-size
+			    :element-type 'freq
+			    :initial-element (make-freq))))
+    (declare (type (simple-array freq (*)) lookup))
+
+    (defun random-fasta-make-lookup (a)
+      (declare (type (simple-array freq (*)) a))
+      (let ((j 0))
+	(loop for i from 0 below lookup-size
+	      do (loop while (< (freq-m (aref a j)) (* 1.0d0 i))  do (incf j))
+	      do (setf (aref lookup i) (aref a j)))))
+
+    (defun random-fasta-add-line (bytes)
+      (declare (type fixnum bytes))
+      (out-check-flush)
+      (let ((lct ct))
+	(declare (type fixnum lct))
+
+	(loop while (< lct (fx (+ ct bytes)))
+	      do (let* ((r (* (random-next) scale))
+			(ai (truncate r)))
+
+		   (loop while (< (freq-m (aref lookup ai)) r)
+			 do (incf ai))
+
+		   (setf (aref out-buf (incf lct)) (freq-c (aref lookup ai)))))
+
+	(setf (aref out-buf (incf lct)) #\NEWLINE)
+	(setf ct lct))
+      (values)))
+
+  (defun random-fasta-make (desc a n)
+    (declare (type (simple-array character (*)) desc)
+	     (type fixnum n))
+    (random-fasta-make-lookup a)
+    (let ((len (length desc)))
+      (replace out-buf desc :start1 ct :start2 0 :end1 (fx (incf ct len)) :end2 len))
+    (setf (aref out-buf ct) #\NEWLINE)
+    (loop while (> n 0)
+	  do (let ((bytes (min line-length n)))
+	       (random-fasta-add-line bytes)
+	       (decf n bytes)))
+    (setf (aref out-buf (incf ct)) #\NEWLINE)
+    (values))
+
+  (defun repeat-fasta-make (desc alu n)
+    (declare (type (simple-array character (*)) desc alu)
+	     (type fixnum n))
+    (replace out-buf desc :start1 ct :end2 (length desc))
+    (incf ct (length desc))
+    (setf (aref out-buf ct) #\NEWLINE)
+    (incf ct)
+    (let ((buf (make-array (+ (length alu) line-length))))
+      (loop for i of-type fixnum from 0 below (length buf) by (length alu)
+	    do (replace buf alu :start1 i :end2 (min (length alu) (- (length buf) 1))))
+      (let ((pos 0))
+	(loop while (> n 0)
+	      do (let ((bytes (min line-length n)))
+		   (out-check-flush)
+		   (replace out-buf buf :start2 pos :start1 ct :end2 (the fixnum (+ pos bytes)))
+		   (incf ct bytes)
+		   (setf (aref out-buf ct) #\NEWLINE)
+		   (incf ct)
+		   (setf pos (mod (the fixnum (+ pos bytes)) (length alu)))
+		   (decf n bytes)))))
+    (values)))
+
+
+  (let ((ALU (concatenate 'string 
+			  "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG"
+			  "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA"
+			  "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT"
+			  "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA"
+			  "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG"
+			  "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC"
+			  "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"))
+	(IUB (sum-and-scale (frequify 
+			     (#\a 0.27d0) (#\c 0.12d0) (#\g 0.12d0) (#\t 0.27d0)
+			     (#\B 0.02d0) (#\D 0.02d0) (#\H 0.02d0) (#\K 0.02d0)
+			     (#\M 0.02d0) (#\N 0.02d0) (#\R 0.02d0) (#\S 0.02d0)
+			     (#\V 0.02d0) (#\W 0.02d0) (#\Y 0.02d0))))
+	(homo-sapiens 
+	 (sum-and-scale (frequify 
+			 (#\a 0.3029549426680d0)
+			 (#\c 0.1979883004921d0)
+			 (#\g 0.1975473066391d0)
+			 (#\t 0.3015094502008d0)))))
+
+    (defun main (&optional in-n)
+      (let ((n (or in-n
+		   (ignore-errors
+		     (parse-integer (car (last #+sbcl sb-ext:*posix-argv*
+					       #+cmu  extensions:*command-line-strings*
+					       #+gcl  si::*command-args*
+					       #+clisp nil)))))))
+	(declare (type fixnum n))
+	(repeat-fasta-make ">ONE Homo sapiens alu" ALU (the fixnum (* n 2)))
+	(random-fasta-make ">TWO IUB ambiguity codes" IUB (the fixnum (* n 3)))
+	(random-fasta-make ">THREE Homo sapiens frequency" homo-sapiens (the fixnum (* n 5)))
+	(out-close))))
