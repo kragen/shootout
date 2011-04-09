@@ -51,9 +51,10 @@
       (setf (freq-m (aref a (- (length a) 1))) lookup-scale))
     a)
   
-  (defmacro ub (a)
-    `(the (unsigned-byte 32) ,a))
-  (defmacro fx (a)
+#+x86(defmacro ub (a)
+       `(the (unsigned-byte 32) ,a))
+
+(defmacro fx (a)
     `(the fixnum ,a))
   
   (defsetf out-ct set-out-ct))
@@ -61,7 +62,9 @@
 (declaim (inline random-next))
 
 (defparameter *last* 42)
-(declaim (type fixnum *last*))
+#+x86-64(declaim (type (unsigned-byte 60) *last*))
+
+#+x86(declaim (type (unsigned-byte 29) *last*))
 
 (defconstant IM 139968)
 (defconstant IA 3877)
@@ -70,13 +73,19 @@
 
 (defconstant im-minus-1500 (- IM 1500))
 
-(defun random-next ()
-  (declare (values (unsigned-byte 32)))
-  ;;fixnums are nice, but being able to use them is a pain in the ass
-  (let ((last *last*))
-    (cond ((>= last im-minus-1500)
-	   (setf *last* (mod (ub (+ (ub (* last IA)) IC)) IM)))
-	  (t (setf *last* (mod (fx (+ (fx (* last IA)) IC)) IM))))))
+#+x86-64(defun random-next ()
+	  (declare (values (unsigned-byte 64)))
+	  (let ((last *last*))
+	    (setf *last* (the (integer 0 138467) (mod (+ (fx (* last IA)) IC) IM)))))
+
+#+x86(defun random-next ()
+       (declare (values (unsigned-byte 32)))
+       ;;fixnums are nice, but being able to use them is a pain in the ass
+       (let ((last *last*))
+	     (setf *last* (mod (ub (+ (ub (* last IA)) IC)) IM))
+))
+
+
 
 (let ((out-buf (make-array out-buffer-size :element-type 'character))
       (ct 0))
@@ -85,7 +94,7 @@
 
   (let ((stream *standard-output*))
     (defun out-check-flush ()
-      (when (>= ct lim) 
+      (when (>= ct lim)
 	(write-sequence out-buf stream :start 0 :end ct) (setf ct 0)))
 
     (defun out-close ()
@@ -109,32 +118,34 @@
       (out-check-flush)
       (let ((lct ct))
 	(declare (type fixnum lct))
-
 	(loop while (< lct (fx (+ ct bytes)))
 	      do (let* ((r (* (random-next) scale))
 			(ai (truncate r)))
-
 		   (loop while (< (freq-m (aref lookup ai)) r)
 			 do (incf ai))
+		   (setf (aref out-buf lct) (freq-c (aref lookup ai)))
+		   (incf lct)))
 
-		   (setf (aref out-buf (incf lct)) (freq-c (aref lookup ai)))))
-
-	(setf (aref out-buf (incf lct)) #\NEWLINE)
-	(setf ct lct))
-      (values)))
+	(setf (aref out-buf lct) #\NEWLINE)
+	(incf lct)
+	(setf ct lct)
+	(values))))
 
   (defun random-fasta-make (desc a n)
     (declare (type (simple-array character (*)) desc)
 	     (type fixnum n))
+
     (random-fasta-make-lookup a)
+
     (let ((len (length desc)))
       (replace out-buf desc :start1 ct :start2 0 :end1 (fx (incf ct len)) :end2 len))
+
     (setf (aref out-buf ct) #\NEWLINE)
+    (incf ct)
     (loop while (> n 0)
 	  do (let ((bytes (min line-length n)))
 	       (random-fasta-add-line bytes)
 	       (decf n bytes)))
-    (setf (aref out-buf (incf ct)) #\NEWLINE)
     (values))
 
   (defun repeat-fasta-make (desc alu n)
