@@ -344,7 +344,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#java" name="java">What about Java&#174;?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
-<p>The usual startup measurements and the "Java 6 steady state" approximations (and JVM time) are shown alongside for comparison.</p>
+<p>The usual startup measurements and are shown alongside for comparison.</p>
 
 
 <table>
@@ -352,7 +352,7 @@ language, benchmark, your-name, date, (version)<br />
 <th>"1.6.0_16"&nbsp;</th>
 <th colspan="2">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
 <th colspan="2">&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
-<th colspan="3">&nbsp;</th>
+<th>&nbsp;</th>
 </tr>
 
 <tr>
@@ -362,8 +362,6 @@ language, benchmark, your-name, date, (version)<br />
 <th class="num">mean</th>
 <th class="num">&#963;</th>
 <th class="num">&nbsp;&nbsp;usual&nbsp;startup</th>
-<th class="num">&nbsp;approx.</th>
-<th class="num">&nbsp;JVM&nbsp;time</th>
 </tr>
 
 <tr>
@@ -373,8 +371,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>0.12s</td>
 <td>0.00</td>
 <td>0.31s</td>
-<td>0.13s</td>
-<td>(14&nbsp;sec)</td>
 </tr>
 
 <tr>
@@ -384,8 +380,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>3.96s</td>
 <td>0.02</td>
 <td>4.11s</td>
-<td>3.96s</td>
-<td>(4&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -395,8 +389,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>4.65s</td>
 <td>0.10</td>
 <td>5.00s</td>
-<td>4.55s</td>
-<td>(5&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -406,8 +398,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>6.91s</td>
 <td>0.12</td>
 <td>7.51s</td>
-<td>-</td>
-<td>-</td>
 </tr>
 
 <tr>
@@ -417,8 +407,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>11.46s</td>
 <td>0.06</td>
 <td>10.95s</td>
-<td>11.40s</td>
-<td>(13&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -428,8 +416,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>15.35s</td>
 <td>0.43</td>
 <td>19.18s</td>
-<td>15.40s</td>
-<td>(17&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -439,8 +425,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>18.56s</td>
 <td>0.48</td>
 <td>18.43s</td>
-<td>18.59s</td>
-<td>(20&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -450,8 +434,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>25.07s</td>
 <td>1.22</td>
 <td>25.03s</td>
-<td>24.69s</td>
-<td>(27&nbsp;min)</td>
 </tr>
 
 </table>
@@ -460,8 +442,6 @@ language, benchmark, your-name, date, (version)<br />
 <p>Loading Java bytecode, profiling and dynamic compilation do take time but not enough time to make much of a difference in these examples.</p>
 
 <p>The obvious differences show where there is a mismatch between program structure and JVM optimization - even though methods have been fully compiled, the JVM continues using the <a href="http://www.ibm.com/developerworks/java/library/j-benchmark1.html#osr"><b>on-stack-replacement</b></a>. The opportunity to use the fully optimized compiled methods seems only to arise <em>the next time</em> the code block is invoked - whether that's in 10 seconds or 10 days.</p>
-
-<p>To highlight that mismatch, "Java 6 steady state" approximations are shown in the measurement tables alongside the usual startup measurements.</p>
 </dd>
 
 
