@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: u64q.programs.Makefile,v 1.56 2011-03-25 02:16:34 igouy-guest Exp $
+# $Id: u64q.programs.Makefile,v 1.57 2011-04-13 00:58:22 igouy-guest Exp $
 
 # ASSUME each program will build in a clean empty tmpdir
 # ASSUME there's a symlink to the program source in tmpdir
@@ -253,7 +253,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-mv $< $(TEST).erl
 
 %.erlang_run: %.erl
-	-$(ERLC) $(TEST).erl
+	-$(ERLC) +native $(TEST).erl
 
 
 ########################################
@@ -264,7 +264,7 @@ CHICKENOPTS := -O2 -d0 -no-trace -no-lambda-info -optimize-level 3 -disable-inte
 	-mv $< $(TEST).erl
 
 %.hipe_run: %.erl
-	-$(ERLC) +native +"{hipe, [o3]}" $(HIPE_OPTS) $(TEST).erl
+	-$(ERLC) +native +"{hipe, [o3]}" $(TEST).erl
 
 
 ########################################
