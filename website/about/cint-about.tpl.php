@@ -1,4 +1,4 @@
-<p>Although we only show the result of using <strong>CINT</strong> as a C interpreter, a CINT script can call compiled C++/C classes/functions and compiled code can make callbacks to CINT user defined functions.</p>
+<p>"CINT is an interpreter for C and C++ code. It is useful e.g. for situations where rapid development is more important than execution time. Using an interpreter the compile and link cycle is dramatically reduced facilitating rapid development. CINT makes C/C++ programming enjoyable even for part-time programmers."</p>
 <?=$Version;?>
 <p><a href="http://tis-method.blogspot.com/2011/01/scripting-subsystem-based-on-cint.html">Scripting subsystem based on CInt interpreter</a></p>
 <p>Home Page: <a href="http://root.cern.ch/drupal/content/cint">What is CINT?</a></p>
