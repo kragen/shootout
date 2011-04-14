@@ -15,6 +15,64 @@
 <li>To show how difficult it can be to make <i>meaningful</i> comparisons</li>
 </ol>
 </dd>
+
+<dt><a href="#analytics" name="analytics">Oct 1, 2010 - Mar 31, 2011</a></dt>
+<dd>
+<ul>
+<li>167,264 Absolute Unique Visitors</li>
+<li>1,223,686 Pageviews</li>
+<li>4.91 Average Pageviews</li>
+</ul>
+</dd>
+
+<dt>&nbsp;</dt>
+<dd>
+
+<table>
+<tr><th colspan="2">% programs contributed 2005-2010, by language</th></tr>
+<tr><td>Python</td><td>12.2</td></tr>
+<tr><td>C++</td><td>9.0</td></tr>
+<tr><td>C</td><td>7.1</td></tr>
+<tr><td>Haskell</td><td>7.1</td></tr>
+<tr><td>Java</td><td>6.4</td></tr>
+<tr><td>Pascal</td><td>6.2</td></tr>
+<tr><td>Perl</td><td>5.8</td></tr>
+<tr><td>Lisp</td><td>5.0</td></tr>
+<tr><td>OCaml</td><td>4.2</td></tr>
+<tr><td>Ruby</td><td>4.1</td></tr>
+<tr><td>Lua</td><td>3.5</td></tr>
+<tr><td>Erlang</td><td>3.5</td></tr>
+<tr><td>Scala</td><td>3.2</td></tr>
+<tr><td>Ada</td><td>2.9</td></tr>
+<tr><td>ATS</td><td>2.9</td></tr>
+<tr><td>Scheme</td><td>2.9</td></tr>
+<tr><td>C#</td><td>2.4</td></tr>
+<tr><td>F#</td><td>2.0</td></tr>
+<tr><td>Fortran</td><td>1.6</td></tr>
+<tr><td>Clojure</td><td>1.5</td></tr>
+<tr><td>JavaScript</td><td>1.5</td></tr>
+<tr><td>PHP</td><td>1.5</td></tr>
+<tr><td>Smalltalk</td><td>1.0</td></tr>
+<tr><td>Go</td><td>1.0</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
+<tr><th colspan="2">% programs contributed 2005-2010, by year</th></tr>
+<tr><td>2005</td><td>23</td></tr>
+<tr><td>2006</td><td>17</td></tr>
+<tr><td>2007</td><td>12</td></tr>
+<tr><td>2008</td><td>17</td></tr>
+<tr><td>2009</td><td>15</td></tr>
+<tr><td>2010</td><td>16</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
+<tr><th colspan="2">The year the fastest current Haskell programs were contributed</th></tr>
+<tr><td>2007</td><td>1</td></tr>
+<tr><td>2008</td><td>3</td></tr>
+<tr><td>2009</td><td>2</td></tr>
+<tr><td>2010</td><td>7</td></tr>
+</table>
+
+</dd>
+
+
 </dl>
 </dd>
 
@@ -62,15 +120,6 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <dt><a href="#measurements" name="measurements">Compare measurements of <b>all the programs for one language</b></a></dt>
 <dd>
 <p>Example select <a href="./u64/measurements.php?lang=java" title="Compare performance measurements of all the accepted Java 6 -server programs">Java -6 server</a> in the drop-down menu.</p>
-</dd>
-
-<dt><a href="#analytics" name="analytics">Oct 1, 2010 - Mar 31, 2011</a></dt>
-<dd>
-<ul>
-<li>167,264 Absolute Unique Visitors</li>
-<li>1,223,686 Pageviews</li>
-<li>4.91 Average Pageviews</li>
-</ul>
 </dd>
 
 </dl>
@@ -136,54 +185,6 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <dt><a href="#contribute" name="contribute">&nbsp;How to contribute programs</a></dt>
 <dd>
 <dl>
-
-
-<dt>&nbsp;</dt>
-<dd>
-
-<table>
-<tr><th colspan="2">% programs contributed 2005-2010, by language</th></tr>
-<tr><td>Python</td><td>12.2</td></tr>
-<tr><td>C++</td><td>9.0</td></tr>
-<tr><td>C</td><td>7.1</td></tr>
-<tr><td>Haskell</td><td>7.1</td></tr>
-<tr><td>Java</td><td>6.4</td></tr>
-<tr><td>Pascal</td><td>6.2</td></tr>
-<tr><td>Perl</td><td>5.8</td></tr>
-<tr><td>Lisp</td><td>5.0</td></tr>
-<tr><td>OCaml</td><td>4.2</td></tr>
-<tr><td>Ruby</td><td>4.1</td></tr>
-<tr><td>Lua</td><td>3.5</td></tr>
-<tr><td>Erlang</td><td>3.5</td></tr>
-<tr><td>Scala</td><td>3.2</td></tr>
-<tr><td>Ada</td><td>2.9</td></tr>
-<tr><td>ATS</td><td>2.9</td></tr>
-<tr><td>Scheme</td><td>2.9</td></tr>
-<tr><td>C#</td><td>2.4</td></tr>
-<tr><td>F#</td><td>2.0</td></tr>
-<tr><td>Fortran</td><td>1.6</td></tr>
-<tr><td>Clojure</td><td>1.5</td></tr>
-<tr><td>JavaScript</td><td>1.5</td></tr>
-<tr><td>PHP</td><td>1.5</td></tr>
-<tr><td>Smalltalk</td><td>1.0</td></tr>
-<tr><td>Go</td><td>1.0</td></tr>
-<tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
-<tr><th colspan="2">% programs contributed 2005-2010, by year</th></tr>
-<tr><td>2005</td><td>23</td></tr>
-<tr><td>2006</td><td>17</td></tr>
-<tr><td>2007</td><td>12</td></tr>
-<tr><td>2008</td><td>17</td></tr>
-<tr><td>2009</td><td>15</td></tr>
-<tr><td>2010</td><td>16</td></tr>
-<tr><td>&nbsp;</td><td>&nbsp;</td></tr> 
-<tr><th colspan="2">The year the fastest current Haskell programs were contributed</th></tr>
-<tr><td>2007</td><td>1</td></tr>
-<tr><td>2008</td><td>3</td></tr>
-<tr><td>2009</td><td>2</td></tr>
-<tr><td>2010</td><td>7</td></tr>
-</table>
-
-</dd>
 
 
 <dt><a href="#diff" name="diff">How much effort should I put into getting the program correct?</a></dt>
@@ -344,7 +345,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#java" name="java">What about Java&#174;?</a></dt>
 <dd><p>In these (x86 Ubuntu&#8482; : Intel&#174; Q6600&#174; quad-core) examples we measured elapsed time once the Java program had started: in the first case, we simply started and measured the program 66 times; in the second case, we started the program once and repeated measurements again and again and again 66 times without restarting the JVM; and then discarded the first measurement leaving 65 data points.</p>
-<p>The usual startup measurements and and JVM time are shown alongside for comparison.</p>
+<p>The usual startup measurements and are shown alongside for comparison.</p>
 
 
 <table>
@@ -352,7 +353,7 @@ language, benchmark, your-name, date, (version)<br />
 <th>"1.6.0_16"&nbsp;</th>
 <th colspan="2">&nbsp;started&nbsp;65&nbsp;times&nbsp;</th>
 <th colspan="2">&nbsp;repeated&nbsp;65&nbsp;times&nbsp;</th>
-<th colspan="3">&nbsp;</th>
+<th>&nbsp;</th>
 </tr>
 
 <tr>
@@ -362,7 +363,6 @@ language, benchmark, your-name, date, (version)<br />
 <th class="num">mean</th>
 <th class="num">&#963;</th>
 <th class="num">&nbsp;&nbsp;usual&nbsp;startup</th>
-<th class="num">&nbsp;JVM&nbsp;time</th>
 </tr>
 
 <tr>
@@ -372,7 +372,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>0.12s</td>
 <td>0.00</td>
 <td>0.31s</td>
-<td>(14&nbsp;sec)</td>
 </tr>
 
 <tr>
@@ -382,7 +381,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>3.96s</td>
 <td>0.02</td>
 <td>4.11s</td>
-<td>(4&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -392,7 +390,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>4.65s</td>
 <td>0.10</td>
 <td>5.00s</td>
-<td>(5&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -402,7 +399,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>6.91s</td>
 <td>0.12</td>
 <td>7.51s</td>
-<td>-</td>
 </tr>
 
 <tr>
@@ -412,7 +408,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>11.46s</td>
 <td>0.06</td>
 <td>10.95s</td>
-<td>(13&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -422,7 +417,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>15.35s</td>
 <td>0.43</td>
 <td>19.18s</td>
-<td>(17&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -432,7 +426,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>18.56s</td>
 <td>0.48</td>
 <td>18.43s</td>
-<td>(20&nbsp;min)</td>
 </tr>
 
 <tr>
@@ -442,7 +435,6 @@ language, benchmark, your-name, date, (version)<br />
 <td>25.07s</td>
 <td>1.22</td>
 <td>25.03s</td>
-<td>(27&nbsp;min)</td>
 </tr>
 
 </table>
