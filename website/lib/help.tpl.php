@@ -25,7 +25,7 @@
 </ul>
 </dd>
 
-<dt>&nbsp;</dt>
+<dt>% programs contributed</dt>
 <dd>
 
 <table>
@@ -40,6 +40,7 @@
 <tr><td>Lisp</td><td>5.0</td></tr>
 <tr><td>OCaml</td><td>4.2</td></tr>
 <tr><td>Ruby</td><td>4.1</td></tr>
+<tr><td>==</td><td>&nbsp;</td></tr>
 <tr><td>Lua</td><td>3.5</td></tr>
 <tr><td>Erlang</td><td>3.5</td></tr>
 <tr><td>Scala</td><td>3.2</td></tr>
