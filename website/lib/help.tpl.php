@@ -336,7 +336,7 @@ language, benchmark, your-name, date, (version)<br />
 <dd>
 <p><i>Why don't you</i> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your c:\ directory, check the  <a href="http://sourceforge.net/projects/pywin32/" title="Python Win32 Extensions">requirements</a> and <a href="http://gnuwin32.sourceforge.net/packages/make.htm" title="GNU Make for Windows, GNU DiffUtils for Windows">recommendations</a>, and read the license before use.</p>
-<p>(Here are some measurements made <i>just as a demo</i> of what you could do with <a href="http://shootout.alioth.debian.org/demo/compare.php?lang=csc&lang2=csharp">bencher.py on <b>Windows Vista&#174;</b></a>.)</p></dd>
+<p>(Here are some measurements made <i>just as a demo</i> of what you could do with <a href="http://shootout.alioth.debian.org/demo/compare.php?lang=csc&amp;lang2=csharp">bencher.py on <b>Windows Vista&#174;</b></a>.)</p></dd>
 
 
 <dt><a href="#llvm" name="llvm">Why don't you include <b>LLVM</b>?</a></dt>
