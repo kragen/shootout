@@ -1,5 +1,5 @@
 # The Computer Language Benchmarks Game
-# $Id: bencher.py,v 1.6 2010-03-10 22:32:21 igouy-guest Exp $
+# $Id: bencher.py,v 1.7 2011-04-19 21:18:54 igouy-guest Exp $
 
 """
 Description: bencher does repeated measurements of program
@@ -1338,7 +1338,7 @@ def force(items):
 
 
 def main():
-   print 'bencher release 0.7'
+   print 'bencher release 0.8'
    try:
       options,remeasure = getopt(sys.argv[1:],'',['conf='])
 
