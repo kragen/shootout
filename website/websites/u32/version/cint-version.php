@@ -1,1 +1,1 @@
-<p>Clojure 1.2.0</p>
+<p>cint 5.18.00, July 2, 2010</p>
