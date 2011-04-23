@@ -133,7 +133,7 @@ function FullWeightedData($FileName,$Tests,$Langs,$Incl,$Excl,$W,$SLangs,$HasHea
 
    $score = array();
    foreach($data as $k => $test){
-      if ($weightedTestsCount>0 && (sizeof($test)/$weightedTestsCount > 0.5)){
+      if ($weightedTestsCount>0 && (sizeof($test)/$weightedTestsCount > 0.4)){
 
          $s = 0.0; $ws = 0.0; $include = 0.0;
          foreach($test as $t => $testvalues){
