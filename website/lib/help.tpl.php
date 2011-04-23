@@ -25,7 +25,7 @@
 </ul>
 </dd>
 
-<dt>% programs contributed</dt>
+<dt><a href="#programscontributed" name="programscontributed">% programs contributed</a></dt>
 <dd>
 
 <table>
