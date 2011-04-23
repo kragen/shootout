@@ -1,0 +1,71 @@
+/* The Computer Language Benchmarks Game
+ * http://shootout.alioth.debian.org/
+ *
+ * contributed by Ricardo Garcia
+ */
+
+#include <assert.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#define NUM_THREADS (503)
+
+pthread_t threads[NUM_THREADS];   /* Threads. */
+int names[NUM_THREADS];      /* Thread "names". */
+long mailboxes[NUM_THREADS];   /* Read tokens from here. */
+sem_t greenlights[NUM_THREADS];   /* Semaphores to signal token presence. */
+
+void *ring_routine(void *myname)
+{
+   int name = *(int *)(myname);   /* My name (1..NUM_THREADS). */
+   int index = name - 1;      /* My index for the arrays. */
+   int next = (index + 1) % NUM_THREADS;
+   long token;
+
+   for (;;) {
+      sem_wait(greenlights + index);   /* Wait for a new token. */
+      token = mailboxes[index];   /* Get token. */
+      if (token == 0) {      /* Game over. */
+         printf("%d\n", name);
+         exit(EXIT_SUCCESS);
+      }
+      mailboxes[next] = token - 1;   /* Decrement and pass. */
+      sem_post(greenlights + next);   /* Green ligh for next thr. */
+   }
+   return NULL;
+}
+
+int main(int argc, char *argv[])
+{
+   long first_token;
+   int ii;
+   pthread_attr_t attributes;
+   sem_t permanent_red;
+   
+   /* Read first token. */
+   first_token = strtol(argv[1], NULL, 10);
+
+   /* Initialize attributes. */
+   pthread_attr_init(&attributes);
+   pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED);
+   pthread_attr_setstacksize(&attributes, PTHREAD_STACK_MIN);
+
+   /* Initialize arrays and create threads. */
+   for (ii = 0; ii < NUM_THREADS; ++ii) {
+      names[ii] = ii + 1;
+      sem_init(greenlights + ii, 0, 0);
+      pthread_create(threads + ii, &attributes, ring_routine, names + ii);
+   }
+
+   /* Pass first token. */
+   mailboxes[0] = first_token;
+   sem_post(greenlights + 0);
+
+   /* Wait forever. */
+   sem_init(&permanent_red, 0, 0);
+   sem_wait(&permanent_red);
+   return 0;
+}
