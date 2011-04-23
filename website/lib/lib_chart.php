@@ -71,7 +71,7 @@ class Chart {
       $this->colour = array();
       $this->colour[WHITE] = ImageColorAllocate($this->im,255,255,255);
       $this->colour[LIGHT_GRAY] = ImageColorAllocate($this->im,221,221,221);
-      $this->colour[GRAY] = ImageColorAllocate($this->im,204,204,204);
+      $this->colour[GRAY] = ImageColorAllocate($this->im,190,190,190);
       $this->colour[DARK_GRAY] = ImageColorAllocate($this->im,145,145,145);
       $this->colour[BLACK] = ImageColorAllocate($this->im,0,0,0);
       $this->colour[DODGER_BLUE] = ImageColorAllocate($this->im,30,144,255);
