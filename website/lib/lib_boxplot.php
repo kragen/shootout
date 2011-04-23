@@ -60,7 +60,7 @@ function FullRatios($FileName,$Tests,$Langs,$Incl,$Excl,$SLangs,$HasHeading=TRUE
 
    $ratios = array();
    foreach($data as $k => $test){
-      if (sizeof($test)/sizeof($Tests) > 0.2){
+      if (sizeof($test)/sizeof($Tests) > 0.3){
          $s = array();
          foreach($test as $t => $row){
             // wait until now to filter so sizeof($test) is consistent with FullWeightedData
