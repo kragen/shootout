@@ -317,7 +317,7 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#languagex" name="languagex"><b>Why don't you include language X?</b></a></dt>
 <dd>
-<p>Because I don't want to do that extra work! <i>Why don't you</i> use our measurement scripts and publish measurements for language X?</p>
+<p>Because I don't want to do more chores! <i>Why don't you</i> use our measurement scripts and publish measurements for language X?</p>
 
 
 <p>For example</p>
@@ -334,19 +334,19 @@ language, benchmark, your-name, date, (version)<br />
 
 <dt><a href="#implementationx" name="implementationx">Why don't you include <b>3 or 4 implementations of the same language</b>?</a></dt>
 <dd>
-<p>Because I don't want to do that extra work! <i>Why don't you</i> use our measurement scripts and publish measurements for 3 or 4 implementations of the same language?</p>
+<p>Because I don't want to do more chores! <i>Why don't you</i> use our measurement scripts and publish measurements for 3 or 4 implementations of the same language?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p></dd>
 
 <dt><a href="#win32" name="win32">Why don't you include <b>Microsoft&#174; Windows&#174;</b>?</a></dt>
 <dd>
-<p>Because I don't want to do that extra work! <i>Why don't you</i> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
+<p>Because I don't want to do more chores! <i>Why don't you</i> use our measurement scripts and publish measurements for Microsoft&#174; Windows&#174;?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your c:\ directory, check the  <a href="http://sourceforge.net/projects/pywin32/" title="Python Win32 Extensions">requirements</a> and <a href="http://gnuwin32.sourceforge.net/packages/make.htm" title="GNU Make for Windows, GNU DiffUtils for Windows">recommendations</a>, and read the license before use.</p>
 <p>(Here are some measurements made <i>just as a demo</i> of what you could do with <a href="http://shootout.alioth.debian.org/demo/compare.php?lang=csc&amp;lang2=csharp">bencher.py on <b>Windows Vista&#174;</b></a>.)</p></dd>
 
 
 <dt><a href="#llvm" name="llvm">Why don't you include <b>LLVM</b>?</a></dt>
 <dd>
-<p>Because I don't want to do that extra work! <i>Why don't you</i> use our measurement scripts and publish measurements for LLVM?</p>
+<p>Because I don't want to do more chores! <i>Why don't you</i> use our measurement scripts and publish measurements for LLVM?</p>
 <p>The Python script "bencher does repeated measurements of program cpu time, elapsed time, resident memory usage, cpu load while a program is running, and summarizes those measurements" - <a href="<?=DOWNLOAD_PATH;?>bencher.zip"><b>download bencher</b></a> and unzip into your ~ directory, check the requirements and <a href="http://www.andre-simon.de/doku/highlight/en/highlight.html" title="highlight, ndiff">recommendations</a>, and read the license before use.</p>
 <p>(Here are some measurements made <i>just as a demo</i> of what you could do <a href="http://shootout.alioth.debian.org/demo2/which-programming-languages-are-fastest.php?llvmgcc=on&amp;clang=on&amp;java=on&amp;ghc=on&amp;csharp=on&amp;fsharp=on">building language implementations on the <b>LLVM toolchain</b></a>.)</p></dd>
 
