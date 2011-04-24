@@ -44,15 +44,15 @@ h1 { font-weight: bold; font-size: smaller; }
 <li><a href="./java.php" title="Compare Java and C++ elapsed times">Java 6 -server</a></li>
 <li><a href="./compare.php?lang=v8&amp;lang2=java" title="Compare JavaScript and Java elapsed times">JavaScript V8</a></li>
 <li><a href="./lisp.php" title="Compare SBCL Lisp and Java elapsed times">Lisp SBCL</a></li>
-<li><a href="./compare.php?lang=lua&amp;lang2=luajit" title="Compare Lua and LuaJIT elapsed times">Lua</a></li>
+<li><a href="./compare.php?lang=lua&amp;lang2=v8" title="Compare Lua and JavaScript elapsed times">Lua</a></li>
 <li><a href="./oz.php" title="Compare Mozart/Oz and interpreted Java elapsed times">Mozart/Oz</a></li>
 <li><a href="./ocaml.php" title="Compare OCaml and C++ elapsed times">OCaml</a></li>
 <li><a href="./pascal.php" title="Compare Pascal and C++ elapsed times">Free Pascal</a></li>
 <li><a href="./compare.php?lang=perl&amp;lang2=yarv" title="Compare Perl and Ruby 1.9 elapsed times">Perl</a></li>
 <li><a href="./compare.php?lang=php&amp;lang2=yarv" title="Compare PHP and Ruby 1.9 elapsed times">PHP</a></li>
-<li><a href="./compare.php?lang=python3&amp;lang2=python" title="Compare Python3 and CPython elapsed times">Python 3</a></li>
+<li><a href="./compare.php?lang=python3&amp;lang2=yarv" title="Compare Python3 and Ruby 1.9 elapsed times">Python 3</a></li>
 <li><a href="./racket.php" title="Compare Racket and interpreted Java elapsed times">Racket</a></li>
-<li><a href="./compare.php?lang=yarv&amp;lang2=python" title="Compare Ruby 1.9 and CPython elapsed times">Ruby 1.9</a></li>
+<li><a href="./compare.php?lang=yarv&amp;lang2=python3" title="Compare Ruby 1.9 and Python3 elapsed times">Ruby 1.9</a></li>
 <li><a href="./compare.php?lang=jruby&amp;lang2=yarv" title="Compare JRuby and Ruby 1.9 elapsed times">JRuby</a></li>
 <li><a href="./scala.php" title="Compare Scala and Java elapsed times">Scala</a></li>
 <li><a href="./smalltalk.php" title="Compare Smalltalk and Java elapsed times">Smalltalk VisualWorks</a></li>
