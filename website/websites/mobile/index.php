@@ -31,6 +31,7 @@ h1 { font-weight: bold; font-size: smaller; }
 <li><a href="./ada.php" title="Compare Ada and C++ elapsed times">Ada 2005 GNAT</a></li>
 <li><a href="./ats.php" title="Compare ATS and C++ elapsed times">ATS</a></li>
 <li><a href="./c.php" title="Compare C and C++ elapsed times">C GNU</a></li>
+<li><a href="./compare.php?lang=cint&amp;lang2=gcc" title="Compare interpreted and compiled C elapsed times">CINT</a></li>
 <li><a href="./clean.php" title="Compare Clean and C++ elapsed times">Clean</a></li>
 <li><a href="./compare.php?lang=clojure" title="Compare Clojure and Java elapsed times">Clojure</a></li>
 <li><a href="./csharp.php" title="Compare C# and Java elapsed times">C# Mono</a></li>
