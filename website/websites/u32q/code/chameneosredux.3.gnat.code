@@ -1,0 +1,329 @@
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- Contributed by Francois Fabien (24 avril 2011)</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Based on the original Ada version by</span>
+<span class="hl slc">-- Claude Kaiser and Jean-Francois Pradat-Peyre (CEDRIC - CNAM Paris)</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Chameneos are Ada tasks and the meeting place is a protected body</span>
+<span class="hl slc">-- Fully portable :</span>
+<span class="hl slc">--            No machine/OS dependency</span>
+<span class="hl slc">--            No dependency of GNAT-compiler specific features</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Expected build command:</span>
+<span class="hl slc">-- gnatmake -gnatpn05 -O3 -march=native -f chameneosredux.adb</span>
+<span class="hl slc">------------------------------------------------------------------------------</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Simple_Barriers<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Abort_Statements<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Asynchronous_Select_Nesting <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+
+<span class="hl kwa">with</span> Chameneos<span class="hl sym">;</span>        <span class="hl kwa">use</span> Chameneos<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">;</span> <span class="hl kwa">use</span> Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">;</span>
+<span class="hl kwa">with</span> System<span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> ChameneosRedux <span class="hl kwa">is</span>
+   <span class="hl kwa">pragma</span> Priority <span class="hl sym">(</span>System<span class="hl sym">.</span>Max_Priority<span class="hl sym">);</span>
+   Meeting_count <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">600</span><span class="hl sym">;</span>
+<span class="hl kwa">begin</span>
+
+   <span class="hl kwa">if</span> Argument_Count <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+      <span class="hl kwa">begin</span>
+         Meeting_count <span class="hl sym">:=</span> <span class="hl kwb">Natural</span>'Value <span class="hl sym">(</span>Argument <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">));</span>
+      <span class="hl kwa">exception</span>
+         <span class="hl kwa">when others</span> <span class="hl sym">=&gt;</span>
+            <span class="hl kwa">null</span><span class="hl sym">;</span><span class="hl slc">-- When bad argument, keep meetings := 600</span>
+      <span class="hl kwa">end</span><span class="hl sym">;</span>
+   <span class="hl kwa">end if</span><span class="hl sym">;</span>
+
+   Print_Colours<span class="hl sym">;</span>
+   Run <span class="hl sym">(</span>Meeting_count<span class="hl sym">, (</span>Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">));</span>
+   Run
+     <span class="hl sym">(</span>Meeting_count<span class="hl sym">,</span>
+      <span class="hl sym">(</span>Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">,</span> Red<span class="hl sym">,</span> Blue<span class="hl sym">));</span>
+<span class="hl kwa">end</span> ChameneosRedux<span class="hl sym">;</span>
+<span class="hl slc">-------------------------------------------------------------------------------</span>
+<span class="hl slc">-- Root package</span>
+<span class="hl slc">-- Definitions and test procedure (run)</span>
+<span class="hl slc">-------------------------------------------------------------------------------</span>
+
+<span class="hl kwa">package</span> Chameneos <span class="hl kwa">is</span>
+   <span class="hl slc">-- The creature Name</span>
+   <span class="hl kwa">subtype</span> Id_Type <span class="hl kwa">is</span> <span class="hl kwb">Positive</span><span class="hl sym">;</span>
+   <span class="hl kwa">type</span> Colour <span class="hl kwa">is</span> <span class="hl sym">(</span>Blue<span class="hl sym">,</span> Red<span class="hl sym">,</span> Yellow<span class="hl sym">);</span>
+   <span class="hl kwa">type</span> Colour_Set <span class="hl kwa">is array</span> <span class="hl sym">(</span>Id_Type <span class="hl kwa">range</span> <span class="hl sym">&lt;&gt;)</span> <span class="hl kwa">of</span> Colour<span class="hl sym">;</span>
+
+   <span class="hl kwa">function</span> Do_Complement <span class="hl sym">(</span>C1<span class="hl sym">,</span> C2 <span class="hl sym">:</span> Colour<span class="hl sym">)</span> <span class="hl kwa">return</span> Colour<span class="hl sym">;</span>
+   <span class="hl slc">-- since this function is heavily used, make it inline to speed up</span>
+   <span class="hl kwa">pragma</span> Inline <span class="hl sym">(</span>Do_Complement<span class="hl sym">);</span>
+
+   <span class="hl slc">-- Stuff required for the measurement</span>
+   <span class="hl kwa">type</span> Measure_Type <span class="hl kwa">is record</span>
+      Meetings_Made <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Meetings_Same <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+   <span class="hl kwa">end record</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Result_Type <span class="hl kwa">is array</span> <span class="hl sym">(</span>Id_Type <span class="hl kwa">range</span> <span class="hl sym">&lt;&gt;)</span> <span class="hl kwa">of</span> Measure_Type<span class="hl sym">;</span>
+
+   <span class="hl slc">--  Utility for output</span>
+   <span class="hl kwa">procedure</span> Print_Colours<span class="hl sym">;</span>
+   <span class="hl slc">-- The test procedure</span>
+   <span class="hl kwa">procedure</span> Run <span class="hl sym">(</span>Meetings <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> Set <span class="hl sym">:</span> Colour_Set<span class="hl sym">);</span>
+<span class="hl kwa">end</span> Chameneos<span class="hl sym">;</span>
+<span class="hl slc">-------------------------------------------------------------------------------</span>
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Text_IO<span class="hl sym">;</span>           <span class="hl kwa">use</span> Ada<span class="hl sym">.</span>Text_IO<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Exceptions<span class="hl sym">;</span>        <span class="hl kwa">use</span> Ada<span class="hl sym">.</span>Exceptions<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Strings<span class="hl sym">.</span>Unbounded<span class="hl sym">;</span> <span class="hl kwa">use</span> Ada<span class="hl sym">.</span>Strings<span class="hl sym">.</span>Unbounded<span class="hl sym">;</span>
+<span class="hl kwa">with</span> Chameneos<span class="hl sym">.</span>Creatures<span class="hl sym">;</span>   <span class="hl kwa">use</span> Chameneos<span class="hl sym">.</span>Creatures<span class="hl sym">;</span>
+
+<span class="hl kwa">package body</span> Chameneos <span class="hl kwa">is</span>
+
+   <span class="hl kwa">package</span> Int_Io <span class="hl kwa">is new</span> Ada<span class="hl sym">.</span>Text_IO<span class="hl sym">.</span>Integer_IO <span class="hl sym">(</span><span class="hl kwb">Integer</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">function</span> Do_Complement <span class="hl sym">(</span>C1<span class="hl sym">,</span> C2 <span class="hl sym">:</span> Colour<span class="hl sym">)</span> <span class="hl kwa">return</span> Colour <span class="hl kwa">is</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">case</span> C1 <span class="hl kwa">is</span>
+         <span class="hl kwa">when</span> Blue <span class="hl sym">=&gt;</span>
+            <span class="hl kwa">case</span> C2 <span class="hl kwa">is</span>
+               <span class="hl kwa">when</span> Blue <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Blue<span class="hl sym">;</span>
+               <span class="hl kwa">when</span> Red <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Yellow<span class="hl sym">;</span>
+               <span class="hl kwa">when</span> Yellow <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Red<span class="hl sym">;</span>
+            <span class="hl kwa">end case</span><span class="hl sym">;</span>
+         <span class="hl kwa">when</span> Red <span class="hl sym">=&gt;</span>
+            <span class="hl kwa">case</span> C2 <span class="hl kwa">is</span>
+               <span class="hl kwa">when</span> Blue <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Yellow<span class="hl sym">;</span>
+               <span class="hl kwa">when</span> Red <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Red<span class="hl sym">;</span>
+               <span class="hl kwa">when</span> Yellow <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Blue<span class="hl sym">;</span>
+            <span class="hl kwa">end case</span><span class="hl sym">;</span>
+         <span class="hl kwa">when</span> Yellow <span class="hl sym">=&gt;</span>
+            <span class="hl kwa">case</span> C2 <span class="hl kwa">is</span>
+               <span class="hl kwa">when</span> Blue <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Red<span class="hl sym">;</span>
+               <span class="hl kwa">when</span> Red <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Blue<span class="hl sym">;</span>
+               <span class="hl kwa">when</span> Yellow <span class="hl sym">=&gt;</span>
+                  <span class="hl kwa">return</span> Yellow<span class="hl sym">;</span>
+            <span class="hl kwa">end case</span><span class="hl sym">;</span>
+      <span class="hl kwa">end case</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Do_Complement<span class="hl sym">;</span>
+
+   <span class="hl kwa">function</span> To_US <span class="hl sym">(</span>Source <span class="hl sym">:</span> <span class="hl kwb">String</span><span class="hl sym">)</span> <span class="hl kwa">return</span> Unbounded_String <span class="hl kwa">renames</span>
+     To_Unbounded_String<span class="hl sym">;</span>
+
+   Colour_Image <span class="hl sym">:</span> <span class="hl kwa">constant array</span> <span class="hl sym">(</span>Colour<span class="hl sym">)</span> <span class="hl kwa">of</span> Unbounded_String <span class="hl sym">:=</span>
+     <span class="hl sym">(</span>Blue   <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;blue&quot;</span><span class="hl sym">),</span>
+      Red    <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;red&quot;</span><span class="hl sym">),</span>
+      Yellow <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;yellow&quot;</span><span class="hl sym">));</span>
+
+   Numbers_Image <span class="hl sym">:</span> <span class="hl kwa">constant array</span> <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">..</span> <span class="hl num">9</span><span class="hl sym">)</span> <span class="hl kwa">of</span> Unbounded_String <span class="hl sym">:=</span>
+     <span class="hl sym">(</span><span class="hl num">0</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;zero &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">1</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;one &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">2</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;two &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">3</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;three &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">4</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;four &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">5</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;five &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">6</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;six &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">7</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;seven &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">8</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;eight &quot;</span><span class="hl sym">),</span>
+      <span class="hl num">9</span> <span class="hl sym">=&gt;</span> To_US <span class="hl sym">(</span><span class="hl str">&quot;nine &quot;</span><span class="hl sym">));</span>
+
+   <span class="hl kwa">function</span> Spelled <span class="hl sym">(</span>Value <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">return</span> <span class="hl kwb">String</span> <span class="hl kwa">is</span>
+      Result <span class="hl sym">:</span> Unbounded_String <span class="hl sym">:=</span> Null_Unbounded_String<span class="hl sym">;</span>
+      K      <span class="hl sym">:</span> <span class="hl kwb">Natural</span>          <span class="hl sym">:=</span> Value<span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">loop</span>
+         Result <span class="hl sym">:=</span> Numbers_Image <span class="hl sym">(</span>K <span class="hl kwa">rem</span> <span class="hl num">10</span><span class="hl sym">) &amp;</span> Result<span class="hl sym">;</span>
+         K      <span class="hl sym">:=</span> K <span class="hl sym">/</span> <span class="hl num">10</span><span class="hl sym">;</span>
+         <span class="hl kwa">exit when</span> K <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">return</span> To_String <span class="hl sym">(</span>Result<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Spelled<span class="hl sym">;</span>
+
+   <span class="hl kwa">procedure</span> Print_Colours <span class="hl kwa">is</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">for</span> C1 <span class="hl kwa">in</span> Colour <span class="hl kwa">loop</span>
+         <span class="hl kwa">for</span> C2 <span class="hl kwa">in</span> Colour <span class="hl kwa">loop</span>
+            Put_Line
+              <span class="hl sym">(</span>To_String <span class="hl sym">(</span>Colour_Image <span class="hl sym">(</span>C1<span class="hl sym">)) &amp;</span>
+               <span class="hl str">&quot; + &quot;</span> <span class="hl sym">&amp;</span>
+               To_String <span class="hl sym">(</span>Colour_Image <span class="hl sym">(</span>C2<span class="hl sym">)) &amp;</span>
+               <span class="hl str">&quot; -&gt; &quot;</span> <span class="hl sym">&amp;</span>
+               To_String <span class="hl sym">(</span>Colour_Image <span class="hl sym">(</span>Do_Complement <span class="hl sym">(</span>C1<span class="hl sym">,</span> C2<span class="hl sym">))));</span>
+         <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      New_Line<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Print_Colours<span class="hl sym">;</span>
+
+   <span class="hl slc">-- The procedure that handles the test</span>
+   <span class="hl kwa">procedure</span> Run <span class="hl sym">(</span>Meetings <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span> Set <span class="hl sym">:</span> Colour_Set<span class="hl sym">)</span> <span class="hl kwa">is</span>
+      <span class="hl slc">-- Chameneos are created here</span>
+      Creature_Set   <span class="hl sym">:</span> <span class="hl kwa">array</span> <span class="hl sym">(</span>Set'<span class="hl kwa">Range</span><span class="hl sym">)</span> <span class="hl kwa">of</span> Creature<span class="hl sym">;</span>
+      Measures       <span class="hl sym">:</span> Chameneos<span class="hl sym">.</span>Result_Type <span class="hl sym">(</span>Set'<span class="hl kwa">Range</span><span class="hl sym">);</span>
+      Total_Meetings <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Set'<span class="hl kwa">Range loop</span>
+         Put <span class="hl sym">(</span>To_String <span class="hl sym">(</span>Colour_Image <span class="hl sym">(</span>Set <span class="hl sym">(</span>I<span class="hl sym">))) &amp;</span> <span class="hl str">&quot; &quot;</span><span class="hl sym">);</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      New_Line<span class="hl sym">;</span>
+
+      <span class="hl slc">-- Meeting place initialization</span>
+      Place<span class="hl sym">.</span>Init <span class="hl sym">(</span>Meetings<span class="hl sym">);</span>
+      <span class="hl slc">-- Rendez-vous to start the tasks</span>
+      <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Set'<span class="hl kwa">Range loop</span>
+         Creature_Set <span class="hl sym">(</span>I<span class="hl sym">).</span>Start <span class="hl sym">(</span>I<span class="hl sym">,</span> Set <span class="hl sym">(</span>I<span class="hl sym">));</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl slc">-- Rendez-vous : waiting for the test to complete</span>
+      <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Set'<span class="hl kwa">Range loop</span>
+         Creature_Set <span class="hl sym">(</span>I<span class="hl sym">).</span>Report <span class="hl sym">(</span>Measures <span class="hl sym">(</span>I<span class="hl sym">));</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Set'<span class="hl kwa">Range loop</span>
+         Int_Io<span class="hl sym">.</span>Put <span class="hl sym">(</span>Measures <span class="hl sym">(</span>I<span class="hl sym">).</span>Meetings_Made<span class="hl sym">,</span> Width <span class="hl sym">=&gt;</span> <span class="hl num">10</span><span class="hl sym">);</span>
+         Put <span class="hl sym">(</span><span class="hl str">&quot;  &quot;</span> <span class="hl sym">&amp;</span> Spelled <span class="hl sym">(</span>Measures <span class="hl sym">(</span>I<span class="hl sym">).</span>Meetings_Same<span class="hl sym">));</span>
+         New_Line<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">for</span> I <span class="hl kwa">in</span> Set'<span class="hl kwa">Range loop</span>
+         Total_Meetings <span class="hl sym">:=</span> Total_Meetings <span class="hl sym">+</span> Measures <span class="hl sym">(</span>I<span class="hl sym">).</span>Meetings_Made<span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      Put <span class="hl sym">(</span>Spelled <span class="hl sym">(</span>Total_Meetings<span class="hl sym">));</span>
+      New_Line <span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">exception</span>
+      <span class="hl kwa">when</span> E <span class="hl sym">:</span> <span class="hl kwa">others</span> <span class="hl sym">=&gt;</span>
+         Ada<span class="hl sym">.</span>Text_IO<span class="hl sym">.</span>Put_Line
+           <span class="hl sym">(</span><span class="hl str">&quot;Test failed cause :=&quot;</span> <span class="hl sym">&amp;</span> Exception_Information <span class="hl sym">(</span>E<span class="hl sym">));</span>
+   <span class="hl kwa">end</span> Run<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Chameneos<span class="hl sym">;</span>
+<span class="hl slc">------------------------------------------------------------------------------</span>
+<span class="hl slc">-- The chameneos description</span>
+<span class="hl slc">-------------------------------------------------------------------------------</span>
+<span class="hl kwa">package</span> Chameneos<span class="hl sym">.</span>Creatures <span class="hl kwa">is</span>
+
+   <span class="hl slc">--A chameneos is an Ada task</span>
+   <span class="hl kwa">task type</span> Creature <span class="hl kwa">is</span>
+      <span class="hl kwa">entry</span> Start <span class="hl sym">(</span>Id <span class="hl sym">:</span> <span class="hl kwa">in</span> Id_Type<span class="hl sym">;</span> C <span class="hl sym">:</span> <span class="hl kwa">in</span> Colour<span class="hl sym">);</span>
+      <span class="hl kwa">entry</span> Report <span class="hl sym">(</span>Measure <span class="hl sym">:</span> <span class="hl kwa">out</span> Measure_Type<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Creature<span class="hl sym">;</span>
+   <span class="hl slc">-- The meeting place</span>
+   <span class="hl kwa">protected</span> Place <span class="hl kwa">is</span>
+      <span class="hl kwa">procedure</span> Init <span class="hl sym">(</span>Max_Count <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Natural</span><span class="hl sym">);</span>
+      <span class="hl kwa">entry</span> Meet
+        <span class="hl sym">(</span>X          <span class="hl sym">:</span> <span class="hl kwa">in</span> Id_Type<span class="hl sym">;</span>
+         C          <span class="hl sym">:</span> <span class="hl kwa">in</span> Colour<span class="hl sym">;</span>
+         Mall_Open  <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+         Name_Other <span class="hl sym">:</span> <span class="hl kwa">out</span> Id_Type<span class="hl sym">;</span>
+         C_Other    <span class="hl sym">:</span> <span class="hl kwa">out</span> Colour<span class="hl sym">);</span>
+
+   <span class="hl kwa">private</span>
+      <span class="hl kwa">entry</span> Waiting
+        <span class="hl sym">(</span>X          <span class="hl sym">:</span> <span class="hl kwa">in</span> Id_Type<span class="hl sym">;</span>
+         C          <span class="hl sym">:</span> <span class="hl kwa">in</span> Colour<span class="hl sym">;</span>
+         Mall_Open  <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+         Name_Other <span class="hl sym">:</span> <span class="hl kwa">out</span> Id_Type<span class="hl sym">;</span>
+         C_Other    <span class="hl sym">:</span> <span class="hl kwa">out</span> Colour<span class="hl sym">);</span>
+
+      Meetings_Counter   <span class="hl sym">:</span> <span class="hl kwb">Natural</span><span class="hl sym">;</span>
+      First_Call         <span class="hl sym">:</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+      A_Colour<span class="hl sym">,</span> B_Colour <span class="hl sym">:</span> Colour<span class="hl sym">;</span>
+      A_Name<span class="hl sym">,</span> B_Name     <span class="hl sym">:</span> Id_Type<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Place<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Chameneos<span class="hl sym">.</span>Creatures<span class="hl sym">;</span>
+<span class="hl slc">-------------------------------------------------------------------------------</span>
+<span class="hl kwa">package body</span> Chameneos<span class="hl sym">.</span>Creatures <span class="hl kwa">is</span>
+
+   <span class="hl kwa">protected body</span> Place <span class="hl kwa">is</span>
+
+      <span class="hl kwa">procedure</span> Init <span class="hl sym">(</span>Max_Count <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Natural</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+      <span class="hl kwa">begin</span>
+         Meetings_Counter <span class="hl sym">:=</span> Max_Count<span class="hl sym">;</span>
+         First_Call       <span class="hl sym">:=</span> <span class="hl kwd">True</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Init<span class="hl sym">;</span>
+
+      <span class="hl kwa">entry</span> Meet
+        <span class="hl sym">(</span>X          <span class="hl sym">:</span> <span class="hl kwa">in</span> Id_Type<span class="hl sym">;</span>
+         C          <span class="hl sym">:</span> <span class="hl kwa">in</span> Colour<span class="hl sym">;</span>
+         Mall_Open  <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+         Name_Other <span class="hl sym">:</span> <span class="hl kwa">out</span> Id_Type<span class="hl sym">;</span>
+         C_Other    <span class="hl sym">:</span> <span class="hl kwa">out</span> Colour<span class="hl sym">)</span> <span class="hl kwa">when</span> <span class="hl kwd">True</span>
+      <span class="hl kwa">is</span>
+      <span class="hl kwa">begin</span>
+         <span class="hl kwa">if</span> <span class="hl sym">(</span>Meetings_Counter <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">then</span>
+            <span class="hl slc">-- The test is finished</span>
+            Mall_Open <span class="hl sym">:=</span> <span class="hl kwd">False</span><span class="hl sym">;</span>
+            <span class="hl slc">-- must give dummy values that will not be used anyway</span>
+            C_Other    <span class="hl sym">:=</span> C<span class="hl sym">;</span>
+            Name_Other <span class="hl sym">:=</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">else</span>
+            Mall_Open <span class="hl sym">:=</span> <span class="hl kwd">True</span><span class="hl sym">;</span>
+            <span class="hl kwa">if</span> <span class="hl sym">(</span>First_Call<span class="hl sym">)</span> <span class="hl kwa">then</span>
+               A_Colour   <span class="hl sym">:=</span> C<span class="hl sym">;</span>
+               A_Name     <span class="hl sym">:=</span> X<span class="hl sym">;</span>
+               First_Call <span class="hl sym">:=</span> <span class="hl kwd">False</span><span class="hl sym">;</span>
+               <span class="hl kwa">requeue</span> Waiting<span class="hl sym">;</span>
+            <span class="hl kwa">else</span>
+               B_Colour         <span class="hl sym">:=</span> C<span class="hl sym">;</span>
+               B_Name           <span class="hl sym">:=</span> X<span class="hl sym">;</span>
+               C_Other          <span class="hl sym">:=</span> A_Colour<span class="hl sym">;</span>
+               Name_Other       <span class="hl sym">:=</span> A_Name<span class="hl sym">;</span>
+               First_Call       <span class="hl sym">:=</span> <span class="hl kwd">True</span><span class="hl sym">;</span>
+               Meetings_Counter <span class="hl sym">:=</span> Meetings_Counter <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span>
+            <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Meet<span class="hl sym">;</span>
+
+      <span class="hl kwa">entry</span> Waiting
+        <span class="hl sym">(</span>X          <span class="hl sym">:</span> <span class="hl kwa">in</span> Id_Type<span class="hl sym">;</span>
+         C          <span class="hl sym">:</span> <span class="hl kwa">in</span> Colour<span class="hl sym">;</span>
+         Mall_Open  <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+         Name_Other <span class="hl sym">:</span> <span class="hl kwa">out</span> Id_Type<span class="hl sym">;</span>
+         C_Other    <span class="hl sym">:</span> <span class="hl kwa">out</span> Colour<span class="hl sym">)</span> <span class="hl kwa">when</span> First_Call
+      <span class="hl kwa">is</span>
+         <span class="hl kwa">pragma</span> Unreferenced <span class="hl sym">(</span>X<span class="hl sym">,</span> C<span class="hl sym">);</span>
+      <span class="hl kwa">begin</span>
+         Mall_Open  <span class="hl sym">:=</span> <span class="hl kwd">True</span><span class="hl sym">;</span>
+         C_Other    <span class="hl sym">:=</span> B_Colour<span class="hl sym">;</span>
+         Name_Other <span class="hl sym">:=</span> B_Name<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Waiting<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Place<span class="hl sym">;</span>
+
+   <span class="hl kwa">task body</span> Creature <span class="hl kwa">is</span>
+      My_Id<span class="hl sym">,</span> Other_Id         <span class="hl sym">:</span> Id_Type<span class="hl sym">;</span>
+      My_Colour<span class="hl sym">,</span> Other_Colour <span class="hl sym">:</span> Colour<span class="hl sym">;</span>
+      Meetings_Made           <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Meetings_Same           <span class="hl sym">:</span> <span class="hl kwb">Natural</span> <span class="hl sym">:=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      Is_Mall_Open            <span class="hl sym">:</span> <span class="hl kwb">Boolean</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">accept</span> Start <span class="hl sym">(</span>Id <span class="hl sym">:</span> <span class="hl kwa">in</span> Id_Type<span class="hl sym">;</span> C <span class="hl sym">:</span> <span class="hl kwa">in</span> Colour<span class="hl sym">)</span> <span class="hl kwa">do</span>
+         My_Id     <span class="hl sym">:=</span> Id<span class="hl sym">;</span>
+         My_Colour <span class="hl sym">:=</span> C<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Start<span class="hl sym">;</span>
+      <span class="hl kwa">loop</span>
+         Place<span class="hl sym">.</span>Meet <span class="hl sym">(</span>My_Id<span class="hl sym">,</span> My_Colour<span class="hl sym">,</span> Is_Mall_Open<span class="hl sym">,</span> Other_Id<span class="hl sym">,</span> Other_Colour<span class="hl sym">);</span>
+         <span class="hl kwa">if not</span> Is_Mall_Open <span class="hl kwa">then</span>
+            <span class="hl slc">-- the test is finished</span>
+            <span class="hl kwa">exit</span><span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         My_Colour     <span class="hl sym">:=</span> Do_Complement <span class="hl sym">(</span>My_Colour<span class="hl sym">,</span> Other_Colour<span class="hl sym">);</span>
+         Meetings_Made <span class="hl sym">:=</span> Meetings_Made <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">if</span> Other_Id <span class="hl sym">=</span> My_Id <span class="hl kwa">then</span>
+            Meetings_Same <span class="hl sym">:=</span> Meetings_Same <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+      <span class="hl slc">-- Give the results and die.</span>
+      <span class="hl kwa">accept</span> Report <span class="hl sym">(</span>Measure <span class="hl sym">:</span> <span class="hl kwa">out</span> Measure_Type<span class="hl sym">)</span> <span class="hl kwa">do</span>
+         Measure<span class="hl sym">.</span>Meetings_Made <span class="hl sym">:=</span> Meetings_Made<span class="hl sym">;</span>
+         Measure<span class="hl sym">.</span>Meetings_Same <span class="hl sym">:=</span> Meetings_Same<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Report<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Creature<span class="hl sym">;</span>
+
+<span class="hl kwa">end</span> Chameneos<span class="hl sym">.</span>Creatures<span class="hl sym">;</span>
