@@ -1,0 +1,160 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com"></span>
+<span class="hl com">   contributed by Isaac Gouy, optimization and use of more C# idioms by Robert F. Tobler</span>
+<span class="hl com">   simdified by Konrad M. Kruczynski and Jaroslaw M. Gliwinski</span>
+<span class="hl com">*/</span>
+<span class="hl kwa">using</span> System<span class="hl sym">;</span>
+<span class="hl kwa">using</span> Mono<span class="hl sym">.</span>Simd<span class="hl sym">;</span>
+
+<span class="hl kwa">namespace</span> NBody
+<span class="hl sym">{</span>
+   <span class="hl kwa">class</span> NBody
+   <span class="hl sym">{</span>
+      <span class="hl kwa">public static</span> <span class="hl kwb">void</span> <span class="hl kwd">Main</span><span class="hl sym">(</span>String<span class="hl sym">[]</span> args<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         var n <span class="hl sym">=</span> args<span class="hl sym">.</span>Length <span class="hl sym">&gt;</span> <span class="hl num">0</span> ? Int32<span class="hl sym">.</span><span class="hl kwd">Parse</span><span class="hl sym">(</span>args<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">]) :</span> <span class="hl num">10000</span><span class="hl sym">;</span>
+         var bodies <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">NBodySystem</span><span class="hl sym">();</span>
+         var dtdt <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">0.01</span><span class="hl sym">);</span>
+         Console<span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;{0:f9}&quot;</span><span class="hl sym">,</span> bodies<span class="hl sym">.</span><span class="hl kwd">Energy</span><span class="hl sym">());</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span>var i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> n<span class="hl sym">;</span> i<span class="hl sym">++)</span> bodies<span class="hl sym">.</span><span class="hl kwd">Advance</span><span class="hl sym">(</span><span class="hl kwa">ref</span> dtdt<span class="hl sym">);</span>
+         Console<span class="hl sym">.</span><span class="hl kwd">WriteLine</span><span class="hl sym">(</span><span class="hl str">&quot;{0:f9}&quot;</span><span class="hl sym">,</span> bodies<span class="hl sym">.</span><span class="hl kwd">Energy</span><span class="hl sym">());</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">class</span> Body
+   <span class="hl sym">{</span>
+      <span class="hl kwa">public</span> Vector2d Pxy<span class="hl sym">;</span>
+      <span class="hl kwa">public</span> Vector2d Pz0<span class="hl sym">;</span>
+      <span class="hl kwa">public</span> Vector2d Vxy<span class="hl sym">;</span>
+      <span class="hl kwa">public</span> Vector2d Vz0<span class="hl sym">;</span>
+      <span class="hl kwa">public</span> Vector2d MassMass<span class="hl sym">;</span>
+
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">class</span> Pair
+   <span class="hl sym">{</span>
+      <span class="hl kwa">public</span> Body Bi<span class="hl sym">,</span> Bj<span class="hl sym">;</span>
+   <span class="hl sym">}</span>
+
+   <span class="hl kwa">class</span> NBodySystem
+   <span class="hl sym">{</span>
+      <span class="hl kwa">private readonly</span> Body<span class="hl sym">[]</span> bodies<span class="hl sym">;</span>
+      <span class="hl kwa">private readonly</span> Pair<span class="hl sym">[]</span> pairs<span class="hl sym">;</span>
+
+      <span class="hl kwb">const double</span> Pi <span class="hl sym">=</span> <span class="hl num">3.141592653589793</span><span class="hl sym">;</span>
+      <span class="hl kwb">const double</span> SolarMass <span class="hl sym">=</span> <span class="hl num">4</span> <span class="hl sym">*</span> Pi <span class="hl sym">*</span> Pi<span class="hl sym">;</span>
+      <span class="hl kwb">const double</span> DaysPerYear <span class="hl sym">=</span> <span class="hl num">365.24</span><span class="hl sym">;</span>
+
+      <span class="hl kwa">public</span> <span class="hl kwd">NBodySystem</span><span class="hl sym">()</span>
+      <span class="hl sym">{</span>
+         bodies <span class="hl sym">=</span> <span class="hl kwa">new</span><span class="hl sym">[] {</span>
+                        <span class="hl kwa">new</span> Body
+                           <span class="hl sym">{</span> <span class="hl slc">// Sun</span>
+                              MassMass <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span>SolarMass<span class="hl sym">,</span> SolarMass<span class="hl sym">)</span>
+                           <span class="hl sym">},</span>
+                        <span class="hl kwa">new</span> Body
+                           <span class="hl sym">{</span> <span class="hl slc">// Jupiter</span>
+                              Pxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">4.84143144246472090e+00</span><span class="hl sym">, -</span><span class="hl num">1.16032004402742839e+00</span><span class="hl sym">),</span>
+                              Pz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">( -</span><span class="hl num">1.03622044471123109e-01</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              Vxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">1.66007664274403694e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span>  <span class="hl num">7.69901118419740425e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">),</span>
+                              Vz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">6.90460016972063023e-05</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              MassMass <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">9.54791938424326609e-04</span> <span class="hl sym">*</span> SolarMass<span class="hl sym">)</span>
+                           <span class="hl sym">},</span>
+                        <span class="hl kwa">new</span> Body
+                           <span class="hl sym">{</span> <span class="hl slc">// Saturn</span>
+                              Pxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">8.34336671824457987e+00</span><span class="hl sym">,</span> <span class="hl num">4.12479856412430479e+00</span><span class="hl sym">),</span>
+                              Pz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">4.03523417114321381e-01</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              Vxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">2.76742510726862411e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">4.99852801234917238e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">),</span>
+                              Vz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">2.30417297573763929e-05</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              MassMass <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">2.85885980666130812e-04</span> <span class="hl sym">*</span> SolarMass<span class="hl sym">)</span>
+                           <span class="hl sym">},</span>
+                        <span class="hl kwa">new</span> Body
+                           <span class="hl sym">{</span> <span class="hl slc">// Uranus</span>
+                              Pxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">1.28943695621391310e+01</span><span class="hl sym">, -</span><span class="hl num">1.51111514016986312e+01</span><span class="hl sym">),</span>
+                              Pz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">2.23307578892655734e-01</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              Vxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">2.96460137564761618e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">2.37847173959480950e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">),</span>
+                              Vz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">2.96589568540237556e-05</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              MassMass <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">4.36624404335156298e-05</span> <span class="hl sym">*</span> SolarMass<span class="hl sym">)</span>
+                           <span class="hl sym">},</span>
+                        <span class="hl kwa">new</span> Body
+                           <span class="hl sym">{</span> <span class="hl slc">// Neptune</span>
+                              Pxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">1.53796971148509165e+01</span><span class="hl sym">, -</span><span class="hl num">2.59193146099879641e+01</span><span class="hl sym">),</span>
+                              Pz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">1.79258772950371181e-01</span><span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              Vxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">2.68067772490389322e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">1.62824170038242295e-03</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">),</span>
+                              Vz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">9.51592254519715870e-05</span> <span class="hl sym">*</span> DaysPerYear<span class="hl sym">,</span> <span class="hl num">0</span><span class="hl sym">),</span>
+                              MassMass <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">5.15138902046611451e-05</span> <span class="hl sym">*</span> SolarMass<span class="hl sym">)</span>
+                           <span class="hl sym">},</span>
+                     <span class="hl sym">};</span>
+
+         pairs <span class="hl sym">=</span> <span class="hl kwa">new</span> Pair<span class="hl sym">[</span>bodies<span class="hl sym">.</span>Length <span class="hl sym">* (</span>bodies<span class="hl sym">.</span>Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">) /</span> <span class="hl num">2</span><span class="hl sym">];</span>
+         var pi <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span>var i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> bodies<span class="hl sym">.</span>Length <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">;</span> i<span class="hl sym">++)</span>
+         <span class="hl sym">{</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span>var j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> bodies<span class="hl sym">.</span>Length<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+            <span class="hl sym">{</span>
+               pairs<span class="hl sym">[</span>pi<span class="hl sym">++] =</span> <span class="hl kwa">new</span> Pair <span class="hl sym">{</span> Bi <span class="hl sym">=</span> bodies<span class="hl sym">[</span>i<span class="hl sym">],</span> Bj <span class="hl sym">=</span> bodies<span class="hl sym">[</span>j<span class="hl sym">] };</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+
+         var pxy <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+         var pz0 <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">);</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span>var i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> bodies<span class="hl sym">.</span>Length<span class="hl sym">;</span> i<span class="hl sym">++ )</span>
+         <span class="hl sym">{</span>
+            var b <span class="hl sym">=</span> bodies<span class="hl sym">[</span>i<span class="hl sym">];</span>
+            pxy <span class="hl sym">+=</span> b<span class="hl sym">.</span>Vxy <span class="hl sym">*</span> b<span class="hl sym">.</span>MassMass<span class="hl sym">;</span>
+            pz0 <span class="hl sym">+=</span> b<span class="hl sym">.</span>Vz0 <span class="hl sym">*</span> b<span class="hl sym">.</span>MassMass<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         var sol <span class="hl sym">=</span> bodies<span class="hl sym">[</span><span class="hl num">0</span><span class="hl sym">];</span>
+         var minusOne <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(-</span><span class="hl num">1</span><span class="hl sym">);</span>
+         var solarMass <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span>SolarMass<span class="hl sym">);</span>
+         sol<span class="hl sym">.</span>Vxy <span class="hl sym">=</span> minusOne <span class="hl sym">*</span> pxy <span class="hl sym">/</span> solarMass<span class="hl sym">;</span>
+         sol<span class="hl sym">.</span>Vz0 <span class="hl sym">=</span> minusOne <span class="hl sym">*</span> pz0 <span class="hl sym">/</span> solarMass<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+
+      <span class="hl kwa">public</span> <span class="hl kwb">void</span> <span class="hl kwd">Advance</span><span class="hl sym">(</span><span class="hl kwa">ref</span> Vector2d dtdt<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+         <span class="hl kwa">foreach</span> <span class="hl sym">(</span>var p <span class="hl kwa">in</span> pairs<span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            var bi <span class="hl sym">=</span> p<span class="hl sym">.</span>Bi<span class="hl sym">;</span>
+            var bj <span class="hl sym">=</span> p<span class="hl sym">.</span>Bj<span class="hl sym">;</span>
+            var dxdy <span class="hl sym">=</span> bi<span class="hl sym">.</span>Pxy <span class="hl sym">-</span> bj<span class="hl sym">.</span>Pxy<span class="hl sym">;</span>
+            var dzd0 <span class="hl sym">=</span> bi<span class="hl sym">.</span>Pz0 <span class="hl sym">-</span> bj<span class="hl sym">.</span>Pz0<span class="hl sym">;</span>
+            var distvec <span class="hl sym">= (</span>dxdy <span class="hl sym">*</span> dxdy<span class="hl sym">).</span><span class="hl kwd">HorizontalAdd</span><span class="hl sym">(</span>dzd0 <span class="hl sym">*</span> dzd0<span class="hl sym">);</span>
+            var d2 <span class="hl sym">=</span> distvec<span class="hl sym">.</span><span class="hl kwd">HorizontalAdd</span><span class="hl sym">(</span>distvec<span class="hl sym">);</span>
+            var mag <span class="hl sym">=</span> dtdt <span class="hl sym">/ (</span>d2<span class="hl sym">.</span><span class="hl kwd">Sqrt</span><span class="hl sym">() *</span> d2<span class="hl sym">);</span>
+            bi<span class="hl sym">.</span>Vxy <span class="hl sym">-=</span> dxdy <span class="hl sym">*</span> bj<span class="hl sym">.</span>MassMass <span class="hl sym">*</span> mag<span class="hl sym">;</span>
+            bj<span class="hl sym">.</span>Vxy <span class="hl sym">+=</span> dxdy <span class="hl sym">*</span> bi<span class="hl sym">.</span>MassMass <span class="hl sym">*</span> mag<span class="hl sym">;</span>
+            bi<span class="hl sym">.</span>Vz0 <span class="hl sym">-=</span> dzd0 <span class="hl sym">*</span> bj<span class="hl sym">.</span>MassMass <span class="hl sym">*</span> mag<span class="hl sym">;</span>
+            bj<span class="hl sym">.</span>Vz0 <span class="hl sym">+=</span> dzd0 <span class="hl sym">*</span> bi<span class="hl sym">.</span>MassMass <span class="hl sym">*</span> mag<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">foreach</span><span class="hl sym">(</span>var b <span class="hl kwa">in</span> bodies<span class="hl sym">)</span>
+         <span class="hl sym">{</span>
+            b<span class="hl sym">.</span>Pxy <span class="hl sym">+=</span> dtdt <span class="hl sym">*</span> b<span class="hl sym">.</span>Vxy<span class="hl sym">;</span>
+            b<span class="hl sym">.</span>Pz0 <span class="hl sym">+=</span> dtdt <span class="hl sym">*</span> b<span class="hl sym">.</span>Vz0<span class="hl sym">;</span>
+         <span class="hl sym">}</span>
+         
+      <span class="hl sym">}</span>
+
+      <span class="hl kwa">public</span> <span class="hl kwb">double</span> <span class="hl kwd">Energy</span><span class="hl sym">()</span>
+      <span class="hl sym">{</span>
+         var half <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">0.5</span><span class="hl sym">);</span>
+         var e <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwd">Vector2d</span><span class="hl sym">(</span><span class="hl num">0.0</span><span class="hl sym">);</span>
+         <span class="hl kwa">for</span> <span class="hl sym">(</span>var i <span class="hl sym">=</span> <span class="hl num">0</span><span class="hl sym">;</span> i <span class="hl sym">&lt;</span> bodies<span class="hl sym">.</span>Length<span class="hl sym">;</span> i<span class="hl sym">++)</span>
+         <span class="hl sym">{</span>
+            var bi <span class="hl sym">=</span> bodies<span class="hl sym">[</span>i<span class="hl sym">];</span>
+            var sq <span class="hl sym">= (</span>bi<span class="hl sym">.</span>Vxy<span class="hl sym">*</span>bi<span class="hl sym">.</span>Vxy<span class="hl sym">).</span><span class="hl kwd">HorizontalAdd</span><span class="hl sym">(</span>bi<span class="hl sym">.</span>Vz0<span class="hl sym">*</span>bi<span class="hl sym">.</span>Vz0<span class="hl sym">);</span>
+            e <span class="hl sym">+=</span> half <span class="hl sym">*</span> bi<span class="hl sym">.</span>MassMass <span class="hl sym">*</span> sq<span class="hl sym">.</span><span class="hl kwd">HorizontalAdd</span><span class="hl sym">(</span>sq<span class="hl sym">);</span>
+            <span class="hl kwa">for</span> <span class="hl sym">(</span>var j <span class="hl sym">=</span> i <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">;</span> j <span class="hl sym">&lt;</span> bodies<span class="hl sym">.</span>Length<span class="hl sym">;</span> j<span class="hl sym">++)</span>
+            <span class="hl sym">{</span>
+               var bj <span class="hl sym">=</span> bodies<span class="hl sym">[</span>j<span class="hl sym">];</span>
+               var dxdy <span class="hl sym">=</span> bi<span class="hl sym">.</span>Pxy <span class="hl sym">-</span> bj<span class="hl sym">.</span>Pxy<span class="hl sym">;</span>
+               var dzd0 <span class="hl sym">=</span> bi<span class="hl sym">.</span>Pz0 <span class="hl sym">-</span> bj<span class="hl sym">.</span>Pz0<span class="hl sym">;</span>
+               var sqvec <span class="hl sym">= (</span>dxdy <span class="hl sym">*</span> dxdy<span class="hl sym">).</span><span class="hl kwd">HorizontalAdd</span><span class="hl sym">(</span>dzd0 <span class="hl sym">*</span> dzd0<span class="hl sym">);</span>
+               e <span class="hl sym">-= (</span>bi<span class="hl sym">.</span>MassMass <span class="hl sym">*</span> bj<span class="hl sym">.</span>MassMass<span class="hl sym">) / (</span>sqvec<span class="hl sym">.</span><span class="hl kwd">HorizontalAdd</span><span class="hl sym">(</span>sqvec<span class="hl sym">)).</span><span class="hl kwd">Sqrt</span><span class="hl sym">();</span>
+            <span class="hl sym">}</span>
+         <span class="hl sym">}</span>
+         <span class="hl kwa">return</span> e<span class="hl sym">.</span>X<span class="hl sym">;</span>
+      <span class="hl sym">}</span>
+   <span class="hl sym">}</span>
+<span class="hl sym">}</span>
