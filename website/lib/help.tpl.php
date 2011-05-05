@@ -87,19 +87,18 @@
 </dd>
 
 
-<dt><a href="#twowindows" name="twowindows">Compare source code for two languages</a></dt>
+<dt><a href="#twowindows" name="twowindows"><b>Compare source code for two languages</b></a></dt>
 <dd>
-<p><b>Open 2 web browser windows side-by-side</b> and compare the source code of the programs side-by-side.<p>
-
-<p>Example, open a browser window, <span class="u32"><a
+<p>Example, open a web browser window, <span class="u32"><a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=gcc" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with GCC.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=gcc" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with GCC.">fannkuch-redux</a> select <a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=gcc" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with GCC.">C GNU GCC</a> in the drop-down menus.</p>
 
-<p>Example, open a second browser window, <span class="u32"><a
+<p>Example, <b>open a second web browser window</b>, <span class="u32"><a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">fannkuch-redux</a> select <a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">C CINT</a> in the drop-down menus.</p> 
+<p>Tile the web browser windows side-by-side.</p>
 <p>Notice the slight changes made to the C program. Notice the huge difference in the Time-used measurements. Notice which the GCC compiler options and the CINT interpreter flags were used.</p>
 </dd>
 
