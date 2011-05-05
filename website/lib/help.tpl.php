@@ -87,7 +87,7 @@
 </dd>
 
 
-<dt><a href="#twowindows" name="twowindows"><b>Compare source code for two languages</b></a></dt>
+<dt><a href="#twowindows" name="twowindows"><b>Compare the source code for two programs</b></a></dt>
 <dd>
 <p>Example, open a web browser window, <span class="u32"><a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=gcc" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with GCC.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a
@@ -99,7 +99,7 @@ href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements,
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">fannkuch-redux</a> select <a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">C CINT</a> in the drop-down menus.</p> 
 <p>Tile the web browser windows side-by-side.</p>
-<p>Notice the slight changes made to the C program. Notice the huge difference in the Time-used measurements. Notice which the GCC compiler options and the CINT interpreter flags were used.</p>
+<p>Notice the slight changes made to the C program for CINT. Notice the huge difference in the Time-used measurements. Notice which the GCC compiler options and the CINT interpreter flags were used.</p>
 </dd>
 
 <dt><a href="#several" name="several">Compare performance for <b>3 or 4 <i>or more</i> programming languages</b></a></dt>
