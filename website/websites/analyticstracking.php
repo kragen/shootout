@@ -1,6 +1,12 @@
-<script src='http://shootout.alioth.debian.org/ja_js_12dec2009.php' type='text/javascript'></script>
 <script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("UA-1050511-1");
-pageTracker._trackPageview();
-} catch(err) {}</script>
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-1050511-1']);
+ _gaq.push(['_trackPageview']);
+ _gaq.push(['_trackPageLoadTime']);
+
+ (function() {
+   var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+ })();
+</script>
