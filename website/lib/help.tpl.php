@@ -87,7 +87,7 @@
 </dd>
 
 
-<dt><a href="#twowindows" name="twowindows"><b>Compare the source code for two programs</b></a></dt>
+<dt><a href="#twowindows" name="twowindows">Compare the <b>source code for 2 programs</b></a></dt>
 <dd>
 <p>Example, open a web browser window, <span class="u32"><a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=gcc" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with GCC.">&nbsp;Ubuntu&#8482;&nbsp;:&nbsp;Intel&#174;&nbsp;Q6600&#174;&nbsp;one core&nbsp;</a></span> select <a
@@ -99,7 +99,7 @@ href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements,
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">fannkuch-redux</a> select <a
 href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT.">C CINT</a> in the drop-down menus.</p> 
 <p>Tile the web browser windows side-by-side.</p>
-<p>Notice the slight changes made to the C program for CINT. Notice the huge difference in the Time-used measurements. Notice which the GCC compiler options and the CINT interpreter flags were used.</p>
+<p>Notice the slight changes made to the C program for CINT. Notice the huge difference in the Time-used measurements. Notice which GCC compiler options and CINT interpreter flags were used.</p>
 </dd>
 
 <dt><a href="#several" name="several">Compare performance for <b>3 or 4 <i>or more</i> programming languages</b></a></dt>
@@ -127,10 +127,13 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 <dd>
 <p>Don't confuse differences in default memory allocation with differences in Memory-used when the task requires programs to allocate more than the default memory.</p>
 <p>Example select <a href="./u32/which-language-is-best.php?v8=on&amp;yarv=on&amp;perl=on&amp;gpp=on&amp;php=on&amp;sbcl=on&amp;cint=on&amp;csharp=on&amp;racket=on&amp;vw=on&amp;ghc=on&amp;lua=on&amp;java=on&amp;hipe=on&amp;python3=on&amp;xfullcpu=0&amp;xmem=1&amp;xloc=0&amp;nbody=0&amp;fannkuchredux=0&amp;meteor=0&amp;fasta=0&amp;spectralnorm=0&amp;revcomp=1&amp;mandelbrot=0&amp;knucleotide=1&amp;regexdna=1&amp;pidigits=0&amp;chameneosredux=0&amp;threadring=0&amp;binarytrees=1&amp;calc=chart" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
+<p>Notice that some of the programs are written for multicore and allocate additional buffers to accumulate results from multiple processes.</p>
 </dd>
 
 <dt><a href="#comparecodeused" name="comparecodeused">Compare <b>Code-used</b> for all the benchmarks</a></dt>
 <dd>
+<p>Don't expect <em>programming in the large</em> to show as big a differences in Code-used measurements as these tiny tiny <em>programming in the small</em> tasks.</p>
+<blockquote>This paper compares one scripting language, Python, with C in the domain of revision control systems, as large working implementations exist for both languages. It finds no clear evidence that scripting languages produce smaller systems&#8230;</blockquote> 
 <p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&amp;xfullcpu=0&amp;xmem=0&amp;xloc=1" title="Which programming languages have benchmark programs that use less source code on one core x86 Ubuntu">Which programming language is best?</a> and set the Code B weight to 1 and the Time secs weight to 0.</p>
 </dd>
 
