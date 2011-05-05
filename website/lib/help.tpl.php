@@ -86,6 +86,16 @@
 <p>There are 4 sets of up-to-date measurements. Measurements for the 4 different OS/machine combinations are shown on color-coded pages.</p>
 </dd>
 
+
+<dt><a href="#twowindows" name="twowindows">Compare source code for two languages</a></dt>
+<dd>
+<p><b>Open 2 web browser windows side-by-side</b> and compare the source code of the programs side-by-side.<p>
+
+<p>Example, open a browser window, select <span class="u32"><a href="./u32/benchmark.php?test=fannkuchredux&amp;lang=gcc" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with GCC">fannkuch-redux and C GNU GCC</a></span> in the drop-down menus.</p>
+<p>Then open a second browser window, select <span class="u32"><a href="./u32/benchmark.php?test=fannkuchredux&amp;lang=cint" title="Measurements, source code, command-line and program output logs for the C fannkuch-redux program with CINT">fannkuch-redux and C CINT</a></span> in the drop-down menus.</p>
+<p>Notice the slight changes made to the C program. Notice the huge difference in the Time-used measurements. Notice which the GCC compiler options and the CINT interpreter flags were used.</p>
+</dd>
+
 <dt><a href="#several" name="several">Compare performance for <b>3 or 4 <i>or more</i> programming languages</b></a></dt>
 <dd>
 <p>Example <span class="u32q"><a
@@ -109,7 +119,8 @@ href="./u32/compare.php?lang=java&amp;lang2=python" title="Compare the speed and
 
 <dt><a href="#comparememoryused" name="comparememoryused">Compare <b>Memory-used</b> for all the benchmarks</a></dt>
 <dd>
-<p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&amp;xfullcpu=0&amp;xmem=1&amp;xloc=0" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
+<p>Don't confuse differences in default memory allocation with differences in Memory-used when the task requires programs to allocate more than the default memory.</p>
+<p>Example select <a href="./u32/which-language-is-best.php?v8=on&amp;yarv=on&amp;perl=on&amp;gpp=on&amp;php=on&amp;sbcl=on&amp;cint=on&amp;csharp=on&amp;racket=on&amp;vw=on&amp;ghc=on&amp;lua=on&amp;java=on&amp;hipe=on&amp;python3=on&amp;xfullcpu=0&amp;xmem=1&amp;xloc=0&amp;nbody=0&amp;fannkuchredux=0&amp;meteor=0&amp;fasta=0&amp;spectralnorm=0&amp;revcomp=1&amp;mandelbrot=0&amp;knucleotide=1&amp;regexdna=1&amp;pidigits=0&amp;chameneosredux=0&amp;threadring=0&amp;binarytrees=1&amp;calc=chart" title="Which programming languages have benchmark programs that use less memory on one core x86 Ubuntu">Which programming language is best?</a> and set the Memory KB weight to 1 and the Time secs weight to 0.</p>
 </dd>
 
 <dt><a href="#comparecodeused" name="comparecodeused">Compare <b>Code-used</b> for all the benchmarks</a></dt>
