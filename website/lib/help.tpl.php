@@ -136,6 +136,7 @@ href="./u32/compare.php?lang=java&amp;lang2=python3" title="Compare the speed an
 <blockquote><p>"This paper [<a href="http://plg.uwaterloo.ca/~migod/846/2011-Winter/projects/Simon-LanguageChoiceVCS-report.pdf">pdf The Effect of Language Choice on Revision Control
 Systems</a>] compares one scripting language, Python, with C in the domain of revision control systems, as large working implementations exist for both languages. It finds no clear evidence that scripting languages produce smaller systems&#8230;"</p></blockquote> 
 <p>Example select <a href="./u32/which-language-is-best.php?calc=calculate&amp;xfullcpu=0&amp;xmem=0&amp;xloc=1" title="Which programming languages have benchmark programs that use less source code on one core x86 Ubuntu">Which programming language is best?</a> and set the Code B weight to 1 and the Time secs weight to 0.</p>
+<p>Notice that some of the programs are written for multicore and include code to distribute work across multiple threads (or processes).</p>
 </dd>
 
 
