@@ -1,0 +1,216 @@
+<span class="hl com">/* The Computer Language Benchmarks Game</span>
+<span class="hl com">   http://shootout.alioth.debian.org/</span>
+<span class="hl com">   </span>
+<span class="hl com">   Contributed by Rex Kerr</span>
+<span class="hl com">   (inspired by the C++ version by Andrew Moon)</span>
+<span class="hl com">*/</span>
+
+<span class="hl kwa">import</span> java<span class="hl sym">.</span>io<span class="hl sym">.</span>_
+<span class="hl kwa">import</span> actors<span class="hl sym">.</span>Futures<span class="hl sym">.</span>_
+
+<span class="hl kwa">object</span> knucleotide <span class="hl sym">{</span>
+  <span class="hl kwa">val</span> BlockSize <span class="hl sym">=</span> <span class="hl num">1024</span><span class="hl sym">*</span><span class="hl num">1024</span>
+  
+  <span class="hl slc">// Iterators are not specialized so we need our own</span>
+  <span class="hl kwa">abstract class</span> LongIter <span class="hl sym">{</span>
+    <span class="hl kwa">def</span> hasNext<span class="hl sym">:</span> <span class="hl kwc">Boolean</span>
+    <span class="hl kwa">def</span> next<span class="hl sym">:</span> <span class="hl kwc">Long</span>
+    <span class="hl kwa">def</span> foreach<span class="hl sym">(</span>f<span class="hl sym">:</span> <span class="hl kwc">Long</span> <span class="hl sym">=&gt;</span> Unit<span class="hl sym">) {</span> <span class="hl kwa">while</span> <span class="hl sym">(</span>hasNext<span class="hl sym">)</span> f<span class="hl sym">(</span>next<span class="hl sym">) }</span>
+  <span class="hl sym">}</span>
+  
+  <span class="hl kwa">val</span> table <span class="hl sym">=</span> <span class="hl kwc">Array</span><span class="hl sym">.</span>tabulate<span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">](</span><span class="hl num">256</span><span class="hl sym">) {</span>
+    <span class="hl kwa">case</span> <span class="hl str">'a'</span> <span class="hl sym">|</span> <span class="hl str">'A'</span> <span class="hl sym">=&gt;</span> <span class="hl num">0</span>
+    <span class="hl kwa">case</span> <span class="hl str">'t'</span> <span class="hl sym">|</span> <span class="hl str">'T'</span> <span class="hl sym">=&gt;</span> <span class="hl num">1</span>
+    <span class="hl kwa">case</span> <span class="hl str">'g'</span> <span class="hl sym">|</span> <span class="hl str">'G'</span> <span class="hl sym">=&gt;</span> <span class="hl num">2</span>
+    <span class="hl kwa">case</span> <span class="hl str">'c'</span> <span class="hl sym">|</span> <span class="hl str">'C'</span> <span class="hl sym">=&gt;</span> <span class="hl num">3</span>
+    <span class="hl kwa">case</span> <span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span> <span class="hl sym">=&gt; -</span><span class="hl num">3</span>
+    <span class="hl kwa">case</span> <span class="hl str">'&gt;'</span> <span class="hl sym">=&gt; -</span><span class="hl num">2</span>
+    <span class="hl kwa">case</span> _ <span class="hl sym">=&gt; -</span><span class="hl num">1</span>
+  <span class="hl sym">}</span>
+
+  <span class="hl slc">// More efficient to store DNA sequence data as bits instead of bytes</span>
+  <span class="hl kwa">class</span> Bits<span class="hl sym">(</span><span class="hl kwa">val</span> data<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">]) {</span>
+    self <span class="hl sym">=&gt;</span>
+    <span class="hl kwa">var</span> size <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">var</span> index <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">var</span> n <span class="hl sym">=</span> <span class="hl num">0</span>
+    
+    <span class="hl kwa">def</span> add2<span class="hl sym">(</span>b<span class="hl sym">:</span> <span class="hl kwc">Byte</span><span class="hl sym">) {</span>
+      size <span class="hl sym">+=</span> <span class="hl num">1</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>n<span class="hl sym">&gt;</span><span class="hl num">30</span><span class="hl sym">) {</span> index <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span> n <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">}</span>
+      data<span class="hl sym">(</span>index<span class="hl sym">) |= (</span>b<span class="hl sym">&amp;</span><span class="hl num">0x3</span><span class="hl sym">)&lt;&lt;</span>n
+      n <span class="hl sym">+=</span> <span class="hl num">2</span>
+    <span class="hl sym">}</span>
+    
+    <span class="hl kwa">def</span> addLots<span class="hl sym">(</span>bs<span class="hl sym">:</span> Bits<span class="hl sym">) {</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>n<span class="hl sym">==</span><span class="hl num">0</span> <span class="hl sym">||</span> n<span class="hl sym">&gt;</span><span class="hl num">30</span><span class="hl sym">) {</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>n<span class="hl sym">&gt;</span><span class="hl num">30</span><span class="hl sym">) {</span> index <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span> n <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl sym">}</span>
+        <span class="hl kwc">System</span><span class="hl sym">.</span>arraycopy<span class="hl sym">(</span>bs<span class="hl sym">.</span>data<span class="hl sym">,</span><span class="hl num">0</span><span class="hl sym">,</span>data<span class="hl sym">,</span>index<span class="hl sym">,</span>bs<span class="hl sym">.</span>index<span class="hl sym">)</span>
+        index <span class="hl sym">+=</span> bs<span class="hl sym">.</span>index
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>index <span class="hl sym">&gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> n <span class="hl sym">==</span> <span class="hl num">0</span><span class="hl sym">) {</span> index <span class="hl sym">-=</span> <span class="hl num">1</span><span class="hl sym">;</span> n <span class="hl sym">=</span> <span class="hl num">32</span> <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span> <span class="hl sym">{</span>
+        <span class="hl kwa">var</span> i <span class="hl sym">=</span> <span class="hl num">0</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> bs<span class="hl sym">.</span>index<span class="hl sym">) {</span>
+          <span class="hl kwa">val</span> j <span class="hl sym">=</span> bs<span class="hl sym">.</span>data<span class="hl sym">(</span>i<span class="hl sym">)</span>
+          data<span class="hl sym">(</span>index<span class="hl sym">) |=</span> j <span class="hl sym">&lt;&lt;</span> n
+          index <span class="hl sym">+=</span> <span class="hl num">1</span>
+          data<span class="hl sym">(</span>index<span class="hl sym">) |=</span> j <span class="hl sym">&gt;&gt;&gt; (</span><span class="hl num">32</span><span class="hl sym">-</span>n<span class="hl sym">)</span>
+          i <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl sym">}</span>
+        size
+      <span class="hl sym">}</span>
+      size <span class="hl sym">+=</span> bs<span class="hl sym">.</span>index<span class="hl sym">*</span><span class="hl num">16</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>bs<span class="hl sym">.</span>n <span class="hl sym">!=</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        <span class="hl kwa">var</span> n <span class="hl sym">=</span> bs<span class="hl sym">.</span>n
+        <span class="hl kwa">var</span> i <span class="hl sym">=</span> bs<span class="hl sym">.</span>data<span class="hl sym">(</span>bs<span class="hl sym">.</span>index<span class="hl sym">)</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>n <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+          add2<span class="hl sym">(</span> i<span class="hl sym">.</span>toByte <span class="hl sym">)</span>
+          i <span class="hl sym">&gt;&gt;&gt;=</span> <span class="hl num">2</span>
+          n <span class="hl sym">-=</span> <span class="hl num">2</span>
+        <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+    
+    <span class="hl kwa">def</span> scan<span class="hl sym">(</span>n<span class="hl sym">:</span> Int<span class="hl sym">,</span> offset<span class="hl sym">:</span> Int<span class="hl sym">) =</span> <span class="hl kwa">new</span> LongIter <span class="hl sym">{</span>
+      <span class="hl kwa">var</span> i <span class="hl sym">=</span> offset <span class="hl sym">%</span> <span class="hl num">16</span>
+      <span class="hl kwa">var</span> j <span class="hl sym">=</span> offset <span class="hl sym">/</span> <span class="hl num">16</span>
+      <span class="hl kwa">val</span> mask <span class="hl sym">= (</span><span class="hl num">1L</span> <span class="hl sym">&lt;&lt; (</span><span class="hl num">2</span><span class="hl sym">*</span>n<span class="hl sym">)) -</span> <span class="hl num">1</span>
+      <span class="hl kwa">def</span> hasNext <span class="hl sym">=</span> j<span class="hl sym">*</span><span class="hl num">16</span> <span class="hl sym">+</span> i <span class="hl sym">+</span> n <span class="hl sym">&lt;=</span> self<span class="hl sym">.</span>size
+      <span class="hl kwa">def</span> next <span class="hl sym">= {</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>i<span class="hl sym">+</span>n <span class="hl sym">&lt;=</span> <span class="hl num">16</span><span class="hl sym">) {</span>
+          <span class="hl kwa">val</span> l <span class="hl sym">= ((</span>data<span class="hl sym">(</span>j<span class="hl sym">) &gt;&gt;&gt; (</span><span class="hl num">2</span><span class="hl sym">*</span>i<span class="hl sym">)) &amp;</span> mask<span class="hl sym">)</span>
+          i <span class="hl sym">+=</span> n
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>i<span class="hl sym">&gt;=</span><span class="hl num">16</span><span class="hl sym">) {</span> j <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">-=</span> <span class="hl num">16</span> <span class="hl sym">}</span>
+          l
+        <span class="hl sym">}</span>
+        <span class="hl kwa">else</span> <span class="hl sym">{</span>
+          <span class="hl kwa">val</span> l <span class="hl sym">= (((</span>data<span class="hl sym">(</span>j<span class="hl sym">) &gt;&gt;&gt; (</span><span class="hl num">2</span><span class="hl sym">*</span>i<span class="hl sym">))).</span>toLong <span class="hl sym">| (</span>data<span class="hl sym">(</span>j<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">).</span>toLong <span class="hl sym">&lt;&lt;</span> <span class="hl num">2</span><span class="hl sym">*(</span><span class="hl num">16</span><span class="hl sym">-</span>i<span class="hl sym">))) &amp;</span> mask
+          j <span class="hl sym">+=</span> <span class="hl num">1</span>
+          i <span class="hl sym">+=</span> n <span class="hl sym">-</span> <span class="hl num">16</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>i<span class="hl sym">&gt;=</span><span class="hl num">16</span><span class="hl sym">) {</span> j <span class="hl sym">+=</span> <span class="hl num">1</span><span class="hl sym">;</span> i <span class="hl sym">-=</span> <span class="hl num">16</span> <span class="hl sym">}</span>
+          l
+        <span class="hl sym">}</span>
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+  
+  <span class="hl slc">// Load a UTF-8 DNA file from standard in, picking out requested sequence</span>
+  <span class="hl kwa">def</span> load<span class="hl sym">(</span>is<span class="hl sym">:</span> <span class="hl kwc">InputStream</span><span class="hl sym">,</span> target<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">]) = {</span>
+    <span class="hl kwa">var</span> need <span class="hl sym">=</span> <span class="hl num">1</span>
+    <span class="hl kwa">var</span> found<span class="hl sym">,</span>nl<span class="hl sym">,</span>done <span class="hl sym">=</span> false
+    <span class="hl kwa">def</span> read<span class="hl sym">:</span> Bits <span class="hl sym">= {</span>
+      <span class="hl kwa">val</span> data <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Byte</span><span class="hl sym">](</span>BlockSize<span class="hl sym">)</span>
+      <span class="hl kwa">val</span> n <span class="hl sym">=</span> is<span class="hl sym">.</span>read<span class="hl sym">(</span>data<span class="hl sym">)</span>
+      <span class="hl kwa">var</span> i <span class="hl sym">=</span> <span class="hl num">0</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>i<span class="hl sym">&lt;</span>n <span class="hl sym">&amp;&amp;</span> need<span class="hl sym">&lt;</span>target<span class="hl sym">.</span>length<span class="hl sym">) {</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>data<span class="hl sym">(</span>i<span class="hl sym">)==</span>target<span class="hl sym">(</span>need<span class="hl sym">))</span> need <span class="hl sym">+=</span> <span class="hl num">1</span> <span class="hl kwa">else</span> need <span class="hl sym">=</span> <span class="hl num">0</span>
+        i <span class="hl sym">+=</span> <span class="hl num">1</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>need <span class="hl sym">&gt;=</span> target<span class="hl sym">.</span>length <span class="hl sym">&amp;&amp; !</span>found<span class="hl sym">) {</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>i<span class="hl sym">&lt;</span>n <span class="hl sym">&amp;&amp;</span> data<span class="hl sym">(</span>i<span class="hl sym">)!=</span><span class="hl str">'</span><span class="hl esc">\n</span><span class="hl str">'</span><span class="hl sym">)</span> i <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>i<span class="hl sym">&lt;</span>n<span class="hl sym">)</span> found <span class="hl sym">=</span> true
+      <span class="hl sym">}</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>found <span class="hl sym">&amp;&amp; !</span>done<span class="hl sym">)</span>
+      <span class="hl sym">{</span>
+        <span class="hl kwa">val</span> bits <span class="hl sym">=</span> <span class="hl kwa">new</span> Bits<span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">](</span><span class="hl num">1</span><span class="hl sym">+((</span>n<span class="hl sym">-</span>i<span class="hl sym">)&gt;&gt;</span><span class="hl num">4</span><span class="hl sym">)))</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> n<span class="hl sym">) {</span>
+          <span class="hl kwa">val</span> x <span class="hl sym">=</span> table<span class="hl sym">(</span>data<span class="hl sym">(</span>i<span class="hl sym">)&amp;</span><span class="hl num">0xFF</span><span class="hl sym">)</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>x <span class="hl sym">&gt;=</span> <span class="hl num">0</span><span class="hl sym">) {</span> bits<span class="hl sym">.</span>add2<span class="hl sym">(</span>x<span class="hl sym">);</span> nl <span class="hl sym">=</span> false <span class="hl sym">}</span>
+          <span class="hl kwa">else if</span> <span class="hl sym">(</span>x <span class="hl sym">== -</span><span class="hl num">3</span><span class="hl sym">)</span> nl <span class="hl sym">=</span> true
+          <span class="hl kwa">else if</span> <span class="hl sym">(</span>nl <span class="hl sym">&amp;&amp;</span> x <span class="hl sym">== -</span><span class="hl num">2</span><span class="hl sym">) {</span> i <span class="hl sym">=</span> n<span class="hl sym">;</span> done <span class="hl sym">=</span> true <span class="hl sym">}</span>
+          i <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl sym">}</span>
+        bits
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else if</span> <span class="hl sym">(</span>n<span class="hl sym">==</span>BlockSize <span class="hl sym">&amp;&amp; !</span>done<span class="hl sym">)</span> read
+      <span class="hl kwa">else new</span> Bits<span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">](</span><span class="hl num">0</span><span class="hl sym">))</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">val</span> data <span class="hl sym">=</span> <span class="hl kwc">Iterator</span><span class="hl sym">.</span>continually<span class="hl sym">(</span>read<span class="hl sym">).</span>takeWhile<span class="hl sym">(</span>_<span class="hl sym">.</span>size <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">).</span>toArray
+    <span class="hl kwa">val</span> all <span class="hl sym">=</span> <span class="hl kwa">new</span> Bits<span class="hl sym">(</span><span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">](</span>data<span class="hl sym">.</span>map<span class="hl sym">(</span>_<span class="hl sym">.</span>size<span class="hl sym">).</span>sum<span class="hl sym">/</span><span class="hl num">16</span><span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">))</span>
+    data<span class="hl sym">.</span>foreach<span class="hl sym">(</span>all<span class="hl sym">.</span>addLots<span class="hl sym">)</span>
+    all
+  <span class="hl sym">}</span>
+  
+  <span class="hl slc">// Utility to go from binary to text representation</span>
+  <span class="hl kwa">val</span> decode <span class="hl sym">=</span> <span class="hl kwc">Map</span><span class="hl sym">(</span><span class="hl num">0L</span><span class="hl sym">-&gt;</span><span class="hl str">&quot;A&quot;</span><span class="hl sym">,</span> <span class="hl num">1L</span><span class="hl sym">-&gt;</span><span class="hl str">&quot;T&quot;</span><span class="hl sym">,</span> <span class="hl num">2L</span><span class="hl sym">-&gt;</span><span class="hl str">&quot;G&quot;</span><span class="hl sym">,</span> <span class="hl num">3L</span><span class="hl sym">-&gt;</span><span class="hl str">&quot;C&quot;</span><span class="hl sym">)</span>
+  <span class="hl kwa">def</span> l2s<span class="hl sym">(</span>l<span class="hl sym">:</span> <span class="hl kwc">Long</span><span class="hl sym">,</span> n<span class="hl sym">:</span> Int<span class="hl sym">):</span> <span class="hl kwc">String</span> <span class="hl sym">= {</span>
+    <span class="hl kwa">if</span> <span class="hl sym">(</span>n <span class="hl sym">&lt;=</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl str">&quot;&quot;</span>
+    <span class="hl kwa">else</span> decode<span class="hl sym">(</span>l<span class="hl sym">&amp;</span><span class="hl num">0x3</span><span class="hl sym">) +</span> l2s<span class="hl sym">(</span>l<span class="hl sym">&gt;&gt;&gt;</span><span class="hl num">2</span><span class="hl sym">,</span> n<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+  <span class="hl sym">}</span>
+    
+  <span class="hl slc">// Custom counted hash set (neither Java nor Scala provides one)</span>
+  <span class="hl kwa">class</span> DnaHash<span class="hl sym">(</span>z<span class="hl sym">:</span> Int<span class="hl sym">) {</span>
+    <span class="hl kwa">var</span> size <span class="hl sym">=</span> <span class="hl num">16</span>
+    <span class="hl kwa">var</span> n <span class="hl sym">=</span> <span class="hl num">0</span>
+    <span class="hl kwa">var</span> keys <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Long</span><span class="hl sym">](</span>size<span class="hl sym">)</span>
+    <span class="hl kwa">var</span> counts <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">](</span>size<span class="hl sym">)</span>
+    <span class="hl kwa">final def</span> hc<span class="hl sym">(</span>l<span class="hl sym">:</span> <span class="hl kwc">Long</span><span class="hl sym">) = (</span>l<span class="hl sym">.</span>toInt <span class="hl sym">+ (</span>l<span class="hl sym">&gt;&gt;</span><span class="hl num">17</span><span class="hl sym">).</span>toInt<span class="hl sym">) &amp; (</span>size<span class="hl sym">-</span><span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">final def</span> nx<span class="hl sym">(</span>i<span class="hl sym">:</span> Int<span class="hl sym">) = (</span>i<span class="hl sym">+</span><span class="hl num">1</span><span class="hl sym">) &amp; (</span>size <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">)</span>
+    <span class="hl kwa">def</span> <span class="hl sym">+=(</span>key<span class="hl sym">:</span> <span class="hl kwc">Long</span><span class="hl sym">,</span> count<span class="hl sym">:</span> Int <span class="hl sym">=</span> <span class="hl num">1</span><span class="hl sym">) {</span>
+      <span class="hl kwa">val</span> index <span class="hl sym">=</span> hc<span class="hl sym">(</span>key<span class="hl sym">)</span>
+      <span class="hl kwa">if</span> <span class="hl sym">(</span>counts<span class="hl sym">(</span>index<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+        keys<span class="hl sym">(</span>index<span class="hl sym">) =</span> key
+        counts<span class="hl sym">(</span>index<span class="hl sym">) =</span> count
+        n <span class="hl sym">+=</span> <span class="hl num">1</span>
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else if</span> <span class="hl sym">(</span>keys<span class="hl sym">(</span>index<span class="hl sym">) ==</span> key<span class="hl sym">)</span> counts<span class="hl sym">(</span>index<span class="hl sym">) +=</span> count
+      <span class="hl kwa">else if</span> <span class="hl sym">(</span><span class="hl num">6</span><span class="hl sym">*</span>n <span class="hl sym">&gt;</span> size<span class="hl sym">) {</span>
+        <span class="hl kwa">val</span> <span class="hl sym">(</span>oldk<span class="hl sym">,</span> oldc<span class="hl sym">,</span> olds<span class="hl sym">) = (</span>keys<span class="hl sym">,</span> counts<span class="hl sym">,</span> size<span class="hl sym">)</span>
+        size <span class="hl sym">*=</span> <span class="hl num">2</span>
+        keys <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">Long</span><span class="hl sym">](</span>size<span class="hl sym">)</span>
+        counts <span class="hl sym">=</span> <span class="hl kwa">new</span> <span class="hl kwc">Array</span><span class="hl sym">[</span>Int<span class="hl sym">](</span>size<span class="hl sym">)</span>
+        n <span class="hl sym">=</span> <span class="hl num">0</span>
+        <span class="hl kwa">var</span> i <span class="hl sym">=</span> <span class="hl num">0</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;</span> olds<span class="hl sym">) {</span>
+          <span class="hl kwa">if</span> <span class="hl sym">(</span>oldc<span class="hl sym">(</span>i<span class="hl sym">) &gt;</span> <span class="hl num">0</span><span class="hl sym">)</span> <span class="hl kwa">this</span> <span class="hl sym">+= (</span>oldk<span class="hl sym">(</span>i<span class="hl sym">),</span> oldc<span class="hl sym">(</span>i<span class="hl sym">))</span>
+          i <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">this</span> <span class="hl sym">+=</span> key
+      <span class="hl sym">}</span>
+      <span class="hl kwa">else</span> <span class="hl sym">{</span>
+        <span class="hl kwa">var</span> i <span class="hl sym">=</span> nx<span class="hl sym">(</span>index<span class="hl sym">)</span>
+        <span class="hl kwa">while</span> <span class="hl sym">(</span>counts<span class="hl sym">(</span>i<span class="hl sym">) !=</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> keys<span class="hl sym">(</span>i<span class="hl sym">) !=</span> key<span class="hl sym">)</span> i <span class="hl sym">=</span> nx<span class="hl sym">(</span>i<span class="hl sym">)</span>
+        <span class="hl kwa">if</span> <span class="hl sym">(</span>counts<span class="hl sym">(</span>i<span class="hl sym">) ==</span> <span class="hl num">0</span><span class="hl sym">) {</span>
+          keys<span class="hl sym">(</span>i<span class="hl sym">) =</span> key
+          counts<span class="hl sym">(</span>i<span class="hl sym">) =</span> count
+          n <span class="hl sym">+=</span> <span class="hl num">1</span>
+        <span class="hl sym">}</span>
+        <span class="hl kwa">else</span> counts<span class="hl sym">(</span>i<span class="hl sym">) +=</span> count
+      <span class="hl sym">}</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">def</span> apply<span class="hl sym">(</span>key<span class="hl sym">:</span> <span class="hl kwc">Long</span><span class="hl sym">) = {</span>
+      <span class="hl kwa">var</span> i <span class="hl sym">=</span> hc<span class="hl sym">(</span>key<span class="hl sym">)</span>
+      <span class="hl kwa">while</span> <span class="hl sym">(</span>counts<span class="hl sym">(</span>i<span class="hl sym">) &gt;</span> <span class="hl num">0</span> <span class="hl sym">&amp;&amp;</span> keys<span class="hl sym">(</span>i<span class="hl sym">) !=</span> key<span class="hl sym">)</span> i <span class="hl sym">=</span> nx<span class="hl sym">(</span>i<span class="hl sym">)</span>
+      counts<span class="hl sym">(</span>i<span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+    <span class="hl kwa">def</span> printSorted <span class="hl sym">{</span>
+      <span class="hl kwa">val</span> factor <span class="hl sym">=</span> <span class="hl num">100.0</span><span class="hl sym">/</span>counts<span class="hl sym">.</span>sum
+      <span class="hl sym">(</span>counts<span class="hl sym">.</span>map<span class="hl sym">(</span>_<span class="hl sym">*</span>factor<span class="hl sym">)</span> zip keys<span class="hl sym">.</span>map<span class="hl sym">(</span>l2s<span class="hl sym">(</span>_<span class="hl sym">,</span>z<span class="hl sym">))).</span>filter<span class="hl sym">(</span>_<span class="hl sym">.</span>_1 <span class="hl sym">&gt;</span> <span class="hl num">0</span><span class="hl sym">).</span>sortWith<span class="hl sym">((</span>a<span class="hl sym">,</span>b<span class="hl sym">) =&gt;</span>
+        a<span class="hl sym">.</span>_1 <span class="hl sym">&gt;</span> b<span class="hl sym">.</span>_1 <span class="hl sym">|| (</span>a<span class="hl sym">.</span>_1 <span class="hl sym">==</span> b<span class="hl sym">.</span>_1 <span class="hl sym">&amp;&amp;</span> a<span class="hl sym">.</span>_2 <span class="hl sym">&lt;</span> b<span class="hl sym">.</span>_2<span class="hl sym">)</span>
+      <span class="hl sym">).</span>foreach<span class="hl sym">{</span> <span class="hl kwa">case</span> <span class="hl sym">(</span>freq<span class="hl sym">,</span> label<span class="hl sym">) =&gt;</span> printf<span class="hl sym">(</span><span class="hl str">&quot;%s %.3f</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span>label<span class="hl sym">,</span>freq<span class="hl sym">) }</span>
+      println
+    <span class="hl sym">}</span>
+    <span class="hl kwa">def</span> print<span class="hl sym">(</span>s<span class="hl sym">:</span> <span class="hl kwc">String</span><span class="hl sym">) {</span>
+      <span class="hl kwa">val</span> key <span class="hl sym">=</span> s<span class="hl sym">.</span>getBytes<span class="hl sym">.</span>map<span class="hl sym">(</span>x <span class="hl sym">=&gt;</span> table<span class="hl sym">(</span>x <span class="hl sym">&amp;</span> <span class="hl num">0xFF</span><span class="hl sym">).</span>toLong<span class="hl sym">).</span>reduceRight<span class="hl sym">((</span>l<span class="hl sym">,</span>r<span class="hl sym">) =&gt;</span> <span class="hl num">4</span><span class="hl sym">*</span>r <span class="hl sym">+</span> l<span class="hl sym">)</span>
+      printf<span class="hl sym">(</span><span class="hl str">&quot;%-7d %s</span><span class="hl esc">\n</span><span class="hl str">&quot;</span><span class="hl sym">,</span><span class="hl kwa">this</span><span class="hl sym">(</span>key<span class="hl sym">),</span>s<span class="hl sym">)</span>
+    <span class="hl sym">}</span>
+  <span class="hl sym">}</span>
+  
+  <span class="hl slc">// Required function that adds data with offset to hash set</span>
+  <span class="hl kwa">def</span> addToHash<span class="hl sym">(</span>data<span class="hl sym">:</span> Bits<span class="hl sym">,</span> hash<span class="hl sym">:</span> DnaHash<span class="hl sym">,</span> n<span class="hl sym">:</span> Int<span class="hl sym">,</span> offset<span class="hl sym">:</span> Int<span class="hl sym">) =</span> data<span class="hl sym">.</span>scan<span class="hl sym">(</span>n<span class="hl sym">,</span>offset<span class="hl sym">).</span>foreach<span class="hl sym">(</span>hash <span class="hl sym">+=</span> _<span class="hl sym">)</span>
+  
+  <span class="hl kwa">def</span> main<span class="hl sym">(</span>args<span class="hl sym">:</span> <span class="hl kwc">Array</span><span class="hl sym">[</span><span class="hl kwc">String</span><span class="hl sym">]) {</span>
+    <span class="hl kwa">val</span> sizes <span class="hl sym">=</span> <span class="hl kwc">List</span><span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">,</span><span class="hl num">2</span><span class="hl sym">,</span><span class="hl num">3</span><span class="hl sym">,</span><span class="hl num">4</span><span class="hl sym">,</span><span class="hl num">6</span><span class="hl sym">,</span><span class="hl num">12</span><span class="hl sym">,</span><span class="hl num">18</span><span class="hl sym">)</span>
+    <span class="hl kwa">val</span> sequence <span class="hl sym">=</span> <span class="hl str">&quot;GGTATTTTAATTTATAGT&quot;</span>
+    <span class="hl kwa">val</span> data <span class="hl sym">=</span> load<span class="hl sym">(</span><span class="hl kwc">System</span><span class="hl sym">.</span><span class="hl kwa">in</span><span class="hl sym">,</span> <span class="hl str">&quot;</span><span class="hl esc">\n</span><span class="hl str">&gt;THREE&quot;</span><span class="hl sym">.</span>getBytes<span class="hl sym">)</span>
+    <span class="hl kwa">val</span> answers <span class="hl sym">=</span> sizes<span class="hl sym">.</span>map<span class="hl sym">(</span>n <span class="hl sym">=&gt;</span> n <span class="hl sym">-&gt;</span> future <span class="hl sym">{</span>
+      <span class="hl kwa">val</span> h <span class="hl sym">=</span> <span class="hl kwa">new</span> DnaHash<span class="hl sym">(</span>n<span class="hl sym">)</span>
+      <span class="hl kwa">for</span> <span class="hl sym">(</span>i <span class="hl sym">&lt;-</span> <span class="hl num">0</span> until n<span class="hl sym">)</span> addToHash<span class="hl sym">(</span>data<span class="hl sym">,</span>h<span class="hl sym">,</span>n<span class="hl sym">,</span>i<span class="hl sym">)</span>
+      h
+    <span class="hl sym">}).</span>toMap
+    answers<span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)().</span>printSorted
+    answers<span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">)().</span>printSorted
+    sizes<span class="hl sym">.</span>drop<span class="hl sym">(</span><span class="hl num">2</span><span class="hl sym">).</span>foreach<span class="hl sym">(</span>n <span class="hl sym">=&gt;</span> answers<span class="hl sym">(</span>n<span class="hl sym">)().</span>print<span class="hl sym">(</span>sequence<span class="hl sym">.</span>substring<span class="hl sym">(</span><span class="hl num">0</span><span class="hl sym">,</span>n<span class="hl sym">)))</span>
+  <span class="hl sym">}</span>
+<span class="hl sym">}</span>

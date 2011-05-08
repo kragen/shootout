@@ -1,0 +1,118 @@
+{ The Computer Language Benchmarks Game
+  http://shootout.alioth.debian.org
+
+  contributed by Ales Katona
+  modified by Vincent Snijders
+  optimized and multithreaded by Jean de La Taille
+  modified by Jeppe Johansen
+}
+
+program mandelbrot;
+
+uses
+  {$ifdef unix}cthreads,{$endif}
+  sysUtils, math;
+
+const
+  Limit = 4.0;
+  ThreadCount = 4;
+
+var
+  n, dimx : longint;
+  nInv: double;
+  TextBuf: pbyte;
+
+  yCounter: longint;
+
+function subThread(p: pointer) : ptrint;
+var
+  x, y, i, bits, bit, buf_index: Longint;
+  Zr, Zi, Ti, Tr, Cr, Ci : Double;
+begin
+  while true do
+  begin
+    y := interlockedincrement(yCounter)-1;
+
+    if y >= n then break;
+
+    buf_index := y*dimx;
+
+    prefetch(TextBuf[buf_index]);
+
+    bit := 128; // 1000 0000
+
+    bits := 0;
+    Ci := ((y + y) * nInv) - 1.0;
+    for x := 0 to n-1 do
+    begin
+      //---------------------------
+
+      Zr := 0;
+      Zi := 0;
+      Tr := 0;
+      Ti := 0;
+      Cr := ((x + x) * nInv) - 1.5;
+      for i := 1 to 50 do
+      begin
+        Zi := 2.0 * Zr * Zi + Ci;
+        Zr := Tr - Ti + Cr;
+        Ti := Zi * Zi;
+        Tr := Zr * Zr;
+        if ((Tr + Ti) > limit) then
+        begin
+          bits := bits or bit;
+          break;
+        end;
+      end;
+      //---------------------------
+
+      bit := bit >> 1;
+      if (bit = 0) then
+      begin
+        TextBuf[buf_index] := not bits;
+        inc(buf_index);
+
+        bits := 0;
+        bit := 128;
+      end;
+    end;
+  end;
+  subThread := 0;
+end;
+
+procedure run;
+var
+  i, t, buf_index: Longint;
+  tt : array[0..ThreadCount-1] of TThreadID;
+begin
+  nInv := 1/n;
+
+  for i := 0 to ThreadCount-1 do
+    tt[i] := BeginThread(@subThread, nil);
+
+  for i := 0 to ThreadCount-1 do
+    WaitForThreadTerminate(tt[i], 0);
+
+  buf_index := 0;
+  i := n*dimx;
+  while buf_index < i do
+  begin
+    t := FileWrite(StdOutputHandle, TextBuf[buf_index], i-buf_index);;
+    if t >= 0 then
+      buf_index := buf_index + t;
+  end;
+end;
+
+begin
+  Val(ParamStr(1), n);
+  write('P4', chr(10), n, ' ', n, chr(10));
+  Flush(output);
+
+  dimx := Ceil(n / 8);
+
+  TextBuf := GetMem(dimx*n);
+
+  run;
+
+  freemem(textbuf);
+end.
