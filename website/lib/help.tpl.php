@@ -565,8 +565,7 @@ href="./debian/performance.php">&nbsp;Debian&nbsp;:&nbsp;AMD&#8482;&nbsp;Sempron
 <p>Follow <a href="http://shootout.alioth.debian.org/help.php#contribute">these steps <b>to contribute</b></a> faster more elegant programs.</p>
 <p>Tell us about content mistakes, inconsistencies, bad installs <em>etc</em>. Please <a href="http://alioth.debian.org/account/register.php"><b>create an Alioth ID</b></a>, login and <a href="https://alioth.debian.org/tracker/?atid=411002&amp;group_id=30402&amp;func=browse"><b>Report a Bug</b></a>.</p>
 <p>Tell us about new versions of language implementations shown in the current benchmarks game <em>etc</em> - add a <a href="https://alioth.debian.org/tracker/index.php?group_id=30402&amp;atid=411005"><b>Feature Request</b></a>.</p>
-<p>You can grab the source code for all the programs (or just some of the programs) from <a href="https://alioth.debian.org/scm/?group_id=30402">the project CVS repository -</a> checkout shootout/bench</p>
-<p>(There's also <a href="https://github.com/kragen/shootout">an independent GitHub clone</a> of the project CVS repository.)</p>
+<p>You can grab the source code for all the programs (or just some of the programs) from <a href="https://alioth.debian.org/scm/?group_id=30402">the project CVS repository -</a> <b>co shootout/bench<b> (There's also <a href="https://github.com/kragen/shootout">an independent GitHub clone</a> of the project CVS repository.)</p>
 <p>Please ask more general questions in <a href="https://alioth.debian.org/forum/forum.php?forum_id=999" title="Find Help, Share Opinions"><b>the discussion forum</b></a> </p>
 </dd>
 
