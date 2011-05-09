@@ -1,0 +1,113 @@
+<span class="hl slc">-- The Computer Language Benchmarks Game</span>
+<span class="hl slc">-- http://shootout.alioth.debian.org/</span>
+<span class="hl slc">-- Contributed by Jacob Sparre Andersen (with help from Alex Mason)</span>
+<span class="hl slc">--</span>
+<span class="hl slc">-- Modified by Francois Fabien (9 mai 2011)</span>
+<span class="hl slc">-- Compile with:</span>
+<span class="hl slc">--    gnatmake -gnatVn -O3 -gnatp threadring.adb</span>
+
+<span class="hl slc">-- pragmas used for optimization of the run-time.</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Simple_Barriers<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Abort_Statements<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Asynchronous_Control<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Calendar<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Delay<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Dynamic_Attachment<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Dynamic_Priorities<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Entry_Calls_In_Elaboration_Code<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Entry_Queue<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Exception_Registration<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Initialize_Scalars<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Local_Protected_Objects<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Protected_Type_Allocators<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Relative_Delay<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Requeue_Statements<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Select_Statements<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Streams<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Task_Allocators<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Task_Attributes_Package<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Task_Termination<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Terminate_Alternatives<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Static_Priorities<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Static_Storage_Size<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Immediate_Reclamation<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Wide_Characters<span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Protected_Entries <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Select_Alternatives <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Task_Entries <span class="hl sym">=&gt;</span> <span class="hl num">1</span><span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>Max_Asynchronous_Select_Nesting <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+<span class="hl kwa">pragma</span> Restrictions <span class="hl sym">(</span>No_Nested_Finalization<span class="hl sym">);</span>
+
+<span class="hl kwa">with</span> Ada<span class="hl sym">.</span>Text_IO<span class="hl sym">,</span> Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">;</span>
+<span class="hl kwa">use</span>  Ada<span class="hl sym">;</span>
+
+<span class="hl kwa">procedure</span> Threadring <span class="hl kwa">is</span>
+
+   Ring_Size <span class="hl sym">:</span> <span class="hl kwa">constant</span> <span class="hl sym">:=</span> <span class="hl num">503</span><span class="hl sym">;</span>
+   <span class="hl kwa">type</span> Ring_Index <span class="hl kwa">is mod</span> Ring_Size<span class="hl sym">;</span><span class="hl slc">-- 0 to 502</span>
+
+   <span class="hl kwa">package</span> Int_IO <span class="hl kwa">is new</span> Text_IO<span class="hl sym">.</span>Integer_IO <span class="hl sym">(</span><span class="hl kwb">Integer</span><span class="hl sym">);</span>
+
+   <span class="hl kwa">pragma</span> Warnings <span class="hl sym">(</span>Off<span class="hl sym">);</span>
+   <span class="hl kwa">protected type</span> Semaphore <span class="hl kwa">is</span>
+      <span class="hl kwa">entry</span> Seize <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Integer</span><span class="hl sym">);</span>
+      <span class="hl kwa">procedure</span> Release <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Integer</span><span class="hl sym">);</span>
+   <span class="hl kwa">private</span>
+      Value <span class="hl sym">:</span> <span class="hl kwb">Integer</span><span class="hl sym">;</span>
+      Ready <span class="hl sym">:</span> <span class="hl kwb">Boolean</span> <span class="hl sym">:=</span> <span class="hl kwd">False</span><span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Semaphore<span class="hl sym">;</span>
+
+   <span class="hl kwa">protected body</span> Semaphore <span class="hl kwa">is</span>
+      <span class="hl kwa">entry</span> Seize <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwa">out</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span> <span class="hl kwa">when</span> Ready <span class="hl kwa">is</span>
+      <span class="hl kwa">begin</span>
+         Item  <span class="hl sym">:=</span> Value<span class="hl sym">;</span>
+         Ready <span class="hl sym">:=</span> <span class="hl kwd">False</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Seize<span class="hl sym">;</span>
+
+      <span class="hl kwa">procedure</span> Release <span class="hl sym">(</span>Item <span class="hl sym">:</span> <span class="hl kwa">in</span> <span class="hl kwb">Integer</span><span class="hl sym">)</span> <span class="hl kwa">is</span>
+      <span class="hl kwa">begin</span>
+         Value <span class="hl sym">:=</span> Item<span class="hl sym">;</span>
+         Ready <span class="hl sym">:=</span> <span class="hl kwd">True</span><span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Release<span class="hl sym">;</span>
+   <span class="hl kwa">end</span> Semaphore<span class="hl sym">;</span>
+   <span class="hl kwa">pragma</span> Warnings <span class="hl sym">(</span>On<span class="hl sym">);</span>
+
+   <span class="hl kwa">type</span> Semaphore_Ring <span class="hl kwa">is array</span> <span class="hl sym">(</span>Ring_Index<span class="hl sym">)</span> <span class="hl kwa">of</span> Semaphore<span class="hl sym">;</span>
+   Semaphores <span class="hl sym">:</span> Semaphore_Ring<span class="hl sym">;</span>
+   
+   <span class="hl slc">-- tasks are mapped on OS threads.</span>
+   <span class="hl kwa">task type</span> Node <span class="hl kwa">is</span>
+      <span class="hl kwa">entry</span> Initialize <span class="hl sym">(</span>Identifier <span class="hl sym">:</span> <span class="hl kwa">in</span> Ring_Index<span class="hl sym">);</span>
+   <span class="hl kwa">end</span> Node<span class="hl sym">;</span>
+
+   <span class="hl kwa">task body</span> Node <span class="hl kwa">is</span>
+      ID    <span class="hl sym">:</span> Ring_Index<span class="hl sym">;</span>
+      Token <span class="hl sym">:</span> <span class="hl kwb">Integer</span><span class="hl sym">;</span>
+   <span class="hl kwa">begin</span>
+      <span class="hl kwa">accept</span> Initialize <span class="hl sym">(</span>Identifier <span class="hl sym">:</span> <span class="hl kwa">in</span> Ring_Index<span class="hl sym">)</span> <span class="hl kwa">do</span>
+         ID <span class="hl sym">:=</span> Identifier<span class="hl sym">;</span>
+      <span class="hl kwa">end</span> Initialize<span class="hl sym">;</span>
+
+      <span class="hl kwa">loop</span>
+         Semaphores <span class="hl sym">(</span>ID<span class="hl sym">).</span>Seize <span class="hl sym">(</span>Token<span class="hl sym">);</span>
+         <span class="hl kwa">if</span> Token <span class="hl sym">=</span> <span class="hl num">0</span> <span class="hl kwa">then</span>
+            Int_IO<span class="hl sym">.</span>Put <span class="hl sym">(</span><span class="hl kwb">Integer</span> <span class="hl sym">(</span>ID<span class="hl sym">) +</span> <span class="hl num">1</span><span class="hl sym">,</span> Width <span class="hl sym">=&gt;</span> <span class="hl num">0</span><span class="hl sym">);</span>
+            Text_IO<span class="hl sym">.</span>New_Line<span class="hl sym">;</span>
+         <span class="hl kwa">end if</span><span class="hl sym">;</span>
+         Semaphores <span class="hl sym">(</span>ID <span class="hl sym">+</span> <span class="hl num">1</span><span class="hl sym">).</span>Release <span class="hl sym">(</span>Token <span class="hl sym">-</span> <span class="hl num">1</span><span class="hl sym">);</span>
+         <span class="hl kwa">exit when</span> Token <span class="hl sym">&lt;</span> <span class="hl num">0</span><span class="hl sym">;</span>
+      <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   <span class="hl kwa">end</span> Node<span class="hl sym">;</span>
+
+   <span class="hl kwa">type</span> Node_Ring <span class="hl kwa">is array</span> <span class="hl sym">(</span>Ring_Index<span class="hl sym">)</span> <span class="hl kwa">of</span> Node<span class="hl sym">;</span>
+   Nodes <span class="hl sym">:</span> Node_Ring<span class="hl sym">;</span>
+
+<span class="hl kwa">begin</span>
+   <span class="hl kwa">for</span> ID <span class="hl kwa">in</span> Nodes'<span class="hl kwa">Range loop</span>
+      Nodes <span class="hl sym">(</span>ID<span class="hl sym">).</span>Initialize <span class="hl sym">(</span>Identifier <span class="hl sym">=&gt;</span> ID<span class="hl sym">);</span>
+   <span class="hl kwa">end loop</span><span class="hl sym">;</span>
+
+   Semaphores <span class="hl sym">(</span>Ring_Index'First<span class="hl sym">).</span>Release
+     <span class="hl sym">(</span><span class="hl kwb">Integer</span>'Value <span class="hl sym">(</span>Ada<span class="hl sym">.</span>Command_Line<span class="hl sym">.</span>Argument <span class="hl sym">(</span><span class="hl num">1</span><span class="hl sym">)));</span>
+<span class="hl kwa">end</span> Threadring<span class="hl sym">;</span>

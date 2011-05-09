@@ -1,0 +1,113 @@
+-- The Computer Language Benchmarks Game
+-- http://shootout.alioth.debian.org/
+-- Contributed by Jacob Sparre Andersen (with help from Alex Mason)
+--
+-- Modified by Francois Fabien (9 mai 2011)
+-- Compile with:
+--    gnatmake -gnatVn -O3 -gnatp threadring.adb
+
+-- pragmas used for optimization of the run-time.
+pragma Restrictions (Simple_Barriers);
+pragma Restrictions (No_Abort_Statements);
+pragma Restrictions (No_Asynchronous_Control);
+pragma Restrictions (No_Calendar);
+pragma Restrictions (No_Delay);
+pragma Restrictions (No_Dynamic_Attachment);
+pragma Restrictions (No_Dynamic_Priorities);
+pragma Restrictions (No_Entry_Calls_In_Elaboration_Code);
+pragma Restrictions (No_Entry_Queue);
+pragma Restrictions (No_Exception_Registration);
+pragma Restrictions (No_Initialize_Scalars);
+pragma Restrictions (No_Local_Protected_Objects);
+pragma Restrictions (No_Protected_Type_Allocators);
+pragma Restrictions (No_Relative_Delay);
+pragma Restrictions (No_Requeue_Statements);
+pragma Restrictions (No_Select_Statements);
+pragma Restrictions (No_Streams);
+pragma Restrictions (No_Task_Allocators);
+pragma Restrictions (No_Task_Attributes_Package);
+pragma Restrictions (No_Task_Termination);
+pragma Restrictions (No_Terminate_Alternatives);
+pragma Restrictions (Static_Priorities);
+pragma Restrictions (Static_Storage_Size);
+pragma Restrictions (Immediate_Reclamation);
+pragma Restrictions (No_Wide_Characters);
+pragma Restrictions (Max_Protected_Entries => 1);
+pragma Restrictions (Max_Select_Alternatives => 0);
+pragma Restrictions (Max_Task_Entries => 1);
+pragma Restrictions (Max_Asynchronous_Select_Nesting => 0);
+pragma Restrictions (No_Nested_Finalization);
+
+with Ada.Text_IO, Ada.Command_Line;
+use  Ada;
+
+procedure Threadring is
+
+   Ring_Size : constant := 503;
+   type Ring_Index is mod Ring_Size;-- 0 to 502
+
+   package Int_IO is new Text_IO.Integer_IO (Integer);
+
+   pragma Warnings (Off);
+   protected type Semaphore is
+      entry Seize (Item : out Integer);
+      procedure Release (Item : in Integer);
+   private
+      Value : Integer;
+      Ready : Boolean := False;
+   end Semaphore;
+
+   protected body Semaphore is
+      entry Seize (Item : out Integer) when Ready is
+      begin
+         Item  := Value;
+         Ready := False;
+      end Seize;
+
+      procedure Release (Item : in Integer) is
+      begin
+         Value := Item;
+         Ready := True;
+      end Release;
+   end Semaphore;
+   pragma Warnings (On);
+
+   type Semaphore_Ring is array (Ring_Index) of Semaphore;
+   Semaphores : Semaphore_Ring;
+   
+   -- tasks are mapped on OS threads.
+   task type Node is
+      entry Initialize (Identifier : in Ring_Index);
+   end Node;
+
+   task body Node is
+      ID    : Ring_Index;
+      Token : Integer;
+   begin
+      accept Initialize (Identifier : in Ring_Index) do
+         ID := Identifier;
+      end Initialize;
+
+      loop
+         Semaphores (ID).Seize (Token);
+         if Token = 0 then
+            Int_IO.Put (Integer (ID) + 1, Width => 0);
+            Text_IO.New_Line;
+         end if;
+         Semaphores (ID + 1).Release (Token - 1);
+         exit when Token < 0;
+      end loop;
+
+   end Node;
+
+   type Node_Ring is array (Ring_Index) of Node;
+   Nodes : Node_Ring;
+
+begin
+   for ID in Nodes'Range loop
+      Nodes (ID).Initialize (Identifier => ID);
+   end loop;
+
+   Semaphores (Ring_Index'First).Release
+     (Integer'Value (Ada.Command_Line.Argument (1)));
+end Threadring;
