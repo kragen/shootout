@@ -137,7 +137,7 @@ $langs = array(
    array('php','PHP','php',$u32sites),
    array('python3','Python 3','python3',$allsites),
    array('racket','Racket','racket',$onecoresites),
-   array('yarv','Ruby 1.9','',$allsites),
+   array('yarv','Ruby 1.9','ruby',$allsites),
    array('jruby','JRuby','jruby',$allsites),
    array('scala','Scala','scala',$allsites),
    array('vw','Smalltalk VisualWorks','smalltalk',$onecoresites)
