@@ -4,13 +4,13 @@
 # contributed by David Pyke
 # tweaked by Danny Sauer
 # Butchered by Jesse Millikan
+# 2.5 times faster by Reini Urban
 
 use constant IM => 139968;
 use constant IA => 3877;
 use constant IC => 29573;
 
-use constant LINELENGTH => 60;
-
+my $LINELENGTH = 60;
 my $LAST = 42;
 
 sub makeCumulative {
@@ -26,27 +26,25 @@ sub makeRandomFasta {
     my($id,$desc,$n,$genelist) = @_;
 
     print ">$id $desc\n";
-    my $pick, $r;
-
-	while($n > 0){
-		$pick='';
-
-		# Get LINELENGTH chars or what's left of $n
-        CHAR: foreach (1 .. ($n > LINELENGTH ? LINELENGTH : $n)){
-    		$rand = ($LAST = ($LAST * IA + IC) % IM) / IM;
-
-			# Select gene and append it
-    		foreach (@$genelist){
-				if($rand < $_->[1]){
-					$pick .= $_->[0];
-					next CHAR;
-				}
-    		}
-        }
-
-        print "$pick\n";
-		$n -= LINELENGTH;
+    my $rand;
+    my $pick= ' ' x 4096;
+    $pick = '';
+    while($n > 0){
+	# Get LINELENGTH chars or what's left of $n
+	foreach (1 .. ($n > $LINELENGTH ? $LINELENGTH : $n)){
+	    $rand = ($LAST = ($LAST * IA + IC) % IM) / IM;
+	    # Select gene and append it. $genelist(char,probs) is sorted by probs
+	    foreach (@$genelist){
+		if($rand < $_->[1]){
+		    $pick .= $_->[0];
+		    last;
+		}
+	    }
+	}
+	$pick .= "\n";
+	$n -= $LINELENGTH;
     }
+    print $pick;
 }
 
 # Print $n characters of $s (repeated if nessary) with newlines every LINELENGTH
@@ -55,13 +53,13 @@ sub makeRepeatFasta {
 
     print ">$id $desc\n";
 
-	my $ss;
+	my $ss = '';
 	while($n > 0){
 		# Overfill $ss with $s
-		$ss .= $s while length $ss < LINELENGTH;
+		$ss .= $s while length $ss < $LINELENGTH;
 		# Print LINELENGTH chars or whatever's left of $n
-        print substr($ss,0,$n > LINELENGTH ? LINELENGTH : $n,""), "\n";
-		$n -= LINELENGTH;
+        print substr($ss,0,$n > $LINELENGTH ? $LINELENGTH : $n,""), "\n";
+		$n -= $LINELENGTH;
 	}
 }
 
