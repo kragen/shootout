@@ -7,9 +7,11 @@
 use integer;
 
 sub bottomup_tree { # item, depth
-    return $_[0] unless $_[1];
-    my $value = $_[0] * 2;
-    [ $_[0], bottomup_tree($value-1, $_[1]-1), bottomup_tree($value, $_[1]-1) ]
+    my $item = shift;
+    my $depth = shift;
+    return $item unless $depth;
+    my $value = $item * 2;
+    [ $item, bottomup_tree($value-1, $depth-1), bottomup_tree($value, $depth-1) ]
 }
 
 sub item_check {
